@@ -1,6 +1,6 @@
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { inspectAgentAdapters } from "../adapters/registry.mjs";
+import { inspectWorkerExecutors } from "../executors/registry.mjs";
 import { ensureDir, now, readJson, shortId, writeJson } from "../lib/common.mjs";
 import { runAdapterSmoke } from "./adapter-smoke.mjs";
 import { enqueueNotification } from "./notifications.mjs";
@@ -23,7 +23,7 @@ export function recordAdapterSmokeReport(root, report, options = {}) {
   });
   updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
 
-  const inspections = options.inspections || inspectAgentAdapters();
+  const inspections = options.inspections || inspectWorkerExecutors();
   const observation = recordAdapterObservation(root, inspections, {
     source: "smoke",
     smokeReport: report
@@ -148,7 +148,7 @@ export function backfillAdapterObservations(root, options = {}) {
     .map((name) => readJson(join(historyDir, name)));
   const smokeIds = new Set(existing.map((item) => item.smoke_id).filter(Boolean));
   const hasBaseline = existing.some((item) => item.source === "baseline" && item.smoke_id == null);
-  const inspections = options.inspections || inspectAgentAdapters();
+  const inspections = options.inspections || inspectWorkerExecutors();
   let created = 0;
 
   const baseline = readJson(join(root, "adapters", "capabilities.json"), null);

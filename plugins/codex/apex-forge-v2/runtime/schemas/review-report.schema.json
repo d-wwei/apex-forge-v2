@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/review-report.schema.json",
+  "title": "Apex Forge V2 Review Report",
+  "type": "object",
+  "required": ["schema_version", "report_id", "run_id", "status", "created_at", "blocking_findings", "non_blocking_findings"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "report_id": { "type": "string" },
+    "run_id": { "type": "string" },
+    "status": { "type": "string", "enum": ["PASS", "BLOCKED"] },
+    "created_at": { "type": "string" },
+    "blocking_findings": { "type": "array", "items": { "type": "string" } },
+    "non_blocking_findings": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,17 @@
+{
+  "repositories": [
+    { "id": "node-cli", "archetype": "CLI application" },
+    { "id": "js-library", "archetype": "JavaScript library" },
+    { "id": "api-service", "archetype": "HTTP API service" },
+    { "id": "data-pipeline", "archetype": "Data pipeline" },
+    { "id": "docs-tool", "archetype": "Documentation generator" }
+  ],
+  "scenarios": [
+    { "id": "simple", "purpose": "Single-file behavior change" },
+    { "id": "multi-step", "purpose": "Multi-file feature with tests" },
+    { "id": "bug-fix", "purpose": "Reproduce and fix a regression" },
+    { "id": "interrupted", "purpose": "Resume after forced interruption" },
+    { "id": "review-defect", "purpose": "Detect injected P0/P1 defect" },
+    { "id": "parallel", "purpose": "Independent implementation and test slices" }
+  ]
+}

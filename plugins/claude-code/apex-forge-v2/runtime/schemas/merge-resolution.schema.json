@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/merge-resolution.schema.json",
+  "title": "Apex Forge V2 Merge Resolution",
+  "type": "object",
+  "required": ["schema_version", "resolution_id", "run_id", "created_at", "kept_patch_id", "dropped_patch_ids", "reason"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "resolution_id": { "type": "string" },
+    "run_id": { "type": "string" },
+    "created_at": { "type": "string" },
+    "kept_patch_id": { "type": "string" },
+    "dropped_patch_ids": { "type": "array", "items": { "type": "string" } },
+    "reason": { "type": "string" }
+  },
+  "additionalProperties": false
+}

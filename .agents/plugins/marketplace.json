@@ -1,0 +1,20 @@
+{
+  "name": "apex-forge-local",
+  "interface": {
+    "displayName": "Apex Forge Local"
+  },
+  "plugins": [
+    {
+      "name": "apex-forge-v2",
+      "source": {
+        "source": "local",
+        "path": "./plugins/codex/apex-forge-v2"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

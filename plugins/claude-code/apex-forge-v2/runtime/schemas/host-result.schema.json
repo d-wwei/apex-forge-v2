@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/host-result.schema.json",
+  "title": "Apex Forge V2 Host Result",
+  "type": "object",
+  "required": ["schema_version", "action_id", "host_id", "status", "summary", "artifact_refs", "created_at"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "action_id": { "type": "string", "minLength": 1 },
+    "host_id": { "type": "string", "minLength": 1 },
+    "status": {
+      "type": "string",
+      "enum": ["accepted", "in_progress", "completed", "blocked", "cancelled", "failed"]
+    },
+    "summary": { "type": "string" },
+    "artifact_refs": { "type": "array", "items": { "type": "string" } },
+    "error": { "type": ["string", "null"] },
+    "created_at": { "type": "string" }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,18 @@
+{
+  "name": "apex-forge-local",
+  "owner": {
+    "name": "d-wwei"
+  },
+  "metadata": {
+    "description": "Local Apex Forge V2 Agent plugins",
+    "homepage": "https://github.com/d-wwei/apex-forge-v2"
+  },
+  "plugins": [
+    {
+      "name": "apex-forge-v2",
+      "version": "0.1.0",
+      "source": "./apex-forge-v2",
+      "description": "Kernel-backed planning, execution, review, and recovery workflows"
+    }
+  ]
+}

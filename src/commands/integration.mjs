@@ -10,6 +10,7 @@ import { applyPatchOperations, findPatch, findPatchWithPath, findWorker, getWork
 import { ensureMergeApproval } from "../core/governance.mjs";
 import { resolveConflictRisks, syncConflictRisks, syncReviewRisk, syncVerificationRisk } from "../core/risks.mjs";
 import { scanProjectContracts } from "../core/contracts.mjs";
+import { withProjectTransaction } from "../core/project-transaction.mjs";
 
 export function handleMergeCommand(subcommand, args) {
   if (subcommand === "enqueue") {
@@ -205,6 +206,16 @@ export function applyMergeInternal(root, run) {
     throw new Error(`merge approval required：${approval.approval.id}=${approval.approval.decision || "pending"}`);
   }
 
+  const mergeItems = queue.items.filter((item) => item.status !== "dropped");
+  const changedFiles = Array.from(new Set(mergeItems.flatMap((item) => item.changed_files))).sort();
+  return withProjectTransaction(resolve(root, ".."), {
+    kind: "merge-apply",
+    idempotencyKey: `merge-apply:${run.run_id}:${mergeItems.map((item) => item.patch_id).sort().join(",")}`,
+    extraPaths: changedFiles
+  }, () => applyMergeTransaction(root, run, queue)).result;
+}
+
+function applyMergeTransaction(root, run, queue) {
   const mergedPatches = [];
   const appliedFiles = [];
   for (const item of queue.items) {

@@ -117,7 +117,20 @@ export function replayProjectStateFromEvents(events) {
       knowledgeVersion = event.payload.knowledge_version;
     }
     if (event.type === "learning.applied") {
-      knowledgeVersion += 1;
+      knowledgeVersion = Number.isInteger(event.payload?.knowledge_version)
+        ? event.payload.knowledge_version
+        : knowledgeVersion + 1;
+    }
+    if (event.type === "project.reconciled") {
+      if (Array.isArray(event.payload?.active_runs)) {
+        activeRuns.clear();
+        for (const runId of event.payload.active_runs) activeRuns.add(runId);
+        partialRuns.clear();
+        learnedRuns.clear();
+      }
+      if (Number.isInteger(event.payload?.knowledge_version)) {
+        knowledgeVersion = event.payload.knowledge_version;
+      }
     }
   }
   return {

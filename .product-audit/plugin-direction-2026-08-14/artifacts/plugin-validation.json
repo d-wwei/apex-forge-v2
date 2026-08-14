@@ -1,0 +1,42 @@
+{
+  "schema_version": "v0",
+  "generated_at": "2026-08-14T15:37:40.186Z",
+  "status": "PASS",
+  "checks": [
+    {
+      "id": "codex-plugin-validator",
+      "status": "PASS",
+      "exit_code": 0,
+      "stdout": "Plugin validation passed: /Users/admin/Documents/AI/Apex-forge/v2/plugins/codex/apex-forge-v2\n",
+      "stderr": ""
+    },
+    {
+      "id": "claude-plugin-validator",
+      "status": "PASS",
+      "exit_code": 0,
+      "stdout": "Validating plugin manifest: /Users/admin/Documents/AI/Apex-forge/v2/plugins/claude-code/apex-forge-v2/.claude-plugin/plugin.json\n\n✔ Validation passed\n",
+      "stderr": ""
+    },
+    {
+      "id": "codex-plugin-installed",
+      "status": "PASS",
+      "exit_code": 0,
+      "stdout": "i-curated                    not installed           /Users/admin/.codex/.tmp/plugins/plugins/quickbooks                  \nintercom@openai-curated                      not installed           /Users/admin/.codex/.tmp/plugins/plugins/intercom                    \nchronograph-lp@openai-curated                not installed           /Users/admin/.codex/.tmp/plugins/plugins/chronograph-lp              \nnvidia@openai-curated                        not installed           /Users/admin/.codex/.tmp/plugins/plugins/nvidia                      \nposthog@openai-curated                       not installed           /Users/admin/.codex/.tmp/plugins/plugins/posthog                     \nactively@openai-curated                      not installed           /Users/admin/.codex/.tmp/plugins/plugins/actively                    \nzoho@openai-curated                          not installed           /Users/admin/.codex/.tmp/plugins/plugins/zoho                        \nfiscal-ai@openai-curated                     not installed           /Users/admin/.codex/.tmp/plugins/plugins/fiscal-ai                   \npicsart@openai-curated                       not installed           /Users/admin/.codex/.tmp/plugins/plugins/picsart                     \nalation@openai-curated                       not installed           /Users/admin/.codex/.tmp/plugins/plugins/alation                     \nfal@openai-curated                           not installed           /Users/admin/.codex/.tmp/plugins/plugins/fal                         \nhebbia@openai-curated                        not installed           /Users/admin/.codex/.tmp/plugins/plugins/hebbia                      \nwix@openai-curated                           not installed           /Users/admin/.codex/.tmp/plugins/plugins/wix                         \nbase44@openai-curated                        not installed           /Users/admin/.codex/.tmp/plugins/plugins/base44                      \nngs-analysis@openai-curated                  not installed           /Users/admin/.codex/.tmp/plugins/plugins/ngs-analysis                \nsuperhuman@openai-curated                    not installed           /Users/admin/.codex/.tmp/plugins/plugins/superhuman                  \nshopify@openai-curated                       not installed           /Users/admin/.codex/.tmp/plugins/plugins/shopify                     \nmagicpath@openai-curated                     not installed           /Users/admin/.codex/.tmp/plugins/plugins/magicpath                   \nbrighthire@openai-curated                    not installed           /Users/admin/.codex/.tmp/plugins/plugins/brighthire                  \ncatalyst-by-zoho@openai-curated              not installed           /Users/admin/.codex/.tmp/plugins/plugins/catalyst-by-zoho            \nglean@openai-curated                         not installed           /Users/admin/.codex/.tmp/plugins/plugins/glean                       \nchronograph-gp@openai-curated                not installed           /Users/admin/.codex/.tmp/plugins/plugins/chronograph-gp              \nopenai-ads-conversions@openai-curated        not installed           /Users/admin/.codex/.tmp/plugins/plugins/openai-ads-conversions      \nboltz-api-cli@openai-curated                 not installed           /Users/admin/.codex/.tmp/plugins/plugins/boltz-api-cli               \nreplayio@openai-curated                      not installed           /Users/admin/.codex/.tmp/plugins/plugins/replayio                    \ndigitalocean@openai-curated                  not installed           /Users/admin/.codex/.tmp/plugins/plugins/digitalocean                \n\nMarketplace `apex-forge-local`\n/Users/admin/Documents/AI/Apex-forge/v2/.agents/plugins/marketplace.json\n\nPLUGIN                          STATUS              VERSION                     PATH                                                               \napex-forge-v2@apex-forge-local  installed, enabled  0.1.0+codex.20260814121422  /Users/admin/Documents/AI/Apex-forge/v2/plugins/codex/apex-forge-v2\n",
+      "stderr": ""
+    },
+    {
+      "id": "claude-plugin-installed",
+      "status": "PASS",
+      "exit_code": 0,
+      "stdout": "Installed plugins:\n\n  ❯ agent-recall@agent-recall\n    Version: 1.0.0-alpha.1\n    Scope: user\n    Status: ✘ disabled\n\n  ❯ agent-skills@addy-agent-skills\n    Version: 1.0.0\n    Scope: user\n    Status: ✘ disabled\n\n  ❯ apex-forge-v2@apex-forge-local\n    Version: 0.1.0\n    Scope: local\n    Status: ✔ enabled\n\n  ❯ discord@claude-plugins-official\n    Version: 0.0.4\n    Scope: project\n    Status: ✔ enabled\n\n  ❯ equity-research@financial-services-plugins\n    Version: 0.1.0\n    Scope: user\n    Status: ✘ failed to load\n    Error: Hook load failed: [\n  {\n    \"expected\": \"object\",\n    \"code\": \"invalid_type\",\n    \"path\": [],\n    \"message\": \"Invalid input: expected object, received array\"\n  }\n]\n\n  ❯ financial-analysis@financial-services-plugins\n    Version: 0.1.0\n    Scope: user\n    Status: ✘ failed to load\n    Error: Hook load failed: [\n  {\n    \"expected\": \"object\",\n    \"code\": \"invalid_type\",\n    \"path\": [],\n    \"message\": \"Invalid input: expected object, received array\"\n  }\n]\n\n  ❯ investment-banking@financial-services-plugins\n    Version: 0.2.0\n    Scope: user\n    Status: ✔ enabled\n\n  ❯ private-equity@financial-services-plugins\n    Version: 0.1.0\n    Scope: user\n    Status: ✘ failed to load\n    Error: Hook load failed: [\n  {\n    \"expected\": \"object\",\n    \"code\": \"invalid_type\",\n    \"path\": [],\n    \"message\": \"Invalid input: expected object, received array\"\n  }\n]\n\n  ❯ superpowers@claude-plugins-official\n    Version: 5.0.6\n    Scope: project\n    Status: ✘ disabled\n\n  ❯ telegram@claude-plugins-official\n    Version: 0.0.4\n    Scope: project\n    Status: ✔ enabled\n\n  ❯ typescript-lsp@claude-plugins-official\n    Version: 1.0.0\n    Scope: user\n    Status: ✘ disabled\n\n  ❯ wealth-management@financial-services-plugins\n    Version: 0.1.0\n    Scope: user\n    Status: ✘ failed to load\n    Error: Hook load failed: [\n  {\n    \"expected\": \"object\",\n    \"code\": \"invalid_type\",\n    \"path\": [],\n    \"message\": \"Invalid input: expected object, received array\"\n  }\n]\n\n",
+      "stderr": ""
+    },
+    {
+      "id": "node-runtime",
+      "status": "PASS",
+      "exit_code": 0,
+      "stdout": "v26.7.0\n",
+      "stderr": ""
+    }
+  ]
+}

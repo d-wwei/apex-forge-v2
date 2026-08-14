@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/executor-capability.schema.json",
+  "title": "Apex Forge V2 Worker Executor Capability",
+  "type": "object",
+  "required": ["schema_version", "executor_id", "available", "version", "capabilities"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "executor_id": { "type": "string", "minLength": 1 },
+    "available": { "type": "boolean" },
+    "version": { "type": "string" },
+    "capabilities": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+      "uniqueItems": true
+    },
+    "error": { "type": "string" }
+  },
+  "additionalProperties": false
+}

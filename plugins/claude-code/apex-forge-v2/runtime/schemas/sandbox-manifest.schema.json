@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/sandbox-manifest.schema.json",
+  "title": "Apex Forge V2 Sandbox Manifest",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "worker_id",
+    "run_id",
+    "plan_node_id",
+    "requested_type",
+    "type",
+    "fallback_reason",
+    "created_at",
+    "read_scope",
+    "write_scope",
+    "verification"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "worker_id": { "type": "string" },
+    "run_id": { "type": "string" },
+    "plan_node_id": { "type": "string" },
+    "requested_type": { "type": "string", "enum": ["scratch", "worktree"] },
+    "type": { "type": "string", "enum": ["scratch", "worktree"] },
+    "fallback_reason": { "type": "string" },
+    "created_at": { "type": "string" },
+    "read_scope": { "type": "array", "items": { "type": "string" } },
+    "write_scope": { "type": "array", "items": { "type": "string" } },
+    "verification": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

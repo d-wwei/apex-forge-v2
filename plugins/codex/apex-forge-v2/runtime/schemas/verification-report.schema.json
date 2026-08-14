@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/verification-report.schema.json",
+  "title": "Apex Forge V2 Verification Report",
+  "type": "object",
+  "required": ["schema_version", "report_id", "run_id", "status", "created_at", "checks"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "report_id": { "type": "string" },
+    "run_id": { "type": "string" },
+    "status": { "type": "string", "enum": ["PASS", "FAIL"] },
+    "created_at": { "type": "string" },
+    "workspace": {
+      "type": "object",
+      "required": [
+        "mode",
+        "source_project",
+        "patch_ids",
+        "applied_files",
+        "unmaterialized_patch_ids",
+        "conflicts",
+        "preparation_error",
+        "cleaned"
+      ],
+      "properties": {
+        "mode": { "type": "string", "enum": ["project-root", "staged-copy"] },
+        "source_project": { "type": "string" },
+        "patch_ids": { "type": "array", "items": { "type": "string" } },
+        "applied_files": { "type": "array", "items": { "type": "string" } },
+        "unmaterialized_patch_ids": { "type": "array", "items": { "type": "string" } },
+        "conflicts": { "type": "array" },
+        "preparation_error": { "type": "string" },
+        "cleaned": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "status", "command", "exit_code"],
+        "properties": {
+          "id": { "type": "string" },
+          "status": { "type": "string", "enum": ["PASS", "FAIL"] },
+          "command": { "type": "string" },
+          "exit_code": { "type": "integer" },
+          "stdout_tail": { "type": "string" },
+          "stderr_tail": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/notification.schema.json",
+  "title": "Apex Forge V2 Notification",
+  "type": "object",
+  "required": ["schema_version", "id", "event_type", "severity", "status", "dedupe_key", "title", "body", "evidence_refs", "payload", "attempts", "next_attempt_at", "last_error", "delivered_at", "delivery_receipt", "created_at", "updated_at"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "id": { "type": "string" },
+    "event_type": { "type": "string" },
+    "severity": { "type": "string", "enum": ["info", "medium", "high", "critical"] },
+    "status": { "type": "string", "enum": ["queued", "delivering", "delivered", "failed", "dead_letter", "acknowledged"] },
+    "dedupe_key": { "type": "string" },
+    "title": { "type": "string" },
+    "body": { "type": "string" },
+    "evidence_refs": { "type": "array", "items": { "type": "string" } },
+    "payload": { "type": "object" },
+    "attempts": { "type": "integer", "minimum": 0 },
+    "next_attempt_at": { "type": ["string", "null"] },
+    "last_error": { "type": "string" },
+    "delivered_at": { "type": ["string", "null"] },
+    "delivery_receipt": { "type": "string" },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" },
+    "acknowledged_at": { "type": ["string", "null"] },
+    "acknowledged_by": { "type": ["string", "null"] },
+    "acknowledgement_reason": { "type": "string" }
+  },
+  "additionalProperties": false
+}

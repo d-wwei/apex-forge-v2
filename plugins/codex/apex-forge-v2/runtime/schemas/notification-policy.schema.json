@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/notification-policy.schema.json",
+  "title": "Apex Forge V2 Notification Policy",
+  "type": "object",
+  "required": ["schema_version", "updated_at", "enabled", "minimum_severity", "dedupe_window_minutes", "notify_on", "delivery"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "updated_at": { "type": "string" },
+    "enabled": { "type": "boolean" },
+    "minimum_severity": { "type": "string", "enum": ["info", "medium", "high", "critical"] },
+    "dedupe_window_minutes": { "type": "integer", "minimum": 0 },
+    "notify_on": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["adapter.smoke.failed", "adapter.smoke.refresh_failed"]
+      },
+      "uniqueItems": true
+    },
+    "delivery": {
+      "type": "object",
+      "required": ["mode", "sink_path", "max_attempts", "retry_backoff_seconds"],
+      "properties": {
+        "mode": { "type": "string", "const": "file" },
+        "sink_path": { "type": "string", "minLength": 1 },
+        "max_attempts": { "type": "integer", "minimum": 1 },
+        "retry_backoff_seconds": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/learning-report.schema.json",
+  "title": "Apex Forge V2 Learning Report",
+  "type": "object",
+  "required": ["schema_version", "report_id", "run_id", "created_at", "proposal_ids"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "report_id": { "type": "string" },
+    "run_id": { "type": "string" },
+    "created_at": { "type": "string" },
+    "proposal_ids": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

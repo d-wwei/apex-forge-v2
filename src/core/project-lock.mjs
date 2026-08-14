@@ -6,15 +6,28 @@ import {
   writeFileSync
 } from "node:fs";
 import { randomUUID } from "node:crypto";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 
 const SLEEP_BUFFER = new Int32Array(new SharedArrayBuffer(4));
+const HELD_LOCKS = new Map();
 
 export function withProjectLock(projectDir, action, options = {}) {
-  const release = acquireProjectLock(projectDir, options);
+  const key = resolve(projectDir);
+  const held = HELD_LOCKS.get(key);
+  if (held) {
+    held.depth += 1;
+    try {
+      return action();
+    } finally {
+      held.depth -= 1;
+    }
+  }
+  const release = acquireProjectLock(key, options);
+  HELD_LOCKS.set(key, { depth: 1 });
   try {
     return action();
   } finally {
+    HELD_LOCKS.delete(key);
     release();
   }
 }

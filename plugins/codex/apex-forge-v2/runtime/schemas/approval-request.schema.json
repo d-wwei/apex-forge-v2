@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/approval-request.schema.json",
+  "title": "Apex Forge V2 Approval Request",
+  "type": "object",
+  "required": ["schema_version", "contract_version", "revision", "id", "kind", "run_id", "capability", "fingerprint", "action_hash", "artifact_hash", "policy_revision", "status", "decision", "reasons", "changed_files", "requested_by", "requested_at", "expires_at", "decided_at", "decided_by", "decision_capabilities", "decision_reason"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "contract_version": { "type": "string", "const": "v1" },
+    "revision": { "type": "integer", "minimum": 1 },
+    "id": { "type": "string" },
+    "kind": { "type": "string", "enum": ["merge", "adapter_baseline"] },
+    "run_id": { "type": "string" },
+    "capability": { "type": "string", "enum": ["merge_apply", "adapter_baseline_update"] },
+    "fingerprint": { "type": "string" },
+    "action_hash": { "type": "string" },
+    "artifact_hash": { "type": "string" },
+    "policy_revision": { "type": "string" },
+    "status": { "type": "string", "enum": ["pending", "decided"] },
+    "decision": { "type": ["string", "null"], "enum": ["approved", "rejected", null] },
+    "reasons": { "type": "array", "items": { "type": "string" } },
+    "changed_files": { "type": "array", "items": { "type": "string" } },
+    "requested_by": { "type": "string" },
+    "requested_at": { "type": "string" },
+    "expires_at": { "type": "string" },
+    "decided_at": { "type": ["string", "null"] },
+    "decided_by": { "type": ["string", "null"] },
+    "decision_capabilities": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "decision_reason": { "type": "string" }
+  },
+  "additionalProperties": false
+}

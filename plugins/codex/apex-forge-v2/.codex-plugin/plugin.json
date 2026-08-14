@@ -1,0 +1,38 @@
+{
+  "name": "apex-forge-v2",
+  "version": "0.1.0+codex.20260814121422",
+  "description": "Natural-language, Kernel-backed software delivery workflows for Codex.",
+  "author": {
+    "name": "d-wwei",
+    "url": "https://github.com/d-wwei"
+  },
+  "homepage": "https://github.com/d-wwei/apex-forge-v2",
+  "repository": "https://github.com/d-wwei/apex-forge-v2",
+  "license": "MIT",
+  "keywords": [
+    "coding-agent",
+    "planning",
+    "review",
+    "durable-workflow",
+    "multi-agent"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Apex Forge V2",
+    "shortDescription": "Durable planning, execution, review, and recovery",
+    "longDescription": "Use the current Codex session as the interactive Agent while Apex Forge Kernel persists project state, evidence, verification, approvals, and optional Factory workers.",
+    "developerName": "d-wwei",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Use Apex Forge to implement this requirement.",
+      "Resume the current Apex Forge run.",
+      "Show me the Apex Forge project status."
+    ],
+    "websiteURL": "https://github.com/d-wwei/apex-forge-v2"
+  }
+}

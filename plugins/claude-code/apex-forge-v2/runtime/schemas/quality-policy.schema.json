@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/quality-policy.schema.json",
+  "title": "Apex Forge V2 Quality Policy",
+  "type": "object",
+  "required": ["schema_version", "updated_at", "block_new_runs_on_failure", "block_new_runs_on_smoke_failure", "adapter_smoke_max_age_hours", "adapter_smoke_auto_refresh", "adapter_smoke_refresh_timeout_ms", "adapter_observation_interval_hours", "rolling_window_days", "rolling_run_count", "thresholds"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "updated_at": { "type": "string" },
+    "block_new_runs_on_failure": { "type": "boolean" },
+    "block_new_runs_on_smoke_failure": { "type": "boolean" },
+    "adapter_smoke_max_age_hours": { "type": "number", "minimum": 1 },
+    "adapter_smoke_auto_refresh": { "type": "boolean" },
+    "adapter_smoke_refresh_timeout_ms": { "type": "integer", "minimum": 1000 },
+    "adapter_observation_interval_hours": { "type": "integer", "minimum": 1 },
+    "rolling_window_days": { "type": "integer", "minimum": 1 },
+    "rolling_run_count": { "type": "integer", "minimum": 1 },
+    "thresholds": {
+      "type": "object",
+      "required": ["max_open_risks", "max_verification_failures", "max_adapter_failure_rate", "max_cycle_regression_percent"],
+      "properties": {
+        "max_open_risks": { "type": "integer", "minimum": 0 },
+        "max_verification_failures": { "type": "integer", "minimum": 0 },
+        "max_adapter_failure_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "max_cycle_regression_percent": { "type": "number", "minimum": 0 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

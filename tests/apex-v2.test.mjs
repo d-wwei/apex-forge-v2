@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -89,6 +89,35 @@ writeFileSync(output, JSON.stringify({
   tests: [{ command: "node --check", status: "pass", detail: "fixture" }],
   risks: [],
   evidence_refs: []
+}));
+`);
+  chmodSync(path, 0o755);
+  return path;
+}
+
+function createFakeClaudeWorker(project) {
+  const path = join(project, `fake-claude-worker-${Math.random().toString(36).slice(2)}.mjs`);
+  writeFileSync(path, `#!/usr/bin/env node
+import { mkdirSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+
+if (process.argv.includes("--version")) {
+  console.log("fake-claude 1.0.0");
+  process.exit(0);
+}
+
+const target = join(process.cwd(), "src/apex-v2.mjs");
+mkdirSync(dirname(target), { recursive: true });
+writeFileSync(target, "console.log('from fake claude');\\n");
+console.log(JSON.stringify({
+  session_id: "fake-claude-session",
+  structured_output: {
+    verdict: "pass",
+    summary: "fake claude completed scoped change",
+    tests: [{ command: "node --check", status: "pass", detail: "fixture" }],
+    risks: [],
+    evidence_refs: []
+  }
 }));
 `);
   chmodSync(path, 0o755);
@@ -231,11 +260,37 @@ function submitEvidenceForRemainingPlanNodes(project, runId) {
       "--plan-node-id",
       node.id
     ]).stdout);
-    run(["worker", "exec-shell", "--project", project, "--worker-id", worker.worker_id, "--cmd", "node --version"]);
+    if (worker.execution_class === "cognitive") {
+      completeHostWorker(project, worker, `${node.id} semantic evidence`);
+    } else if (worker.execution_class === "workspace_patch") {
+      completeHostWorker(project, worker, `${node.id} interactive patch`, true);
+    } else {
+      run(["worker", "exec-shell", "--project", project, "--worker-id", worker.worker_id, "--cmd", "node --version"]);
+    }
     created.push(worker);
   }
 
   return created;
+}
+
+function completeHostWorker(project, worker, summary, modifyWorkspace = false) {
+  run([
+    "host", "claim", "--project", project, "--host-id", "codex-host",
+    "--worker-id", worker.worker_id
+  ]);
+  if (modifyWorkspace) {
+    const target = worker.write_scope.find((scope) => !scope.endsWith("/"))
+      || (worker.write_scope.some((scope) => scope.startsWith("tests/"))
+        ? "tests/apex-v2.test.mjs"
+        : "src/apex-v2.mjs");
+    const path = join(project, target);
+    const current = existsSync(path) ? readFileSync(path, "utf8") : "";
+    writeProjectFile(project, target, `${current}\n// ${worker.worker_id}\n`);
+  }
+  return JSON.parse(run([
+    "host", "submit", "--project", project, "--host-id", "codex-host",
+    "--worker-id", worker.worker_id, "--summary", summary
+  ]).stdout);
 }
 
 function createRunWithQueuedPatches(project) {
@@ -429,6 +484,35 @@ test("intake -> triage -> roadmap -> run 形成项目级需求到交付子图的
   run(["validate", "--project", project]);
 });
 
+test("run create transaction failpoint 不留下半完成 ProjectState", () => {
+  const project = tempProject();
+  run(["init", "--project", project, "--name", "Transactional Run"]);
+  const intake = JSON.parse(run([
+    "intake", "add", "--project", project, "--title", "transactional run"
+  ]).stdout);
+  run(["intake", "triage", "--project", project, "--id", intake.id, "--decision", "accepted"]);
+  const roadmap = JSON.parse(run([
+    "roadmap", "promote", "--project", project, "--intake-id", intake.id
+  ]).stdout);
+
+  const failed = run([
+    "run", "create", "--project", project, "--roadmap-id", roadmap.id
+  ], {
+    env: { ...process.env, APEX_V2_TRANSACTION_FAILPOINT: "run-create" },
+    expectFailure: true
+  });
+  assert.match(failed.stderr, /transaction failpoint/);
+  const root = join(project, ".apex-v2");
+  assert.deepEqual(readJson(join(root, "project.json")).active_runs, []);
+  assert.equal(readJson(join(root, "roadmap", "graph.json")).nodes[0].status, "ready");
+  assert.equal(readdirSync(join(root, "runs")).length, 0);
+
+  const created = JSON.parse(run([
+    "run", "create", "--project", project, "--roadmap-id", roadmap.id
+  ]).stdout);
+  assert.match(created.run_id, /^run-/);
+});
+
 test("project tick 自动提升 accepted intake 并按 WIP 派生 delivery runs，且重复执行幂等", () => {
   const project = tempProject();
   run(["init", "--project", project, "--name", "Tick Demo"]);
@@ -518,15 +602,157 @@ test("project tick --advance --dispatch 自动为 ready plan nodes 创建 worker
   assert.equal(workersAfterSecondTick.length, 1);
 });
 
+test("认知节点由当前 Host Agent claim 并提交语义 evidence", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithPlanGraph(project);
+  const worker = JSON.parse(run([
+    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
+    "--plan-node-id", "delivery-context"
+  ]).stdout);
+
+  assert.equal(worker.adapter, "host");
+  assert.equal(worker.execution_class, "cognitive");
+  assert.equal(worker.preferred_mode, "interactive");
+
+  const listed = JSON.parse(run([
+    "host", "actions", "--project", project, "--host-id", "codex-host"
+  ]).stdout);
+  assert.equal(listed.length, 1);
+  assert.equal(listed[0].worker_id, worker.worker_id);
+
+  const claimed = JSON.parse(run([
+    "host", "claim", "--project", project, "--host-id", "codex-host",
+    "--worker-id", worker.worker_id
+  ]).stdout);
+  assert.equal(claimed.worker.status, "claimed");
+  assert.equal(claimed.worker.claimed_by, "codex-host");
+
+  const submitted = JSON.parse(run([
+    "host", "submit", "--project", project, "--host-id", "codex-host",
+    "--worker-id", worker.worker_id,
+    "--summary", "已核对任务上下文、验收边界与未知项。"
+  ]).stdout);
+  assert.equal(submitted.result.status, "completed");
+  assert.equal(submitted.worker.status, "evidence_submitted");
+  assert.ok(submitted.artifact_id);
+
+  const persisted = readJson(join(
+    project,
+    ".apex-v2",
+    "runs",
+    deliveryRun.run_id,
+    "workers",
+    worker.worker_id,
+    "host-result.json"
+  ));
+  assert.equal(persisted.host_id, "codex-host");
+});
+
+test("Interactive Host Agent 对 workspace patch 建立基线并提交 merge queue", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithPlanGraph(project);
+  const worker = JSON.parse(run([
+    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
+    "--plan-node-id", "delivery-implementation"
+  ]).stdout);
+  assert.equal(worker.adapter, "codex");
+  assert.equal(worker.preferred_mode, "interactive");
+
+  const claimed = JSON.parse(run([
+    "host", "claim", "--project", project, "--host-id", "codex-host",
+    "--worker-id", worker.worker_id
+  ]).stdout);
+  assert.equal(claimed.worker.adapter, "host");
+  assert.equal(claimed.worker.factory_executor_id, "codex");
+
+  writeProjectFile(project, "src/apex-v2.mjs", "console.log('interactive host change');\n");
+  const submitted = JSON.parse(run([
+    "host", "submit", "--project", project, "--host-id", "codex-host",
+    "--worker-id", worker.worker_id,
+    "--summary", "当前 Codex 已完成受控实现。"
+  ]).stdout);
+  assert.ok(submitted.patch_id);
+  assert.equal(submitted.queue_status, "queued");
+  assert.equal(submitted.worker.status, "queued");
+
+  const patch = readJson(join(
+    project,
+    ".apex-v2",
+    "runs",
+    deliveryRun.run_id,
+    "workers",
+    worker.worker_id,
+    "patch-bundle.json"
+  ));
+  assert.deepEqual(patch.changed_files, ["src/apex-v2.mjs"]);
+});
+
+test("Interactive Host Agent 取消 action 时恢复工作区基线", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithPlanGraph(project);
+  const original = readFileSync(join(project, "src", "apex-v2.mjs"), "utf8");
+  const worker = JSON.parse(run([
+    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
+    "--plan-node-id", "delivery-implementation"
+  ]).stdout);
+  run([
+    "host", "claim", "--project", project, "--host-id", "codex-host",
+    "--worker-id", worker.worker_id
+  ]);
+  writeProjectFile(project, "src/apex-v2.mjs", "console.log('cancel me');\n");
+
+  const cancelled = JSON.parse(run([
+    "host", "cancel", "--project", project, "--host-id", "codex-host",
+    "--worker-id", worker.worker_id, "--reason", "user cancelled"
+  ]).stdout);
+
+  assert.equal(cancelled.result.status, "cancelled");
+  assert.equal(cancelled.worker.status, "cancelled");
+  assert.equal(readFileSync(join(project, "src", "apex-v2.mjs"), "utf8"), original);
+});
+
+test("Interactive workspace patch action 必须串行 claim", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithPlanGraph(project);
+  const implementation = JSON.parse(run([
+    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
+    "--plan-node-id", "delivery-implementation"
+  ]).stdout);
+  const testsWorker = JSON.parse(run([
+    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
+    "--plan-node-id", "delivery-tests"
+  ]).stdout);
+
+  run([
+    "host", "claim", "--project", project, "--host-id", "codex-host",
+    "--worker-id", implementation.worker_id
+  ]);
+  const blocked = run([
+    "host", "claim", "--project", project, "--host-id", "codex-host",
+    "--worker-id", testsWorker.worker_id
+  ], { expectFailure: true });
+  assert.match(blocked.stderr, /已有 workspace_patch action 被 claim/);
+
+  writeProjectFile(project, "src/apex-v2.mjs", "console.log('first patch');\n");
+  run([
+    "host", "submit", "--project", project, "--host-id", "codex-host",
+    "--worker-id", implementation.worker_id, "--summary", "first patch"
+  ]);
+  const claimed = JSON.parse(run([
+    "host", "claim", "--project", project, "--host-id", "codex-host",
+    "--worker-id", testsWorker.worker_id
+  ]).stdout);
+  assert.equal(claimed.worker.status, "claimed");
+});
+
 test("project tick --run-workers 自动执行 active worker 的验证命令并保持幂等", () => {
   const project = tempProject();
-  seedProjectFiles(project);
-  run(["init", "--project", project, "--name", "Run Worker Demo"]);
-  run(["knowledge", "refresh", "--project", project]);
-  const intake = JSON.parse(run(["intake", "add", "--project", project, "--title", "自动运行 worker", "--priority", "P1", "--risk", "high"]).stdout);
-  run(["intake", "triage", "--project", project, "--id", intake.id, "--decision", "accepted"]);
-  const tick = JSON.parse(run(["project", "tick", "--project", project, "--advance", "--dispatch"]).stdout);
-  const runId = tick.created_runs[0].run_id;
+  const { deliveryRun } = createRunWithPlanGraph(project);
+  const runId = deliveryRun.run_id;
+  run([
+    "worker", "create", "--project", project, "--run-id", runId,
+    "--plan-node-id", "delivery-verification"
+  ]);
 
   const runWorkers = JSON.parse(run(["project", "tick", "--project", project, "--run-workers", "--worker-limit", "1"]).stdout);
   assert.equal(runWorkers.worker_runs.length, 1);
@@ -537,10 +763,7 @@ test("project tick --run-workers 自动执行 active worker 的验证命令并�
   assert.equal(workers.filter((worker) => worker.status === "evidence_submitted").length, 1);
 
   const second = JSON.parse(run(["project", "tick", "--project", project, "--run-workers", "--worker-limit", "1"]).stdout);
-  assert.equal(second.worker_runs.length, 1, "第二次应运行另一个尚未执行的 active worker");
-
-  const third = JSON.parse(run(["project", "tick", "--project", project, "--run-workers", "--worker-limit", "2"]).stdout);
-  assert.equal(third.worker_runs.length, 0, "已有 adapter result 的 worker 不应重复执行");
+  assert.equal(second.worker_runs.length, 0, "已有 adapter result 的 worker 不应重复执行");
 });
 
 test("project tick --run-workers 遇到失败命令会阻塞 worker", () => {
@@ -555,7 +778,7 @@ test("project tick --run-workers 遇到失败命令会阻塞 worker", () => {
     "--run-id",
     deliveryRun.run_id,
     "--plan-node-id",
-    "delivery-context"
+    "delivery-verification"
   ]).stdout);
 
   const workerPath = join(project, ".apex-v2", "runs", deliveryRun.run_id, "workers", worker.worker_id, "worker.json");
@@ -597,23 +820,23 @@ test("project tick --complete-execute 必须等待全部 PlanGraph 节点完成"
     "delivery-context"
   ]).stdout);
 
-  run(["worker", "exec-shell", "--project", project, "--worker-id", evidenceWorker.worker_id, "--cmd", "node --version"]);
-  run(["worker", "decide", "--project", project, "--worker-id", decisionWorker.worker_id, "--decision", "context worker 不提交 patch"]);
+  completeHostWorker(project, evidenceWorker, "implementation patch", true);
+  completeHostWorker(project, decisionWorker, "context evidence");
 
   const partialTick = JSON.parse(run(["project", "tick", "--project", project, "--collect-results", "--complete-execute"]).stdout);
-  assert.equal(partialTick.collected_results.length, 2);
+  assert.equal(partialTick.collected_results.length, 1);
   assert.equal(partialTick.completed_execute_runs.length, 0);
 
   submitEvidenceForRemainingPlanNodes(project, deliveryRun.run_id);
   const tick = JSON.parse(run(["project", "tick", "--project", project, "--collect-results", "--complete-execute"]).stdout);
-  assert.ok(tick.collected_results.length >= 5);
+  assert.ok(tick.collected_results.length >= 4);
   assert.equal(tick.completed_execute_runs.length, 1);
   assert.equal(tick.completed_execute_runs[0].run_id, deliveryRun.run_id);
 
   const root = join(project, ".apex-v2");
   assert.ok(existsSync(join(root, "runs", deliveryRun.run_id, "decision-queue.json")));
   const queue = readJson(join(root, "runs", deliveryRun.run_id, "decision-queue.json"));
-  assert.equal(queue.items.length, 7);
+  assert.equal(queue.items.length, 5);
 
   const runState = readJson(join(root, "runs", deliveryRun.run_id, "run.json"));
   assert.equal(runState.nodes.find((node) => node.id === "execute").status, "passed");
@@ -649,20 +872,8 @@ test("project tick --review 对 evidence-only run 允许 no-op integration", () 
   const project = tempProject();
   seedProjectFiles(project);
   const { deliveryRun } = createRunWithPlanGraph(project);
-  const evidenceWorker = JSON.parse(run([
-    "worker",
-    "create",
-    "--project",
-    project,
-    "--run-id",
-    deliveryRun.run_id,
-    "--plan-node-id",
-    "delivery-implementation"
-  ]).stdout);
-  run(["worker", "exec-shell", "--project", project, "--worker-id", evidenceWorker.worker_id, "--cmd", "node --version"]);
-  submitEvidenceForRemainingPlanNodes(project, deliveryRun.run_id);
-  const tick = JSON.parse(run(["project", "tick", "--project", project, "--collect-results", "--complete-execute", "--verify", "--review"]).stdout);
-  assert.equal(tick.completed_execute_runs.length, 1);
+  passNode(project, deliveryRun.run_id, "execute", "manual evidence-only execute");
+  const tick = JSON.parse(run(["project", "tick", "--project", project, "--verify", "--review"]).stdout);
   assert.equal(tick.verified_runs.length, 1);
   assert.equal(tick.reviewed_runs.length, 1);
   assert.equal(tick.reviewed_runs[0].status, "PASS");
@@ -689,19 +900,8 @@ test("merge apply 对 evidence-only run 生成 NOOP integration report", () => {
   const project = tempProject();
   seedProjectFiles(project);
   const { deliveryRun } = createRunWithPlanGraph(project);
-  const evidenceWorker = JSON.parse(run([
-    "worker",
-    "create",
-    "--project",
-    project,
-    "--run-id",
-    deliveryRun.run_id,
-    "--plan-node-id",
-    "delivery-implementation"
-  ]).stdout);
-  run(["worker", "exec-shell", "--project", project, "--worker-id", evidenceWorker.worker_id, "--cmd", "node --version"]);
-  submitEvidenceForRemainingPlanNodes(project, deliveryRun.run_id);
-  const tick = JSON.parse(run(["project", "tick", "--project", project, "--collect-results", "--complete-execute", "--verify", "--review"]).stdout);
+  passNode(project, deliveryRun.run_id, "execute", "manual evidence-only execute");
+  const tick = JSON.parse(run(["project", "tick", "--project", project, "--verify", "--review"]).stdout);
   assert.equal(tick.reviewed_runs[0].status, "PASS");
 
   const applied = JSON.parse(run(["merge", "apply", "--project", project, "--run-id", deliveryRun.run_id]).stdout);
@@ -714,19 +914,8 @@ test("project tick --integrate 自动处理 evidence-only no-op integration", ()
   const project = tempProject();
   seedProjectFiles(project);
   const { deliveryRun } = createRunWithPlanGraph(project);
-  const evidenceWorker = JSON.parse(run([
-    "worker",
-    "create",
-    "--project",
-    project,
-    "--run-id",
-    deliveryRun.run_id,
-    "--plan-node-id",
-    "delivery-implementation"
-  ]).stdout);
-  run(["worker", "exec-shell", "--project", project, "--worker-id", evidenceWorker.worker_id, "--cmd", "node --version"]);
-  submitEvidenceForRemainingPlanNodes(project, deliveryRun.run_id);
-  run(["project", "tick", "--project", project, "--collect-results", "--complete-execute", "--verify", "--review"]);
+  passNode(project, deliveryRun.run_id, "execute", "manual evidence-only execute");
+  run(["project", "tick", "--project", project, "--verify", "--review"]);
 
   const integrated = JSON.parse(run(["project", "tick", "--project", project, "--integrate"]).stdout);
   assert.equal(integrated.integrated_runs.length, 1);
@@ -757,6 +946,8 @@ test("project tick --learn 默认只生成提案，--apply-learning 才写回并
   runState = readJson(join(root, "runs", deliveryRun.run_id, "run.json"));
   assert.equal(runState.status, "done");
   assert.equal(runState.nodes.find((node) => node.id === "learn").status, "passed");
+  const reconciled = JSON.parse(run(["project", "reconcile", "--project", project]).stdout);
+  assert.equal(reconciled.status, "CONSISTENT");
 });
 
 test("project tick --review 在有 patch 但未进入 merge queue 时仍 BLOCKED", () => {
@@ -811,7 +1002,7 @@ test("project tick --complete-execute 不会越过 blocked worker", () => {
     "--run-id",
     deliveryRun.run_id,
     "--plan-node-id",
-    "delivery-context"
+    "delivery-verification"
   ]).stdout);
   run(["worker", "exec-shell", "--project", project, "--worker-id", worker.worker_id, "--cmd", "node -e \"process.exit(5)\""]);
 
@@ -1233,9 +1424,13 @@ test("plan graph 会按 intake 类型、标题和 affected area 生成任务相�
   const tests = generated.plan.nodes.find((node) => node.id === "delivery-tests");
   assert.deepEqual(implementation.write_scope, ["src/session.mjs"]);
   assert.deepEqual(tests.write_scope, ["tests/session.test.mjs"]);
-  assert.equal(implementation.adapter, "codex");
+  assert.equal(implementation.adapter, undefined);
+  assert.equal(implementation.execution_class, "workspace_patch");
+  assert.deepEqual(implementation.required_capabilities, ["structured_output", "workspace_write", "tool_use"]);
+  assert.equal(implementation.preferred_mode, "interactive");
   assert.equal(implementation.output_contract, "patch");
-  assert.equal(tests.adapter, "codex");
+  assert.equal(tests.adapter, undefined);
+  assert.equal(tests.execution_class, "workspace_patch");
   assert.ok(generated.plan.nodes.every((node) => node.objective.includes("修复 session 恢复丢失状态")));
   assert.ok(generated.plan.nodes.every((node) => !node.title.includes("Project Kernel")));
 });
@@ -1522,7 +1717,7 @@ test("worker promote-sandbox 拒绝越界目标文件", () => {
   assert.match(rejected.stderr, /超出 worker write_scope/);
 });
 
-test("worker shell/human adapters 产出可追踪 artifact，shell 失败会阻塞 worker", () => {
+test("shell 仅执行 deterministic worker，human decision 保持可追踪", () => {
   const project = tempProject();
   const { deliveryRun } = createRunWithPlanGraph(project);
 
@@ -1537,13 +1732,35 @@ test("worker shell/human adapters 产出可追踪 artifact，shell 失败会阻�
     "delivery-context"
   ]).stdout);
 
-  const shell = JSON.parse(run([
+  const rejected = run([
     "worker",
     "exec-shell",
     "--project",
     project,
     "--worker-id",
     worker.worker_id,
+    "--cmd",
+    "node --version"
+  ], { expectFailure: true });
+  assert.match(rejected.stderr, /只允许 deterministic_check/);
+
+  const shellWorker = JSON.parse(run([
+    "worker",
+    "create",
+    "--project",
+    project,
+    "--run-id",
+    deliveryRun.run_id,
+    "--plan-node-id",
+    "delivery-verification"
+  ]).stdout);
+  const shell = JSON.parse(run([
+    "worker",
+    "exec-shell",
+    "--project",
+    project,
+    "--worker-id",
+    shellWorker.worker_id,
     "--cmd",
     "node --version"
   ]).stdout);
@@ -1567,30 +1784,20 @@ test("worker shell/human adapters 产出可追踪 artifact，shell 失败会阻�
   assert.equal(decision.result.status, "DECISION");
   assert.match(decision.artifact_id, /^artifact-/);
 
-  const failedWorker = JSON.parse(run([
-    "worker",
-    "create",
-    "--project",
-    project,
-    "--run-id",
-    deliveryRun.run_id,
-    "--plan-node-id",
-    "delivery-implementation"
-  ]).stdout);
   const failed = JSON.parse(run([
     "worker",
     "exec-shell",
     "--project",
     project,
     "--worker-id",
-    failedWorker.worker_id,
+    shellWorker.worker_id,
     "--cmd",
     "node -e \"process.exit(7)\""
   ]).stdout);
   assert.equal(failed.result.status, "FAIL");
 
   const workers = JSON.parse(run(["worker", "list", "--project", project, "--run-id", deliveryRun.run_id]).stdout);
-  assert.equal(workers.find((item) => item.worker_id === failedWorker.worker_id).status, "blocked");
+  assert.equal(workers.find((item) => item.worker_id === shellWorker.worker_id).status, "blocked");
 });
 
 test("adapter registry 检测多 CLI 并按显式 fallback order 解析", () => {
@@ -1899,12 +2106,19 @@ test("worker fallback 在 retryable adapter failure 后切换到下一个可用 
   assert.equal(fallback.worker.status, "active");
   assert.equal(fallback.worker.adapter, "claude");
   assert.equal(fallback.worker.sandbox.status, "missing");
-  run(["worker", "exec-shell", "--project", project, "--worker-id", worker.worker_id, "--cmd", "node --version"]);
+  const fakeClaude = createFakeClaudeWorker(project);
+  const tick = JSON.parse(run([
+    "project", "tick", "--project", project, "--run-agents",
+    "--agent-command", fakeClaude, "--agent-timeout-ms", "10000"
+  ]).stdout);
+  assert.equal(tick.agent_runs.length, 1);
+  assert.equal(tick.agent_runs[0].status, "PASS");
+  assert.ok(tick.agent_runs[0].patch_id);
   const summary = JSON.parse(run([
     "worker", "results", "--project", project, "--worker-id", worker.worker_id, "--record"
   ]).stdout);
   assert.equal(summary.verdict, "pass");
-  assert.deepEqual(summary.adapters, ["codex", "shell"]);
+  assert.deepEqual(summary.adapters, ["codex", "claude"]);
   assert.equal(summary.attempts.length, 2);
   assert.deepEqual(summary.failures, ["execution_error"]);
   assert.ok(existsSync(join(project, ".apex-v2", "runs", deliveryRun.run_id, "workers", worker.worker_id, "worker-summary.json")));
@@ -1915,7 +2129,7 @@ test("worker retry 遵守 adapter 最大尝试次数并重置 sandbox", () => {
   const { deliveryRun } = createRunWithPlanGraph(project);
   const worker = JSON.parse(run([
     "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
-    "--plan-node-id", "delivery-context"
+    "--plan-node-id", "delivery-verification"
   ]).stdout);
   run(["worker", "sandbox", "init", "--project", project, "--worker-id", worker.worker_id]);
   run([
@@ -1946,7 +2160,7 @@ test("project tick --retry-workers 自动恢复可重试 shell worker", () => {
   const { deliveryRun } = createRunWithPlanGraph(project);
   const worker = JSON.parse(run([
     "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
-    "--plan-node-id", "delivery-context"
+    "--plan-node-id", "delivery-verification"
   ]).stdout);
   run([
     "worker", "exec-shell", "--project", project, "--worker-id", worker.worker_id,
@@ -2241,6 +2455,30 @@ test("merge apply 会应用 write_text patch operation 并记录 applied_files",
   assert.equal(applied.report.status, "MERGED");
   assert.deepEqual(applied.report.applied_files, ["src/apex-v2.mjs"]);
   assert.equal(readFileSync(join(project, "src", "apex-v2.mjs"), "utf8"), "console.log('patched');\n");
+});
+
+test("merge transaction failpoint 同时回滚源码和 merge queue", () => {
+  const project = tempProject();
+  seedProjectFiles(project);
+  const { deliveryRun, patchA } = createRunWithQueuedPatches(project);
+  const verified = JSON.parse(run(["verify", "run", "--project", project, "--run-id", deliveryRun.run_id]).stdout);
+  passNodeWithEvidence(project, deliveryRun.run_id, "verify", verified.artifact_id);
+  const review = JSON.parse(run(["review", "generate", "--project", project, "--run-id", deliveryRun.run_id]).stdout);
+  passNodeWithEvidence(project, deliveryRun.run_id, "review", review.artifact_id);
+  const before = readFileSync(join(project, "src", "apex-v2.mjs"), "utf8");
+
+  const failed = run(["merge", "apply", "--project", project, "--run-id", deliveryRun.run_id], {
+    env: { ...process.env, APEX_V2_TRANSACTION_FAILPOINT: "merge-apply" },
+    expectFailure: true
+  });
+  assert.match(failed.stderr, /transaction failpoint/);
+  assert.equal(readFileSync(join(project, "src", "apex-v2.mjs"), "utf8"), before);
+  const queue = readJson(join(project, ".apex-v2", "runs", deliveryRun.run_id, "merge-queue.json"));
+  assert.ok(queue.items.every((item) => item.status === "queued"));
+  assert.equal(
+    readJson(join(project, ".apex-v2", "runs", deliveryRun.run_id, "workers", patchA.patch.worker_id, "patch-bundle.json")).status,
+    "submitted"
+  );
 });
 
 test("merge apply 支持同文件不同 replace_text 片段并行合并", () => {

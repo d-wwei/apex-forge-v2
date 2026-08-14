@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/notification-outbox.schema.json",
+  "title": "Apex Forge V2 Notification Outbox",
+  "type": "array",
+  "items": {
+    "$ref": "https://apex-forge.local/v2/schemas/notification.schema.json"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/risk-register.schema.json",
+  "title": "Apex Forge V2 Risk Register",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["schema_version", "id", "dedupe_key", "source", "title", "description", "severity", "status", "run_id", "carry_id", "conflict_key", "owner", "evidence_refs", "resolution", "created_at", "updated_at"],
+    "properties": {
+      "schema_version": { "type": "string", "const": "v0" },
+      "id": { "type": "string" },
+      "dedupe_key": { "type": "string" },
+      "source": { "type": "string", "enum": ["manual", "carry_forward", "merge_conflict", "verification", "review"] },
+      "title": { "type": "string" },
+      "description": { "type": "string" },
+      "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+      "status": { "type": "string", "enum": ["open", "mitigated", "accepted", "closed"] },
+      "run_id": { "type": ["string", "null"] },
+      "carry_id": { "type": ["string", "null"] },
+      "conflict_key": { "type": ["string", "null"] },
+      "owner": { "type": "string" },
+      "evidence_refs": { "type": "array", "items": { "type": "string" } },
+      "resolution": { "type": "string" },
+      "created_at": { "type": "string" },
+      "updated_at": { "type": "string" }
+    },
+    "additionalProperties": false
+  }
+}

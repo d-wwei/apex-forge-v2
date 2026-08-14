@@ -8,6 +8,7 @@ import { buildTaskPlanGraph, renderPlanGraphMarkdown, validatePlanGraph } from "
 import { buildProjectInventory } from "./knowledge.mjs";
 import { KNOWLEDGE_FILES } from "../core/knowledge-constants.mjs";
 import { syncCarryRisk } from "../core/risks.mjs";
+import { withProjectTransaction } from "../core/project-transaction.mjs";
 
 export function handleRunCommand(subcommand, args) {
   if (subcommand === "create") {
@@ -132,6 +133,13 @@ function createRun(args) {
 }
 
 export function createRunForRoadmapNode(root, roadmapId, timestamp) {
+  return withProjectTransaction(resolve(root, ".."), {
+    kind: "run-create",
+    idempotencyKey: `run-create:${roadmapId}`
+  }, () => createRunForRoadmapNodeTransaction(root, roadmapId, timestamp)).result;
+}
+
+function createRunForRoadmapNodeTransaction(root, roadmapId, timestamp) {
   const roadmapPath = join(root, "roadmap", "graph.json");
   const graph = readJson(roadmapPath);
   const node = graph.nodes.find((entry) => entry.id === roadmapId);
@@ -392,4 +400,3 @@ function gateToNodeStatus(gateStatus) {
     HALT: "halted"
   }[gateStatus];
 }
-

@@ -1,0 +1,71 @@
+[
+  {
+    "task_id": "node-cli--interrupted",
+    "repository": "node-cli",
+    "scenario": "interrupted",
+    "mode": "v1-skill",
+    "metrics": {
+      "completion": 1,
+      "user_actions": 2,
+      "recovery": 1,
+      "evidence": 0.8,
+      "wall_ms": 384000,
+      "cost": 95695,
+      "safety": 0.8
+    },
+    "evidence": {
+      "tests": "4/4 PASS",
+      "first_process_tokens": 55453,
+      "resume_process_tokens": 40242,
+      "durable_state": ".apex brainstorm/plan/task state",
+      "notes": "Fresh process resumed the existing V1 plan. V1 CLI created an invalid --help task that required state correction."
+    }
+  },
+  {
+    "task_id": "node-cli--interrupted",
+    "repository": "node-cli",
+    "scenario": "interrupted",
+    "mode": "cli-kernel",
+    "metrics": {
+      "completion": 1,
+      "user_actions": 2,
+      "recovery": 1,
+      "evidence": 1,
+      "wall_ms": 608000,
+      "cost": 141094,
+      "safety": 0.8
+    },
+    "evidence": {
+      "tests": "4/4 PASS",
+      "first_process_tokens": 43727,
+      "resume_process_tokens": 97367,
+      "durable_run": true,
+      "duplicate_intake_or_run": false,
+      "notes": "Run closed successfully. Automatic learning exposed missing knowledge-version replay evidence; the Kernel fix and reconcile correction were verified afterward."
+    }
+  },
+  {
+    "task_id": "node-cli--interrupted",
+    "repository": "node-cli",
+    "scenario": "interrupted",
+    "mode": "plugin-kernel",
+    "metrics": {
+      "completion": 1,
+      "user_actions": 2,
+      "recovery": 1,
+      "evidence": 1,
+      "wall_ms": 653000,
+      "cost": 133757,
+      "safety": 0.8
+    },
+    "evidence": {
+      "tests": "4/4 PASS",
+      "contracts": "112 PASS",
+      "first_process_tokens": 45703,
+      "resume_process_tokens": 88054,
+      "durable_run": true,
+      "duplicate_intake_or_run": false,
+      "notes": "Plugin resumed the existing run and closed it. The same historical knowledge-version replay drift was repaired and verified CONSISTENT."
+    }
+  }
+]

@@ -12,6 +12,7 @@ export function printHelp() {
   apex-v2 knowledge refresh --project <dir>
   apex-v2 worker create|list|sandbox|exec-shell|exec-agent|retry|fallback|results|resume|decide|submit-patch --project <dir>
   apex-v2 worker adapters --project <dir>
+  apex-v2 host actions|claim|submit|cancel --project <dir> --host-id <id>
   apex-v2 merge enqueue|status|resolve|apply --project <dir>
   apex-v2 verify run --project <dir> --run-id <id>
   apex-v2 review generate --project <dir> --run-id <id>

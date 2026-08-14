@@ -1,0 +1,4 @@
+interface:
+  display_name: "Apex Forge Ship"
+  short_description: "Verify, approve, integrate, and close delivery"
+  default_prompt: "Ship the current Apex Forge run."

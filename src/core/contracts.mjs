@@ -1,8 +1,13 @@
 import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { basename, join, relative } from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
+import {
+  BUILTIN_EXECUTOR_IDS,
+  defaultAllowedExecutionAdapters,
+  defaultRetryAttempts
+} from "../executors/defaults.mjs";
+import { schemaDirectory } from "./schema-paths.mjs";
 
-const SCHEMA_DIR = new URL("../../schemas/", import.meta.url).pathname;
 let registry = null;
 
 export class ContractValidationError extends Error {
@@ -17,6 +22,7 @@ export class ContractValidationError extends Error {
 
 export function contractRegistry() {
   if (registry) return registry;
+  const schemaDir = schemaDirectory();
   const ajv = new Ajv2020({
     allErrors: true,
     strict: true,
@@ -24,8 +30,8 @@ export function contractRegistry() {
     validateFormats: false
   });
   const schemas = new Map();
-  for (const file of readdirSync(SCHEMA_DIR).filter((entry) => entry.endsWith(".json")).sort()) {
-    const schema = JSON.parse(readFileSync(join(SCHEMA_DIR, file), "utf8"));
+  for (const file of readdirSync(schemaDir).filter((entry) => entry.endsWith(".json")).sort()) {
+    const schema = JSON.parse(readFileSync(join(schemaDir, file), "utf8"));
     schemas.set(file, schema);
     ajv.addSchema(schema, schema.$id);
   }
@@ -158,6 +164,32 @@ export function migrateLegacyContracts(projectDir, apply = false) {
       value.adapter = "shell";
       fields.push("adapter");
     }
+    if (name === "worker.json" && value.executor_id == null) {
+      value.executor_id = value.adapter || "shell";
+      fields.push("executor_id");
+    }
+    if (name === "worker.json" && value.execution_class == null) {
+      value.execution_class = value.output_contract === "patch"
+        ? "workspace_patch"
+        : value.adapter === "human"
+          ? "human_decision"
+          : value.adapter === "shell"
+            ? "deterministic_check"
+            : "cognitive";
+      fields.push("execution_class");
+    }
+    if (name === "worker.json" && value.preferred_mode == null) {
+      value.preferred_mode = value.execution_class === "deterministic_check"
+        ? "deterministic"
+        : value.execution_class === "human_decision"
+          ? "human"
+          : "factory";
+      fields.push("preferred_mode");
+    }
+    if (name === "worker.json" && !Array.isArray(value.required_capabilities)) {
+      value.required_capabilities = [];
+      fields.push("required_capabilities");
+    }
     if (name === "worker.json" && value.output_contract == null) {
       value.output_contract = value.status === "patch_submitted" || value.status === "queued" || value.status === "merged"
         ? "patch"
@@ -171,6 +203,37 @@ export function migrateLegacyContracts(projectDir, apply = false) {
     if (name === "worker.json" && !("last_adapter" in value)) {
       value.last_adapter = null;
       fields.push("last_adapter");
+    }
+    if (
+      name === "retry.json"
+      && normalizedPathIncludes(path, "/policies/")
+      && value.max_attempts?.host == null
+    ) {
+      value.max_attempts.host = 1;
+      fields.push("max_attempts.host");
+    }
+    if (name === "retry.json" && normalizedPathIncludes(path, "/policies/")) {
+      for (const [executorId, attempts] of Object.entries(defaultRetryAttempts())) {
+        if (value.max_attempts?.[executorId] != null) continue;
+        value.max_attempts[executorId] = attempts;
+        fields.push(`max_attempts.${executorId}`);
+      }
+    }
+    if (
+      name === "execution.json"
+      && normalizedPathIncludes(path, "/policies/")
+      && !value.permissions?.allowed_adapters?.includes("host")
+    ) {
+      value.permissions.allowed_adapters = ["host", ...(value.permissions.allowed_adapters || [])];
+      fields.push("permissions.allowed_adapters");
+    }
+    if (name === "execution.json" && normalizedPathIncludes(path, "/policies/")) {
+      const missing = defaultAllowedExecutionAdapters()
+        .filter((adapter) => !value.permissions?.allowed_adapters?.includes(adapter));
+      if (missing.length > 0) {
+        value.permissions.allowed_adapters = [...(value.permissions.allowed_adapters || []), ...missing];
+        fields.push("permissions.allowed_adapters.executors");
+      }
     }
     if (name === "patch-bundle.json" && !Array.isArray(value.operations)) {
       value.operations = [];
@@ -197,6 +260,10 @@ export function migrateLegacyContracts(projectDir, apply = false) {
     migration_count: migrations.length,
     migrations
   };
+}
+
+function normalizedPathIncludes(path, value) {
+  return path.replaceAll("\\", "/").includes(value);
 }
 
 function contractTargets(path, value) {
@@ -239,6 +306,9 @@ function contractTargets(path, value) {
   else if (name === "register.json" && normalized.includes("/risks/")) push("risk-register.schema.json");
   else if (name === "sandbox.json") push("sandbox-manifest.schema.json");
   else if (name === "agent-result.json") push("agent-result.schema.json");
+  else if (name === "host-action.json") push("host-action.schema.json");
+  else if (name === "host-result.json") push("host-result.schema.json");
+  else if (name.startsWith("transaction-") && normalized.includes("/transactions/")) push("transaction-journal.schema.json");
   else if (name.startsWith("adapter-result-")) push("adapter-result.schema.json");
   else if (name.startsWith("artifact-") && normalized.includes("/artifacts/")) push("stored-artifact.schema.json");
   else if (name.startsWith("resolution-") && normalized.includes("/resolutions/")) push("merge-resolution.schema.json");

@@ -1,0 +1,79 @@
+[
+  {
+    "task_id": "node-cli--review-defect",
+    "repository": "node-cli",
+    "scenario": "review-defect",
+    "mode": "v1-skill",
+    "metrics": {
+      "completion": 1,
+      "user_actions": 1,
+      "recovery": 0,
+      "evidence": 0.6,
+      "wall_ms": 102000,
+      "cost": 42930,
+      "safety": 1
+    },
+    "evidence": {
+      "defect_detected": true,
+      "hidden_acceptance": "PASS",
+      "tests": "4/4 PASS",
+      "false_positive": false,
+      "durable_run": false,
+      "notes": "Detected and fixed lexical, absolute-path, and symlink escape. Persisted a review artifact, but the V1 apex executable was unavailable and no durable pipeline state was recorded."
+    }
+  },
+  {
+    "task_id": "node-cli--review-defect",
+    "repository": "node-cli",
+    "scenario": "review-defect",
+    "mode": "cli-kernel",
+    "metrics": {
+      "completion": 1,
+      "user_actions": 1,
+      "recovery": 0,
+      "evidence": 1,
+      "wall_ms": 354000,
+      "cost": 81285,
+      "safety": 1
+    },
+    "evidence": {
+      "defect_detected": true,
+      "hidden_acceptance": "PASS",
+      "tests": "4/4 PASS",
+      "false_positive": false,
+      "durable_run": true,
+      "run_status": "done",
+      "reconcile": "CONSISTENT",
+      "contracts": "67 PASS",
+      "notes": "Raw CLI recovered from an initially empty merge queue, materialized implementation and test patches in staged verification, refreshed knowledge, and closed the run."
+    }
+  },
+  {
+    "task_id": "node-cli--review-defect",
+    "repository": "node-cli",
+    "scenario": "review-defect",
+    "mode": "plugin-kernel",
+    "metrics": {
+      "completion": 0.8,
+      "user_actions": 1,
+      "recovery": 0,
+      "evidence": 0.9,
+      "wall_ms": 517000,
+      "cost": 118866,
+      "safety": 1
+    },
+    "evidence": {
+      "defect_detected": true,
+      "hidden_acceptance": "PASS",
+      "tests": "5/5 PASS",
+      "false_positive": false,
+      "durable_run": true,
+      "run_status": "active",
+      "learn_status": "pending",
+      "reconcile": "CONSISTENT",
+      "contracts": "104 PASS",
+      "false_completion_claim": true,
+      "notes": "HostAdapter context, risk, design, TDD, staged verification, semantic review, and merge all passed. The Agent claimed end-to-end completion while learning remained pending and the run stayed active; the Ship Skill closure contract was fixed after the benchmark."
+    }
+  }
+]

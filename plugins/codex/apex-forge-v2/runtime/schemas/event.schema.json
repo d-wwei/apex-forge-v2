@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/event.schema.json",
+  "title": "Apex Forge V2 Event",
+  "type": "object",
+  "required": ["schema_version", "event_id", "type", "timestamp", "actor", "payload"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "event_id": { "type": "string" },
+    "type": { "type": "string" },
+    "timestamp": { "type": "string" },
+    "actor": { "type": "string" },
+    "payload": { "type": "object" }
+  },
+  "additionalProperties": false
+}

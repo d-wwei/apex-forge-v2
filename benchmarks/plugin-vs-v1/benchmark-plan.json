@@ -1,0 +1,169 @@
+{
+  "generated_at": "2026-08-14T12:14:59.663Z",
+  "modes": [
+    "v1-skill",
+    "cli-kernel",
+    "plugin-kernel"
+  ],
+  "metrics": [
+    "completion",
+    "recovery",
+    "evidence",
+    "user_actions",
+    "wall_ms",
+    "cost",
+    "safety"
+  ],
+  "tasks": [
+    {
+      "task_id": "node-cli--simple",
+      "repository": "node-cli",
+      "scenario": "simple"
+    },
+    {
+      "task_id": "node-cli--multi-step",
+      "repository": "node-cli",
+      "scenario": "multi-step"
+    },
+    {
+      "task_id": "node-cli--bug-fix",
+      "repository": "node-cli",
+      "scenario": "bug-fix"
+    },
+    {
+      "task_id": "node-cli--interrupted",
+      "repository": "node-cli",
+      "scenario": "interrupted"
+    },
+    {
+      "task_id": "node-cli--review-defect",
+      "repository": "node-cli",
+      "scenario": "review-defect"
+    },
+    {
+      "task_id": "node-cli--parallel",
+      "repository": "node-cli",
+      "scenario": "parallel"
+    },
+    {
+      "task_id": "js-library--simple",
+      "repository": "js-library",
+      "scenario": "simple"
+    },
+    {
+      "task_id": "js-library--multi-step",
+      "repository": "js-library",
+      "scenario": "multi-step"
+    },
+    {
+      "task_id": "js-library--bug-fix",
+      "repository": "js-library",
+      "scenario": "bug-fix"
+    },
+    {
+      "task_id": "js-library--interrupted",
+      "repository": "js-library",
+      "scenario": "interrupted"
+    },
+    {
+      "task_id": "js-library--review-defect",
+      "repository": "js-library",
+      "scenario": "review-defect"
+    },
+    {
+      "task_id": "js-library--parallel",
+      "repository": "js-library",
+      "scenario": "parallel"
+    },
+    {
+      "task_id": "api-service--simple",
+      "repository": "api-service",
+      "scenario": "simple"
+    },
+    {
+      "task_id": "api-service--multi-step",
+      "repository": "api-service",
+      "scenario": "multi-step"
+    },
+    {
+      "task_id": "api-service--bug-fix",
+      "repository": "api-service",
+      "scenario": "bug-fix"
+    },
+    {
+      "task_id": "api-service--interrupted",
+      "repository": "api-service",
+      "scenario": "interrupted"
+    },
+    {
+      "task_id": "api-service--review-defect",
+      "repository": "api-service",
+      "scenario": "review-defect"
+    },
+    {
+      "task_id": "api-service--parallel",
+      "repository": "api-service",
+      "scenario": "parallel"
+    },
+    {
+      "task_id": "data-pipeline--simple",
+      "repository": "data-pipeline",
+      "scenario": "simple"
+    },
+    {
+      "task_id": "data-pipeline--multi-step",
+      "repository": "data-pipeline",
+      "scenario": "multi-step"
+    },
+    {
+      "task_id": "data-pipeline--bug-fix",
+      "repository": "data-pipeline",
+      "scenario": "bug-fix"
+    },
+    {
+      "task_id": "data-pipeline--interrupted",
+      "repository": "data-pipeline",
+      "scenario": "interrupted"
+    },
+    {
+      "task_id": "data-pipeline--review-defect",
+      "repository": "data-pipeline",
+      "scenario": "review-defect"
+    },
+    {
+      "task_id": "data-pipeline--parallel",
+      "repository": "data-pipeline",
+      "scenario": "parallel"
+    },
+    {
+      "task_id": "docs-tool--simple",
+      "repository": "docs-tool",
+      "scenario": "simple"
+    },
+    {
+      "task_id": "docs-tool--multi-step",
+      "repository": "docs-tool",
+      "scenario": "multi-step"
+    },
+    {
+      "task_id": "docs-tool--bug-fix",
+      "repository": "docs-tool",
+      "scenario": "bug-fix"
+    },
+    {
+      "task_id": "docs-tool--interrupted",
+      "repository": "docs-tool",
+      "scenario": "interrupted"
+    },
+    {
+      "task_id": "docs-tool--review-defect",
+      "repository": "docs-tool",
+      "scenario": "review-defect"
+    },
+    {
+      "task_id": "docs-tool--parallel",
+      "repository": "docs-tool",
+      "scenario": "parallel"
+    }
+  ]
+}

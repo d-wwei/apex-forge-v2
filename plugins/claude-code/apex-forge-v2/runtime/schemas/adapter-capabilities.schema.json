@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/adapter-capabilities.schema.json",
+  "title": "Apex Forge V2 Adapter Capabilities Snapshot",
+  "type": "object",
+  "required": ["schema_version", "generated_at", "adapters"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "generated_at": { "type": "string" },
+    "adapters": { "type": "array", "items": { "type": "object" } }
+  },
+  "additionalProperties": false
+}

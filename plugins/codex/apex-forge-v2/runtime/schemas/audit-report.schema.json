@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/audit-report.schema.json",
+  "title": "Apex Forge V2 Project Audit Report",
+  "type": "object",
+  "required": ["schema_version", "audit_id", "created_at", "objective", "status", "checks", "summary"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "audit_id": { "type": "string" },
+    "created_at": { "type": "string" },
+    "objective": { "type": "string" },
+    "status": { "type": "string", "enum": ["PASS", "PARTIAL", "FAIL"] },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "status", "claim", "evidence", "gap"],
+        "properties": {
+          "id": { "type": "string" },
+          "status": { "type": "string", "enum": ["PASS", "PARTIAL", "FAIL"] },
+          "claim": { "type": "string" },
+          "evidence": { "type": "array", "items": { "type": "string" } },
+          "gap": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "summary": { "type": "object" }
+  },
+  "additionalProperties": false
+}

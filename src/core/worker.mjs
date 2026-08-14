@@ -14,6 +14,9 @@ import {
   writeJson,
   writeTextIfMissing
 } from "../lib/common.mjs";
+import {
+  normalizeExecutionCapabilities
+} from "../contracts/execution-capability.mjs";
 import { appendEvent, SCHEMA_VERSION, updateProject } from "./store.mjs";
 import { createArtifact } from "./artifacts.mjs";
 import { loadRun } from "./run-state.mjs";
@@ -22,6 +25,8 @@ export function createWorkerForPlanNode(root, run, planNode) {
   const timestamp = now();
   const workerId = shortId("worker");
   const namespace = `.apex-v2/runs/${run.run_id}/workers/${workerId}`;
+  const executionPolicy = readJson(join(root, "policies", "execution.json"));
+  const assignment = resolveWorkerAssignment(planNode, executionPolicy);
   const worker = {
     schema_version: SCHEMA_VERSION,
     worker_id: workerId,
@@ -34,7 +39,7 @@ export function createWorkerForPlanNode(root, run, planNode) {
       path: "",
       status: "missing"
     },
-    adapter: planNode.adapter || "shell",
+    ...assignment,
     output_contract: planNode.output_contract || "evidence",
     objective: planNode.objective,
     deliverables: planNode.deliverables,
@@ -59,6 +64,43 @@ export function createWorkerForPlanNode(root, run, planNode) {
   });
   updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
   return worker;
+}
+
+export function resolveWorkerAssignment(planNode, executionPolicy) {
+  const executionClass = planNode.execution_class || legacyExecutionClass(planNode);
+  const preferredMode = planNode.preferred_mode || legacyPreferredMode(executionClass);
+  const requiredCapabilities = normalizeExecutionCapabilities(planNode.required_capabilities || []);
+  let adapter = planNode.adapter;
+  if (!adapter) {
+    if (executionClass === "cognitive" && preferredMode === "interactive") adapter = "host";
+    else if (executionClass === "deterministic_check") adapter = "shell";
+    else if (executionClass === "human_decision") adapter = "human";
+    else {
+      adapter = (executionPolicy?.permissions?.adapter_fallback_order || [])
+        .find((candidate) => executionPolicy.permissions.allowed_adapters.includes(candidate));
+    }
+  }
+  if (!adapter) throw new Error(`无法为 plan node 选择 WorkerExecutor：${planNode.id || "(unknown)"}`);
+  return {
+    adapter,
+    executor_id: adapter,
+    execution_class: executionClass,
+    preferred_mode: preferredMode,
+    required_capabilities: requiredCapabilities
+  };
+}
+
+function legacyExecutionClass(planNode) {
+  if (planNode.adapter === "human" || planNode.output_contract === "decision") return "human_decision";
+  if (planNode.adapter === "shell") return "deterministic_check";
+  if (planNode.output_contract === "patch") return "workspace_patch";
+  return "cognitive";
+}
+
+function legacyPreferredMode(executionClass) {
+  if (executionClass === "deterministic_check") return "deterministic";
+  if (executionClass === "human_decision") return "human";
+  return "factory";
 }
 
 export function getWorkers(root, runId) {
@@ -181,6 +223,9 @@ export function findGitRoot(projectDir) {
 }
 
 export function executeWorkerShell(root, worker, command, via) {
+  if (worker.execution_class && worker.execution_class !== "deterministic_check") {
+    throw new Error(`shell adapter 只允许 deterministic_check worker：${worker.execution_class}`);
+  }
   const projectDir = join(root, "..");
   const timestamp = now();
   const result = spawnSync(command, {

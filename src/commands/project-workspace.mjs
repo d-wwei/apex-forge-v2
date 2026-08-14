@@ -79,6 +79,8 @@ export function initProject(args) {
     const retryPolicy = readJson(join(root, "policies", "retry.json"));
     retryPolicy.max_attempts.claude = retryPolicy.max_attempts.claude || 3;
     retryPolicy.max_attempts.gemini = retryPolicy.max_attempts.gemini || 3;
+    retryPolicy.max_attempts.host = retryPolicy.max_attempts.host || 1;
+    retryPolicy.max_attempts["deepseek-runner"] = retryPolicy.max_attempts["deepseek-runner"] || 3;
     writeJson(join(root, "policies", "retry.json"), retryPolicy);
   }
   if (!existsSync(join(root, "policies", "execution.json"))) {
@@ -86,7 +88,7 @@ export function initProject(args) {
   } else {
     const executionPolicy = readJson(join(root, "policies", "execution.json"));
     if (!executionPolicy.permissions.adapter_fallback_order) {
-      executionPolicy.permissions.allowed_adapters = Array.from(new Set([...executionPolicy.permissions.allowed_adapters, "claude", "gemini"]));
+      executionPolicy.permissions.allowed_adapters = Array.from(new Set(["host", ...executionPolicy.permissions.allowed_adapters, "claude", "gemini", "deepseek-runner"]));
       executionPolicy.permissions.adapter_fallback_order = ["codex", "claude", "gemini"];
       executionPolicy.updated_at = timestamp;
     }
@@ -336,4 +338,3 @@ export function validateProject(args) {
 
   console.log(`项目校验通过：${root}`);
 }
-

@@ -66,9 +66,8 @@ import {
   renderPlanGraphMarkdown,
   validatePlanGraph
 } from "./core/plan-graph.mjs";
-import { executeCodexWorker } from "./core/agent-execution.mjs";
-import { inspectCodexAdapter } from "./adapters/codex.mjs";
-import { inspectAgentAdapters } from "./adapters/registry.mjs";
+import { executeWorkerExecutor } from "./core/worker-execution.mjs";
+import { inspectWorkerExecutors } from "./executors/registry.mjs";
 import {
   applyProjectReconciliation,
   inspectEventLog,
@@ -122,6 +121,7 @@ import {
   handleIntakeCommand,
   handleRoadmapCommand
 } from "./commands/intake-roadmap.mjs";
+import { handleHostCommand } from "./commands/host.mjs";
 import {
   evaluateAdapterCapabilityDrift,
   fallbackWorkerInternal,
@@ -166,8 +166,8 @@ import {
 import {
   buildAuditChecks,
   renderAuditMarkdown
-} from "./core/project-audit-report.mjs";
-import { buildAuditSummary as collectAuditSummary } from "./core/project-audit-summary.mjs";
+} from "./audit/project-audit-report.mjs";
+import { buildAuditSummary as collectAuditSummary } from "./audit/project-audit-summary.mjs";
 import { buildWorkerSummary } from "./core/worker-results.mjs";
 import { runAdapterSmoke } from "./core/adapter-smoke.mjs";
 import {
@@ -254,6 +254,11 @@ function main() {
 
     if (command === "worker") {
       handleWorkerCommand(subcommand, parseArgs(rest));
+      return;
+    }
+
+    if (command === "host") {
+      handleHostCommand(subcommand, parseArgs(rest));
       return;
     }
 
@@ -452,10 +457,11 @@ function applyLearning(args) {
     item.status = "applied";
     item.updated_at = now();
   });
-  bumpKnowledgeVersion(root);
+  const knowledgeVersion = bumpKnowledgeVersion(root);
   const event = appendEvent(root, "learning.applied", "apex-v2", {
     proposal_id: proposal.id,
-    target_file: proposal.target_file
+    target_file: proposal.target_file,
+    knowledge_version: knowledgeVersion
   });
   updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
   console.log(JSON.stringify(proposal, null, 2));
@@ -615,7 +621,9 @@ function reconcileProject(args) {
     applyProjectReconciliation(root, inspection);
     const event = appendEvent(root, "project.reconciled", "apex-v2", {
       report_id: report.report_id,
-      change_count: inspection.changes.length
+      change_count: inspection.changes.length,
+      active_runs: inspection.derived.active_runs,
+      knowledge_version: inspection.derived.knowledge_version
     });
     updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
     report.applied = true;
@@ -986,7 +994,15 @@ function learnReadyRuns(root, runIds, applyLearning) {
           applied.push(proposalId);
         }
       }
-      if (applied.length > 0) bumpKnowledgeVersion(root);
+      if (applied.length > 0) {
+        const knowledgeVersion = bumpKnowledgeVersion(root);
+        appendEvent(root, "learning.applied", "apex-v2", {
+          run_id: run.run_id,
+          proposal_ids: applied,
+          knowledge_version: knowledgeVersion,
+          via: "project.tick"
+        });
+      }
       passNode(root, run.run_id, "learn", result.artifact_id, "project tick 自动完成 learning governance。");
     }
     out.push({ run_id: run.run_id, proposal_ids: proposalIds, applied, artifact_id: result.artifact_id });
@@ -1050,11 +1066,12 @@ function retryBlockedWorkers(root, runIds, limit) {
 
 function fallbackBlockedAgents(root, runIds, limit) {
   const out = [];
+  const executorIds = new Set(inspectWorkerExecutors().map((item) => item.executor_id));
   for (const runId of runIds) {
     if (out.length >= limit) break;
     for (const worker of getWorkers(root, runId)) {
       if (out.length >= limit) break;
-      if (worker.status !== "blocked" || !["codex", "claude", "gemini"].includes(worker.last_adapter || worker.adapter)) continue;
+      if (worker.status !== "blocked" || !executorIds.has(worker.last_adapter || worker.executor_id || worker.adapter)) continue;
       try {
         const result = fallbackWorkerInternal(root, worker, "project.tick");
         out.push({ run_id: runId, worker_id: worker.worker_id, status: "FALLBACK_READY", from: result.from, to: result.to, failure_kind: result.failure_kind });
@@ -1068,6 +1085,7 @@ function fallbackBlockedAgents(root, runIds, limit) {
 
 function runReadyCodingAgents(root, runIds, limit, args) {
   const out = [];
+  const executorIds = new Set(inspectWorkerExecutors().map((item) => item.executor_id));
   const requestedSandbox = normalizeEnum(args["agent-sandbox"] || "worktree", ["scratch", "worktree"], "agent-sandbox");
   const timeoutMs = effectiveAgentTimeout(root, Number(args["agent-timeout-ms"] || 30 * 60 * 1000));
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
@@ -1080,17 +1098,19 @@ function runReadyCodingAgents(root, runIds, limit, args) {
     const plan = loadPlanGraph(root, runId);
     for (const worker of getWorkers(root, runId)) {
       if (out.length >= limit) break;
-      if (worker.status !== "active" || worker.adapter !== "codex") continue;
+      const executorId = worker.executor_id || worker.adapter;
+      if (worker.status !== "active" || !executorIds.has(executorId)) continue;
       try {
-        assertAdapterAllowed(root, worker.adapter);
+        assertAdapterAllowed(root, executorId);
         initializeWorkerSandbox(root, worker, requestedSandbox);
         const planNode = getPlanNode(plan, worker.plan_node_id);
-        const result = executeCodexWorker(root, worker, planNode, {
+        const result = executeWorkerExecutor(root, worker, planNode, {
           command: args["agent-command"] ? String(args["agent-command"]) : undefined,
-          adapter: worker.adapter,
+          adapter: executorId,
           model: args["agent-model"] ? String(args["agent-model"]) : undefined,
           profile: args["agent-profile"] ? String(args["agent-profile"]) : undefined,
-          timeoutMs
+          timeoutMs,
+          requiredCapabilities: worker.required_capabilities || []
         });
         let queueStatus = null;
         if (result.patch) {
@@ -1230,9 +1250,20 @@ function findArtifactsForWorker(root, runId, worker) {
 function findAdapterResultsForWorker(root, worker) {
   const dir = workerDir(root, worker.run_id, worker.worker_id);
   if (!existsSync(dir)) return [];
-  return readdirSync(dir)
+  const results = readdirSync(dir)
     .filter((file) => file.startsWith("adapter-result-") && file.endsWith(".json"))
     .map((file) => readJson(join(dir, file)));
+  const hostResult = readJson(join(dir, "host-result.json"), null);
+  if (hostResult) {
+    results.push({
+      result_id: hostResult.action_id,
+      adapter: hostResult.host_id,
+      status: hostResult.status === "completed" ? "PASS" : "FAIL",
+      summary: hostResult.summary,
+      created_at: hostResult.created_at
+    });
+  }
+  return results;
 }
 
 function dispatchReadyWorkers(root, runIds) {
@@ -1280,7 +1311,7 @@ function countOpenWorkers(root) {
   for (const runEntry of readdirSync(runsDir, { withFileTypes: true })) {
     if (!runEntry.isDirectory()) continue;
     for (const worker of getWorkers(root, runEntry.name)) {
-      if (["active", "patch_submitted", "blocked"].includes(worker.status)) count += 1;
+      if (["active", "claimed", "patch_submitted", "blocked"].includes(worker.status)) count += 1;
     }
   }
   return count;
@@ -1439,6 +1470,7 @@ function bumpKnowledgeVersion(root) {
   project.knowledge_version = manifest.version;
   project.updated_at = timestamp;
   writeJson(join(root, "project.json"), project);
+  return manifest.version;
 }
 
 function loadPlanGraph(root, runId) {

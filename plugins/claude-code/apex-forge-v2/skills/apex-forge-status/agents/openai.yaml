@@ -1,0 +1,4 @@
+interface:
+  display_name: "Apex Forge Status"
+  short_description: "Inspect runs, Host actions, risks, and blockers"
+  default_prompt: "Show the current Apex Forge project status."

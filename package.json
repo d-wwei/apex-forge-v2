@@ -1,7 +1,8 @@
 {
   "name": "apex-forge-v2",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "bin": {
     "apex-v2": "src/apex-v2.mjs"
@@ -9,9 +10,15 @@
   "scripts": {
     "test": "node --test tests/*.test.mjs",
     "validate": "node src/apex-v2.mjs validate --project .",
-    "check:schemas": "node src/apex-v2.mjs contracts validate --project ."
+    "check:schemas": "node src/apex-v2.mjs contracts validate --project .",
+    "build:plugin": "node scripts/build-codex-plugin.mjs",
+    "validate:plugins": "node scripts/validate-agent-plugins.mjs",
+    "benchmark:plugin": "node scripts/run-plugin-benchmark.mjs"
   },
   "dependencies": {
     "ajv": "8.20.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.9"
   }
 }

@@ -25,7 +25,7 @@ export function spawnCapabilityProcess(executable, args, options = {}) {
     workspaceDir,
     writablePaths,
     network: Boolean(options.network),
-    adapter: options.adapter || "unknown"
+    deniedReadPaths: options.deniedReadPaths || []
   });
   if (!sandbox.available) {
     return {
@@ -76,7 +76,7 @@ function buildMacSandboxProfile(options) {
   const writableRules = options.writablePaths
     .map((path) => `(subpath ${quote(path)})`)
     .join(" ");
-  const deniedSecretPaths = secretPaths(options.adapter)
+  const deniedSecretPaths = [...defaultSecretPaths(), ...(options.deniedReadPaths || [])]
     .map((path) => `(deny file-read* (subpath ${quote(path)}))`)
     .join(" ");
   return [
@@ -89,18 +89,14 @@ function buildMacSandboxProfile(options) {
   ].filter(Boolean).join(" ");
 }
 
-function secretPaths(adapter) {
+function defaultSecretPaths() {
   const home = realpathSync(homedir());
-  const paths = [
+  return [
     resolve(home, ".ssh"),
     resolve(home, ".aws"),
     resolve(home, ".kube"),
     resolve(home, ".config", "gcloud")
   ];
-  if (adapter !== "codex") paths.push(resolve(home, ".codex"));
-  if (adapter !== "claude") paths.push(resolve(home, ".claude"));
-  paths.push(resolve(home, ".gemini"));
-  return paths;
 }
 
 function existingRealPath(path) {

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/integration-report.schema.json",
+  "title": "Apex Forge V2 Integration Report",
+  "type": "object",
+  "required": ["schema_version", "report_id", "run_id", "status", "created_at", "merged_patches", "conflicts"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "report_id": { "type": "string" },
+    "run_id": { "type": "string" },
+    "status": { "type": "string", "enum": ["MERGED", "NOOP", "BLOCKED"] },
+    "created_at": { "type": "string" },
+    "merged_patches": { "type": "array", "items": { "type": "string" } },
+    "applied_files": { "type": "array", "items": { "type": "string" } },
+    "conflicts": { "type": "array", "items": { "type": "object" } }
+  },
+  "additionalProperties": false
+}

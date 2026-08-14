@@ -1,3 +1,4 @@
+// Product audit presentation is outside the provider-neutral Kernel.
 import { bullet } from "../lib/common.mjs";
 
 export function buildAuditChecks(summary) {
@@ -77,4 +78,3 @@ ${JSON.stringify(report.summary, null, 2)}
 \`\`\`
 `;
 }
-

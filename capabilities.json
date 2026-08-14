@@ -1,6 +1,6 @@
 {
   "schema_version": "v0",
-  "updated_at": "2026-08-06",
+  "updated_at": "2026-08-14",
   "features": [
     {
       "id": "task-aware-plan-graph",
@@ -81,9 +81,54 @@
     {
       "id": "adapter-capability-version-history",
       "purpose": "将 capability、version、availability 和 smoke 状态记录为 append-only observation 与趋势报告"
+    },
+    {
+      "id": "host-adapter-contract",
+      "purpose": "Codex 与 Claude Code 通过同一 HostAdapter contract claim action、提交 artifact、审批、进度和取消"
+    },
+    {
+      "id": "interactive-host-execution",
+      "purpose": "当前 Host Agent 对 cognitive 与 workspace_patch action 建立基线、受 scope 约束执行并提交 patch/evidence"
+    },
+    {
+      "id": "provider-neutral-worker-executors",
+      "purpose": "Kernel 通过 capability 选择任意 WorkerExecutor，不再把 provider enum 写入核心 contract"
+    },
+    {
+      "id": "project-transaction-journal",
+      "purpose": "run create 与 merge apply 使用可重入锁、idempotency journal 和源码/Kernel 同步回滚"
+    },
+    {
+      "id": "codex-agent-plugin",
+      "purpose": "Codex plugin 提供六个自然语言 Skills、自包含 Kernel runtime、本地 marketplace 和安装缓存验证"
+    },
+    {
+      "id": "claude-code-plugin",
+      "purpose": "Claude Code plugin 复用同一 Skills 与 Kernel runtime，并通过原生 manifest validation"
+    },
+    {
+      "id": "deepseek-model-provider",
+      "purpose": "DeepSeek 通过 OpenAI-compatible ModelProvider 接入 generic-agent-runner，不污染 Kernel"
+    },
+    {
+      "id": "plugin-comparison-benchmark",
+      "purpose": "30 tasks x 3 modes 的 benchmark harness 对 completion、actions、recovery、evidence、latency、cost 和 safety 设 release gate"
     }
   ],
   "groups": [
+    {
+      "id": "host-agent-plugins",
+      "purpose": "自然语言 Plugin、Interactive Host actions 与跨 Agent conformance",
+      "commands": [
+        "host actions",
+        "host claim",
+        "host submit",
+        "host cancel",
+        "npm run build:plugin",
+        "npm run validate:plugins",
+        "npm run benchmark:plugin"
+      ]
+    },
     {
       "id": "project-kernel",
       "purpose": "项目级状态、调度、自检和持续循环",
@@ -123,7 +168,7 @@
     },
     {
       "id": "worker-adapters",
-      "purpose": "worker 派发、sandbox/worktree、Codex/Claude/Gemini/shell/human adapter、patch bundle",
+      "purpose": "worker 派发、sandbox/worktree、capability-based WorkerExecutor、DeepSeek provider、shell/human 和 patch bundle",
       "commands": [
         "worker create",
         "worker list",

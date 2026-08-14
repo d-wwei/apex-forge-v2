@@ -39,7 +39,9 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
       requiredEvidence: ["intake 与 roadmap 引用", "相关代码或文档来源", "可验证验收标准"],
       verification: verificationCommands.slice(0, 1),
       mergeStrategy: "只产出 evidence，不直接修改项目代码。",
-      adapter: "shell",
+      executionClass: "cognitive",
+      requiredCapabilities: ["structured_output"],
+      preferredMode: "interactive",
       outputContract: "evidence",
       risk: normalizedRisk(intake.risk, "medium")
     }),
@@ -56,7 +58,9 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
       requiredEvidence: ["danger-zone 引用", "失败路径", "风险处置建议"],
       verification: verificationCommands.slice(0, 1),
       mergeStrategy: "与 context 分析并行，输出独立 evidence card。",
-      adapter: "shell",
+      executionClass: "cognitive",
+      requiredCapabilities: ["structured_output"],
+      preferredMode: "interactive",
       outputContract: "evidence",
       risk: normalizedRisk(intake.risk, "medium")
     }),
@@ -73,7 +77,9 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
       requiredEvidence: ["上下文 evidence", "风险 evidence", "每个切片的验证路径"],
       verification: verificationCommands.slice(0, 2),
       mergeStrategy: "方案先于代码写入；发现范围冲突时返回 planning。",
-      adapter: "shell",
+      executionClass: "cognitive",
+      requiredCapabilities: ["structured_output"],
+      preferredMode: "interactive",
       outputContract: "evidence",
       risk: normalizedRisk(intake.risk, "high")
     }),
@@ -90,7 +96,9 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
       requiredEvidence: ["changed_files", "patch artifact", "局部验证结果"],
       verification: verificationCommands,
       mergeStrategy: "worker 只提交 patch bundle；由 coordinator 串行合并。",
-      adapter: "codex",
+      executionClass: "workspace_patch",
+      requiredCapabilities: ["structured_output", "workspace_write", "tool_use"],
+      preferredMode: "interactive",
       outputContract: "patch",
       risk: normalizedRisk(intake.risk, "high")
     }),
@@ -107,7 +115,9 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
       requiredEvidence: ["新增或更新测试", "测试命令输出", "失败路径断言"],
       verification: verificationCommands,
       mergeStrategy: "可与主实现并行；write_scope 重叠时必须拆分或串行。",
-      adapter: "codex",
+      executionClass: "workspace_patch",
+      requiredCapabilities: ["structured_output", "workspace_write", "tool_use"],
+      preferredMode: "interactive",
       outputContract: "patch",
       risk: normalizedRisk(intake.risk, "medium")
     }),
@@ -125,6 +135,9 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
       verification: verificationCommands,
       mergeStrategy: "验证节点只汇总证据，不替代 implementation patch。",
       adapter: "shell",
+      executionClass: "deterministic_check",
+      requiredCapabilities: [],
+      preferredMode: "deterministic",
       outputContract: "evidence",
       risk: normalizedRisk(intake.risk, "high")
     }),
@@ -141,7 +154,9 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
       requiredEvidence: ["需求符合性", "blocking findings", "merge posture"],
       verification: verificationCommands,
       mergeStrategy: "只处理 review 阻塞项；新增范围必须返回 intake 或 replan。",
-      adapter: "shell",
+      executionClass: "cognitive",
+      requiredCapabilities: ["structured_output"],
+      preferredMode: "interactive",
       outputContract: "evidence",
       risk: normalizedRisk(intake.risk, "high")
     })
@@ -231,7 +246,16 @@ export function validatePlanGraph(plan) {
     if (!Array.isArray(node.write_scope) || node.write_scope.length === 0) errors.push(`${node.id} 缺少 write_scope`);
     if (!Array.isArray(node.required_evidence) || node.required_evidence.length === 0) errors.push(`${node.id} 缺少 required_evidence`);
     if (!Array.isArray(node.verification) || node.verification.length === 0) errors.push(`${node.id} 缺少 verification`);
-    if (node.adapter != null && !["shell", "codex", "claude", "gemini", "human"].includes(node.adapter)) errors.push(`${node.id} 的 adapter 无效：${node.adapter}`);
+    if (node.adapter != null && (typeof node.adapter !== "string" || !node.adapter)) errors.push(`${node.id} 的 adapter 无效：${node.adapter}`);
+    if (node.execution_class != null && !["cognitive", "workspace_patch", "deterministic_check", "human_decision"].includes(node.execution_class)) {
+      errors.push(`${node.id} 的 execution_class 无效：${node.execution_class}`);
+    }
+    if (node.preferred_mode != null && !["interactive", "factory", "deterministic", "human"].includes(node.preferred_mode)) {
+      errors.push(`${node.id} 的 preferred_mode 无效：${node.preferred_mode}`);
+    }
+    if (node.required_capabilities != null && !Array.isArray(node.required_capabilities)) {
+      errors.push(`${node.id} 的 required_capabilities 必须是数组`);
+    }
     if (node.output_contract != null && !["evidence", "patch", "decision"].includes(node.output_contract)) errors.push(`${node.id} 的 output_contract 无效：${node.output_contract}`);
     if (!lanes.has(node.parallel_group)) errors.push(`${node.id} 的 parallel_group 未在 parallel_lanes 中声明：${node.parallel_group}`);
   }
@@ -322,7 +346,10 @@ ${plan.nodes.map((node) => `### ${node.id}：${node.title}
 - write_scope: ${node.write_scope.join(", ")}
 - required_evidence: ${node.required_evidence.join(", ")}
 - verification: ${node.verification.join(" && ")}
-- adapter: ${node.adapter}
+- adapter: ${node.adapter || "policy-selected"}
+- execution_class: ${node.execution_class || "legacy"}
+- preferred_mode: ${node.preferred_mode || "legacy"}
+- required_capabilities: ${(node.required_capabilities || []).join(", ") || "无"}
 - output_contract: ${node.output_contract}
 - risk: ${node.risk}
 - merge_strategy: ${node.merge_strategy}
@@ -411,6 +438,9 @@ function planNode(input) {
     verification: unique(input.verification),
     merge_strategy: input.mergeStrategy,
     adapter: input.adapter,
+    execution_class: input.executionClass,
+    required_capabilities: unique(input.requiredCapabilities || []),
+    preferred_mode: input.preferredMode,
     output_contract: input.outputContract,
     risk: input.risk
   };

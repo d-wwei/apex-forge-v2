@@ -1,0 +1,4 @@
+interface:
+  display_name: "Using Apex Forge"
+  short_description: "Route work through durable Apex Forge workflows"
+  default_prompt: "Use Apex Forge to handle this task."

@@ -33,3 +33,26 @@ test("event replay reconstructs ProjectState active runs, knowledge version, and
     event_count: 10
   });
 });
+
+test("project.reconciled event repairs historical knowledge-version replay drift", () => {
+  const events = [
+    {
+      event_id: "event-1",
+      type: "run.created",
+      payload: { run_id: "run-1" }
+    },
+    {
+      event_id: "event-2",
+      type: "project.reconciled",
+      payload: {
+        active_runs: [],
+        knowledge_version: 3
+      }
+    }
+  ];
+
+  const replay = replayProjectStateFromEvents(events);
+  assert.deepEqual(replay.active_runs, []);
+  assert.equal(replay.knowledge_version, 3);
+  assert.equal(replay.last_event_id, "event-2");
+});

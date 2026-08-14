@@ -1,15 +1,20 @@
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { getAgentAdapter, inspectAgentAdapters } from "../adapters/registry.mjs";
+import {
+  getWorkerExecutor,
+  inspectWorkerExecutors
+} from "../executors/registry.mjs";
+import { DEFAULT_SMOKE_EXECUTOR_IDS } from "../executors/defaults.mjs";
 import { now, shortId } from "../lib/common.mjs";
 import { validateContract } from "./contracts.mjs";
+import { schemaPath } from "./schema-paths.mjs";
 
-const RESULT_SCHEMA = new URL("../../schemas/agent-result.schema.json", import.meta.url).pathname;
+const RESULT_SCHEMA = schemaPath("agent-result.schema.json");
 
 export function runAdapterSmoke(options = {}) {
-  const names = options.adapters || ["codex", "claude", "gemini"];
-  const inspections = new Map(inspectAgentAdapters().map((item) => [item.adapter, item]));
+  const names = options.adapters || DEFAULT_SMOKE_EXECUTOR_IDS;
+  const inspections = new Map(inspectWorkerExecutors().map((item) => [item.adapter, item]));
   const results = [];
   for (const name of names) {
     const info = inspections.get(name);
@@ -38,8 +43,8 @@ function runLiveProbe(name, info, timeoutMs) {
   const outputPath = join(workspace, "result.json");
   const prompt = 'Do not use tools or modify files. Return verdict "pass", summary "adapter smoke", tests [], risks [], evidence_refs [] using the required structured output.';
   try {
-    const adapter = getAgentAdapter(name);
-    const execution = adapter.execute({
+    const executor = getWorkerExecutor(name);
+    const execution = executor.execute({
       executable: name,
       workspaceDir: workspace,
       prompt,

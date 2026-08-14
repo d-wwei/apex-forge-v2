@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/gate-result.schema.json",
+  "title": "Apex Forge V2 Gate Result",
+  "type": "object",
+  "required": ["status", "reason", "blocking"],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": [
+        "PASS",
+        "PARTIAL_PASS",
+        "FAIL_REWORK",
+        "FAIL_REPLAN",
+        "ESCALATE",
+        "HALT"
+      ]
+    },
+    "reason": {
+      "type": "string"
+    },
+    "blocking": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "carry_forward_ids": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": false
+}

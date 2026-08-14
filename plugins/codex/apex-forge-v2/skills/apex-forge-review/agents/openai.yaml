@@ -1,0 +1,4 @@
+interface:
+  display_name: "Apex Forge Review"
+  short_description: "Review requirements, patches, evidence, and risks"
+  default_prompt: "Review the current Apex Forge delivery."

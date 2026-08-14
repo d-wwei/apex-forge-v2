@@ -1,0 +1,66 @@
+[
+  {
+    "task_id": "node-cli--simple",
+    "repository": "node-cli",
+    "scenario": "simple",
+    "mode": "v1-skill",
+    "metrics": {
+      "completion": 1,
+      "user_actions": 1,
+      "recovery": 0,
+      "evidence": 0.5,
+      "wall_ms": 667000,
+      "cost": 39006,
+      "safety": 1
+    },
+    "evidence": {
+      "tests": "4/4 PASS",
+      "durable_run": false,
+      "notes": "V1 apex CLI entry was unavailable, so no durable pipeline evidence was recorded."
+    }
+  },
+  {
+    "task_id": "node-cli--simple",
+    "repository": "node-cli",
+    "scenario": "simple",
+    "mode": "cli-kernel",
+    "metrics": {
+      "completion": 1,
+      "user_actions": 1,
+      "recovery": 0,
+      "evidence": 1,
+      "wall_ms": 888000,
+      "cost": 80238,
+      "safety": 1
+    },
+    "evidence": {
+      "tests": "4/4 PASS",
+      "durable_run": true,
+      "run_status": "done",
+      "notes": "Raw operator flow exposed artifact type note schema drift."
+    }
+  },
+  {
+    "task_id": "node-cli--simple",
+    "repository": "node-cli",
+    "scenario": "simple",
+    "mode": "plugin-kernel",
+    "metrics": {
+      "completion": 1,
+      "user_actions": 1,
+      "recovery": 0,
+      "evidence": 1,
+      "wall_ms": 1179000,
+      "cost": 93330,
+      "safety": 1
+    },
+    "evidence": {
+      "tests": "4/4 PASS",
+      "durable_run": true,
+      "run_status": "done",
+      "contracts": "111 PASS",
+      "reconcile": "CONSISTENT",
+      "notes": "Plugin completed end to end but was slower and more expensive on this simple task."
+    }
+  }
+]

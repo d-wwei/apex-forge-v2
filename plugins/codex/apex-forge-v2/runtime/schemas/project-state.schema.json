@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/project-state.schema.json",
+  "title": "Apex Forge V2 Project State",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "project_id",
+    "project_name",
+    "created_at",
+    "updated_at",
+    "active_milestone",
+    "knowledge_version",
+    "last_event_id",
+    "active_runs",
+    "wip_limits"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "project_id": { "type": "string", "minLength": 1 },
+    "project_name": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" },
+    "active_milestone": { "type": ["string", "null"] },
+    "knowledge_version": { "type": "integer", "minimum": 0 },
+    "last_event_id": { "type": ["string", "null"] },
+    "active_runs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "wip_limits": {
+      "type": "object",
+      "required": ["active_runs", "parallel_workers"],
+      "properties": {
+        "active_runs": { "type": "integer", "minimum": 1 },
+        "parallel_workers": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

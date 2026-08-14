@@ -11,7 +11,7 @@ export function defaultRetryPolicy(timestamp) {
   return {
     schema_version: "v0",
     updated_at: timestamp,
-    max_attempts: { shell: 2, codex: 3, claude: 3, gemini: 3, human: 1 },
+    max_attempts: defaultRetryAttempts(),
     auto_retry: {
       enabled: true,
       reset_sandbox: true,
@@ -32,8 +32,8 @@ export function defaultExecutionPolicy(timestamp) {
       max_agent_runs_per_tick: 3
     },
     permissions: {
-      allowed_adapters: ["shell", "human", "codex", "claude", "gemini"],
-      adapter_fallback_order: ["codex", "claude", "gemini"],
+      allowed_adapters: defaultAllowedExecutionAdapters(),
+      adapter_fallback_order: [...DEFAULT_EXECUTOR_FALLBACK_ORDER],
       adapter_fallback_failure_kinds: ["timeout", "execution_error", "contract_error", "agent_reported_failure", "no_patch"],
       merge_approval_risks: ["critical"],
       sensitive_paths: [".github/", "infra/", "migrations/", "deploy/", "Dockerfile", "package-lock.json"]
@@ -65,3 +65,8 @@ export function defaultQualityPolicy(timestamp) {
     }
   };
 }
+import {
+  DEFAULT_EXECUTOR_FALLBACK_ORDER,
+  defaultAllowedExecutionAdapters,
+  defaultRetryAttempts
+} from "../executors/defaults.mjs";

@@ -1,6 +1,6 @@
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { inspectAgentAdapters } from "../adapters/registry.mjs";
+import { inspectWorkerExecutors } from "../executors/registry.mjs";
 import { ensureDir, now, readJson, shortId, writeJson } from "../lib/common.mjs";
 import {
   backfillAdapterObservations,
@@ -13,7 +13,7 @@ import { appendEvent, updateProject } from "./store.mjs";
 
 export function runProjectHeartbeat(root, options = {}) {
   const policy = readJson(join(root, "policies", "quality.json"));
-  const inspections = options.inspections || inspectAgentAdapters();
+  const inspections = options.inspections || inspectWorkerExecutors();
   const backfill = backfillAdapterObservations(root, { inspections });
   const smoke = refreshStaleAdapterSmoke(root, policy, {
     trigger: "project.heartbeat",

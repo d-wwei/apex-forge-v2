@@ -3,8 +3,8 @@ import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { appendEvent, projectRoot, requireStore, SCHEMA_VERSION, updateProject } from "../core/store.mjs";
 import { applyPatchOperations, createWorkerForPlanNode, ensureWorkerSandboxReady, executeWorkerShell, findGitRoot, findPatch, findWorker, getWorkers, isFileAllowedByScope, workerDir } from "../core/worker.mjs";
-import { executeCodexWorker } from "../core/agent-execution.mjs";
-import { inspectAgentAdapters } from "../adapters/registry.mjs";
+import { executeWorkerExecutor } from "../core/worker-execution.mjs";
+import { inspectWorkerExecutors } from "../executors/registry.mjs";
 import { assertAdapterAllowed, assertPatchWithinBudget, effectiveAgentTimeout, ensureAdapterBaselineApproval } from "../core/governance.mjs";
 import { createArtifact } from "../core/artifacts.mjs";
 import { loadRun, requirePassedNode } from "../core/run-state.mjs";
@@ -384,7 +384,7 @@ function execWorkerAgent(args) {
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
     throw new Error("--timeout-ms 必须是正整数");
   }
-  const result = executeCodexWorker(root, worker, planNode, {
+  const result = executeWorkerExecutor(root, worker, planNode, {
     command: args.command ? String(args.command) : undefined,
     adapter,
     model: args.model ? String(args.model) : undefined,
@@ -403,7 +403,7 @@ function listWorkerAdapters(args) {
   const adapters = [
     { adapter: "shell", available: true, mode: "command evidence" },
     { adapter: "human", available: true, mode: "structured decision" },
-    ...inspectAgentAdapters().map((item) => ({ ...item, mode: "isolated coding agent" }))
+    ...inspectWorkerExecutors().map((item) => ({ ...item, mode: "isolated coding agent" }))
   ];
   if (args.history) {
     console.log(JSON.stringify(buildAdapterTrend(root), null, 2));
@@ -459,7 +459,7 @@ export function evaluateAdapterCapabilityDrift(root, adapters = null) {
   const currentAdapters = adapters || [
     { adapter: "shell", available: true, mode: "command evidence" },
     { adapter: "human", available: true, mode: "structured decision" },
-    ...inspectAgentAdapters().map((item) => ({ ...item, mode: "isolated coding agent" }))
+    ...inspectWorkerExecutors().map((item) => ({ ...item, mode: "isolated coding agent" }))
   ];
   const baseline = readJson(join(root, "adapters", "capabilities.json"), null);
   const previous = new Map((baseline?.adapters || []).map((item) => [item.adapter, item]));
@@ -506,7 +506,7 @@ function resumeWorkerAgent(args) {
   const plan = loadPlanGraph(root, worker.run_id);
   const planNode = getPlanNode(plan, worker.plan_node_id);
   const timeoutMs = effectiveAgentTimeout(root, Number(args["timeout-ms"] || 30 * 60 * 1000));
-  const result = executeCodexWorker(root, worker, planNode, {
+  const result = executeWorkerExecutor(root, worker, planNode, {
     adapter: worker.session_adapter,
     sessionId: worker.session_id,
     timeoutMs
@@ -533,13 +533,14 @@ export function fallbackWorkerInternal(root, worker, via) {
   const current = worker.last_adapter || worker.adapter;
   const order = policy.permissions.adapter_fallback_order;
   const start = Math.max(-1, order.indexOf(current));
-  const available = new Map(inspectAgentAdapters().map((item) => [item.adapter, item]));
+  const available = new Map(inspectWorkerExecutors().map((item) => [item.adapter, item]));
   const next = order.slice(start + 1).find((name) =>
     policy.permissions.allowed_adapters.includes(name) && available.get(name)?.available
   );
   if (!next) throw new Error(`没有可用 fallback adapter，current=${current}`);
   resetWorkerSandbox(root, worker);
   worker.adapter = next;
+  worker.executor_id = next;
   worker.status = "active";
   worker.updated_at = now();
   writeJson(join(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);

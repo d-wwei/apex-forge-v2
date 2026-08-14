@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/merge-queue.schema.json",
+  "title": "Apex Forge V2 Merge Queue",
+  "type": "object",
+  "required": ["schema_version", "run_id", "updated_at", "items", "conflicts"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "run_id": { "type": "string" },
+    "updated_at": { "type": "string" },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["patch_id", "worker_id", "plan_node_id", "status", "changed_files"],
+        "properties": {
+          "patch_id": { "type": "string" },
+          "worker_id": { "type": "string" },
+          "plan_node_id": { "type": "string" },
+          "status": { "type": "string", "enum": ["queued", "blocked_conflict", "merged", "dropped"] },
+          "changed_files": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": false
+      }
+    },
+    "conflicts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["kind", "file", "patch_ids", "resolution"],
+        "properties": {
+          "kind": { "type": "string" },
+          "file": { "type": "string" },
+          "patch_ids": { "type": "array", "items": { "type": "string" } },
+          "resolution": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "resolutions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["resolution_id", "kept_patch_id", "dropped_patch_ids", "reason"],
+        "properties": {
+          "resolution_id": { "type": "string" },
+          "kept_patch_id": { "type": "string" },
+          "dropped_patch_ids": { "type": "array", "items": { "type": "string" } },
+          "reason": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

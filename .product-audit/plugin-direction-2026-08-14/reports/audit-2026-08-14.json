@@ -1,0 +1,101 @@
+{
+  "date": "2026-08-14T15:41:16.129553+00:00",
+  "scope": "provisional",
+  "score": 96.4,
+  "raw_grade": "A",
+  "effective_grade": "A",
+  "critical_fails": 0,
+  "results": [
+    {
+      "eid": "E-201",
+      "severity": "CRITICAL",
+      "status": "PASS",
+      "detail": "manifest=yes skills=6",
+      "metric_type": "snapshot"
+    },
+    {
+      "eid": "E-202",
+      "severity": "HIGH",
+      "status": "PASS",
+      "detail": "default_prompt=True onboarding_test=True",
+      "metric_type": "snapshot"
+    },
+    {
+      "eid": "E-203",
+      "severity": "HIGH",
+      "status": "PASS",
+      "detail": "target_user=True flagship=True baseline=True target=True window=True",
+      "metric_type": "snapshot"
+    },
+    {
+      "eid": "E-301",
+      "severity": "CRITICAL",
+      "status": "PASS",
+      "detail": "core=True schemas=46 state=True test_cases=131",
+      "metric_type": "snapshot"
+    },
+    {
+      "eid": "E-302",
+      "severity": "CRITICAL",
+      "status": "PASS",
+      "detail": "direct_provider_import=False provider_refs_in_core=1",
+      "metric_type": "snapshot"
+    },
+    {
+      "eid": "E-303",
+      "severity": "HIGH",
+      "status": "PASS",
+      "detail": "host_contract=True worker_contract=True host_test=True",
+      "metric_type": "snapshot"
+    },
+    {
+      "eid": "E-304",
+      "severity": "HIGH",
+      "status": "PASS",
+      "detail": "interactive_impl=True interactive_test=True",
+      "metric_type": "snapshot"
+    },
+    {
+      "eid": "E-401",
+      "severity": "CRITICAL",
+      "status": "PASS",
+      "detail": "cognitive_nodes=[('delivery-context', 'host-policy'), ('delivery-risk', 'host-policy'), ('delivery-design', 'host-policy'), ('delivery-review', 'host-policy')] shell_only=0",
+      "metric_type": "snapshot"
+    },
+    {
+      "eid": "E-402",
+      "severity": "HIGH",
+      "status": "PASS",
+      "detail": "mode_router=True mode_test=True",
+      "metric_type": "snapshot"
+    },
+    {
+      "eid": "E-403",
+      "severity": "HIGH",
+      "status": "WARN",
+      "detail": "comparative_benchmark=True status=BLOCKED",
+      "metric_type": "incremental"
+    },
+    {
+      "eid": "E-501",
+      "severity": "HIGH",
+      "status": "PASS",
+      "detail": "shape=True version=0.1.0+codex.20260814121422 validator=True",
+      "metric_type": "snapshot"
+    },
+    {
+      "eid": "E-502",
+      "severity": "MEDIUM",
+      "status": "PASS",
+      "detail": "host_neutral_doc=True non_codex_mock=True codex_core_import=False",
+      "metric_type": "snapshot"
+    },
+    {
+      "eid": "E-503",
+      "severity": "MEDIUM",
+      "status": "PASS",
+      "detail": "mcp_implemented=False defer_criteria=True",
+      "metric_type": "snapshot"
+    }
+  ]
+}

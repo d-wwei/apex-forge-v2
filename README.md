@@ -30,14 +30,33 @@ V2 不再复刻旧版固定流水线，而是以 **项目级 contract-driven gra
 - `planning/v2-planning-recommendation.md`
 - `planning/project-operating-model.md`
 - `planning/roadmap.md`
+- `planning/plugin-upgrade-plan.md`
 - `contracts/stage-contracts-v0.md`
 - `research/source-inventory.md`
 - `research/subagent-synthesis-2026-07-28.md`
 - `research/legacy-apex-forge-audit.md`
 
-## 当前可运行能力
+## 当前产品形态
 
-V2 已经是一个可运行的项目级自动调度内核原型：`src/apex-v2.mjs`。
+V2 是一个 **Codex-first Agent Plugin + platform-neutral Kernel**：
+
+- Codex Plugin 提供自然语言入口、六个 Skills、当前会话交互和审批体验；
+- 当前 Codex Agent 默认以 Interactive Mode claim cognitive/workspace actions；
+- Kernel 持久化项目状态、PlanGraph、artifact、policy、verification、merge 和 recovery；
+- Factory Mode 通过 capability-based WorkerExecutor 调度 Codex、Claude、Gemini 或 DeepSeek-backed runner；
+- CLI 保留为 operator/debug surface，不再是正常用户路径。
+
+Codex 本地插件：
+
+```bash
+codex plugin marketplace add .
+codex plugin add apex-forge-v2@apex-forge-local
+```
+
+Claude Code 插件位于 `plugins/claude-code/apex-forge-v2/`，DeepSeek 通过
+`ModelProvider -> generic-agent-runner` 接入，不假设不存在的原生 Agent Host。
+
+## 当前可运行能力
 
 能力清单的机器可读来源是 `capabilities.json`。
 
@@ -50,7 +69,9 @@ V2 已经是一个可运行的项目级自动调度内核原型：`src/apex-v2.m
 - `execute` 只有在全部 PlanGraph 节点都有成功 worker 结果后才能通过，避免首批 worker 完成即提前收口；
 - verification 会在隔离临时 workspace 中物化 merge queue patch，再运行项目验证命令；没有 operations 的 patch 不能冒充已验证变更；
 - ProjectKnowledgeBase 刷新和 governance learning 写回；
-- worker sandbox / worktree fallback / Codex、Claude、Gemini、shell、human adapters；
+- HostAdapter / WorkerExecutor / ModelProvider 三层扩展边界；
+- Interactive Host claim/submit/cancel、workspace baseline、scope 审计、patch bundle 和 merge queue；
+- worker sandbox / worktree fallback / Codex、Claude、Gemini、DeepSeek runner、shell、human；
 - Codex coding-agent adapter：结构化 prompt、完整 scratch/worktree、写范围审计、自动 patch bundle 和 merge queue；
 - blocked worker 可通过 `worker retry` 清理 sandbox 后重试，并保留历次 adapter evidence；
 - `project reconcile` 校验 event log 完整性，并从 run/roadmap/knowledge artifacts 检测或修复 ProjectState 漂移；
@@ -59,7 +80,7 @@ V2 已经是一个可运行的项目级自动调度内核原型：`src/apex-v2.m
 - PARTIAL_PASS 必须生成结构化 carry-forward；未处理风险会暂停 run，只有 evidence resolve 或 human accept 后才能关闭；
 - execution policy 限制 patch 文件数/字节、agent 超时和并发；critical 或敏感路径 merge 必须经过内容指纹 approval；
 - carry-forward 和 merge conflict 自动回流 Risk Register；`project metrics --record` 持久化交付、执行、质量和风险指标；
-- adapter registry 检测 Codex、Claude、Gemini，并按 execution policy 的显式 fallback order 选择可用 runtime；
+- capability registry 检测 WorkerExecutors，并按 execution policy 与 required capabilities 选择 runtime；
 - retryable adapter failure 可通过 `worker fallback` 或 `project tick --fallback-agents` 切换 runtime；scope violation 不允许换模型绕过；
 - verification/review 失败自动回流 Risk Register；`worker results --record` 汇总多 adapter attempts 和最终交付证据；
 - Claude/Gemini session_id 持久化到 worker/result，blocked worker 可通过 `worker resume` 在全新 sandbox 延续会话；
@@ -73,6 +94,9 @@ V2 已经是一个可运行的项目级自动调度内核原型：`src/apex-v2.m
 - operation 级冲突检测、merge queue、merge resolve、merge apply；
 - verification report、review report、integration report、learning report、audit report；
 - `project audit --create-intake` 把能力缺口回流为 intake。
+- run create / merge apply 使用 transaction journal、idempotency 和失败回滚；
+- Codex/Claude 插件共享六个 Skills 和自包含 runtime；
+- 30-task benchmark harness 在真实结果不足时保持 BLOCKED，不自报胜出。
 
 常用命令：
 
@@ -86,6 +110,9 @@ node src/apex-v2.mjs roadmap promote --project . --intake-id <intake-id>
 node src/apex-v2.mjs run create --project . --roadmap-id <roadmap-id>
 node src/apex-v2.mjs project tick --project . --advance --dispatch --run-workers --collect-results --complete-execute --verify --review
 node src/apex-v2.mjs project tick --project . --run-agents --agent-limit 1
+node src/apex-v2.mjs host actions --project . --host-id codex-host
+node src/apex-v2.mjs host claim --project . --host-id codex-host --worker-id <worker-id>
+node src/apex-v2.mjs host submit --project . --host-id codex-host --worker-id <worker-id> --summary "..."
 node src/apex-v2.mjs project reconcile --project .
 node src/apex-v2.mjs project reconcile --project . --apply
 node src/apex-v2.mjs worker adapters --project . --history
@@ -99,6 +126,9 @@ node src/apex-v2.mjs project audit --project . --create-intake
 
 ```bash
 npm test
+npm run build:plugin
+npm run validate:plugins
+npm run benchmark:plugin
 node src/apex-v2.mjs contracts validate --project .
 node src/apex-v2.mjs validate --project .
 ```

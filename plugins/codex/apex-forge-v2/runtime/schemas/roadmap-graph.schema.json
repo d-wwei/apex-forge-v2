@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/roadmap-graph.schema.json",
+  "title": "Apex Forge V2 Roadmap Graph",
+  "type": "object",
+  "required": ["schema_version", "updated_at", "milestones", "nodes", "edges", "wip_limits"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "updated_at": { "type": "string" },
+    "milestones": { "type": "array", "items": { "type": "string" } },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "source_intake_id", "status", "priority", "risk", "created_at", "updated_at"],
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "source_intake_id": { "type": "string" },
+          "status": { "type": "string", "enum": ["ready", "active", "blocked", "done", "deferred"] },
+          "priority": { "type": "string", "enum": ["P0", "P1", "P2", "P3"] },
+          "risk": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+          "created_at": { "type": "string" },
+          "updated_at": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["from", "to", "type"],
+        "properties": {
+          "from": { "type": "string" },
+          "to": { "type": "string" },
+          "type": { "type": "string", "enum": ["blocks", "relates", "supersedes"] }
+        },
+        "additionalProperties": false
+      }
+    },
+    "wip_limits": {
+      "type": "object",
+      "required": ["active_nodes"],
+      "properties": {
+        "active_nodes": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

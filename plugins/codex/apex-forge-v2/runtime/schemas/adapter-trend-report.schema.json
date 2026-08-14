@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/adapter-trend-report.schema.json",
+  "title": "Apex Forge V2 Adapter Trend Report",
+  "type": "object",
+  "required": ["schema_version", "generated_at", "snapshot_count", "adapters"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "generated_at": { "type": "string" },
+    "snapshot_count": { "type": "integer", "minimum": 0 },
+    "adapters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["adapter", "observations", "latest", "version_changes", "capability_changes", "availability_changes", "smoke"],
+        "properties": {
+          "adapter": { "type": "string" },
+          "observations": { "type": "integer", "minimum": 0 },
+          "latest": { "type": "object" },
+          "version_changes": { "type": "array", "items": { "type": "object" } },
+          "capability_changes": { "type": "array", "items": { "type": "object" } },
+          "availability_changes": { "type": "array", "items": { "type": "object" } },
+          "smoke": {
+            "type": "object",
+            "required": ["pass", "fail"],
+            "properties": {
+              "pass": { "type": "integer", "minimum": 0 },
+              "fail": { "type": "integer", "minimum": 0 }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

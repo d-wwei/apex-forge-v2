@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/adapter-smoke-report.schema.json",
+  "title": "Apex Forge V2 Adapter Smoke Report",
+  "type": "object",
+  "required": ["schema_version", "smoke_id", "generated_at", "mode", "status", "results"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "smoke_id": { "type": "string" },
+    "generated_at": { "type": "string" },
+    "mode": { "type": "string", "enum": ["static", "live"] },
+    "status": { "type": "string", "enum": ["PASS", "FAIL"] },
+    "results": { "type": "array", "items": { "type": "object" } }
+  },
+  "additionalProperties": false
+}

@@ -1,13 +1,15 @@
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { readJson } from "../lib/common.mjs";
-import { buildAdapterTrend } from "./adapter-observability.mjs";
-import { listAllArtifacts } from "./artifacts.mjs";
-import { inspectCodexAdapter } from "../adapters/codex.mjs";
-import { inspectAgentAdapters } from "../adapters/registry.mjs";
-import { inspectEventLog } from "./reconcile.mjs";
-import { scanProjectContracts } from "./contracts.mjs";
-import { hasExecutedTest } from "./project-audit.mjs";
+import {
+  inspectWorkerExecutor,
+  inspectWorkerExecutors
+} from "../executors/registry.mjs";
+import { buildAdapterTrend } from "../core/adapter-observability.mjs";
+import { listAllArtifacts } from "../core/artifacts.mjs";
+import { inspectEventLog } from "../core/reconcile.mjs";
+import { scanProjectContracts } from "../core/contracts.mjs";
+import { hasExecutedTest } from "../core/project-audit.mjs";
 
 export function buildAuditSummary(root, projectDir, testExecution, deps) {
   const { evaluateAdapterCapabilityDrift, findFilesByName, findRunFiles, getWorkers, listRunStates, workerSuccessfullyCompleted } = deps;
@@ -38,8 +40,8 @@ export function buildAuditSummary(root, projectDir, testExecution, deps) {
   const adapterResults = findFilesByName(root, (name) => name.startsWith("adapter-result-") && name.endsWith(".json"))
     .map((file) => readJson(file));
   const workerSummaries = findFilesByName(root, (name) => name === "worker-summary.json").map((file) => readJson(file));
-  const codexAdapter = inspectCodexAdapter("codex");
-  const agentAdapters = inspectAgentAdapters();
+  const codexAdapter = inspectWorkerExecutor("codex");
+  const agentAdapters = inspectWorkerExecutors();
   const adapterDrift = evaluateAdapterCapabilityDrift(root);
   const retryPolicy = readJson(join(root, "policies", "retry.json"), null);
   const eventLog = inspectEventLog(join(root, "events.jsonl"));
@@ -192,4 +194,3 @@ export function buildAuditSummary(root, projectDir, testExecution, deps) {
     merged_integrations: integrationReports.map((file) => readJson(file)).filter((report) => report.status === "MERGED").length
   };
 }
-
