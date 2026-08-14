@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/worker-run.schema.json",
+  "title": "Apex Forge V2 Worker Run",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "worker_id",
+    "run_id",
+    "plan_node_id",
+    "status",
+    "namespace",
+    "sandbox",
+    "read_scope",
+    "write_scope",
+    "verification",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "worker_id": { "type": "string" },
+    "run_id": { "type": "string" },
+    "plan_node_id": { "type": "string" },
+    "status": { "type": "string", "enum": ["active", "evidence_submitted", "decision_submitted", "patch_submitted", "queued", "merged", "blocked", "dropped"] },
+    "namespace": { "type": "string" },
+    "adapter": { "type": "string", "enum": ["shell", "codex", "claude", "gemini", "human"] },
+    "output_contract": { "type": "string", "enum": ["evidence", "patch", "decision"] },
+    "objective": { "type": "string" },
+    "deliverables": { "type": "array", "items": { "type": "string" } },
+    "required_evidence": { "type": "array", "items": { "type": "string" } },
+    "sandbox": {
+      "type": "object",
+      "required": ["type", "path", "status"],
+      "properties": {
+        "type": { "type": "string", "enum": ["none", "scratch", "worktree"] },
+        "path": { "type": "string" },
+        "status": { "type": "string", "enum": ["missing", "ready"] },
+        "fallback_reason": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "read_scope": { "type": "array", "items": { "type": "string" } },
+    "write_scope": { "type": "array", "items": { "type": "string" } },
+    "verification": { "type": "array", "items": { "type": "string" } },
+    "attempt": { "type": "integer", "minimum": 0 },
+    "last_adapter": { "type": ["string", "null"] },
+    "session_id": { "type": ["string", "null"] },
+    "session_adapter": { "type": ["string", "null"] },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" }
+  },
+  "additionalProperties": false
+}

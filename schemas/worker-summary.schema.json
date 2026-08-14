@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/worker-summary.schema.json",
+  "title": "Apex Forge V2 Worker Attempt Summary",
+  "type": "object",
+  "required": ["schema_version", "summary_id", "worker_id", "run_id", "plan_node_id", "generated_at", "final_status", "verdict", "adapters", "attempts", "failures", "changed_files", "patch_id"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "summary_id": { "type": "string" },
+    "worker_id": { "type": "string" },
+    "run_id": { "type": "string" },
+    "plan_node_id": { "type": "string" },
+    "generated_at": { "type": "string" },
+    "final_status": { "type": "string" },
+    "verdict": { "type": "string", "enum": ["pass", "fail", "partial"] },
+    "adapters": { "type": "array", "items": { "type": "string" } },
+    "attempts": { "type": "array", "items": { "type": "object" } },
+    "failures": { "type": "array", "items": { "type": "string" } },
+    "changed_files": { "type": "array", "items": { "type": "string" } },
+    "patch_id": { "type": ["string", "null"] }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/retry-policy.schema.json",
+  "title": "Apex Forge V2 Retry Policy",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "updated_at",
+    "max_attempts",
+    "auto_retry",
+    "non_retryable_failure_kinds"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "updated_at": { "type": "string" },
+    "max_attempts": {
+      "type": "object",
+      "required": ["shell", "codex", "human"],
+      "properties": {
+        "shell": { "type": "integer", "minimum": 1 },
+        "codex": { "type": "integer", "minimum": 1 },
+        "claude": { "type": "integer", "minimum": 1 },
+        "gemini": { "type": "integer", "minimum": 1 },
+        "human": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "auto_retry": {
+      "type": "object",
+      "required": ["enabled", "reset_sandbox", "retryable_failure_kinds"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "reset_sandbox": { "type": "boolean" },
+        "retryable_failure_kinds": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "non_retryable_failure_kinds": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": false
+}

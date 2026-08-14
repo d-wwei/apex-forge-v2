@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/adapter-observation.schema.json",
+  "title": "Apex Forge V2 Adapter Observation",
+  "type": "object",
+  "required": ["schema_version", "snapshot_id", "generated_at", "source", "smoke_id", "adapters"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "snapshot_id": { "type": "string" },
+    "generated_at": { "type": "string" },
+    "source": { "type": "string", "enum": ["baseline", "smoke", "manual"] },
+    "smoke_id": { "type": ["string", "null"] },
+    "adapters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["adapter", "available", "version", "capabilities", "smoke_status", "smoke_duration_ms"],
+        "properties": {
+          "adapter": { "type": "string" },
+          "available": { "type": "boolean" },
+          "version": { "type": "string" },
+          "capabilities": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+          "smoke_status": { "type": ["string", "null"], "enum": ["PASS", "FAIL", null] },
+          "smoke_duration_ms": { "type": ["integer", "null"], "minimum": 0 }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

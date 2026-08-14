@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/adapter-result.schema.json",
+  "title": "Apex Forge V2 Adapter Result",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "result_id",
+    "worker_id",
+    "run_id",
+    "plan_node_id",
+    "adapter",
+    "status",
+    "created_at"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "result_id": { "type": "string" },
+    "worker_id": { "type": "string" },
+    "run_id": { "type": "string" },
+    "plan_node_id": { "type": "string" },
+    "adapter": { "type": "string", "enum": ["shell", "human", "codex", "claude", "gemini"] },
+    "status": { "type": "string", "enum": ["PASS", "FAIL", "DECISION"] },
+    "failure_kind": {
+      "type": ["string", "null"],
+      "enum": [
+        "timeout",
+        "scope_violation",
+        "unsupported_change",
+        "execution_error",
+        "contract_error",
+        "agent_reported_failure",
+        "no_patch",
+        "unknown",
+        null
+      ]
+    },
+    "command": { "type": "string" },
+    "decision": { "type": "string" },
+    "summary": { "type": "string" },
+    "adapter_version": { "type": "string" },
+    "session_id": { "type": ["string", "null"] },
+    "executable": { "type": "string" },
+    "exit_code": { "type": "integer" },
+    "duration_ms": { "type": "integer", "minimum": 0 },
+    "stdout_tail": { "type": "string" },
+    "stderr_tail": { "type": "string" },
+    "changed_files": { "type": "array", "items": { "type": "string" } },
+    "out_of_scope_files": { "type": "array", "items": { "type": "string" } },
+    "unsupported_files": { "type": "array", "items": { "type": "string" } },
+    "refs": { "type": "array", "items": { "type": "string" } },
+    "created_at": { "type": "string" }
+  },
+  "additionalProperties": false
+}

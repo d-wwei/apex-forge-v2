@@ -1,0 +1,27 @@
+# Local runtime state and agent sandboxes
+.apex-v2/
+.apex-v2.lock/
+.tmp-*/
+
+# Dependencies and generated output
+node_modules/
+coverage/
+dist/
+*.log
+*.sqlite
+*.sqlite-*
+
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+auth.json
+*.pem
+*.key
+
+# OS/editor files
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/

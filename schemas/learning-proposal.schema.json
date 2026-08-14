@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/learning-proposal.schema.json",
+  "title": "Apex Forge V2 Learning Proposal",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "id",
+    "source_run_id",
+    "target_file",
+    "proposed_change",
+    "evidence_refs",
+    "confidence",
+    "status",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "id": { "type": "string" },
+    "source_run_id": { "type": "string" },
+    "target_file": { "type": "string" },
+    "proposed_change": { "type": "string" },
+    "evidence_refs": { "type": "array", "items": { "type": "string" } },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "status": { "type": "string", "enum": ["proposed", "approved", "rejected", "applied"] },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" }
+  },
+  "additionalProperties": false
+}
+

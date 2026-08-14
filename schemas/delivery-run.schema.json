@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/delivery-run.schema.json",
+  "title": "Apex Forge V2 Delivery Run",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "run_id",
+    "roadmap_node_id",
+    "status",
+    "context_snapshot",
+    "nodes",
+    "gate",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "run_id": { "type": "string" },
+    "roadmap_node_id": { "type": "string" },
+    "status": { "type": "string", "enum": ["planned", "active", "paused", "done", "failed"] },
+    "context_snapshot": {
+      "type": "object",
+      "required": ["knowledge_version", "files"],
+      "properties": {
+        "knowledge_version": { "type": "integer", "minimum": 0 },
+        "files": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "nodes": { "type": "array" },
+    "carry_forward": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "source_node_id",
+          "description",
+          "severity",
+          "target_node_id",
+          "status",
+          "evidence_refs",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "source_node_id": { "type": "string" },
+          "description": { "type": "string", "minLength": 1 },
+          "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+          "target_node_id": { "type": ["string", "null"] },
+          "status": { "type": "string", "enum": ["open", "resolved", "accepted"] },
+          "resolution": { "type": "string" },
+          "resolved_by": { "type": ["string", "null"] },
+          "evidence_refs": { "type": "array", "items": { "type": "string" } },
+          "created_at": { "type": "string" },
+          "updated_at": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "gate": { "$ref": "gate-result.schema.json" },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" }
+  },
+  "additionalProperties": false
+}

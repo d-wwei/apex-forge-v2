@@ -1,0 +1,202 @@
+{
+  "schema_version": "v0",
+  "updated_at": "2026-08-06",
+  "features": [
+    {
+      "id": "task-aware-plan-graph",
+      "purpose": "PlanGraph 从对应 intake、roadmap、affected_area 和项目文件清单生成任务相关节点与验证路径"
+    },
+    {
+      "id": "complete-plan-execute-gate",
+      "purpose": "只有全部 PlanGraph 节点都有成功 worker 结果时 execute 才能 PASS"
+    },
+    {
+      "id": "staged-patch-verification",
+      "purpose": "在隔离临时 workspace 物化 merge queue patch 后运行验证，避免测试旧代码"
+    },
+    {
+      "id": "codex-coding-agent-adapter",
+      "purpose": "在 worktree 或完整 scratch 副本中运行 Codex，审计写范围并自动生成 patch bundle"
+    },
+    {
+      "id": "project-state-reconciliation",
+      "purpose": "校验 event log 完整性，从 run、roadmap 和 knowledge artifacts 派生并修复物化状态"
+    },
+    {
+      "id": "policy-controlled-retry",
+      "purpose": "按 adapter 最大尝试次数和 failure_kind 控制人工或自动 retry"
+    },
+    {
+      "id": "runtime-contract-registry",
+      "purpose": "使用 draft 2020-12 validator 编译全部 schema，在 JSON 写入前和项目校验时阻止无效状态"
+    },
+    {
+      "id": "partial-pass-carry-forward",
+      "purpose": "PARTIAL_PASS 必须记录结构化残余风险，open carry 会暂停 run，resolve 或 human accept 后才能关闭"
+    },
+    {
+      "id": "execution-budget-and-approval",
+      "purpose": "限制 patch/agent 预算，并要求 critical 或敏感路径 merge 使用内容指纹审批"
+    },
+    {
+      "id": "risk-register-and-metrics",
+      "purpose": "把 carry/conflict 回流为长期风险，并记录项目交付、执行、质量和风险指标"
+    },
+    {
+      "id": "multi-agent-adapter-registry",
+      "purpose": "检测 Codex、Claude、Gemini CLI，并按 execution policy 显式选择或 fallback"
+    },
+    {
+      "id": "runtime-adapter-failover",
+      "purpose": "retryable runtime failure 保留证据后清理 sandbox，并切换到下一个 policy-approved adapter"
+    },
+    {
+      "id": "quality-risk-and-attempt-synthesis",
+      "purpose": "verification/review 失败自动回流风险，并把多 adapter attempts 汇总为 worker summary"
+    },
+    {
+      "id": "adapter-session-resume",
+      "purpose": "持久化 Claude/Gemini session metadata，并用全新 sandbox 恢复 blocked worker"
+    },
+    {
+      "id": "adapter-baseline-governance",
+      "purpose": "adapter capability 基线发生变化时必须通过绑定 diff 指纹的 approval 才能重录"
+    },
+    {
+      "id": "live-adapter-smoke-gate",
+      "purpose": "真实执行 Codex/Claude/Gemini structured-output smoke，失败 report 阻止新 run"
+    },
+    {
+      "id": "metrics-quality-regression-gate",
+      "purpose": "按风险、验证失败、adapter failure rate 和 cycle regression 阈值阻止新 run"
+    },
+    {
+      "id": "adapter-smoke-auto-refresh",
+      "purpose": "仅在存在待调度任务且 live smoke 已过期时按 quality policy 自动刷新，避免空闲轮询消耗"
+    },
+    {
+      "id": "failure-notification-outbox",
+      "purpose": "adapter smoke 与刷新失败按严重度和去重窗口进入持久化 notification outbox"
+    },
+    {
+      "id": "adapter-capability-version-history",
+      "purpose": "将 capability、version、availability 和 smoke 状态记录为 append-only observation 与趋势报告"
+    }
+  ],
+  "groups": [
+    {
+      "id": "project-kernel",
+      "purpose": "项目级状态、调度、自检和持续循环",
+      "commands": [
+        "init",
+        "status",
+        "validate",
+                "project tick",
+                "project reconcile",
+                "project audit"
+      ]
+    },
+    {
+      "id": "intake-roadmap",
+      "purpose": "持续接收需求、triage、进入 roadmap",
+      "commands": [
+        "intake add",
+        "intake list",
+        "intake triage",
+        "roadmap promote"
+      ]
+    },
+    {
+      "id": "delivery-run",
+      "purpose": "从 roadmap 派生 delivery run，推进节点和 plan graph",
+      "commands": [
+        "run create",
+        "run show",
+        "run plan generate",
+        "run plan validate",
+        "run carry list",
+        "run carry resolve",
+        "run carry accept",
+        "run node start",
+        "run node complete"
+      ]
+    },
+    {
+      "id": "worker-adapters",
+      "purpose": "worker 派发、sandbox/worktree、Codex/Claude/Gemini/shell/human adapter、patch bundle",
+      "commands": [
+        "worker create",
+        "worker list",
+        "worker sandbox init",
+                "worker sandbox write",
+                "worker promote-sandbox",
+                "worker exec-shell",
+                "worker exec-agent",
+                "worker adapters",
+                "worker adapters --history",
+                "worker retry",
+                "worker decide",
+        "worker submit-patch"
+      ]
+    },
+    {
+      "id": "merge-conflict",
+      "purpose": "merge queue、patch apply、operation 级冲突检测与 resolver",
+      "commands": [
+        "merge enqueue",
+        "merge status",
+        "merge resolve",
+        "merge apply"
+      ]
+    },
+    {
+      "id": "verification-review-learning",
+      "purpose": "verification report、review gate、learning governance",
+      "commands": [
+        "verify run",
+        "review generate",
+        "learn propose",
+        "learn list",
+        "learn approve",
+        "learn apply"
+      ]
+    },
+    {
+      "id": "artifact-knowledge",
+      "purpose": "artifact evidence 和项目共享知识库",
+      "commands": [
+        "artifact submit",
+        "artifact list",
+        "knowledge refresh"
+      ]
+    },
+    {
+      "id": "contract-registry",
+      "purpose": "schema 编译、历史迁移、全项目 contract scan 和 runtime write gate",
+      "commands": [
+        "contracts validate",
+        "contracts migrate"
+      ]
+    },
+    {
+      "id": "approval-control",
+      "purpose": "查看和决定高风险 merge approval",
+      "commands": [
+        "approval list",
+        "approval decide"
+      ]
+    },
+    {
+      "id": "risk-observability",
+      "purpose": "风险治理、通知 outbox、adapter 趋势和项目 metrics/eval snapshot",
+      "commands": [
+        "risk list",
+        "risk add",
+        "risk update",
+        "notification list",
+        "notification acknowledge",
+        "project metrics"
+      ]
+    }
+  ]
+}

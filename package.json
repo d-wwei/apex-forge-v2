@@ -1,0 +1,17 @@
+{
+  "name": "apex-forge-v2",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "apex-v2": "src/apex-v2.mjs"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "validate": "node src/apex-v2.mjs validate --project .",
+    "check:schemas": "node src/apex-v2.mjs contracts validate --project ."
+  },
+  "dependencies": {
+    "ajv": "8.20.0"
+  }
+}

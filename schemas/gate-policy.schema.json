@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/gate-policy.schema.json",
+  "title": "Apex Forge V2 Gate Policy",
+  "type": "object",
+  "required": ["schema_version", "updated_at", "human_gates", "automatic_gates"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "updated_at": { "type": "string" },
+    "human_gates": { "type": "array", "items": { "type": "string" } },
+    "automatic_gates": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

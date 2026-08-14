@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/metrics-snapshot.schema.json",
+  "title": "Apex Forge V2 Metrics Snapshot",
+  "type": "object",
+  "required": ["schema_version", "snapshot_id", "generated_at", "delivery", "execution", "quality", "risk"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "snapshot_id": { "type": "string" },
+    "generated_at": { "type": "string" },
+    "delivery": { "type": "object" },
+    "execution": { "type": "object" },
+    "quality": { "type": "object" },
+    "risk": { "type": "object" },
+    "window": { "type": "object" },
+    "baseline": { "type": ["object", "null"] },
+    "evaluation": { "type": "object" }
+  },
+  "additionalProperties": false
+}

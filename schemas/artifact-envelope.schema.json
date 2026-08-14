@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/artifact-envelope.schema.json",
+  "title": "Apex Forge V2 Artifact Envelope",
+  "type": "object",
+  "required": [
+    "contract_version",
+    "run_id",
+    "node_id",
+    "stage",
+    "objective",
+    "scope",
+    "inputs",
+    "outputs",
+    "assumptions",
+    "evidence_refs",
+    "risks",
+    "open_questions",
+    "gate",
+    "next_edges",
+    "human_required"
+  ],
+  "properties": {
+    "contract_version": {
+      "type": "string",
+      "const": "v0"
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "node_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stage": {
+      "type": "string",
+      "enum": [
+        "mandate",
+        "context",
+        "plan",
+        "research",
+        "execute",
+        "verify",
+        "review",
+        "integrate",
+        "learn"
+      ]
+    },
+    "objective": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scope": {
+      "type": "object",
+      "required": ["in", "out", "deferred"],
+      "properties": {
+        "in": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "out": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "deferred": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "inputs": {
+      "type": "array"
+    },
+    "outputs": {
+      "type": "array"
+    },
+    "assumptions": {
+      "type": "array"
+    },
+    "evidence_refs": {
+      "type": "array"
+    },
+    "risks": {
+      "type": "array"
+    },
+    "open_questions": {
+      "type": "array"
+    },
+    "gate": {
+      "$ref": "gate-result.schema.json"
+    },
+    "next_edges": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "human_required": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}
+

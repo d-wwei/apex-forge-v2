@@ -1,0 +1,215 @@
+{
+  "generated_at": "2026-08-13T16:32:47.424Z",
+  "commitment_scope": "provisional",
+  "report_status": "provisional",
+  "hashes": {
+    "expectations_ok": true,
+    "expectations_expected": "7264adab0544f4b239d65527becc1221132a8ca21a4ce3acfb3417b11173e0ad",
+    "expectations_current": "7264adab0544f4b239d65527becc1221132a8ca21a4ce3acfb3417b11173e0ad",
+    "script_ok": true,
+    "script_expected": "ddd25c139be7d872d5f3ca55959796c9445245b10e0130ea3677bc8f1cdb5a6c",
+    "script_current": "ddd25c139be7d872d5f3ca55959796c9445245b10e0130ea3677bc8f1cdb5a6c"
+  },
+  "results": [
+    {
+      "id": "E-201",
+      "expectation": "CLI lifecycle is executable",
+      "severity": "MEDIUM",
+      "result": "PASS",
+      "detail": "help=0, validate=0, contracts=0, reconcile=0",
+      "evidence": "live CLI execution",
+      "metric_type": "snapshot"
+    },
+    {
+      "id": "E-202",
+      "expectation": "Invalid transitions fail closed",
+      "severity": "HIGH",
+      "result": "PASS",
+      "detail": "npm_test=0, negative_path_tests=18",
+      "evidence": "tests/apex-v2.test.mjs",
+      "metric_type": "snapshot"
+    },
+    {
+      "id": "E-203",
+      "expectation": "PlanGraph is task-aware and complete-gated",
+      "severity": "HIGH",
+      "result": "PASS",
+      "detail": "npm_test=0, required_tests=2/2, persisted_plans=15",
+      "evidence": "tests and .apex-v2/runs/*/plan-graph.json",
+      "metric_type": "snapshot"
+    },
+    {
+      "id": "E-401",
+      "expectation": "Authoritative state is contract validated",
+      "severity": "HIGH",
+      "result": "PASS",
+      "detail": "schemas=41, validated=1196, skipped_json=0, errors=0",
+      "evidence": "contracts validate",
+      "metric_type": "snapshot"
+    },
+    {
+      "id": "E-402",
+      "expectation": "State writes are crash-consistent and concurrent-safe",
+      "severity": "CRITICAL",
+      "result": "PASS",
+      "detail": "atomic_write_or_lock=true, direct_overwrite_append=true, crash_concurrency_test=true",
+      "evidence": "src/lib/common.mjs, src/core/store.mjs, tests",
+      "metric_type": "snapshot"
+    },
+    {
+      "id": "E-501",
+      "expectation": "Project loop has fresh operational evidence",
+      "severity": "HIGH",
+      "result": "PASS",
+      "detail": "npm_test=0, built_in_audit=PASS, last_event_age_hours=0.0",
+      "evidence": "current npm test, project audit, events.jsonl",
+      "metric_type": "incremental"
+    },
+    {
+      "id": "E-502",
+      "expectation": "Recovery paths are policy bounded",
+      "severity": "HIGH",
+      "result": "PASS",
+      "detail": "npm_test=0, recovery_classes=5/5",
+      "evidence": "tests/apex-v2.test.mjs",
+      "metric_type": "snapshot"
+    },
+    {
+      "id": "E-503",
+      "expectation": "Parallel workers are isolated",
+      "severity": "CRITICAL",
+      "result": "PASS",
+      "detail": "npm_test=0, structural_isolation=true, real_concurrent_adversarial=true",
+      "evidence": "tests and worker sandbox implementation",
+      "metric_type": "snapshot"
+    },
+    {
+      "id": "E-601",
+      "expectation": "Candidate patches are verified, not old roots",
+      "severity": "CRITICAL",
+      "result": "PASS",
+      "detail": "npm_test=0, staged_adversarial_tests=true",
+      "evidence": "tests/apex-v2.test.mjs",
+      "metric_type": "snapshot"
+    },
+    {
+      "id": "E-602",
+      "expectation": "Integration is conflict-aware and reproducible",
+      "severity": "HIGH",
+      "result": "PASS",
+      "detail": "npm_test=0, conflict_classes=3/3",
+      "evidence": "merge conflict tests",
+      "metric_type": "snapshot"
+    },
+    {
+      "id": "E-701",
+      "expectation": "High-risk merge approval is content-bound",
+      "severity": "CRITICAL",
+      "result": "PASS",
+      "detail": "npm_test=0, fingerprint_bound=true, expiry_modeled=true",
+      "evidence": "approval schema and merge approval tests",
+      "metric_type": "snapshot"
+    },
+    {
+      "id": "E-702",
+      "expectation": "Agent execution cannot escape its capability boundary",
+      "severity": "CRITICAL",
+      "result": "PASS",
+      "detail": "elevated_adapter_permissions=false, in_tree_scope_test=true, host_escape_test=true",
+      "evidence": "Claude/Gemini adapter flags and adversarial tests",
+      "metric_type": "snapshot"
+    },
+    {
+      "id": "E-801",
+      "expectation": "Event log and reconcile recover derived state",
+      "severity": "HIGH",
+      "result": "PASS",
+      "detail": "reconcile=CONSISTENT, corruption_test=true, full_event_replay=true",
+      "evidence": "project reconcile and src/core/reconcile.mjs",
+      "metric_type": "snapshot"
+    },
+    {
+      "id": "E-802",
+      "expectation": "Quality metrics represent recent behavior",
+      "severity": "HIGH",
+      "result": "PASS",
+      "detail": "lifetime_aggregation=true, rolling_window=true",
+      "evidence": "src/core/metrics.mjs",
+      "metric_type": "incremental"
+    },
+    {
+      "id": "E-803",
+      "expectation": "Adapter health and notifications are operationally fresh",
+      "severity": "HIGH",
+      "result": "PASS",
+      "detail": "smoke_age_hours=2.5, max_age_hours=24, external_delivery_lifecycle=true",
+      "evidence": ".apex-v2/adapters/latest-live-smoke.json and notifications implementation",
+      "metric_type": "incremental"
+    },
+    {
+      "id": "E-804",
+      "expectation": "Audit PASS uses independent execution evidence",
+      "severity": "CRITICAL",
+      "result": "PASS",
+      "detail": "executes_current_tests=true, test_count_proxy=false, capability_manifest_proxy=false",
+      "evidence": "src/apex-v2.mjs audit implementation",
+      "metric_type": "snapshot"
+    },
+    {
+      "id": "E-805",
+      "expectation": "Adapter history contains a real trend",
+      "severity": "MEDIUM",
+      "result": "PASS",
+      "detail": "observations=7, span_days=9.8",
+      "evidence": ".apex-v2/adapters/history",
+      "metric_type": "incremental"
+    },
+    {
+      "id": "E-901",
+      "expectation": "Documentation and CLI remain aligned",
+      "severity": "MEDIUM",
+      "result": "PASS",
+      "detail": "shared_documented_commands=5/5",
+      "evidence": "README.md and CLI help",
+      "metric_type": "snapshot"
+    },
+    {
+      "id": "E-902",
+      "expectation": "Context Fabric is fresh, sourced, and uncertainty-aware",
+      "severity": "HIGH",
+      "result": "PASS",
+      "detail": "max_knowledge_age_days=0.1, source_sections=true, stale_markers=true, semantic_gap_declared=false",
+      "evidence": ".apex-v2/knowledge",
+      "metric_type": "incremental"
+    },
+    {
+      "id": "E-903",
+      "expectation": "Kernel architecture remains cohesive and replaceable",
+      "severity": "HIGH",
+      "result": "PASS",
+      "detail": "main_lines=1495, total_source_lines=8881, main_share=16.8%",
+      "evidence": "src/apex-v2.mjs and src/**/*.mjs",
+      "metric_type": "snapshot"
+    },
+    {
+      "id": "E-904",
+      "expectation": "Test evidence covers adversarial production risks",
+      "severity": "HIGH",
+      "result": "PASS",
+      "detail": "adversarial_classes=6/6; {\"crash_consistency\":true,\"concurrent_writers\":true,\"sandbox_escape\":true,\"false_audit_pass\":true,\"notification_delivery\":true,\"recent_metric_trap\":true}",
+      "evidence": "tests/apex-v2.test.mjs",
+      "metric_type": "snapshot"
+    }
+  ],
+  "summary": {
+    "score": 100,
+    "raw_grade": "A",
+    "effective_grade": "A",
+    "critical_fails": 0,
+    "possible": 45,
+    "earned": 45,
+    "pass": 21,
+    "warn": 0,
+    "fail": 0
+  }
+}

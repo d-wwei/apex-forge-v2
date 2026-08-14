@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/execution-policy.schema.json",
+  "title": "Apex Forge V2 Execution Policy",
+  "type": "object",
+  "required": ["schema_version", "updated_at", "budgets", "permissions", "approval"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "updated_at": { "type": "string" },
+    "budgets": {
+      "type": "object",
+      "required": ["max_changed_files_per_patch", "max_patch_bytes", "max_agent_duration_ms", "max_agent_runs_per_tick"],
+      "properties": {
+        "max_changed_files_per_patch": { "type": "integer", "minimum": 1 },
+        "max_patch_bytes": { "type": "integer", "minimum": 1 },
+        "max_agent_duration_ms": { "type": "integer", "minimum": 1000 },
+        "max_agent_runs_per_tick": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "permissions": {
+      "type": "object",
+      "required": ["allowed_adapters", "adapter_fallback_order", "adapter_fallback_failure_kinds", "merge_approval_risks", "sensitive_paths"],
+      "properties": {
+        "allowed_adapters": { "type": "array", "items": { "type": "string", "enum": ["shell", "human", "codex", "claude", "gemini"] } },
+        "adapter_fallback_order": { "type": "array", "items": { "type": "string", "enum": ["codex", "claude", "gemini"] } },
+        "adapter_fallback_failure_kinds": { "type": "array", "items": { "type": "string" } },
+        "merge_approval_risks": { "type": "array", "items": { "type": "string", "enum": ["low", "medium", "high", "critical"] } },
+        "sensitive_paths": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "approval": {
+      "type": "object",
+      "required": ["ttl_minutes", "required_capabilities"],
+      "properties": {
+        "ttl_minutes": { "type": "integer", "minimum": 1 },
+        "required_capabilities": {
+          "type": "object",
+          "required": ["merge", "adapter_baseline"],
+          "properties": {
+            "merge": { "type": "string", "const": "merge_apply" },
+            "adapter_baseline": { "type": "string", "const": "adapter_baseline_update" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

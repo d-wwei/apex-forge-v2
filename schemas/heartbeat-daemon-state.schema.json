@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/heartbeat-daemon-state.schema.json",
+  "title": "Apex Forge V2 Heartbeat Daemon State",
+  "type": "object",
+  "required": ["pid", "started_at", "interval_minutes", "project_dir"],
+  "properties": {
+    "pid": { "type": "integer", "minimum": 1 },
+    "started_at": { "type": "string" },
+    "interval_minutes": { "type": "integer", "minimum": 1 },
+    "project_dir": { "type": "string", "minLength": 1 }
+  },
+  "additionalProperties": false
+}
