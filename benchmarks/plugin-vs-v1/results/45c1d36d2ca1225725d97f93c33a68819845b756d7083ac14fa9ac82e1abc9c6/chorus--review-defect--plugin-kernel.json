@@ -1,0 +1,148 @@
+{
+  "task_id": "chorus--review-defect",
+  "task_digest": "6c09f79bdfe841fb768e7eeeb83ff9d1d70a0f66f66cb98187ac732cacd56b1e",
+  "repository": "chorus",
+  "scenario": "review-defect",
+  "mode": "plugin-kernel",
+  "candidate_digest": "45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 818206,
+    "cost": 4379287,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 1,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "0713b8ddd34fe9c9b368e6d1cb0a96fa4ab69a92",
+    "runtime_hash": "fbb9635c7fd7b24c7799126c3640c4ddc3239b4be5e2a5b9dd3f5cce103f16fc",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "4dd02cbdbafb3f56177929ec009c5966f957fae312d0e224c98e6273fbd2b71c",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--review-defect--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--review-defect--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--review-defect--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--review-defect--plugin-kernel/codex-home/sessions/2026/08/20/rollout-2026-08-20T10-47-06-01a01d10-a95e-72c2-88de-83845ccbd78a.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--review-defect--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--review-defect--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--review-defect--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--review-defect--plugin-kernel/codex-home/sessions/2026/08/20/rollout-2026-08-20T10-47-06-01a01d10-a95e-72c2-88de-83845ccbd78a.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--review-defect--plugin-kernel/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "4e390ecb3926e3f8b33a2138f2cd65098526e0f3b001c3d0260f8747783b00c2",
+      "184314e482fb4dfe4a457216a333ddbe413356946b998adc318bdc2a281ca2ab",
+      "611ee3e3b7d8bbaec024605af4ec9f54266fd6bf5a832365bd57b85f35760a2f",
+      "a27fd98bc7f31f1e0f262d6ec2aa873e5b665890ad290e7c0d925119e1baf9b0",
+      "91f9458f324f95520a52552863b593b991a29ec03c4dc7181211301fc45fd4e4"
+    ]
+  },
+  "evidence": {
+    "task_digest": "6c09f79bdfe841fb768e7eeeb83ff9d1d70a0f66f66cb98187ac732cacd56b1e",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a01d10-a95e-72c2-88de-83845ccbd78a",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Restored HttpOnly protection and added a focused regression assertion. Kernel verification, review, and integration passed with only the two allowed files changed.",
+      "tests": [
+        {
+          "command": "pnpm exec vitest run src/lib/__tests__/cookie-utils.test.ts",
+          "status": "pass",
+          "detail": "Integrated workspace: 1 file passed, 6 tests passed."
+        },
+        {
+          "command": "pnpm exec vitest run src/lib/__tests__/cookie-utils.test.ts",
+          "status": "pass",
+          "detail": "Kernel staged candidate: 1 file passed, 6 tests passed."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "artifact-mt0xmqr3-b93f9a83",
+        "artifact-mt0xmrkb-73ad4877",
+        "artifact-mt0xmsc4-3d4bd19a"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "pnpm exec vitest run src/lib/__tests__/cookie-utils.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 485,
+        "stdout_tail": "\n RUN  v4.1.0 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--review-defect--plugin-kernel/workspace\n\n ✓ src/lib/__tests__/cookie-utils.test.ts (6 tests) 2ms\n\n Test Files  1 passed (1)\n      Tests  6 passed (6)\n   Start at  11:00:44\n   Duration  87ms (transform 11ms, setup 0ms, import 16ms, tests 2ms, environment 0ms)\n\n",
+        "stderr_tail": "(node:98216) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "pnpm exec vitest run src/lib/__tests__/cookie-utils.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 471,
+        "stdout_tail": "\n RUN  v4.1.0 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--review-defect--plugin-kernel/workspace\n\n ✓ src/lib/__tests__/cookie-utils.test.ts (6 tests) 2ms\n\n Test Files  1 passed (1)\n      Tests  6 passed (6)\n   Start at  11:00:44\n   Duration  83ms (transform 11ms, setup 0ms, import 16ms, tests 2ms, environment 0ms)\n\n",
+        "stderr_tail": "(node:98243) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      },
+      {
+        "command": "node --input-type=module -e \"import {getCookieOptions} from './src/lib/cookie-utils.ts'; for(const env of ['production','development']){process.env.NODE_ENV=env; if(getCookieOptions(1).httpOnly!==true) process.exit(1)}\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 65,
+        "stdout_tail": "",
+        "stderr_tail": "(node:98250) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--review-defect--plugin-kernel/workspace/src/lib/cookie-utils.ts is not specified and it doesn't parse as CommonJS.\nReparsing as ES module because module syntax was detected. This incurs a performance overhead.\nTo eliminate this warning, add \"type\": \"module\" to /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--review-defect--plugin-kernel/workspace/package.json.\n(Use `node --trace-warnings ...` to show where the warning was created)\n"
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/lib/__tests__/cookie-utils.test.ts",
+        "src/lib/cookie-utils.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": true,
+      "evidence_score": 1,
+      "run_ids": [
+        "run-mt0x6fn4-00d30cfa"
+      ],
+      "done_run_ids": [
+        "run-mt0x6fn4-00d30cfa"
+      ],
+      "fully_closed_run_ids": [
+        "run-mt0x6fn4-00d30cfa"
+      ],
+      "active_runs": [],
+      "candidate_chain_equal": true,
+      "verification_ref": ".apex-v2/runs/run-mt0x6fn4-00d30cfa/verification-report.json",
+      "review_ref": ".apex-v2/runs/run-mt0x6fn4-00d30cfa/review-report.json",
+      "integration_ref": ".apex-v2/runs/run-mt0x6fn4-00d30cfa/integration-report.json",
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "abb24e99e8b24986a2a7af7bc560674fd3cc94149e7f38175d60d0a30b96b23a",
+        "replay_hash": "abb24e99e8b24986a2a7af7bc560674fd3cc94149e7f38175d60d0a30b96b23a",
+        "hash_equal": true
+      }
+    }
+  }
+}

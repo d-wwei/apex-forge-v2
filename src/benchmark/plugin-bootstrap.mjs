@@ -1,0 +1,386 @@
+import { existsSync, readFileSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { spawnSync } from "node:child_process";
+
+export function resolvePluginBenchmarkBootstrap({
+  runRoot,
+  processAttempt,
+  workspace,
+  task,
+  runtimePath,
+  schemaDir
+}) {
+  if (processAttempt <= 1) {
+    return bootstrapPluginBenchmarkProject({
+      workspace,
+      task,
+      runtimePath,
+      schemaDir
+    });
+  }
+  const bootstrapPath = join(runRoot, "plugin-bootstrap.json");
+  if (!existsSync(bootstrapPath)) {
+    throw new Error("plugin resume requires the prior bootstrap artifact");
+  }
+  const bootstrap = JSON.parse(readFileSync(bootstrapPath, "utf8"));
+  if (!bootstrap?.run_id || !bootstrap?.profile) {
+    throw new Error("plugin resume bootstrap artifact is incomplete");
+  }
+  const planPath = join(
+    workspace,
+    ".apex-v2",
+    "runs",
+    bootstrap.run_id,
+    "plan-graph.json"
+  );
+  if (!existsSync(planPath)) {
+    throw new Error(`plugin resume plan missing for ${bootstrap.run_id}`);
+  }
+  const plan = JSON.parse(readFileSync(planPath, "utf8"));
+  if (plan.profile !== bootstrap.profile) {
+    throw new Error(`plugin resume profile drift for ${bootstrap.run_id}`);
+  }
+  return bootstrap;
+}
+
+export function resolveCliBenchmarkBootstrap({
+  runRoot,
+  processAttempt,
+  workspace,
+  task,
+  runtimePath,
+  schemaDir
+}) {
+  if (processAttempt <= 1) {
+    return bootstrapCliBenchmarkProject({
+      workspace,
+      task,
+      runtimePath,
+      schemaDir
+    });
+  }
+  const bootstrapPath = join(runRoot, "cli-bootstrap.json");
+  if (!existsSync(bootstrapPath)) {
+    throw new Error("CLI resume requires the prior bootstrap artifact");
+  }
+  const bootstrap = JSON.parse(readFileSync(bootstrapPath, "utf8"));
+  if (!bootstrap?.run_id || !bootstrap?.profile) {
+    throw new Error("CLI resume bootstrap artifact is incomplete");
+  }
+  return bootstrap;
+}
+
+export function bootstrapPluginBenchmarkProject(options) {
+  return bootstrapBenchmarkProject({ ...options, enableFastPath: true });
+}
+
+export function bootstrapCliBenchmarkProject(options) {
+  return bootstrapBenchmarkProject({ ...options, enableFastPath: false });
+}
+
+function bootstrapBenchmarkProject({
+  workspace,
+  task,
+  runtimePath,
+  schemaDir,
+  enableFastPath
+}) {
+  const projectPath = join(workspace, ".apex-v2", "project.json");
+  const reused = existsSync(projectPath);
+  let intake = null;
+  let tick = null;
+  if (!reused) {
+    runRuntime(runtimePath, schemaDir, [
+      "init",
+      "--project",
+      workspace,
+      "--name",
+      `Benchmark ${task.task_id}`
+    ]);
+    intake = runRuntime(runtimePath, schemaDir, [
+      "intake",
+      "add",
+      "--project",
+      workspace,
+      "--type",
+      intakeType(task.scenario),
+      "--title",
+      task.title,
+      "--description",
+      [
+        task.instructions,
+        `Allowed source files: ${task.affected_files.join(", ")}.`,
+        `Public acceptance commands: ${task.acceptance_commands.join("; ")}`
+      ].join("\n"),
+      "--acceptance-json",
+      JSON.stringify(task.acceptance_commands),
+      "--area",
+      task.affected_files.join(","),
+      "--risk",
+      ["multi-step", "review-defect", "parallel", "interrupted"].includes(task.scenario)
+        ? "high"
+        : "low",
+      "--priority",
+      "P2"
+    ]);
+    runRuntime(runtimePath, schemaDir, [
+      "intake",
+      "triage",
+      "--project",
+      workspace,
+      "--id",
+      intake.id,
+      "--decision",
+      "accepted",
+      "--reason",
+      "Benchmark Host Plugin supplied explicit scope and public acceptance commands."
+    ]);
+    tick = runRuntime(runtimePath, schemaDir, [
+      "project",
+      "tick",
+      "--project",
+      workspace,
+      "--advance",
+      "--dispatch"
+    ]);
+  }
+  const status = runRuntime(runtimePath, schemaDir, [
+    "status",
+    "--project",
+    workspace
+  ]);
+  if (status.active_runs.length !== 1) {
+    throw new Error(`plugin bootstrap expected one active run, got ${status.active_runs.length}`);
+  }
+  const runId = status.active_runs[0];
+  const plan = JSON.parse(readFileSync(
+    join(workspace, ".apex-v2", "runs", runId, "plan-graph.json"),
+    "utf8"
+  ));
+  const fastPath = enableFastPath
+    ? prepareQuickFastPath({
+        workspace,
+        runtimePath,
+        schemaDir,
+        runId,
+        plan
+      })
+    : null;
+  return {
+    reused,
+    intake_id: intake?.id || plan.source_intake_id,
+    run_id: runId,
+    profile: plan.profile,
+    fast_path: fastPath,
+    tick,
+    status
+  };
+}
+
+export function closePluginBenchmarkProject({
+  workspace,
+  task,
+  runtimePath,
+  schemaDir,
+  bootstrap,
+  agentOutput
+}) {
+  const fastPath = bootstrap?.fast_path;
+  if (!fastPath) return null;
+  if (agentOutput?.verdict !== "pass" || !agentOutput.review) {
+    throw new Error("plugin quick closeout requires PASS output with typed review");
+  }
+  const implementation = runRuntime(runtimePath, schemaDir, [
+    "host",
+    "submit",
+    "--project",
+    workspace,
+    "--host-id",
+    "codex-host",
+    "--worker-id",
+    fastPath.worker_id,
+    "--claim-token",
+    fastPath.claim_token,
+    "--summary",
+    agentOutput.summary
+  ]);
+  runRuntime(runtimePath, schemaDir, [
+    "project",
+    "tick",
+    "--project",
+    workspace,
+    "--collect-results",
+    "--dispatch"
+  ]);
+  const actions = runRuntime(runtimePath, schemaDir, [
+    "host",
+    "actions",
+    "--project",
+    workspace,
+    "--host-id",
+    "codex-host"
+  ]);
+  const reviewAction = actions.find((action) =>
+    action.run_id === bootstrap.run_id
+    && action.plan_node_id.endsWith("review")
+  );
+  if (!reviewAction?.candidate_digest) {
+    throw new Error("plugin quick closeout review action lacks candidate digest");
+  }
+  const reviewClaim = runRuntime(runtimePath, schemaDir, [
+    "host",
+    "claim",
+    "--project",
+    workspace,
+    "--host-id",
+    "codex-host",
+    "--worker-id",
+    reviewAction.worker_id
+  ]);
+  const implementationRoot = `.apex-v2/runs/${bootstrap.run_id}/workers/${fastPath.worker_id}`;
+  const patchRef = `${implementationRoot}/patches/${implementation.patch_id}/patch-bundle.json`;
+  const review = agentOutput.review;
+  const evidence = {
+    schema_version: "v0",
+    evidence_type: "review",
+    objective: reviewAction.objective,
+    source_refs: [
+      `.apex-v2/intake/items.json#${bootstrap.intake_id}`,
+      `.apex-v2/runs/${bootstrap.run_id}/plan-graph.json`,
+      patchRef,
+      `${implementationRoot}/host-result.json`,
+      `.apex-v2/runs/${bootstrap.run_id}/merge-queue.json`
+    ],
+    claims: review.claims,
+    uncertainties: review.uncertainties || [],
+    acceptance_mapping: review.acceptance_mapping.map((item) => ({
+      criterion: item.criterion,
+      evidence_ref: patchRef,
+      status: item.status
+    })),
+    candidate_digest: reviewAction.candidate_digest,
+    findings: review.findings || [],
+    residual_risks: review.residual_risks || [],
+    merge_posture: review.merge_posture,
+    created_at: new Date().toISOString()
+  };
+  const reviewSubmission = runRuntime(runtimePath, schemaDir, [
+    "host",
+    "submit",
+    "--project",
+    workspace,
+    "--host-id",
+    "codex-host",
+    "--worker-id",
+    reviewAction.worker_id,
+    "--claim-token",
+    reviewClaim.action.claim_token,
+    "--summary",
+    `Quick review: ${agentOutput.summary}`,
+    "--evidence-json",
+    JSON.stringify(evidence)
+  ]);
+  const closeout = runRuntime(runtimePath, schemaDir, [
+    "project",
+    "tick",
+    "--project",
+    workspace,
+    "--collect-results",
+    "--complete-execute",
+    "--verify",
+    "--review",
+    "--integrate",
+    "--learn",
+    "--apply-learning"
+  ], {
+    APEX_V2_VERIFY_TMPDIR: "/private/tmp",
+    TMPDIR: "/private/tmp"
+  });
+  const status = runRuntime(runtimePath, schemaDir, [
+    "status",
+    "--project",
+    workspace
+  ]);
+  if (status.active_runs.length !== 0) {
+    throw new Error(`plugin quick closeout left active runs: ${status.active_runs.join(",")}`);
+  }
+  return {
+    implementation,
+    review_submission: reviewSubmission,
+    closeout,
+    status,
+    candidate_digest: reviewAction.candidate_digest
+  };
+}
+
+function prepareQuickFastPath({
+  workspace,
+  runtimePath,
+  schemaDir,
+  runId,
+  plan
+}) {
+  if (plan.profile !== "quick") return null;
+  const actions = runRuntime(runtimePath, schemaDir, [
+    "host",
+    "actions",
+    "--project",
+    workspace,
+    "--host-id",
+    "codex-host"
+  ]);
+  const implementation = actions.find((action) =>
+    action.run_id === runId
+    && action.plan_node_id === "delivery-implementation"
+  );
+  if (!implementation) {
+    throw new Error("plugin quick bootstrap expected implementation action");
+  }
+  const claim = runRuntime(runtimePath, schemaDir, [
+    "host",
+    "claim",
+    "--project",
+    workspace,
+    "--host-id",
+    "codex-host",
+    "--worker-id",
+    implementation.worker_id
+  ]);
+  return {
+    stage: "implementation",
+    worker_id: implementation.worker_id,
+    claim_token: claim.action.claim_token,
+    workspace_path: resolve(workspace, claim.workspace.workspace_path),
+    write_scope: implementation.write_scope,
+    verification_commands: plan.verification_policy.required_commands
+  };
+}
+
+function runRuntime(runtimePath, schemaDir, args, extraEnv = {}) {
+  const result = spawnSync(process.execPath, [runtimePath, ...args], {
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      APEX_V2_SCHEMA_DIR: schemaDir,
+      ...extraEnv
+    }
+  });
+  if (result.status !== 0) {
+    throw new Error(
+      `plugin bootstrap failed: ${args.join(" ")}: ${result.stderr || result.stdout}`
+    );
+  }
+  const output = result.stdout.trim();
+  try {
+    return JSON.parse(output);
+  } catch {
+    return { stdout: output };
+  }
+}
+
+function intakeType(scenario) {
+  if (scenario === "bug-fix") return "bug";
+  if (scenario === "review-defect") return "review_feedback";
+  if (scenario === "interrupted") return "test_failure";
+  return "feature";
+}

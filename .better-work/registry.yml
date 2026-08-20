@@ -1,0 +1,10 @@
+schema_version: 2
+project:
+  name: v2
+  path: /Users/admin/Documents/AI/Apex-forge/v2
+  knowledge_dir: .better-work
+  home_link: ~/.better-work/v2
+  initialized_by: better-code
+  created_at: 2026-08-14T16:58:56Z
+  subskills:
+    - better-code

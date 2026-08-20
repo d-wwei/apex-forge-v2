@@ -15,6 +15,8 @@ test("launchd heartbeat installer persists a secret-free scheduled runner", () =
   const home = mkdtempSync(join(tmpdir(), "apex-heartbeat-home-"));
   writeJson(join(project, ".apex-v2", "project.json"), {
     schema_version: "v0",
+    format_version: 1,
+    revision: 0,
     project_id: "scheduler",
     project_name: "Scheduler",
     created_at: "2026-08-13T00:00:00.000Z",

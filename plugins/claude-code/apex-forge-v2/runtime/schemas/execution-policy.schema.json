@@ -7,6 +7,45 @@
   "properties": {
     "schema_version": { "type": "string", "const": "v0" },
     "updated_at": { "type": "string" },
+    "interactive_workspace_patch": {
+      "type": "object",
+      "required": ["enabled"],
+      "properties": {
+        "enabled": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "interactive_host_claim": {
+      "type": "object",
+      "required": ["lease_seconds"],
+      "properties": {
+        "lease_seconds": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "execution_router": {
+      "type": "object",
+      "required": [
+        "factory_min_duration_minutes",
+        "force_factory_risks",
+        "factory_on_isolation",
+        "factory_on_resume",
+        "factory_on_background",
+        "factory_on_parallel_execution"
+      ],
+      "properties": {
+        "factory_min_duration_minutes": { "type": "integer", "minimum": 1 },
+        "force_factory_risks": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["low", "medium", "high", "critical"] }
+        },
+        "factory_on_isolation": { "type": "boolean" },
+        "factory_on_resume": { "type": "boolean" },
+        "factory_on_background": { "type": "boolean" },
+        "factory_on_parallel_execution": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
     "budgets": {
       "type": "object",
       "required": ["max_changed_files_per_patch", "max_patch_bytes", "max_agent_duration_ms", "max_agent_runs_per_tick"],

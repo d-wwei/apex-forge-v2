@@ -15,6 +15,10 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
   const planId = shortId("plan");
   const scopes = inferPlanScopes(intake, inventory);
   const verificationCommands = inferVerificationCommands(inventory);
+  const declaredVerificationCommands = extractDeclaredVerificationCommands(intake);
+  const taskVerificationCommands = declaredVerificationCommands.length > 0
+    ? declaredVerificationCommands.slice(0, 5)
+    : verificationCommands;
   const runArtifactScope = `.apex-v2/runs/${run.run_id}/workers/`;
   const contextRefs = unique([
     ".apex-v2/knowledge/index.md",
@@ -25,7 +29,7 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
     ...scopes.implementation,
     ...scopes.tests
   ]);
-  const nodes = [
+  const fullNodes = [
     planNode({
       id: "delivery-context",
       title: "任务上下文与验收边界",
@@ -37,7 +41,7 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
       writeScope: [`${runArtifactScope}context/`],
       deliverables: ["任务上下文摘要", "验收标准", "已知与未知项"],
       requiredEvidence: ["intake 与 roadmap 引用", "相关代码或文档来源", "可验证验收标准"],
-      verification: verificationCommands.slice(0, 1),
+      verification: taskVerificationCommands.slice(0, 1),
       mergeStrategy: "只产出 evidence，不直接修改项目代码。",
       executionClass: "cognitive",
       requiredCapabilities: ["structured_output"],
@@ -56,7 +60,7 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
       writeScope: [`${runArtifactScope}risk/`],
       deliverables: ["风险清单", "反证与替代方案", "回归检查范围"],
       requiredEvidence: ["danger-zone 引用", "失败路径", "风险处置建议"],
-      verification: verificationCommands.slice(0, 1),
+      verification: taskVerificationCommands.slice(0, 1),
       mergeStrategy: "与 context 分析并行，输出独立 evidence card。",
       executionClass: "cognitive",
       requiredCapabilities: ["structured_output"],
@@ -75,7 +79,7 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
       writeScope: [`${runArtifactScope}design/`],
       deliverables: ["实施切片", "依赖与并行策略", "回滚方案"],
       requiredEvidence: ["上下文 evidence", "风险 evidence", "每个切片的验证路径"],
-      verification: verificationCommands.slice(0, 2),
+      verification: taskVerificationCommands.slice(0, 2),
       mergeStrategy: "方案先于代码写入；发现范围冲突时返回 planning。",
       executionClass: "cognitive",
       requiredCapabilities: ["structured_output"],
@@ -94,11 +98,12 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
       writeScope: scopes.implementation,
       deliverables: ["可审查 patch bundle", "行为变化说明", "残余风险"],
       requiredEvidence: ["changed_files", "patch artifact", "局部验证结果"],
-      verification: verificationCommands,
+      verification: taskVerificationCommands,
       mergeStrategy: "worker 只提交 patch bundle；由 coordinator 串行合并。",
       executionClass: "workspace_patch",
       requiredCapabilities: ["structured_output", "workspace_write", "tool_use"],
       preferredMode: "interactive",
+      executionHints: { estimated_duration_minutes: 20 },
       outputContract: "patch",
       risk: normalizedRisk(intake.risk, "high")
     }),
@@ -113,11 +118,12 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
       writeScope: scopes.tests,
       deliverables: ["自动化测试 patch", "失败路径证明", "覆盖范围说明"],
       requiredEvidence: ["新增或更新测试", "测试命令输出", "失败路径断言"],
-      verification: verificationCommands,
+      verification: taskVerificationCommands,
       mergeStrategy: "可与主实现并行；write_scope 重叠时必须拆分或串行。",
       executionClass: "workspace_patch",
       requiredCapabilities: ["structured_output", "workspace_write", "tool_use"],
       preferredMode: "interactive",
+      executionHints: { estimated_duration_minutes: 20 },
       outputContract: "patch",
       risk: normalizedRisk(intake.risk, "medium")
     }),
@@ -132,7 +138,7 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
       writeScope: [`${runArtifactScope}verification/`],
       deliverables: ["verification report", "命令输出证据", "残余风险"],
       requiredEvidence: ["命令 exit code", "输出尾部", "覆盖与跳过说明"],
-      verification: verificationCommands,
+      verification: taskVerificationCommands,
       mergeStrategy: "验证节点只汇总证据，不替代 implementation patch。",
       adapter: "shell",
       executionClass: "deterministic_check",
@@ -152,7 +158,7 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
       writeScope: scopes.implementation,
       deliverables: ["review findings", "阻塞项修复 patch 或 PASS 决策", "merge posture"],
       requiredEvidence: ["需求符合性", "blocking findings", "merge posture"],
-      verification: verificationCommands,
+      verification: taskVerificationCommands,
       mergeStrategy: "只处理 review 阻塞项；新增范围必须返回 intake 或 replan。",
       executionClass: "cognitive",
       requiredCapabilities: ["structured_output"],
@@ -162,6 +168,32 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
     })
   ];
 
+  const profile = shouldUseQuickPlan(intake, inventory) ? "quick" : "full";
+  const nodes = profile === "quick"
+    ? buildQuickPlanNodes({
+        roadmapNode,
+        intake,
+        scopes,
+        verificationCommands: taskVerificationCommands,
+        contextRefs,
+        runArtifactScope
+      })
+    : fullNodes;
+  const parallelLanes = profile === "quick"
+    ? [
+        { id: "build", purpose: "单一 ActionWorkspace 同时完成实现与测试，减少简单任务往返。", node_ids: ["delivery-implementation"] },
+        { id: "readiness", purpose: "复核需求符合性与 merge posture。", node_ids: ["delivery-review"] }
+      ]
+    : [
+        { id: "discovery", purpose: "并行核对上下文与风险，避免单一路径自证。", node_ids: ["delivery-context", "delivery-risk"] },
+        { id: "planning", purpose: "汇总证据并形成任务级实施切片。", node_ids: ["delivery-design"] },
+        { id: "build", purpose: "主实现与测试在写入范围互斥时并行。", node_ids: ["delivery-implementation", "delivery-tests"] },
+        { id: "verification", purpose: "独立执行真实项目验证并固化证据。", node_ids: ["delivery-verification"] },
+        { id: "readiness", purpose: "复核需求符合性并只修复明确阻塞项。", node_ids: ["delivery-review"] }
+      ];
+  const mergeOrder = profile === "quick"
+    ? ["build", "readiness"]
+    : ["discovery", "planning", "build", "verification", "readiness"];
   const edges = nodes.flatMap((node) =>
     node.dependencies.map((dependency) => edge(dependency, node.id, node.id === "delivery-verification" ? "verifies" : "blocks"))
   );
@@ -176,7 +208,10 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
     source_title: roadmapNode.title,
     affected_area: intake.affected_area,
     generated_at: timestamp,
-    strategy: strategyForIntake(intake, roadmapNode.title),
+    profile,
+    strategy: profile === "quick"
+      ? `针对“${roadmapNode.title}”使用低开销 quick route：单一隔离 patch 同时完成实现与测试，再独立验证和语义评审。`
+      : strategyForIntake(intake, roadmapNode.title),
     planning_basis: [
       `.apex-v2/intake/items.json#${intake.id}`,
       `.apex-v2/roadmap/graph.json#${roadmapNode.id}`,
@@ -192,18 +227,12 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
     ],
     nodes,
     edges,
-    parallel_lanes: [
-      { id: "discovery", purpose: "并行核对上下文与风险，避免单一路径自证。", node_ids: ["delivery-context", "delivery-risk"] },
-      { id: "planning", purpose: "汇总证据并形成任务级实施切片。", node_ids: ["delivery-design"] },
-      { id: "build", purpose: "主实现与测试在写入范围互斥时并行。", node_ids: ["delivery-implementation", "delivery-tests"] },
-      { id: "verification", purpose: "独立执行真实项目验证并固化证据。", node_ids: ["delivery-verification"] },
-      { id: "readiness", purpose: "复核需求符合性并只修复明确阻塞项。", node_ids: ["delivery-review"] }
-    ],
+    parallel_lanes: parallelLanes,
     merge_policy: {
       coordinator_required: true,
       worker_output: "patch_bundle_and_artifacts_only",
       direct_worker_write_to_derived: false,
-      merge_order: ["discovery", "planning", "build", "verification", "readiness"]
+      merge_order: mergeOrder
     },
     conflict_policy: {
       detect_by: ["write_scope_overlap", "same_file_patch", "same_text_patch", "schema_version_change"],
@@ -212,8 +241,10 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
       human_gate_when: ["schema_breaking_change", "security_sensitive_change", "unresolved_patch_conflict"]
     },
     verification_policy: {
-      required_commands: verificationCommands,
-      schema_check: inventory.schemaFiles.length > 0
+      required_commands: taskVerificationCommands,
+      schema_check: declaredVerificationCommands.length === 0
+        && profile === "full"
+        && inventory.schemaFiles.length > 0
         ? "node src/apex-v2.mjs contracts validate --project ."
         : null,
       evidence_level: "PASS requires command evidence linked to the current run"
@@ -234,8 +265,9 @@ export function validatePlanGraph(plan) {
   const lanes = new Map((plan.parallel_lanes || []).map((lane) => [lane.id, lane]));
   const laneMembership = new Map();
 
-  if (!Array.isArray(plan.nodes) || plan.nodes.length < 5) {
-    errors.push("plan graph 至少需要 5 个节点");
+  const minimumNodes = plan.profile === "quick" ? 2 : 5;
+  if (!Array.isArray(plan.nodes) || plan.nodes.length < minimumNodes) {
+    errors.push(`plan graph 至少需要 ${minimumNodes} 个节点`);
     return validationResult(plan, errors);
   }
 
@@ -303,6 +335,97 @@ export function validatePlanGraph(plan) {
   return validationResult(plan, errors);
 }
 
+function buildQuickPlanNodes({
+  roadmapNode,
+  intake,
+  scopes,
+  verificationCommands,
+  contextRefs,
+  runArtifactScope
+}) {
+  const writeScope = unique([...scopes.implementation, ...scopes.tests]);
+  return [
+    planNode({
+      id: "delivery-implementation",
+      title: "快速实现与测试切片",
+      lane: "implementation",
+      parallelGroup: "build",
+      objective: `在单一 ActionWorkspace 内完成“${roadmapNode.title}”的最小实现、聚焦测试和公开验收命令。`,
+      dependencies: [],
+      readScope: unique([...contextRefs, ...writeScope]),
+      writeScope,
+      deliverables: ["实现与测试 patch bundle", "公开验收结果", "残余风险"],
+      requiredEvidence: ["changed_files", "patch artifact", "测试命令输出"],
+      verification: verificationCommands,
+      mergeStrategy: "简单任务只允许一个隔离 patch，避免实现与测试双 worker 往返。",
+      executionClass: "workspace_patch",
+      requiredCapabilities: ["structured_output", "workspace_write", "tool_use"],
+      preferredMode: "interactive",
+      executionHints: { estimated_duration_minutes: 8 },
+      outputContract: "patch",
+      risk: normalizedRisk(intake.risk, "medium")
+    }),
+    planNode({
+      id: "delivery-review",
+      title: "快速语义评审",
+      lane: "review",
+      parallelGroup: "readiness",
+      objective: `复核“${roadmapNode.title}”的需求映射、ActionWorkspace 验收证据与 merge posture。`,
+      dependencies: ["delivery-implementation"],
+      readScope: unique([...contextRefs, ...writeScope]),
+      writeScope: scopes.implementation,
+      deliverables: ["review findings", "residual risks", "merge posture"],
+      requiredEvidence: ["需求符合性", "ActionWorkspace public acceptance", "merge posture"],
+      verification: verificationCommands,
+      mergeStrategy: "只允许修复明确阻塞项；新增范围返回 full route。",
+      executionClass: "cognitive",
+      requiredCapabilities: ["structured_output"],
+      preferredMode: "interactive",
+      outputContract: "evidence",
+      risk: normalizedRisk(intake.risk, "medium")
+    })
+  ];
+}
+
+function shouldUseQuickPlan(intake, inventory) {
+  if (!["low", "medium"].includes(normalizedRisk(intake.risk, "medium"))) return false;
+  const explicit = parseAffectedArea(intake.affected_area, inventory.files)
+    .filter((scope) => !scope.startsWith(".apex-v2/"));
+  if (explicit.length === 0 || explicit.length > 4) return false;
+  if (intake.triage?.status !== "accepted") return false;
+  const description = `${intake.title}\n${intake.description}`.toLowerCase();
+  return !/(parallel|interrupted|resume|recovery|review[- ]defect|security defect|two independent|并行|中断|恢复|安全缺陷)/i
+    .test(description);
+}
+
+export function inferQuickVerificationCommands(intake, fallbackCommands) {
+  const selected = extractDeclaredVerificationCommands(intake);
+  return selected.length > 0 ? selected.slice(0, 5) : fallbackCommands;
+}
+
+export function extractDeclaredVerificationCommands(intake) {
+  const typed = (intake.acceptance_commands || [])
+    .map((value) => String(value).trim())
+    .filter(isVerificationCommand);
+  const refs = (intake.evidence_refs || [])
+    .map((value) => String(value).trim())
+    .filter(isVerificationCommand);
+  if (typed.length > 0) return unique([...typed, ...refs]);
+  const description = String(intake.description || "");
+  const declared = description.match(
+    /public acceptance(?: command)?s?\s*:\s*([^\n]+)/i
+  )?.[1]
+    ?.split(/\s*;\s*/)
+    .map((value) => value.trim())
+    .filter(isVerificationCommand) || [];
+  return unique([...refs, ...declared]);
+}
+
+function isVerificationCommand(value) {
+  return /^(?:[A-Za-z_][A-Za-z0-9_]*=(?:"[^"]*"|'[^']*'|[^\s]+)\s+)*(?:npm|pnpm|yarn|bun|node|npx|pytest|python\s+-m\s+pytest|cargo|go\s+test|make|test\b)/i
+    .test(String(value || "").trim());
+}
+
 export function renderPlanGraphMarkdown(plan) {
   return `# Plan Graph
 
@@ -349,6 +472,7 @@ ${plan.nodes.map((node) => `### ${node.id}：${node.title}
 - adapter: ${node.adapter || "policy-selected"}
 - execution_class: ${node.execution_class || "legacy"}
 - preferred_mode: ${node.preferred_mode || "legacy"}
+- execution_hints: ${JSON.stringify(node.execution_hints || {})}
 - required_capabilities: ${(node.required_capabilities || []).join(", ") || "无"}
 - output_contract: ${node.output_contract}
 - risk: ${node.risk}
@@ -441,6 +565,13 @@ function planNode(input) {
     execution_class: input.executionClass,
     required_capabilities: unique(input.requiredCapabilities || []),
     preferred_mode: input.preferredMode,
+    execution_hints: {
+      estimated_duration_minutes: Number(input.executionHints?.estimated_duration_minutes || 10),
+      requires_isolation: Boolean(input.executionHints?.requires_isolation),
+      requires_resume: Boolean(input.executionHints?.requires_resume),
+      background: Boolean(input.executionHints?.background),
+      requires_parallel_execution: Boolean(input.executionHints?.requires_parallel_execution)
+    },
     output_contract: input.outputContract,
     risk: input.risk
   };

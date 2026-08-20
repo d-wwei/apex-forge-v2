@@ -1,0 +1,169 @@
+{
+  "task_id": "chorus--bug-fix",
+  "task_digest": "e9c5e9c11d14f64553fa1410300d2e4f97f75ad67d731561d4fe77a0027ffc8c",
+  "repository": "chorus",
+  "scenario": "bug-fix",
+  "mode": "plugin-kernel",
+  "candidate_digest": "45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 77800,
+    "cost": 72103,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 1,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "0713b8ddd34fe9c9b368e6d1cb0a96fa4ab69a92",
+    "runtime_hash": "fbb9635c7fd7b24c7799126c3640c4ddc3239b4be5e2a5b9dd3f5cce103f16fc",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "4dd02cbdbafb3f56177929ec009c5966f957fae312d0e224c98e6273fbd2b71c",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--bug-fix--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--bug-fix--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--bug-fix--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--bug-fix--plugin-kernel/codex-home/sessions/2026/08/20/rollout-2026-08-20T10-28-36-01a01cff-b909-7381-9dc3-9e9a9b2e1778.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--bug-fix--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--bug-fix--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--bug-fix--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--bug-fix--plugin-kernel/codex-home/sessions/2026/08/20/rollout-2026-08-20T10-28-36-01a01cff-b909-7381-9dc3-9e9a9b2e1778.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--bug-fix--plugin-kernel/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "34770b1ef59b29ca8f786331a12b30003c112c9516c074de5489bc8f5c6641ef",
+      "ccc28818ca228df1f19e40c18d5488ba32793a1bfdba3b4b590a9c0f8aa48549",
+      "51bb031776d5627257269f0036bc25871a87473131aa25a1e6e85240b15c4900",
+      "a1a321f58d857a1dea2dea5dd3c22ae928578e89ece8d97525a5292ae2b1c193",
+      "81b11b4d1374adb9d72694b1b168f606c324d4f1081c03a09d46f616af8c268c"
+    ]
+  },
+  "evidence": {
+    "task_digest": "e9c5e9c11d14f64553fa1410300d2e4f97f75ad67d731561d4fe77a0027ffc8c",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a01cff-b909-7381-9dc3-9e9a9b2e1778",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Restored production-only secure cookies while preserving the explicit COOKIE_SECURE=false override and all existing cookie attributes.",
+      "tests": [
+        {
+          "command": "pnpm exec vitest run src/lib/__tests__/cookie-utils.test.ts",
+          "status": "pass",
+          "detail": "1 test file passed; 5 tests passed."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "src/lib/cookie-utils.ts",
+        "src/lib/__tests__/cookie-utils.test.ts"
+      ],
+      "review": {
+        "claims": [
+          "Secure cookies are enabled only when NODE_ENV is production and COOKIE_SECURE is not false.",
+          "COOKIE_SECURE=false disables secure cookies in production.",
+          "httpOnly, sameSite, path, and maxAge behavior is unchanged."
+        ],
+        "uncertainties": [],
+        "acceptance_mapping": [
+          {
+            "criterion": "Production defaults to secure cookies",
+            "status": "supported"
+          },
+          {
+            "criterion": "COOKIE_SECURE=false override remains effective",
+            "status": "supported"
+          },
+          {
+            "criterion": "Non-production cookies are insecure",
+            "status": "supported"
+          },
+          {
+            "criterion": "Existing cookie attributes remain unchanged",
+            "status": "supported"
+          }
+        ],
+        "findings": [],
+        "residual_risks": [],
+        "merge_posture": "approve"
+      }
+    },
+    "acceptance": [
+      {
+        "command": "pnpm exec vitest run src/lib/__tests__/cookie-utils.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 482,
+        "stdout_tail": "\n RUN  v4.1.0 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--bug-fix--plugin-kernel/workspace\n\n ✓ src/lib/__tests__/cookie-utils.test.ts (5 tests) 2ms\n\n Test Files  1 passed (1)\n      Tests  5 passed (5)\n   Start at  10:29:53\n   Duration  86ms (transform 13ms, setup 0ms, import 18ms, tests 2ms, environment 0ms)\n\n",
+        "stderr_tail": "(node:82957) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "pnpm exec vitest run src/lib/__tests__/cookie-utils.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 485,
+        "stdout_tail": "\n RUN  v4.1.0 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--bug-fix--plugin-kernel/workspace\n\n ✓ src/lib/__tests__/cookie-utils.test.ts (5 tests) 2ms\n\n Test Files  1 passed (1)\n      Tests  5 passed (5)\n   Start at  10:29:54\n   Duration  84ms (transform 10ms, setup 0ms, import 15ms, tests 2ms, environment 0ms)\n\n",
+        "stderr_tail": "(node:82977) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      },
+      {
+        "command": "! rg -q 'NODE_ENV === \"production\" \\|\\| !forceInsecure' src/lib/cookie-utils.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 33,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/lib/cookie-utils.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": true,
+      "evidence_score": 1,
+      "run_ids": [
+        "run-mt0wimqw-dbe666c9"
+      ],
+      "done_run_ids": [
+        "run-mt0wimqw-dbe666c9"
+      ],
+      "fully_closed_run_ids": [
+        "run-mt0wimqw-dbe666c9"
+      ],
+      "active_runs": [],
+      "candidate_chain_equal": true,
+      "verification_ref": ".apex-v2/runs/run-mt0wimqw-dbe666c9/verification-report.json",
+      "review_ref": ".apex-v2/runs/run-mt0wimqw-dbe666c9/review-report.json",
+      "integration_ref": ".apex-v2/runs/run-mt0wimqw-dbe666c9/integration-report.json",
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "0ac0adf6555f376f3fe4381b9004812082bdac3336cfee9d6d5ca61c57e42b41",
+        "replay_hash": "0ac0adf6555f376f3fe4381b9004812082bdac3336cfee9d6d5ca61c57e42b41",
+        "hash_equal": true
+      }
+    }
+  }
+}

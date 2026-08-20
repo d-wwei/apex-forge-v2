@@ -1,0 +1,138 @@
+{
+  "task_id": "apex-forge-v1--multi-step",
+  "task_digest": "096d755ee28b942e5721bc9ddac30569c7d9432ee3d2de71c1a43a41634303d2",
+  "repository": "apex-forge-v1",
+  "scenario": "multi-step",
+  "mode": "v1-skill",
+  "candidate_digest": "45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 0.6666666666666666,
+    "wall_ms": 133816,
+    "cost": 256956,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 0,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "3755583552540121bcb1287c5bdba3c8b2578726",
+    "runtime_hash": "fbb9635c7fd7b24c7799126c3640c4ddc3239b4be5e2a5b9dd3f5cce103f16fc",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "b1c121e8af6903182ff24e5782c41aaf5cdf620a02db4d64bc413b29c3324516",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--multi-step--v1-skill/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--multi-step--v1-skill/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--multi-step--v1-skill/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--multi-step--v1-skill/codex-home/sessions/2026/08/20/rollout-2026-08-20T08-07-31-01a01c7e-8e25-7721-a69c-04d22bb5f4b7.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--multi-step--v1-skill/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--multi-step--v1-skill/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--multi-step--v1-skill/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--multi-step--v1-skill/codex-home/sessions/2026/08/20/rollout-2026-08-20T08-07-31-01a01c7e-8e25-7721-a69c-04d22bb5f4b7.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--multi-step--v1-skill/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "4b7621f24563faccc481be2fe47ed162121e660a33a3721f5404ff8774de817d",
+      "ed9ff68d829e7681bfc40c616ead0300c353dec993b3a0b9bae8f9d30a7084af",
+      "73d9facb15b1400bc287fdd5a474114257c2c3ce129a136003c7045d1dc7d9c5",
+      "678612e10dfe6f6a9bf8e842b93d7b40a0d2864b4001e139418d084c26e25938",
+      "0739c6359f6d96326a2caa8f8a5edb212986b476f931f6752b993acdfbdcb4e3"
+    ]
+  },
+  "evidence": {
+    "task_digest": "096d755ee28b942e5721bc9ddac30569c7d9432ee3d2de71c1a43a41634303d2",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a01c7e-8e25-7721-a69c-04d22bb5f4b7",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Updated the flat YAML parser to recognize inline comments only outside quoted values. Added the required focused regression test.",
+      "tests": [
+        {
+          "command": "bun test src/__tests__/cli.test.ts --test-name-pattern \"parseSimpleYaml preserves hashes inside quoted values\"",
+          "status": "fail",
+          "detail": "Expected TDD RED: quoted hashes were truncated."
+        },
+        {
+          "command": "bun test src/__tests__/cli.test.ts --test-name-pattern \"parseSimpleYaml preserves hashes inside quoted values\"",
+          "status": "pass",
+          "detail": "1 test passed."
+        },
+        {
+          "command": "bun -e 'import { parseSimpleYaml } from \"./src/state/config.ts\"; const v=parseSimpleYaml(\"a: plain\\nb: '\\''quoted'\\''\\n\"); if (v.a !== \"plain\" || v.b !== \"quoted\") process.exit(1)'",
+          "status": "pass",
+          "detail": "Public acceptance command passed."
+        },
+        {
+          "command": "bunx biome check src/state/config.ts src/__tests__/cli.test.ts",
+          "status": "pass",
+          "detail": "Checked 2 files with no issues."
+        },
+        {
+          "command": "git diff --check",
+          "status": "pass",
+          "detail": "No whitespace errors."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "src/state/config.ts",
+        "src/__tests__/cli.test.ts"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "bun -e 'import { parseSimpleYaml } from \"./src/state/config.ts\"; const v=parseSimpleYaml(\"a: plain\\nb: '\\''quoted'\\''\\n\"); if (v.a !== \"plain\" || v.b !== \"quoted\") process.exit(1)'",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 35,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "bun -e 'import { parseSimpleYaml } from \"./src/state/config.ts\"; const v=parseSimpleYaml(\"label: \\\"release #1\\\"\\nmode: fast # local\\n\"); if (v.label !== \"release #1\" || v.mode !== \"fast\") process.exit(1)'",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 30,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      },
+      {
+        "command": "bun -e 'import { parseSimpleYaml } from \"./src/state/config.ts\"; const v=parseSimpleYaml(\"a: plain\\nb: '\\''quoted'\\''\\n\"); if (v.a !== \"plain\" || v.b !== \"quoted\") process.exit(1)'",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 29,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/__tests__/cli.test.ts",
+        "src/state/config.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": false,
+      "evidence_score": 0.6666666666666666,
+      "reason": "no .apex-v2 durable state"
+    }
+  }
+}

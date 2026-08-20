@@ -1,0 +1,184 @@
+{
+  "repository_id": "agent-recall",
+  "tasks": [
+    {
+      "scenario": "simple",
+      "title": "Correct irregular discovery plurals in generated reports",
+      "instructions": "Update OutputFormatter so discovery groups are labeled `Discoveries` instead of `Discoverys` in slide and weekly-report output. Update the existing formatter tests to assert the corrected headings and run the focused test file.",
+      "affected_files": [
+        "src/services/worker/search/OutputFormatter.ts",
+        "tests/services/output-formatter.test.ts"
+      ],
+      "acceptance_commands": [
+        "bun test tests/services/output-formatter.test.ts"
+      ],
+      "setup_operations": [],
+      "hidden_checks": [
+        {
+          "kind": "behavior",
+          "description": "Both report formats use the correct irregular plural.",
+          "command": "bun test tests/services/output-formatter.test.ts --test-name-pattern 'Discoveries'"
+        },
+        {
+          "kind": "regression",
+          "description": "The obsolete heading is absent from implementation and tests.",
+          "command": "! rg -n 'Discoverys' src/services/worker/search/OutputFormatter.ts"
+        }
+      ]
+    },
+    {
+      "scenario": "multi-step",
+      "title": "Support compound Chinese numerals in temporal queries",
+      "instructions": "Extend TemporalParser's Chinese numeral parsing to support compound values such as 二十, 二十一, and 三十五. Preserve existing single-character and Arabic numeral behavior, add deterministic cases to the existing temporal parser tests, and reject malformed numeral strings.",
+      "affected_files": [
+        "src/services/worker/search/TemporalParser.ts",
+        "tests/services/temporal-parser.test.ts"
+      ],
+      "acceptance_commands": [
+        "bun test tests/services/temporal-parser.test.ts"
+      ],
+      "setup_operations": [],
+      "hidden_checks": [
+        {
+          "kind": "behavior",
+          "description": "Compound Chinese day and week expressions resolve to correct offsets.",
+          "command": "bun -e \"import { TemporalParser } from './src/services/worker/search/TemporalParser.ts'; const p=new TemporalParser(); const now=new Date('2026-04-09T12:00:00Z'); const day=86400000; const a=p.parse('二十一天前',now); const b=p.parse('三十五天前',now); if(!a||!b||Math.round((now.getTime()-a.anchorDate.getTime())/day)!==21||Math.round((now.getTime()-b.anchorDate.getTime())/day)!==35) process.exit(1);\""
+        },
+        {
+          "kind": "regression",
+          "description": "Existing English, Arabic, and single-character Chinese parsing remains intact.",
+          "command": "bun test tests/services/temporal-parser.test.ts"
+        }
+      ]
+    },
+    {
+      "scenario": "bug-fix",
+      "title": "Restore upward token estimation at fractional boundaries",
+      "instructions": "A seeded regression changes observation token estimation from ceiling to floor rounding. Reproduce the failures, restore conservative upward rounding, and add or retain a focused assertion proving fractional token counts round up without changing exact-boundary behavior.",
+      "affected_files": [
+        "src/services/context/TokenCalculator.ts",
+        "tests/context/token-calculator.test.ts"
+      ],
+      "acceptance_commands": [
+        "bun test tests/context/token-calculator.test.ts"
+      ],
+      "setup_operations": [
+        {
+          "op": "replace_text",
+          "path": "src/services/context/TokenCalculator.ts",
+          "content": "",
+          "old_text": "  return Math.ceil(obsSize / CHARS_PER_TOKEN_ESTIMATE);",
+          "new_text": "  return Math.floor(obsSize / CHARS_PER_TOKEN_ESTIMATE);"
+        }
+      ],
+      "hidden_checks": [
+        {
+          "kind": "behavior",
+          "description": "Fractional estimates round upward rather than undercounting context.",
+          "command": "bun -e 'import { calculateObservationTokens } from \"./src/services/context/TokenCalculator.ts\"; const fractional=calculateObservationTokens({title:\"abc\",facts:[]}); const exact=calculateObservationTokens({title:\"ab\",facts:[]}); if(fractional!==2||exact!==1) process.exit(1)'"
+        },
+        {
+          "kind": "regression",
+          "description": "All token economics tests pass after the repair.",
+          "command": "bun test tests/context/token-calculator.test.ts"
+        }
+      ]
+    },
+    {
+      "scenario": "interrupted",
+      "title": "Finish project-filter normalization wiring",
+      "instructions": "The repository already defines normalizeProject, but filtering callers still compare raw values. Complete the interrupted integration by applying normalization consistently before matching, preserving the no-filter behavior for undefined or whitespace-only filters. Add focused tests for trimmed filters, whitespace-only filters, exact matching, and non-matching projects.",
+      "affected_files": [
+        "src/services/worker/search/filters/ProjectFilter.ts",
+        "tests/worker/search/search-orchestrator.test.ts"
+      ],
+      "acceptance_commands": [
+        "bun test tests/worker/search/search-orchestrator.test.ts"
+      ],
+      "setup_operations": [],
+      "hidden_checks": [
+        {
+          "kind": "behavior",
+          "description": "Trimmed project filters match while whitespace-only filters remain unscoped.",
+          "command": "bun -e \"import { filterResultsByProject } from './src/services/worker/search/filters/ProjectFilter.ts'; const rows=[{project:'alpha'},{project:'beta'}]; if(filterResultsByProject(rows,' alpha ').length!==1||filterResultsByProject(rows,'   ').length!==2) process.exit(1);\""
+        },
+        {
+          "kind": "closure",
+          "description": "Normalization is exercised by filtering rather than left as a dead helper.",
+          "command": "test -n \"$(git diff --name-only -- src/services/worker/search/filters/ProjectFilter.ts)\" && test -n \"$(git diff --name-only -- tests/worker/search/search-orchestrator.test.ts)\""
+        }
+      ]
+    },
+    {
+      "scenario": "review-defect",
+      "title": "Reject leaked nested-session identifiers during environment sanitization",
+      "instructions": "Review the seeded environment-sanitizer change as a security defect. Ensure CLAUDE_CODE_SESSION is always removed from child-process environments while the OAuth token and SDK entrypoint remain allowed. Strengthen the existing sanitizer regression test so future allowlist or exact-deny edits cannot leak nested-session identifiers.",
+      "affected_files": [
+        "src/supervisor/env-sanitizer.ts",
+        "tests/supervisor/env-sanitizer.test.ts"
+      ],
+      "acceptance_commands": [
+        "bun test tests/supervisor/env-sanitizer.test.ts"
+      ],
+      "setup_operations": [
+        {
+          "op": "replace_text",
+          "path": "src/supervisor/env-sanitizer.ts",
+          "content": "",
+          "old_text": "  'CLAUDECODE',\n  'CLAUDE_CODE_SESSION',\n  'MCP_SESSION_ID',",
+          "new_text": "  'CLAUDECODE',\n  'MCP_SESSION_ID',"
+        },
+        {
+          "op": "replace_text",
+          "path": "src/supervisor/env-sanitizer.ts",
+          "content": "",
+          "old_text": "  'CLAUDE_CODE_OAUTH_TOKEN',    // CLI subscription billing auth\n  'CLAUDE_CODE_ENTRYPOINT',     // Set to 'sdk-ts' by buildIsolatedEnv",
+          "new_text": "  'CLAUDE_CODE_OAUTH_TOKEN',    // CLI subscription billing auth\n  'CLAUDE_CODE_ENTRYPOINT',     // Set to 'sdk-ts' by buildIsolatedEnv\n  'CLAUDE_CODE_SESSION',        // Preserve parent session context"
+        }
+      ],
+      "hidden_checks": [
+        {
+          "kind": "security",
+          "description": "Nested-session identifiers are stripped while required SDK credentials survive.",
+          "command": "bun -e \"import { sanitizeEnv } from './src/supervisor/env-sanitizer.ts'; const out=sanitizeEnv({CLAUDE_CODE_SESSION:'secret',CLAUDE_CODE_OAUTH_TOKEN:'token',CLAUDE_CODE_ENTRYPOINT:'sdk-ts'}); if(out.CLAUDE_CODE_SESSION!==undefined||out.CLAUDE_CODE_OAUTH_TOKEN!=='token'||out.CLAUDE_CODE_ENTRYPOINT!=='sdk-ts') process.exit(1);\""
+        },
+        {
+          "kind": "regression",
+          "description": "The complete sanitizer test suite passes.",
+          "command": "bun test tests/supervisor/env-sanitizer.test.ts"
+        }
+      ]
+    },
+    {
+      "scenario": "parallel",
+      "title": "Harden independent parser and process-boundary edge cases",
+      "instructions": "Complete two independent workstreams that can be handled in parallel. First, make parseMermaidResponse accept CRLF and optional horizontal whitespace after the mermaid fence while preserving existing extraction behavior. Second, add explicit regression coverage that isPidAlive rejects PID 0 without invoking process.kill.",
+      "affected_files": [
+        "src/services/compilation/ResponseParser.ts",
+        "tests/services/compilation/response-parser.test.ts",
+        "tests/supervisor/process-registry.test.ts"
+      ],
+      "acceptance_commands": [
+        "bun test tests/services/compilation/response-parser.test.ts tests/supervisor/process-registry.test.ts"
+      ],
+      "setup_operations": [],
+      "hidden_checks": [
+        {
+          "kind": "behavior",
+          "description": "Mermaid blocks with Windows newlines are extracted correctly.",
+          "command": "bun -e 'import { parseMermaidResponse } from \"./src/services/compilation/ResponseParser.ts\"; const out=parseMermaidResponse(\"```mermaid\\r\\ngraph LR\\r\\nA-->B\\r\\n```\"); if(out.length!==1||out[0]!==\"graph LR\\r\\nA-->B\") process.exit(1);'"
+        },
+        {
+          "kind": "security",
+          "description": "PID 0 is rejected to prevent process-group probing or signaling.",
+          "command": "bun test tests/supervisor/process-registry.test.ts --test-name-pattern 'PID 0'"
+        },
+        {
+          "kind": "closure",
+          "description": "Both independent focused suites pass together.",
+          "command": "bun test tests/services/compilation/response-parser.test.ts tests/supervisor/process-registry.test.ts"
+        }
+      ]
+    }
+  ]
+}

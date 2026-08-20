@@ -1,0 +1,166 @@
+{
+  "task_id": "chorus--interrupted",
+  "task_digest": "65cdb242dbf405aed7ffbfff51a9c1eeb15318e83f7afa7faac84641a6cc05bc",
+  "repository": "chorus",
+  "scenario": "interrupted",
+  "mode": "plugin-kernel",
+  "candidate_digest": "45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 552817,
+    "cost": 2795775,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 1,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "0713b8ddd34fe9c9b368e6d1cb0a96fa4ab69a92",
+    "runtime_hash": "fbb9635c7fd7b24c7799126c3640c4ddc3239b4be5e2a5b9dd3f5cce103f16fc",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "4dd02cbdbafb3f56177929ec009c5966f957fae312d0e224c98e6273fbd2b71c",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--plugin-kernel/codex-home/sessions/2026/08/20/rollout-2026-08-20T10-32-04-01a01d02-e571-7013-bffa-c14d257e20ed.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--plugin-kernel/execution-2.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--plugin-kernel/process-2.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--plugin-kernel/process-2.stderr.log"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--plugin-kernel/codex-home/sessions/2026/08/20/rollout-2026-08-20T10-32-04-01a01d02-e571-7013-bffa-c14d257e20ed.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--plugin-kernel/execution-2.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--plugin-kernel/process-2.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--plugin-kernel/process-2.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--plugin-kernel/agent-output-2.json"
+    ],
+    "artifact_hashes": [
+      "d43a7a95cd1c60bc76e9530e237cf6a3eee594f76a9d1468134b5389e410dcd2",
+      "8e3b986f9b6987d60aedb928fa723aeb197566cc905570d66fb592379e168bb4",
+      "3e8c55586117862c11470da7d48ae7ef7b0adc16078c44b0861dab9bb510ddac",
+      "f2e853bbb5275856a08c263e974b45061c8657c0f9888ad3ff5cae920aeb51be",
+      "5ab496f8f8f65edd24541b7bdb1290689dc60340fa8360744c1b4ad24461827f",
+      "8c7ccfb78c85e57ef5990bdde3c6956f8e7d8fd81a7e469f710e083cd296aec6",
+      "f836d4bb18674d30df84b9c827ba22df6eb2403249a6eedd8b873feee81a987a",
+      "c383c9fdb0f80ad5c0dd28c1e2c1fe3fd7539a9fe34c4e31661408b2b4b9369b"
+    ]
+  },
+  "evidence": {
+    "task_digest": "65cdb242dbf405aed7ffbfff51a9c1eeb15318e83f7afa7faac84641a6cc05bc",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a01d02-e571-7013-bffa-c14d257e20ed",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Updated success and error helpers to omit absent `meta` and `details` fields while preserving supplied values. Added omission assertions for both paths. Apex Forge run completed and reconciled consistently.",
+      "tests": [
+        {
+          "command": "pnpm exec vitest run src/lib/__tests__/api-response.test.ts",
+          "status": "pass",
+          "detail": "22 tests passed."
+        },
+        {
+          "command": "pnpm exec tsc --noEmit",
+          "status": "pass",
+          "detail": "Exited successfully."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "artifact-mt1182ee-8e997fd6",
+        "artifact-mt1183j2-41895394",
+        "artifact-mt1184kt-b5b6dca6",
+        "reconcile-mt119ej6-47f3b4f3"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "pnpm exec vitest run src/lib/__tests__/api-response.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 766,
+        "stdout_tail": "\n RUN  v4.1.0 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--plugin-kernel/workspace\n\n ✓ src/lib/__tests__/api-response.test.ts (22 tests) 6ms\n\n Test Files  1 passed (1)\n      Tests  22 passed (22)\n   Start at  12:41:55\n   Duration  190ms (transform 26ms, setup 0ms, import 80ms, tests 6ms, environment 0ms)\n\n",
+        "stderr_tail": "(node:44640) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      },
+      {
+        "command": "pnpm exec tsc --noEmit",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 2117,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "pnpm exec vitest run src/lib/__tests__/api-response.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 615,
+        "stdout_tail": "\n RUN  v4.1.0 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--plugin-kernel/workspace\n\n ✓ src/lib/__tests__/api-response.test.ts (22 tests) 9ms\n\n Test Files  1 passed (1)\n      Tests  22 passed (22)\n   Start at  12:41:58\n   Duration  160ms (transform 23ms, setup 0ms, import 59ms, tests 9ms, environment 0ms)\n\n",
+        "stderr_tail": "(node:44685) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      },
+      {
+        "command": "test -n \"$(git diff --name-only -- src/lib/api-response.ts)\" && test -n \"$(git diff --name-only -- src/lib/__tests__/api-response.test.ts)\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 59,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/lib/__tests__/api-response.test.ts",
+        "src/lib/api-response.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": true,
+      "evidence_score": 1,
+      "run_ids": [
+        "run-mt0wn3jw-b6c6f7ae"
+      ],
+      "done_run_ids": [
+        "run-mt0wn3jw-b6c6f7ae"
+      ],
+      "fully_closed_run_ids": [
+        "run-mt0wn3jw-b6c6f7ae"
+      ],
+      "active_runs": [],
+      "candidate_chain_equal": true,
+      "verification_ref": ".apex-v2/runs/run-mt0wn3jw-b6c6f7ae/verification-report.json",
+      "review_ref": ".apex-v2/runs/run-mt0wn3jw-b6c6f7ae/review-report.json",
+      "integration_ref": ".apex-v2/runs/run-mt0wn3jw-b6c6f7ae/integration-report.json",
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "5a6aa2e19bbce4374c2f83e019c40b4ad9c289bbcd31545677a3c6778369664b",
+        "replay_hash": "5a6aa2e19bbce4374c2f83e019c40b4ad9c289bbcd31545677a3c6778369664b",
+        "hash_equal": true
+      }
+    }
+  }
+}

@@ -1,4 +1,5 @@
 import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { basename, join, relative } from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
 import {
@@ -7,6 +8,7 @@ import {
   defaultRetryAttempts
 } from "../executors/defaults.mjs";
 import { schemaDirectory } from "./schema-paths.mjs";
+import { withProjectTransaction } from "./project-transaction.mjs";
 
 let registry = null;
 
@@ -150,12 +152,32 @@ export function scanProjectContracts(projectDir) {
 }
 
 export function migrateLegacyContracts(projectDir, apply = false) {
+  const plan = migrateLegacyContractsInternal(projectDir, false);
+  if (!apply || plan.migration_count === 0) return plan;
+  const planHash = createHash("sha256")
+    .update(JSON.stringify(plan.migrations))
+    .digest("hex");
+  return withProjectTransaction(projectDir, {
+    kind: "contract-migration",
+    idempotencyKey: `contract-migration:${planHash}`
+  }, () => migrateLegacyContractsInternal(projectDir, true)).result;
+}
+
+function migrateLegacyContractsInternal(projectDir, apply) {
   const root = join(projectDir, ".apex-v2");
   const migrations = [];
   for (const path of listJsonFiles(root)) {
     const name = basename(path);
     const value = JSON.parse(readFileSync(path, "utf8"));
     const fields = [];
+    if (name === "project.json" && value.format_version == null) {
+      value.format_version = 1;
+      fields.push("format_version");
+    }
+    if (name === "project.json" && value.revision == null) {
+      value.revision = 0;
+      fields.push("revision");
+    }
     if (name === "worker.json" && !value.sandbox) {
       value.sandbox = { type: "none", path: "", status: "missing" };
       fields.push("sandbox");
@@ -204,6 +226,22 @@ export function migrateLegacyContracts(projectDir, apply = false) {
       value.last_adapter = null;
       fields.push("last_adapter");
     }
+    if (name === "worker.json" && !("claim_token" in value)) {
+      value.claim_token = null;
+      fields.push("claim_token");
+    }
+    if (name === "worker.json" && !("claim_expires_at" in value)) {
+      value.claim_expires_at = null;
+      fields.push("claim_expires_at");
+    }
+    if (name === "worker.json" && value.fencing_token == null) {
+      value.fencing_token = 0;
+      fields.push("fencing_token");
+    }
+    if (name === "worker.json" && !("route_id" in value)) {
+      value.route_id = null;
+      fields.push("route_id");
+    }
     if (
       name === "retry.json"
       && normalizedPathIncludes(path, "/policies/")
@@ -228,6 +266,25 @@ export function migrateLegacyContracts(projectDir, apply = false) {
       fields.push("permissions.allowed_adapters");
     }
     if (name === "execution.json" && normalizedPathIncludes(path, "/policies/")) {
+      if (!value.interactive_workspace_patch) {
+        value.interactive_workspace_patch = { enabled: true };
+        fields.push("interactive_workspace_patch");
+      }
+      if (!value.interactive_host_claim) {
+        value.interactive_host_claim = { lease_seconds: 1800 };
+        fields.push("interactive_host_claim");
+      }
+      if (!value.execution_router) {
+        value.execution_router = {
+          factory_min_duration_minutes: 30,
+          force_factory_risks: ["critical"],
+          factory_on_isolation: true,
+          factory_on_resume: true,
+          factory_on_background: true,
+          factory_on_parallel_execution: true
+        };
+        fields.push("execution_router");
+      }
       const missing = defaultAllowedExecutionAdapters()
         .filter((adapter) => !value.permissions?.allowed_adapters?.includes(adapter));
       if (missing.length > 0) {
@@ -308,6 +365,10 @@ function contractTargets(path, value) {
   else if (name === "agent-result.json") push("agent-result.schema.json");
   else if (name === "host-action.json") push("host-action.schema.json");
   else if (name === "host-result.json") push("host-result.schema.json");
+  else if (name === "action-workspace.json") push("action-workspace.schema.json");
+  else if (name === "cognitive-evidence.json") push("cognitive-evidence.schema.json");
+  else if (name === "execution-route.json") push("execution-route.schema.json");
+  else if (name.startsWith("candidate-") && normalized.includes("/candidates/")) push("candidate-set.schema.json");
   else if (name.startsWith("transaction-") && normalized.includes("/transactions/")) push("transaction-journal.schema.json");
   else if (name.startsWith("adapter-result-")) push("adapter-result.schema.json");
   else if (name.startsWith("artifact-") && normalized.includes("/artifacts/")) push("stored-artifact.schema.json");
@@ -337,6 +398,9 @@ function listJsonFiles(root) {
     if (!existsSync(dir)) return;
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
       const path = join(dir, entry.name);
+      if (dir === root && entry.isDirectory() && entry.name === "releases") {
+        continue;
+      }
       if (
         entry.isDirectory()
         && entry.name === "sandbox"

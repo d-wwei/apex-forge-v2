@@ -8,6 +8,7 @@
     "schema_version": { "type": "string", "const": "v0" },
     "report_id": { "type": "string" },
     "run_id": { "type": "string" },
+    "candidate_digest": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
     "status": { "type": "string", "enum": ["MERGED", "NOOP", "BLOCKED"] },
     "created_at": { "type": "string" },
     "merged_patches": { "type": "array", "items": { "type": "string" } },

@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/candidate-set.schema.json",
+  "title": "Apex Forge V2 Candidate Set",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "run_id",
+    "project_revision",
+    "base_source_fingerprint",
+    "patches",
+    "resolutions",
+    "plan_graph_hash",
+    "verification_policy_hash",
+    "contract_version",
+    "candidate_digest"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "run_id": { "type": "string", "minLength": 1 },
+    "project_revision": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "base_source_fingerprint": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "patches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["patch_id", "worker_id", "plan_node_id", "content_hash"],
+        "properties": {
+          "patch_id": { "type": "string", "minLength": 1 },
+          "worker_id": { "type": "string", "minLength": 1 },
+          "plan_node_id": { "type": "string", "minLength": 1 },
+          "content_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "resolutions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["resolution_id", "content_hash"],
+        "properties": {
+          "resolution_id": { "type": "string", "minLength": 1 },
+          "content_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "plan_graph_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "verification_policy_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "contract_version": { "type": "string", "minLength": 1 },
+    "candidate_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  },
+  "additionalProperties": false
+}

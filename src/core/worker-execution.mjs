@@ -28,9 +28,13 @@ import { loadRun } from "./run-state.mjs";
 import { assertPatchWithinBudget } from "./governance.mjs";
 import { loadExecutionPolicy } from "./governance.mjs";
 import { appendEvent, SCHEMA_VERSION, updateProject } from "./store.mjs";
+import { withProjectTransaction } from "./project-transaction.mjs";
 import { schemaPath } from "./schema-paths.mjs";
 import {
+  findWorker,
   isFileAllowedByScope,
+  patchBundleRef,
+  persistPatchBundle,
   workerDir
 } from "./worker.mjs";
 
@@ -39,6 +43,8 @@ const IGNORED_WORKSPACE_NAMES = new Set([
   ".git",
   ".apex-agent",
   ".apex-v2",
+  ".apex-v2.lock",
+  ".apex-v2.transaction-backups",
   "node_modules",
   "sandbox.json"
 ]);
@@ -69,7 +75,7 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
 
   const dir = workerDir(root, worker.run_id, worker.worker_id);
   const promptPath = join(dir, "agent-prompt.md");
-  const outputPath = join(dir, "agent-result.json");
+  const outputPath = join(workspaceDir, ".apex-agent", `result-${worker.worker_id}.json`);
   const prompt = buildWorkerAgentPrompt(worker, planNode);
   writeFileSync(promptPath, prompt);
   rmSync(outputPath, { force: true });
@@ -102,6 +108,8 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
     sessionId: options.sessionId
   });
   const structured = readAgentResult(outputPath);
+  const rawAgentOutput = existsSync(outputPath) ? readFileSync(outputPath, "utf8") : "";
+  rmSync(outputPath, { force: true });
   const changes = collectWorkspaceChanges(projectDir, workspaceDir, worker.write_scope);
   const protectedChanges = diffProtectedWorkspace(protectedBefore, snapshotProtectedWorkspace(workspaceDir));
   changes.changed_files = Array.from(new Set([...changes.changed_files, ...protectedChanges])).sort();
@@ -143,15 +151,13 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
     },
     refs: [
       `${worker.namespace}/agent-prompt.md`,
-      `${worker.namespace}/agent-result.json`
+      structured.valid
+        ? `${worker.namespace}/agent-result.json`
+        : `${worker.namespace}/agent-output-invalid.txt`
     ],
     created_at: timestamp
   };
-  writeJson(join(dir, `adapter-result-${adapterResult.result_id}.json`), adapterResult);
-
-  const run = loadRun(root, worker.run_id);
   let patch = null;
-  let artifact;
   if (success && changes.operations.length > 0) {
     patch = {
       schema_version: SCHEMA_VERSION,
@@ -168,53 +174,103 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
       updated_at: timestamp
     };
     assertPatchWithinBudget(root, patch);
-    writeJson(join(dir, "patch-bundle.json"), patch);
+  }
+
+  const expectedWorkerUpdatedAt = worker.updated_at;
+  return withProjectTransaction(projectDir, {
+    kind: "worker-execution-commit",
+    idempotencyKey: [
+      "worker-execution-commit",
+      worker.worker_id,
+      Number(worker.attempt || 0) + 1,
+      resolved.id
+    ].join(":")
+  }, () => commitWorkerExecution(root, {
+    workerId: worker.worker_id,
+    expectedWorkerUpdatedAt,
+    adapterResult,
+    patch,
+    success,
+    structured,
+    changes,
+    execution,
+    resolved,
+    rawAgentOutput,
+    timestamp
+  })).result;
+}
+
+function commitWorkerExecution(root, input) {
+  const worker = findWorker(root, input.workerId);
+  if (worker.status !== "active" || worker.updated_at !== input.expectedWorkerUpdatedAt) {
+    throw new Error(`worker execution commit 遇到并发状态变化：${worker.worker_id}`);
+  }
+  const dir = workerDir(root, worker.run_id, worker.worker_id);
+  if (input.structured.valid) {
+    writeFileSync(
+      join(dir, "agent-result.json"),
+      input.rawAgentOutput || `${JSON.stringify(input.structured.value)}\n`
+    );
+    rmSync(join(dir, "agent-output-invalid.txt"), { force: true });
+  } else {
+    rmSync(join(dir, "agent-result.json"), { force: true });
+    writeFileSync(
+      join(dir, "agent-output-invalid.txt"),
+      input.rawAgentOutput || input.adapterResult.stderr_tail || "missing structured output"
+    );
+  }
+  writeJson(join(dir, `adapter-result-${input.adapterResult.result_id}.json`), input.adapterResult);
+  const run = loadRun(root, worker.run_id);
+  let artifact;
+  if (input.patch) {
+    persistPatchBundle(root, input.patch);
     worker.status = "patch_submitted";
     artifact = createArtifact(root, run, "execute", {
       type: "patch",
-      title: `${resolved.name}Patch：${worker.plan_node_id}`,
-      body: structured.value.summary,
+      title: `${input.resolved.name}Patch：${worker.plan_node_id}`,
+      body: input.structured.value.summary,
       refs: [
-        `${worker.namespace}/patch-bundle.json`,
+        patchBundleRef(worker, input.patch.patch_id),
         `${worker.namespace}/agent-result.json`,
-        ...changes.changed_files
+        ...input.changes.changed_files
       ],
-      timestamp
+      timestamp: input.timestamp
     });
   } else {
-    worker.status = success ? "evidence_submitted" : "blocked";
+    worker.status = input.success ? "evidence_submitted" : "blocked";
     artifact = createArtifact(root, run, "execute", {
       type: "evidence",
-      title: `${resolved.name}Adapter：${adapterResult.status}`,
+      title: `${input.resolved.name}Adapter：${input.adapterResult.status}`,
       body: [
-        adapterResult.summary,
-        `exit_code=${adapterResult.exit_code}`,
-        `out_of_scope=${changes.out_of_scope_files.join(",") || "none"}`,
-        `unsupported=${changes.unsupported_files.join(",") || "none"}`
+        input.adapterResult.summary,
+        `exit_code=${input.adapterResult.exit_code}`,
+        `out_of_scope=${input.changes.out_of_scope_files.join(",") || "none"}`,
+        `unsupported=${input.changes.unsupported_files.join(",") || "none"}`
       ].join("\n"),
-      refs: adapterResult.refs,
-      timestamp
+      refs: input.adapterResult.refs,
+      timestamp: input.timestamp
     });
   }
 
-  worker.last_adapter = resolved.name;
-  if (execution.session_id) {
-    worker.session_id = execution.session_id;
-    worker.session_adapter = resolved.name;
+  worker.last_adapter = input.resolved.name;
+  if (input.execution.session_id) {
+    worker.session_id = input.execution.session_id;
+    worker.session_adapter = input.resolved.name;
   }
   worker.attempt = Number(worker.attempt || 0) + 1;
-  worker.updated_at = timestamp;
+  worker.updated_at = input.timestamp;
   writeJson(join(dir, "worker.json"), worker);
-  const event = appendEvent(root, `worker.adapter.${resolved.name}`, "apex-v2", {
+  const event = appendEvent(root, `worker.adapter.${input.resolved.name}`, "apex-v2", {
     run_id: worker.run_id,
     worker_id: worker.worker_id,
-    result_id: adapterResult.result_id,
-    status: adapterResult.status,
-    patch_id: patch?.patch_id || null,
+    result_id: input.adapterResult.result_id,
+    status: input.adapterResult.status,
+    worker_status: worker.status,
+    patch_id: input.patch?.patch_id || null,
     artifact_id: artifact.artifact_id
   });
   updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
-  return { adapterResult, patch, artifact };
+  return { adapterResult: input.adapterResult, patch: input.patch, artifact };
 }
 
 function customExecutorResolution(executorId, executable) {

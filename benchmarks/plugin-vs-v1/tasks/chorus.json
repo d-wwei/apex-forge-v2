@@ -1,0 +1,180 @@
+{
+  "repository_id": "chorus",
+  "tasks": [
+    {
+      "scenario": "simple",
+      "title": "Reject whitespace-only elaboration option labels",
+      "instructions": "Update question validation so option IDs and labels containing only whitespace are rejected. Add focused coverage to the existing pure elaboration service test.",
+      "affected_files": [
+        "src/services/elaboration.service.ts",
+        "src/services/__tests__/elaboration.service.pure.test.ts"
+      ],
+      "acceptance_commands": [
+        "pnpm exec vitest run src/services/__tests__/elaboration.service.pure.test.ts"
+      ],
+      "setup_operations": [],
+      "hidden_checks": [
+        {
+          "kind": "behavior",
+          "description": "Whitespace-only option labels are rejected while valid questions remain accepted.",
+          "command": "tmp=src/services/__tests__/benchmark-hidden-whitespace.test.ts; printf '%s\\n' 'import { it, expect, vi } from \"vitest\";' 'vi.mock(\"@/lib/prisma\", () => ({ prisma: {} }));' 'vi.mock(\"@/lib/event-bus\", () => ({ eventBus: { emitChange: vi.fn() } }));' 'vi.mock(\"@/services/activity.service\", () => ({ createActivity: vi.fn() }));' 'vi.mock(\"@/lib/uuid-resolver\", () => ({}));' 'import { validateQuestionsFormat } from \"@/services/elaboration.service\";' 'it(\"rejects whitespace-only option ids and labels\", () => {' '  const base={id:\"q\",text:\"Question?\",category:\"scope\",options:[{id:\"o1\",label:\"Valid\"},{id:\"o2\",label:\"Also valid\"}]};' '  expect(() => validateQuestionsFormat([{...base,options:[{id:\"   \",label:\"Valid\"},base.options[1]]}])).toThrow();' '  expect(() => validateQuestionsFormat([{...base,options:[{id:\"o1\",label:\"   \"},base.options[1]]}])).toThrow();' '});' > \"$tmp\"; pnpm exec vitest run \"$tmp\"; rc=$?; rm -f \"$tmp\"; exit $rc"
+        },
+        {
+          "kind": "regression",
+          "description": "TypeScript remains valid after tightening validation.",
+          "command": "pnpm exec tsc --noEmit"
+        }
+      ]
+    },
+    {
+      "scenario": "multi-step",
+      "title": "Normalize legacy destination statuses in idea transitions",
+      "instructions": "Make `isValidIdeaStatusTransition` normalize both the source and destination statuses. Extend the existing pure tests with valid and invalid legacy-destination cases, preserving terminal-state behavior.",
+      "affected_files": [
+        "src/services/idea.service.ts",
+        "src/services/__tests__/idea.service.pure.test.ts"
+      ],
+      "acceptance_commands": [
+        "pnpm exec vitest run src/services/__tests__/idea.service.pure.test.ts",
+        "pnpm exec tsc --noEmit"
+      ],
+      "setup_operations": [],
+      "hidden_checks": [
+        {
+          "kind": "behavior",
+          "description": "Legacy destination names follow the same transition rules as their current equivalents.",
+          "command": "pnpm exec vitest run src/services/__tests__/idea.service.pure.test.ts"
+        },
+        {
+          "kind": "closure",
+          "description": "The implementation and its regression tests are both present.",
+          "command": "test -n \"$(git diff --name-only -- src/services/idea.service.ts)\" && test -n \"$(git diff --name-only -- src/services/__tests__/idea.service.pure.test.ts)\""
+        }
+      ]
+    },
+    {
+      "scenario": "bug-fix",
+      "title": "Restore environment-aware secure cookie behavior",
+      "instructions": "A regression is injected into cookie security selection. Diagnose it from the focused tests, restore production-only secure cookies while retaining the explicit `COOKIE_SECURE=false` override, and keep all existing cookie attributes unchanged.",
+      "affected_files": [
+        "src/lib/cookie-utils.ts",
+        "src/lib/__tests__/cookie-utils.test.ts"
+      ],
+      "acceptance_commands": [
+        "pnpm exec vitest run src/lib/__tests__/cookie-utils.test.ts"
+      ],
+      "setup_operations": [
+        {
+          "op": "replace_text",
+          "path": "src/lib/cookie-utils.ts",
+          "content": "",
+          "old_text": "  const isProduction = process.env.NODE_ENV === \"production\" && !forceInsecure;",
+          "new_text": "  const isProduction = process.env.NODE_ENV === \"production\" || !forceInsecure;"
+        }
+      ],
+      "hidden_checks": [
+        {
+          "kind": "security",
+          "description": "Production defaults to secure cookies, development does not, and the explicit insecure override still works.",
+          "command": "pnpm exec vitest run src/lib/__tests__/cookie-utils.test.ts"
+        },
+        {
+          "kind": "regression",
+          "description": "The faulty boolean expression is fully removed.",
+          "command": "! rg -q 'NODE_ENV === \"production\" \\|\\| !forceInsecure' src/lib/cookie-utils.ts"
+        }
+      ]
+    },
+    {
+      "scenario": "interrupted",
+      "title": "Complete omission of undefined API response fields",
+      "instructions": "Finish a partially scoped response-cleanup change: update success and error helpers so optional `meta` and `details` keys are omitted from serialized JSON when absent, while preserving them when supplied. Extend the existing API response tests for both paths.",
+      "affected_files": [
+        "src/lib/api-response.ts",
+        "src/lib/__tests__/api-response.test.ts"
+      ],
+      "acceptance_commands": [
+        "pnpm exec vitest run src/lib/__tests__/api-response.test.ts",
+        "pnpm exec tsc --noEmit"
+      ],
+      "setup_operations": [],
+      "hidden_checks": [
+        {
+          "kind": "behavior",
+          "description": "Absent optional values do not produce keys, while supplied values survive serialization.",
+          "command": "pnpm exec vitest run src/lib/__tests__/api-response.test.ts"
+        },
+        {
+          "kind": "closure",
+          "description": "Both optional response branches have explicit durable regression assertions.",
+          "command": "test -n \"$(git diff --name-only -- src/lib/api-response.ts)\" && test -n \"$(git diff --name-only -- src/lib/__tests__/api-response.test.ts)\""
+        }
+      ]
+    },
+    {
+      "scenario": "review-defect",
+      "title": "Review and repair an HttpOnly cookie regression",
+      "instructions": "Review the injected cookie change as a security defect. Restore the intended HttpOnly protection and add or strengthen a focused assertion that prevents the regression without altering secure, SameSite, path, or max-age behavior.",
+      "affected_files": [
+        "src/lib/cookie-utils.ts",
+        "src/lib/__tests__/cookie-utils.test.ts"
+      ],
+      "acceptance_commands": [
+        "pnpm exec vitest run src/lib/__tests__/cookie-utils.test.ts"
+      ],
+      "setup_operations": [
+        {
+          "op": "replace_text",
+          "path": "src/lib/cookie-utils.ts",
+          "content": "",
+          "old_text": "    httpOnly: true,",
+          "new_text": "    httpOnly: false,"
+        }
+      ],
+      "hidden_checks": [
+        {
+          "kind": "security",
+          "description": "Every generated authentication cookie remains inaccessible to client-side JavaScript.",
+          "command": "pnpm exec vitest run src/lib/__tests__/cookie-utils.test.ts"
+        },
+        {
+          "kind": "security",
+          "description": "Runtime cookie options preserve HttpOnly protection across environments.",
+          "command": "node --input-type=module -e \"import {getCookieOptions} from './src/lib/cookie-utils.ts'; for(const env of ['production','development']){process.env.NODE_ENV=env; if(getCookieOptions(1).httpOnly!==true) process.exit(1)}\""
+        }
+      ]
+    },
+    {
+      "scenario": "parallel",
+      "title": "Harden two independent pure utility boundaries",
+      "instructions": "Implement two independent changes that can be developed in parallel: make `isPrismaNotFound` return false when `code` is inherited rather than an own property, and add coverage proving `cn` resolves conflicting responsive Tailwind utilities correctly. Use the existing implementation and test files only.",
+      "affected_files": [
+        "src/lib/errors.ts",
+        "src/lib/__tests__/errors.test.ts",
+        "src/lib/__tests__/utils.test.ts"
+      ],
+      "acceptance_commands": [
+        "pnpm exec vitest run src/lib/__tests__/errors.test.ts src/lib/__tests__/utils.test.ts",
+        "pnpm exec tsc --noEmit"
+      ],
+      "setup_operations": [],
+      "hidden_checks": [
+        {
+          "kind": "security",
+          "description": "Prototype-inherited error codes cannot be mistaken for trusted Prisma not-found errors.",
+          "command": "pnpm exec vitest run src/lib/__tests__/errors.test.ts"
+        },
+        {
+          "kind": "regression",
+          "description": "Responsive Tailwind conflict behavior has executable coverage.",
+          "command": "pnpm exec vitest run src/lib/__tests__/utils.test.ts && test -n \"$(git diff --name-only -- src/lib/__tests__/utils.test.ts)\""
+        },
+        {
+          "kind": "closure",
+          "description": "Both independent work streams pass together.",
+          "command": "pnpm exec vitest run src/lib/__tests__/errors.test.ts src/lib/__tests__/utils.test.ts"
+        }
+      ]
+    }
+  ]
+}

@@ -25,6 +25,20 @@ export function defaultExecutionPolicy(timestamp) {
   return {
     schema_version: "v0",
     updated_at: timestamp,
+    interactive_workspace_patch: {
+      enabled: true
+    },
+    interactive_host_claim: {
+      lease_seconds: 1800
+    },
+    execution_router: {
+      factory_min_duration_minutes: 30,
+      force_factory_risks: ["critical"],
+      factory_on_isolation: true,
+      factory_on_resume: true,
+      factory_on_background: true,
+      factory_on_parallel_execution: true
+    },
     budgets: {
       max_changed_files_per_patch: 20,
       max_patch_bytes: 1000000,

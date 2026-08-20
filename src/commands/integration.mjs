@@ -1,16 +1,29 @@
-import { cpSync, existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import {
+  cpSync,
+  existsSync,
+  mkdtempSync,
+  realpathSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync
+} from "node:fs";
+import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
-import { basename, join, relative, resolve } from "node:path";
+import { basename, join, relative, resolve, sep } from "node:path";
 import { spawnSync } from "node:child_process";
 import { ensureDir, now, readJson, required, shortId, splitList, tail, writeJson } from "../lib/common.mjs";
 import { appendEvent, projectRoot, requireStore, SCHEMA_VERSION, updateProject } from "../core/store.mjs";
 import { getRunNode, loadRun, requirePassedNode } from "../core/run-state.mjs";
 import { createArtifact, listArtifactsForRun } from "../core/artifacts.mjs";
-import { applyPatchOperations, findPatch, findPatchWithPath, findWorker, getWorkers, workerDir } from "../core/worker.mjs";
+import { applyPatchOperations, findPatch, findPatchWithPath, findWorker, getWorkers, updatePatchBundle, workerDir, workerStatusForMergeItems } from "../core/worker.mjs";
 import { ensureMergeApproval } from "../core/governance.mjs";
 import { resolveConflictRisks, syncConflictRisks, syncReviewRisk, syncVerificationRisk } from "../core/risks.mjs";
 import { scanProjectContracts } from "../core/contracts.mjs";
 import { withProjectTransaction } from "../core/project-transaction.mjs";
+import { buildCandidateSet, persistCandidateSet } from "../core/candidate.mjs";
+import { spawnManagedProcess } from "../core/capability-sandbox.mjs";
 
 export function handleMergeCommand(subcommand, args) {
   if (subcommand === "enqueue") {
@@ -42,6 +55,13 @@ function enqueueMerge(args) {
 }
 
 export function enqueuePatchInternal(root, run, patch) {
+  return withProjectTransaction(resolve(root, ".."), {
+    kind: "merge-enqueue",
+    idempotencyKey: `merge-enqueue:${run.run_id}:${patch.patch_id}`
+  }, () => enqueuePatchTransaction(root, run, patch)).result;
+}
+
+function enqueuePatchTransaction(root, run, patch) {
   const queue = readMergeQueue(root, run.run_id);
   if (!queue.items.some((item) => item.patch_id === patch.patch_id)) {
     queue.items.push({
@@ -70,7 +90,6 @@ function mergeStatus(args) {
   const run = loadRun(root, required(args, "run-id"));
   const queue = readMergeQueue(root, run.run_id);
   recomputeMergeConflicts(root, queue);
-  writeMergeQueue(root, queue);
   console.log(JSON.stringify(queue, null, 2));
 }
 
@@ -79,6 +98,14 @@ function resolveMerge(args) {
   const run = loadRun(root, required(args, "run-id"));
   const keepPatchId = required(args, "keep-patch-id");
   const reason = String(args.reason || "coordinator selected one patch to resolve conflict");
+  const result = withProjectTransaction(resolve(root, ".."), {
+    kind: "merge-resolve",
+    idempotencyKey: `merge-resolve:${run.run_id}:${keepPatchId}:${stableTransitionHash(reason)}`
+  }, () => resolveMergeTransaction(root, run, keepPatchId, reason)).result;
+  console.log(JSON.stringify(result, null, 2));
+}
+
+function resolveMergeTransaction(root, run, keepPatchId, reason) {
   const queue = readMergeQueue(root, run.run_id);
   recomputeMergeConflicts(root, queue);
   const relatedConflicts = queue.conflicts.filter((conflict) => conflict.patch_ids.includes(keepPatchId));
@@ -97,7 +124,7 @@ function resolveMerge(args) {
     const patchInfo = findPatchWithPath(root, run.run_id, patchId);
     patchInfo.patch.status = "dropped";
     patchInfo.patch.updated_at = now();
-    writeJson(patchInfo.path, patchInfo.patch);
+    updatePatchBundle(root, patchInfo.patch);
     const worker = findWorker(root, item.worker_id);
     worker.status = "dropped";
     worker.updated_at = now();
@@ -143,7 +170,7 @@ function resolveMerge(args) {
     artifact_id: artifact.artifact_id
   });
   updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
-  console.log(JSON.stringify({ queue, resolution, artifact_id: artifact.artifact_id }, null, 2));
+  return { queue, resolution, artifact_id: artifact.artifact_id };
 }
 
 function applyMerge(args) {
@@ -162,12 +189,48 @@ export function applyMergeInternal(root, run) {
 
   const queue = readMergeQueue(root, run.run_id);
   recomputeMergeConflicts(root, queue);
+  const currentCandidate = persistCandidateSet(
+    root,
+    buildCandidateSet(root, run, queue, resolve(root, ".."))
+  );
+  const verification = readJson(join(root, "runs", run.run_id, "verification-report.json"), null);
+  const review = readJson(join(root, "runs", run.run_id, "review-report.json"), null);
+  if (
+    !verification
+    || verification.status !== "PASS"
+    || verification.candidate_digest !== currentCandidate.candidate.candidate_digest
+  ) {
+    throw new Error("merge apply 拒绝未绑定当前 candidate 的 verification PASS");
+  }
+  if (
+    !review
+    || review.status !== "PASS"
+    || review.candidate_digest !== currentCandidate.candidate.candidate_digest
+  ) {
+    throw new Error("merge apply 拒绝未绑定当前 candidate 的 review PASS");
+  }
   if (queue.conflicts.length > 0) {
-    const report = writeIntegrationReport(root, run, "BLOCKED", [], queue.conflicts);
+    const report = writeIntegrationReport(
+      root,
+      run,
+      "BLOCKED",
+      [],
+      queue.conflicts,
+      [],
+      currentCandidate.candidate.candidate_digest
+    );
     throw new Error(`merge queue 存在冲突，已生成 integration report：${report.report_id}`);
   }
   if (queue.items.length === 0 && isNoopIntegrationRun(root, run.run_id)) {
-    const report = writeIntegrationReport(root, run, "NOOP", [], []);
+    const report = writeIntegrationReport(
+      root,
+      run,
+      "NOOP",
+      [],
+      [],
+      [],
+      currentCandidate.candidate.candidate_digest
+    );
     const artifact = createArtifact(root, run, "integrate", {
       type: "decision",
       title: "Integration：no-op",
@@ -188,10 +251,18 @@ export function applyMergeInternal(root, run) {
     return { report, artifact_id: artifact.artifact_id };
   }
   if (queue.items.length === 0) {
-    const report = writeIntegrationReport(root, run, "BLOCKED", [], []);
+    const report = writeIntegrationReport(
+      root,
+      run,
+      "BLOCKED",
+      [],
+      [],
+      [],
+      currentCandidate.candidate.candidate_digest
+    );
     throw new Error(`merge queue 为空且不满足 no-op integration 条件：${report.report_id}`);
   }
-  const approval = ensureMergeApproval(root, run, queue);
+  const approval = ensureMergeApproval(root, run, queue, currentCandidate.candidate.candidate_digest);
   if (!approval.allowed) {
     if (approval.created) {
       const event = appendEvent(root, "approval.requested", "apex-v2", {
@@ -210,12 +281,17 @@ export function applyMergeInternal(root, run) {
   const changedFiles = Array.from(new Set(mergeItems.flatMap((item) => item.changed_files))).sort();
   return withProjectTransaction(resolve(root, ".."), {
     kind: "merge-apply",
-    idempotencyKey: `merge-apply:${run.run_id}:${mergeItems.map((item) => item.patch_id).sort().join(",")}`,
+    idempotencyKey: `merge-apply:${run.run_id}:${currentCandidate.candidate.candidate_digest}`,
     extraPaths: changedFiles
-  }, () => applyMergeTransaction(root, run, queue)).result;
+  }, () => applyMergeTransaction(
+    root,
+    run,
+    queue,
+    currentCandidate.candidate.candidate_digest
+  )).result;
 }
 
-function applyMergeTransaction(root, run, queue) {
+function applyMergeTransaction(root, run, queue, candidateDigest) {
   const mergedPatches = [];
   const appliedFiles = [];
   for (const item of queue.items) {
@@ -226,14 +302,22 @@ function applyMergeTransaction(root, run, queue) {
     appliedFiles.push(...applyPatchOperations(resolve(root, ".."), patchInfo.patch));
     patchInfo.patch.status = "merged";
     patchInfo.patch.updated_at = now();
-    writeJson(patchInfo.path, patchInfo.patch);
+    updatePatchBundle(root, patchInfo.patch);
     const worker = findWorker(root, item.worker_id);
     worker.status = "merged";
     worker.updated_at = now();
     writeJson(join(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
   }
   writeMergeQueue(root, queue);
-  const report = writeIntegrationReport(root, run, "MERGED", mergedPatches, [], Array.from(new Set(appliedFiles)));
+  const report = writeIntegrationReport(
+    root,
+    run,
+    "MERGED",
+    mergedPatches,
+    [],
+    Array.from(new Set(appliedFiles)),
+    candidateDigest
+  );
   const artifact = createArtifact(root, run, "integrate", {
     type: "decision",
     title: "Integration：merge queue 已应用",
@@ -271,36 +355,81 @@ function runVerification(args) {
 
 export function runVerificationInternal(root, run, projectDir) {
   requirePassedNode(run, "execute");
+  if (existsSync(join(root, "runs", run.run_id, "integration-report.json"))) {
+    throw new Error("integration 后 verification 已冻结，不能覆盖 candidate chain");
+  }
   const timestamp = now();
   const plan = loadPlanGraph(root, run.run_id);
   const staged = prepareVerificationWorkspace(root, run, projectDir);
+  const candidate = buildCandidateSet(
+    root,
+    run,
+    readMergeQueue(root, run.run_id),
+    projectDir
+  );
   const checks = [staged.materializationCheck];
   try {
     for (const [index, command] of plan.verification_policy.required_commands.entries()) {
-      checks.push(runShellCommandCheck(`plan-command-${index + 1}`, command, staged.workspace_dir));
+      checks.push(runShellCommandCheck(
+        `plan-command-${index + 1}`,
+        command,
+        staged.workspace_dir,
+        staged.environment
+      ));
     }
     if (plan.verification_policy.schema_check) {
-      checks.push(runShellCommandCheck("schema-check", plan.verification_policy.schema_check, staged.workspace_dir));
+      checks.push(runShellCommandCheck(
+        "schema-check",
+        plan.verification_policy.schema_check,
+        staged.workspace_dir,
+        staged.environment
+      ));
     }
   } finally {
     staged.cleanup();
     staged.metadata.cleaned = true;
   }
+  const candidateAfterChecks = buildCandidateSet(
+    root,
+    run,
+    readMergeQueue(root, run.run_id),
+    projectDir
+  );
+  if (candidateAfterChecks.candidate_digest !== candidate.candidate_digest) {
+    checks.push(verificationCheck(
+      "candidate-stability",
+      "FAIL",
+      "candidate digest unchanged during verification",
+      1,
+      candidate.candidate_digest,
+      candidateAfterChecks.candidate_digest
+    ));
+  }
   const report = {
     schema_version: SCHEMA_VERSION,
     report_id: shortId("verification"),
     run_id: run.run_id,
+    candidate_digest: candidate.candidate_digest,
+    candidate_ref: `.apex-v2/runs/${run.run_id}/candidates/candidate-${candidate.candidate_digest}.json`,
     status: checks.every((check) => check.status === "PASS") ? "PASS" : "FAIL",
     created_at: timestamp,
     workspace: staged.metadata,
     checks
   };
+  return withProjectTransaction(projectDir, {
+    kind: "verification-commit",
+    idempotencyKey: `verification-commit:${run.run_id}:${candidate.candidate_digest}`
+  }, () => commitVerification(root, run, report, candidate, timestamp)).result;
+}
+
+function commitVerification(root, run, report, candidate, timestamp) {
+  persistCandidateSet(root, candidate);
   writeJson(join(root, "runs", run.run_id, "verification-report.json"), report);
   syncVerificationRisk(root, run.run_id, report);
   const artifact = createArtifact(root, run, "verify", {
     type: "test",
     title: `Verification：${report.status}`,
-    body: `在 ${report.workspace.mode} 中执行 ${checks.length} 个验证检查，staged patches=${report.workspace.patch_ids.length}，状态 ${report.status}。`,
+    body: `在 ${report.workspace.mode} 中执行 ${report.checks.length} 个验证检查，staged patches=${report.workspace.patch_ids.length}，状态 ${report.status}。`,
     refs: [`.apex-v2/runs/${run.run_id}/verification-report.json`],
     timestamp
   });
@@ -310,6 +439,7 @@ export function runVerificationInternal(root, run, projectDir) {
     status: report.status,
     workspace_mode: report.workspace.mode,
     patch_ids: report.workspace.patch_ids,
+    candidate_digest: report.candidate_digest,
     artifact_id: artifact.artifact_id
   });
   updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
@@ -335,6 +465,7 @@ function prepareVerificationWorkspace(root, run, projectDir) {
   if (patchItems.length === 0) {
     return {
       workspace_dir: projectDir,
+      environment: {},
       metadata,
       materializationCheck: verificationCheck(
         "patch-materialization",
@@ -348,21 +479,32 @@ function prepareVerificationWorkspace(root, run, projectDir) {
     };
   }
 
-  const tempRoot = mkdtempSync(join(tmpdir(), `apex-v2-verify-${run.run_id}-`));
+  const tempRoot = mkdtempSync(join(
+    verificationTempBase(projectDir),
+    `apex-v2-verify-${run.run_id}-`
+  ));
   const workspaceDir = join(tempRoot, "project");
+  const verificationHome = join(tempRoot, "home");
+  const verificationTmp = join(tempRoot, "tmp");
+  ensureDir(verificationHome);
+  ensureDir(verificationTmp);
   try {
     cpSync(projectDir, workspaceDir, {
       recursive: true,
       filter(source) {
         if (source === projectDir) return true;
         const name = basename(source);
-        return name !== ".git" && name !== "node_modules";
+        return ![
+          ".git",
+          ".apex-v2",
+          ".apex-v2.lock",
+          ".apex-v2.transaction-backups",
+          "node_modules"
+        ].includes(name);
       }
     });
-    const sourceNodeModules = join(projectDir, "node_modules");
-    if (existsSync(sourceNodeModules)) {
-      symlinkSync(sourceNodeModules, join(workspaceDir, "node_modules"), "dir");
-    }
+    initializeVerificationRepository(workspaceDir);
+    linkVerificationDependencies(projectDir, workspaceDir);
     if (queue.conflicts.length > 0) {
       throw new Error(`merge queue 存在 ${queue.conflicts.length} 个未解决冲突`);
     }
@@ -391,6 +533,12 @@ function prepareVerificationWorkspace(root, run, projectDir) {
   const materialized = metadata.preparation_error === "" && metadata.unmaterialized_patch_ids.length === 0;
   return {
     workspace_dir: workspaceDir,
+    environment: {
+      HOME: verificationHome,
+      TMPDIR: verificationTmp,
+      XDG_CACHE_HOME: join(verificationHome, ".cache"),
+      XDG_CONFIG_HOME: join(verificationHome, ".config")
+    },
     metadata,
     materializationCheck: verificationCheck(
       "patch-materialization",
@@ -406,8 +554,119 @@ function prepareVerificationWorkspace(root, run, projectDir) {
   };
 }
 
-function runShellCommandCheck(id, command, cwd) {
-  const result = spawnSync(command, { cwd, encoding: "utf8", shell: true });
+function verificationTempBase(projectDir) {
+  const projectReal = realpathSync(projectDir);
+  const candidates = [
+    process.env.APEX_V2_VERIFY_TMPDIR,
+    tmpdir(),
+    "/private/tmp",
+    "/tmp"
+  ].filter(Boolean);
+  for (const candidate of candidates) {
+    if (!existsSync(candidate)) continue;
+    const candidateReal = realpathSync(candidate);
+    if (
+      candidateReal !== projectReal
+      && !candidateReal.startsWith(`${projectReal}${sep}`)
+    ) {
+      return candidateReal;
+    }
+  }
+  throw new Error("找不到项目目录外的 staged verification temp root");
+}
+
+function initializeVerificationRepository(workspaceDir) {
+  for (const args of [
+    ["init", "-q"],
+    ["config", "user.name", "Apex Forge Verification"],
+    ["config", "user.email", "verification@apex-forge.local"]
+  ]) {
+    const result = spawnSync("git", args, { cwd: workspaceDir, encoding: "utf8" });
+    if (result.status !== 0) {
+      throw new Error(`staged git ${args.join(" ")} failed: ${result.stderr || result.stdout}`);
+    }
+  }
+  writeFileSync(
+    join(workspaceDir, ".git", "info", "exclude"),
+    "node_modules\nnode_modules/\n**/node_modules\n**/node_modules/\n.apex-v2/\n"
+  );
+  for (const args of [
+    ["add", "-A"],
+    ["commit", "-q", "-m", "Apex Forge staged verification baseline"]
+  ]) {
+    const result = spawnSync("git", args, {
+      cwd: workspaceDir,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        GIT_AUTHOR_DATE: "2000-01-01T00:00:00Z",
+        GIT_COMMITTER_DATE: "2000-01-01T00:00:00Z"
+      }
+    });
+    if (result.status !== 0) {
+      throw new Error(`staged git ${args.join(" ")} failed: ${result.stderr || result.stdout}`);
+    }
+  }
+}
+
+function linkVerificationDependencies(projectDir, workspaceDir) {
+  const visit = (directory) => {
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      if ([".git", ".apex-v2"].includes(entry.name)) continue;
+      const source = join(directory, entry.name);
+      if (entry.name === "node_modules") {
+        const target = join(workspaceDir, relative(projectDir, source));
+        createWritableVerificationDependencyShell(source, target);
+      } else if (entry.isDirectory()) {
+        visit(source);
+      }
+    }
+  };
+  visit(projectDir);
+}
+
+function createWritableVerificationDependencyShell(source, target) {
+  if (existsSync(target)) return;
+  ensureDir(target);
+  for (const entry of readdirSync(source, { withFileTypes: true })) {
+    const dependency = join(source, entry.name);
+    const linked = join(target, entry.name);
+    if ([".cache", ".tmp", ".vite", ".vite-temp"].includes(entry.name)) {
+      ensureDir(linked);
+      continue;
+    }
+    symlinkSync(dependency, linked, entry.isDirectory() ? "dir" : "file");
+  }
+}
+
+function runShellCommandCheck(id, command, cwd, environment = {}) {
+  const result = spawnManagedProcess("/bin/zsh", ["-lc", command], {
+    workspaceDir: cwd,
+    timeoutMs: positiveInteger(
+      process.env.APEX_V2_VERIFY_COMMAND_TIMEOUT_MS,
+      30 * 60 * 1000
+    ),
+    minFreeBytes: positiveInteger(
+      process.env.APEX_V2_MIN_FREE_BYTES,
+      20 * 1024 * 1024 * 1024
+    ),
+    maxDiskGrowthBytes: positiveInteger(
+      process.env.APEX_V2_MAX_DISK_GROWTH_BYTES,
+      5 * 1024 * 1024 * 1024
+    ),
+    maxWorkspaceGrowthBytes: positiveInteger(
+      process.env.APEX_V2_MAX_WORKSPACE_GROWTH_BYTES,
+      5 * 1024 * 1024 * 1024
+    ),
+    maxOutputBytes: positiveInteger(
+      process.env.APEX_V2_MAX_COMMAND_OUTPUT_BYTES,
+      16 * 1024 * 1024
+    ),
+    env: {
+      ...process.env,
+      ...environment
+    }
+  });
   return verificationCheck(
     id,
     result.status === 0 ? "PASS" : "FAIL",
@@ -416,6 +675,11 @@ function runShellCommandCheck(id, command, cwd) {
     tail(result.stdout),
     tail(result.stderr)
   );
+}
+
+function positiveInteger(value, fallback) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
 function verificationCheck(id, status, command, exitCode, stdout, stderr) {
@@ -445,10 +709,32 @@ function generateReview(args) {
 }
 
 export function generateReviewInternal(root, run) {
+  const queue = readMergeQueue(root, run.run_id);
+  recomputeMergeConflicts(root, queue);
+  const candidate = buildCandidateSet(root, run, queue, resolve(root, ".."));
+  const verification = readJson(join(root, "runs", run.run_id, "verification-report.json"), null);
+  const verifyStatus = getRunNode(run, "verify").status;
+  return withProjectTransaction(resolve(root, ".."), {
+    kind: "review-generate",
+    idempotencyKey: [
+      "review-generate",
+      run.run_id,
+      verifyStatus,
+      verification?.report_id || "none",
+      candidate.candidate_digest
+    ].join(":")
+  }, () => generateReviewTransaction(root, run)).result;
+}
+
+function generateReviewTransaction(root, run) {
   const timestamp = now();
   const queue = readMergeQueue(root, run.run_id);
   recomputeMergeConflicts(root, queue);
   writeMergeQueue(root, queue);
+  const candidate = persistCandidateSet(
+    root,
+    buildCandidateSet(root, run, queue, resolve(root, ".."))
+  );
   const verification = readJson(join(root, "runs", run.run_id, "verification-report.json"), null);
   const blocking = [];
   const nonBlocking = [];
@@ -458,6 +744,8 @@ export function generateReviewInternal(root, run) {
   }
   if (!verification || verification.status !== "PASS") {
     blocking.push("verification-report 缺失或未通过。");
+  } else if (verification.candidate_digest !== candidate.candidate.candidate_digest) {
+    blocking.push("verification-report 未绑定当前 candidate。");
   }
   if (queue.conflicts.length > 0) {
     blocking.push(`merge queue 存在 ${queue.conflicts.length} 个冲突。`);
@@ -477,6 +765,8 @@ export function generateReviewInternal(root, run) {
     schema_version: SCHEMA_VERSION,
     report_id: shortId("review"),
     run_id: run.run_id,
+    candidate_digest: candidate.candidate.candidate_digest,
+    verification_report_id: verification?.report_id || null,
     status: blocking.length === 0 ? "PASS" : "BLOCKED",
     created_at: timestamp,
     blocking_findings: blocking,
@@ -499,6 +789,7 @@ export function generateReviewInternal(root, run) {
     run_id: run.run_id,
     report_id: report.report_id,
     status: report.status,
+    candidate_digest: report.candidate_digest,
     artifact_id: artifact.artifact_id
   });
   updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
@@ -602,25 +893,33 @@ function tryFindPatchForQueueItem(root, runId, patchId) {
 }
 
 function syncWorkerStatusesFromMergeQueue(root, queue) {
+  const itemsByWorker = new Map();
   for (const item of queue.items) {
-    const worker = findWorker(root, item.worker_id);
-    if (item.status === "dropped") {
-      worker.status = "dropped";
-    } else if (item.status === "merged") {
-      worker.status = "merged";
-    } else {
-      worker.status = item.status === "blocked_conflict" ? "blocked" : "queued";
-    }
+    if (!itemsByWorker.has(item.worker_id)) itemsByWorker.set(item.worker_id, []);
+    itemsByWorker.get(item.worker_id).push(item);
+  }
+  for (const [workerId, items] of itemsByWorker) {
+    const worker = findWorker(root, workerId);
+    worker.status = workerStatusForMergeItems(items);
     worker.updated_at = queue.updated_at;
     writeJson(join(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
   }
 }
 
-function writeIntegrationReport(root, run, status, mergedPatches, conflicts, appliedFiles = []) {
+function writeIntegrationReport(
+  root,
+  run,
+  status,
+  mergedPatches,
+  conflicts,
+  appliedFiles = [],
+  candidateDigest = null
+) {
   const report = {
     schema_version: SCHEMA_VERSION,
     report_id: shortId("integration"),
     run_id: run.run_id,
+    candidate_digest: candidateDigest,
     status,
     created_at: now(),
     merged_patches: mergedPatches,
@@ -629,6 +928,10 @@ function writeIntegrationReport(root, run, status, mergedPatches, conflicts, app
   };
   writeJson(join(root, "runs", run.run_id, "integration-report.json"), report);
   return report;
+}
+
+function stableTransitionHash(value) {
+  return createHash("sha256").update(String(value)).digest("hex");
 }
 
 

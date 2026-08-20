@@ -38,6 +38,8 @@ export function initProject(args) {
   if (firstInit) {
     writeJson(join(root, "project.json"), {
       schema_version: SCHEMA_VERSION,
+      format_version: 1,
+      revision: 0,
       project_id: shortId("project"),
       project_name: projectName,
       created_at: timestamp,
@@ -87,6 +89,18 @@ export function initProject(args) {
     writeJson(join(root, "policies", "execution.json"), defaultExecutionPolicy(timestamp));
   } else {
     const executionPolicy = readJson(join(root, "policies", "execution.json"));
+    if (!executionPolicy.interactive_workspace_patch) {
+      executionPolicy.interactive_workspace_patch = { enabled: true };
+      executionPolicy.updated_at = timestamp;
+    }
+    if (!executionPolicy.interactive_host_claim) {
+      executionPolicy.interactive_host_claim = { lease_seconds: 1800 };
+      executionPolicy.updated_at = timestamp;
+    }
+    if (!executionPolicy.execution_router) {
+      executionPolicy.execution_router = defaultExecutionPolicy(timestamp).execution_router;
+      executionPolicy.updated_at = timestamp;
+    }
     if (!executionPolicy.permissions.adapter_fallback_order) {
       executionPolicy.permissions.allowed_adapters = Array.from(new Set(["host", ...executionPolicy.permissions.allowed_adapters, "claude", "gemini", "deepseek-runner"]));
       executionPolicy.permissions.adapter_fallback_order = ["codex", "claude", "gemini"];

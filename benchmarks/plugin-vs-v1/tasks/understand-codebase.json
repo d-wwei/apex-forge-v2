@@ -1,0 +1,181 @@
+{
+  "repository_id": "understand-codebase",
+  "tasks": [
+    {
+      "scenario": "simple",
+      "title": "Ignore WebP image assets",
+      "instructions": "Add `*.webp` to the default binary and asset ignore patterns and extend the existing ignore-filter tests to verify WebP files are excluded. Preserve user negation behavior.",
+      "affected_files": [
+        "understand-codebase-plugin/packages/core/src/ignore-filter.ts",
+        "understand-codebase-plugin/packages/core/src/__tests__/ignore-filter.test.ts"
+      ],
+      "acceptance_commands": [
+        "pnpm --dir understand-codebase-plugin --filter @understand-codebase/core test -- src/__tests__/ignore-filter.test.ts"
+      ],
+      "setup_operations": [],
+      "hidden_checks": [
+        {
+          "kind": "behavior",
+          "description": "WebP assets are ignored by default.",
+          "command": "pnpm --dir understand-codebase-plugin --filter @understand-codebase/core test -- src/__tests__/ignore-filter.test.ts"
+        },
+        {
+          "kind": "evidence",
+          "description": "The default pattern is explicitly present.",
+          "command": "test -n \"$(git diff --name-only -- understand-codebase-plugin/packages/core/src/ignore-filter.ts)\" && test -n \"$(git diff --name-only -- understand-codebase-plugin/packages/core/src/__tests__/ignore-filter.test.ts)\""
+        }
+      ]
+    },
+    {
+      "scenario": "multi-step",
+      "title": "Deduplicate reanalysis file lists",
+      "instructions": "Ensure `classifyUpdate` returns each path at most once in `filesToReanalyze`, while preserving first-seen order. Apply this consistently to partial, architecture, and full updates, then add focused tests covering overlap between structurally changed and new files.",
+      "affected_files": [
+        "understand-codebase-plugin/packages/core/src/change-classifier.ts",
+        "understand-codebase-plugin/packages/core/src/__tests__/change-classifier.test.ts"
+      ],
+      "acceptance_commands": [
+        "pnpm --dir understand-codebase-plugin --filter @understand-codebase/core test -- src/__tests__/change-classifier.test.ts"
+      ],
+      "setup_operations": [],
+      "hidden_checks": [
+        {
+          "kind": "behavior",
+          "description": "Overlapping changed-file categories produce an ordered unique reanalysis list.",
+          "command": "node --input-type=module -e \"import { classifyUpdate } from './understand-codebase-plugin/packages/core/src/change-classifier.ts'; const a={fileChanges:[],newFiles:['src/a.ts'],deletedFiles:[],structurallyChangedFiles:['src/a.ts'],cosmeticOnlyFiles:[],unchangedFiles:[]}; const r=classifyUpdate(a,20,['src/x.ts']); if(JSON.stringify(r.filesToReanalyze)!=='[\\\"src/a.ts\\\"]') process.exit(1)\""
+        },
+        {
+          "kind": "regression",
+          "description": "All core tests remain green.",
+          "command": "pnpm --dir understand-codebase-plugin --filter @understand-codebase/core test"
+        }
+      ]
+    },
+    {
+      "scenario": "bug-fix",
+      "title": "Restore the full-update percentage boundary",
+      "instructions": "A defect makes exactly 50% structural change trigger `FULL_UPDATE`, contrary to the documented greater-than-50% threshold. Restore the strict boundary and add a regression test proving 5 of 10 files does not trigger a full rebuild while 6 of 10 does.",
+      "affected_files": [
+        "understand-codebase-plugin/packages/core/src/change-classifier.ts",
+        "understand-codebase-plugin/packages/core/src/__tests__/change-classifier.test.ts"
+      ],
+      "acceptance_commands": [
+        "pnpm --dir understand-codebase-plugin --filter @understand-codebase/core test -- src/__tests__/change-classifier.test.ts"
+      ],
+      "setup_operations": [
+        {
+          "op": "replace_text",
+          "path": "understand-codebase-plugin/packages/core/src/change-classifier.ts",
+          "content": "",
+          "old_text": "const triggeredByPercentage = totalFilesInGraph > 0 && structuralCount / totalFilesInGraph > 0.5;",
+          "new_text": "const triggeredByPercentage = totalFilesInGraph > 0 && structuralCount / totalFilesInGraph >= 0.5;"
+        }
+      ],
+      "hidden_checks": [
+        {
+          "kind": "behavior",
+          "description": "Exactly 50% does not select FULL_UPDATE, but more than 50% does.",
+          "command": "pnpm --dir understand-codebase-plugin --filter @understand-codebase/core test -- src/__tests__/change-classifier.test.ts"
+        },
+        {
+          "kind": "closure",
+          "description": "The implementation uses the documented strict comparison.",
+          "command": "node --input-type=module -e \"import { classifyUpdate } from './understand-codebase-plugin/packages/core/src/change-classifier.ts'; const make=(n)=>({fileChanges:[],newFiles:[],deletedFiles:[],structurallyChangedFiles:Array.from({length:n},(_,i)=>'src/f'+i+'.ts'),cosmeticOnlyFiles:[],unchangedFiles:[]}); if(classifyUpdate(make(5),10).action==='FULL_UPDATE'||classifyUpdate(make(6),10).action!=='FULL_UPDATE') process.exit(1)\""
+        }
+      ]
+    },
+    {
+      "scenario": "interrupted",
+      "title": "Complete additional complexity aliases",
+      "instructions": "Resume the partially started complexity-alias change. Keep the existing `minimal` mapping, add `severe` as an alias for `complex`, and add tests for both aliases including case-insensitive input.",
+      "affected_files": [
+        "understand-codebase-plugin/packages/core/src/analyzer/normalize-graph.ts",
+        "understand-codebase-plugin/packages/core/src/__tests__/normalize-graph.test.ts"
+      ],
+      "acceptance_commands": [
+        "pnpm --dir understand-codebase-plugin --filter @understand-codebase/core test -- src/__tests__/normalize-graph.test.ts"
+      ],
+      "setup_operations": [
+        {
+          "op": "replace_text",
+          "path": "understand-codebase-plugin/packages/core/src/analyzer/normalize-graph.ts",
+          "content": "",
+          "old_text": "  basic: \"simple\",\n  medium: \"moderate\",",
+          "new_text": "  basic: \"simple\",\n  minimal: \"simple\",\n  medium: \"moderate\","
+        }
+      ],
+      "hidden_checks": [
+        {
+          "kind": "behavior",
+          "description": "Minimal and severe aliases normalize correctly regardless of case.",
+          "command": "pnpm --dir understand-codebase-plugin --filter @understand-codebase/core test -- src/__tests__/normalize-graph.test.ts"
+        },
+        {
+          "kind": "closure",
+          "description": "Both resumed aliases are represented in implementation and tests.",
+          "command": "test -n \"$(git diff --name-only -- understand-codebase-plugin/packages/core/src/analyzer/normalize-graph.ts)\" && test -n \"$(git diff --name-only -- understand-codebase-plugin/packages/core/src/__tests__/normalize-graph.test.ts)\""
+        }
+      ]
+    },
+    {
+      "scenario": "review-defect",
+      "title": "Prevent medium warnings from blocking exports",
+      "instructions": "Review the injected redaction-policy regression. Shareable and LLM output must be blocked only by high-severity findings; medium-severity bearer tokens should still be redacted and warned about without setting `blocked`. Correct the implementation and add a focused regression test.",
+      "affected_files": [
+        "understand-codebase-plugin/src/understand-codebase/privacy/redaction-pipeline.ts",
+        "understand-codebase-plugin/src/__tests__/understand-codebase-redaction-pipeline.test.ts"
+      ],
+      "acceptance_commands": [
+        "pnpm vitest run understand-codebase-plugin/src/__tests__/understand-codebase-redaction-pipeline.test.ts"
+      ],
+      "setup_operations": [
+        {
+          "op": "replace_text",
+          "path": "understand-codebase-plugin/src/understand-codebase/privacy/redaction-pipeline.ts",
+          "content": "",
+          "old_text": "      warnings.some((warning) => warning.severity === \"high\");",
+          "new_text": "      warnings.length > 0;"
+        }
+      ],
+      "hidden_checks": [
+        {
+          "kind": "security",
+          "description": "High-severity secrets fail closed while medium bearer tokens are redacted without blocking.",
+          "command": "pnpm vitest run understand-codebase-plugin/src/__tests__/understand-codebase-redaction-pipeline.test.ts"
+        },
+        {
+          "kind": "closure",
+          "description": "Blocking remains explicitly tied to high severity.",
+          "command": "node --input-type=module -e \"import { RedactionPipeline } from './understand-codebase-plugin/src/understand-codebase/privacy/redaction-pipeline.ts'; const p=new RedactionPipeline(); const medium=p.redactString('Bearer abcdefghijklmnop',{mode:'shareable'}); const high=p.redactString('sk-abcdefghijklmnopqrst',{mode:'shareable'}); if(medium.blocked||!medium.value.includes('[REDACTED_SECRET]')||!high.blocked) process.exit(1)\""
+        }
+      ]
+    },
+    {
+      "scenario": "parallel",
+      "title": "Expose request context in both prompt builders",
+      "instructions": "Make two independent prompt improvements that can be implemented in parallel. In `formatContextForPrompt`, add a `## User Query` section containing the original query. In `formatExplainPrompt`, include the originally requested path near the heading for found components. Extend each module's existing tests without changing graph traversal behavior.",
+      "affected_files": [
+        "understand-codebase-plugin/src/context-builder.ts",
+        "understand-codebase-plugin/src/__tests__/context-builder.test.ts",
+        "understand-codebase-plugin/src/explain-builder.ts",
+        "understand-codebase-plugin/src/__tests__/explain-builder.test.ts"
+      ],
+      "acceptance_commands": [
+        "pnpm vitest run understand-codebase-plugin/src/__tests__/context-builder.test.ts understand-codebase-plugin/src/__tests__/explain-builder.test.ts"
+      ],
+      "setup_operations": [],
+      "hidden_checks": [
+        {
+          "kind": "behavior",
+          "description": "Both formatted prompts retain their original request context.",
+          "command": "node --input-type=module -e \"import { formatContextForPrompt } from './understand-codebase-plugin/src/context-builder.ts'; import { formatExplainPrompt } from './understand-codebase-plugin/src/explain-builder.ts'; const q='original query'; const chat=formatContextForPrompt({projectName:'P',projectDescription:'D',languages:[],frameworks:[],relevantNodes:[],relevantEdges:[],relevantLayers:[],query:q}); const p='src/a.ts:fn'; const explain=formatExplainPrompt({projectName:'P',path:p,targetNode:{id:'1',name:'fn',type:'function',complexity:'simple',summary:'s',tags:[],filePath:'src/a.ts'},childNodes:[],connectedNodes:[],relevantEdges:[],layer:null}); if(!chat.includes('## User Query')||!chat.includes(q)||!explain.includes(p)) process.exit(1)\""
+        },
+        {
+          "kind": "regression",
+          "description": "The complete plugin-level Vitest suite remains green.",
+          "command": "pnpm vitest run understand-codebase-plugin/src/__tests__"
+        }
+      ]
+    }
+  ]
+}

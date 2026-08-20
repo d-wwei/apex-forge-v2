@@ -1,0 +1,150 @@
+{
+  "task_id": "agent-recall--multi-step",
+  "task_digest": "6e3f5d57f583677ad57b358fd6c23015cbb7a1b0eababcc79a80e3561de1ff38",
+  "repository": "agent-recall",
+  "scenario": "multi-step",
+  "mode": "cli-kernel",
+  "candidate_digest": "45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 849153,
+    "cost": 5244675,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 1,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "362bd78657a4f346af7218a571ab2698303ffb2a",
+    "runtime_hash": "fbb9635c7fd7b24c7799126c3640c4ddc3239b4be5e2a5b9dd3f5cce103f16fc",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "2850cf9dcb414575f6b1a17330c6a838edd9f82129fe06ca9a549eca9452e125",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--multi-step--cli-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--multi-step--cli-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--multi-step--cli-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--multi-step--cli-kernel/codex-home/sessions/2026/08/20/rollout-2026-08-20T08-12-57-01a01c83-8add-7a11-a4fd-46fdd65a4996.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--multi-step--cli-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--multi-step--cli-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--multi-step--cli-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--multi-step--cli-kernel/codex-home/sessions/2026/08/20/rollout-2026-08-20T08-12-57-01a01c83-8add-7a11-a4fd-46fdd65a4996.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--multi-step--cli-kernel/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "aeef9299cdd8817516567951384c78417973e4fba7d4787639418ace90b9e947",
+      "3a24665f2654de423c9cd69ee82db9eaafa5ca454c7a7a070a4b8ef5b231e6de",
+      "af4a7fab484cbfc408b3bdad92c9dfa839e17890e9ec20eff86fcac6621d1be7",
+      "b20393cc317cf9fa1a09ebea165f566f01bf4de93e4984f6a9e0e5eb7ce05e84",
+      "77e76968641cad72747e8269bb1958b33bbf89cc616a6d3f23af8522e5ebae41"
+    ]
+  },
+  "evidence": {
+    "task_digest": "6e3f5d57f583677ad57b358fd6c23015cbb7a1b0eababcc79a80e3561de1ff38",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a01c83-8add-7a11-a4fd-46fdd65a4996",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Added strict compound Chinese numeral parsing for values such as 二十, 二十一, and 三十五, preserved existing numeral behavior, and added malformed-input coverage. Kernel run closed PASS.",
+      "tests": [
+        {
+          "command": "bun test tests/services/temporal-parser.test.ts",
+          "status": "pass",
+          "detail": "44 passed, 0 failed; also rerun by kernel verification."
+        },
+        {
+          "command": "git diff --check",
+          "status": "pass",
+          "detail": "No whitespace errors."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "artifact-mt0s2vra-d4aedbf7",
+        "artifact-mt0s3d9l-97cb1431",
+        "artifact-mt0s499d-c9943e14",
+        "artifact-mt0s4yn0-0bc30fb9",
+        "artifact-mt0s4yqg-e8f04572"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "bun test tests/services/temporal-parser.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 51,
+        "stdout_tail": "bun test v1.3.11 (af24e281)\n",
+        "stderr_tail": "onth\" → anchorDate = -30 days, windowDays = 30 [0.02ms]\n(pass) TemporalParser — English \"N ago\" patterns > parses \"3 days ago\" → offset = -3d, window = 3d [0.02ms]\n(pass) TemporalParser — English \"N ago\" patterns > parses \"1 day ago\" (singular) → offset = -1d, window = 1d [0.07ms]\n(pass) TemporalParser — English \"N ago\" patterns > parses \"2 weeks ago\" → offset = -14d, window = 14d [0.01ms]\n(pass) TemporalParser — English \"N ago\" patterns > parses \"1 week ago\" (singular) → offset = -7d, window = 7d [0.05ms]\n(pass) TemporalParser — English \"N ago\" patterns > parses \"2 months ago\" → offset = -60d, window = 60d [0.02ms]\n(pass) TemporalParser — English \"past N\" patterns > parses \"past 5 days\" → window = 5d [0.03ms]\n(pass) TemporalParser — English \"past N\" patterns > parses \"past 2 weeks\" → window = 14d [0.03ms]\n(pass) TemporalParser — English \"past N\" patterns > parses \"past 1 week\" (singular) → window = 7d [0.02ms]\n(pass) TemporalParser — Chinese fixed patterns > parses \"昨天\" → offset = -1d, window = 1d [0.05ms]\n(pass) TemporalParser — Chinese fixed patterns > parses \"今天\" → offset = 0, window = 1d [0.03ms]\n(pass) TemporalParser — Chinese fixed patterns > parses \"上周\" → offset = -7d, window = 7d [0.02ms]\n(pass) TemporalParser — Chinese fixed patterns > parses \"上个月\" → offset = -30d, window = 30d [0.02ms]\n(pass) TemporalParser — Chinese fixed patterns > parses \"最近\" → offset = 0, window = 7d [0.03ms]\n(pass) TemporalParser — Chinese \"N前\" patterns > parses \"3天前\" (digit) → offset = -3d, window = 3d [0.03ms]\n(pass) TemporalParser — Chinese \"N前\" patterns > parses \"两天前\" (Chinese numeral 两) → offset = -2d, window = 2d [0.03ms]\n(pass) TemporalParser — Chinese \"N前\" patterns > parses \"七天前\" (Chinese numeral 七) → offset = -7d, window = 7d [0.02ms]\n(pass) TemporalParser — Chinese \"N前\" patterns > parses \"二十天前\" → offset = -20d, window = 20d [0.02ms]\n(pass) TemporalParser — Chinese \"N前\" patterns > parses \"二十一天前\" → offset = -21d, window = 21d\n(pass) TemporalParser — Chinese \"N前\" patterns > parses \"一周前\" → offset = -7d, window = 7d [0.01ms]\n(pass) TemporalParser — Chinese \"N前\" patterns > parses \"2周前\" (digit) → offset = -14d, window = 14d [0.02ms]\n(pass) TemporalParser — Chinese \"N前\" patterns > parses \"三十五周前\" → offset = -245d, window = 245d [0.01ms]\n(pass) TemporalParser — Chinese \"N前\" patterns > rejects malformed numeral string \"二十一十天前\" [0.01ms]\n(pass) TemporalParser — Chinese \"N前\" patterns > rejects malformed numeral string \"十十天前\" [0.01ms]\n(pass) TemporalParser — Chinese \"N前\" patterns > rejects malformed numeral string \"2十天前\"\n(pass) TemporalParser — Chinese \"N前\" patterns > rejects malformed numeral string \"一百二十天前\"\n(pass) TemporalParser — Chinese \"N前\" patterns > rejects malformed numeral string \"三五周前\"\n(pass) TemporalParser — non-temporal returns null > returns null for a plain keyword query\n(pass) TemporalParser — non-temporal returns null > returns null for an empty string [0.02ms]\n(pass) TemporalParser — non-temporal returns null > returns null for a query with a year but no temporal keyword\n(pass) TemporalParser — non-temporal returns null > returns null for a Chinese query without temporal keywords\n(pass) TemporalParser — boost calculation > returns 0.4 for a target exactly at anchorDate (daysDiff = 0, window = 7)\n(pass) TemporalParser — boost calculation > returns 0 for a target outside the window [0.02ms]\n(pass) TemporalParser — boost calculation > returns positive boost for a target inside the window [0.01ms]\n(pass) TemporalParser — boost calculation > boost value decreases as target moves further from now [0.02ms]\n(pass) TemporalParser — boost calculation > boost for \"past 7 days\" at 7-day boundary is exactly 0 [0.01ms]\n(pass) TemporalParser — edge cases > uses current Date when \"now\" parameter is omitted [0.01ms]\n(pass) TemporalParser — edge cases > query is case-insensitive for English patterns\n(pass) TemporalParser — edge cases > matches pattern within a longer sentence\n\n 44 pass\n 0 fail\n 99 expect() calls\nRan 44 tests across 1 file. [22.00ms]\n"
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "bun -e \"import { TemporalParser } from './src/services/worker/search/TemporalParser.ts'; const p=new TemporalParser(); const now=new Date('2026-04-09T12:00:00Z'); const day=86400000; const a=p.parse('二十一天前',now); const b=p.parse('三十五天前',now); if(!a||!b||Math.round((now.getTime()-a.anchorDate.getTime())/day)!==21||Math.round((now.getTime()-b.anchorDate.getTime())/day)!==35) process.exit(1);\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 31,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      },
+      {
+        "command": "bun test tests/services/temporal-parser.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 35,
+        "stdout_tail": "bun test v1.3.11 (af24e281)\n",
+        "stderr_tail": "s \"last month\" → anchorDate = -30 days, windowDays = 30 [0.01ms]\n(pass) TemporalParser — English \"N ago\" patterns > parses \"3 days ago\" → offset = -3d, window = 3d [0.02ms]\n(pass) TemporalParser — English \"N ago\" patterns > parses \"1 day ago\" (singular) → offset = -1d, window = 1d [0.06ms]\n(pass) TemporalParser — English \"N ago\" patterns > parses \"2 weeks ago\" → offset = -14d, window = 14d [0.03ms]\n(pass) TemporalParser — English \"N ago\" patterns > parses \"1 week ago\" (singular) → offset = -7d, window = 7d [0.01ms]\n(pass) TemporalParser — English \"N ago\" patterns > parses \"2 months ago\" → offset = -60d, window = 60d [0.02ms]\n(pass) TemporalParser — English \"past N\" patterns > parses \"past 5 days\" → window = 5d [0.01ms]\n(pass) TemporalParser — English \"past N\" patterns > parses \"past 2 weeks\" → window = 14d [0.03ms]\n(pass) TemporalParser — English \"past N\" patterns > parses \"past 1 week\" (singular) → window = 7d [0.02ms]\n(pass) TemporalParser — Chinese fixed patterns > parses \"昨天\" → offset = -1d, window = 1d [0.05ms]\n(pass) TemporalParser — Chinese fixed patterns > parses \"今天\" → offset = 0, window = 1d [0.03ms]\n(pass) TemporalParser — Chinese fixed patterns > parses \"上周\" → offset = -7d, window = 7d [0.01ms]\n(pass) TemporalParser — Chinese fixed patterns > parses \"上个月\" → offset = -30d, window = 30d [0.02ms]\n(pass) TemporalParser — Chinese fixed patterns > parses \"最近\" → offset = 0, window = 7d [0.02ms]\n(pass) TemporalParser — Chinese \"N前\" patterns > parses \"3天前\" (digit) → offset = -3d, window = 3d [0.02ms]\n(pass) TemporalParser — Chinese \"N前\" patterns > parses \"两天前\" (Chinese numeral 两) → offset = -2d, window = 2d [0.04ms]\n(pass) TemporalParser — Chinese \"N前\" patterns > parses \"七天前\" (Chinese numeral 七) → offset = -7d, window = 7d [0.02ms]\n(pass) TemporalParser — Chinese \"N前\" patterns > parses \"二十天前\" → offset = -20d, window = 20d [0.01ms]\n(pass) TemporalParser — Chinese \"N前\" patterns > parses \"二十一天前\" → offset = -21d, window = 21d [0.02ms]\n(pass) TemporalParser — Chinese \"N前\" patterns > parses \"一周前\" → offset = -7d, window = 7d [0.01ms]\n(pass) TemporalParser — Chinese \"N前\" patterns > parses \"2周前\" (digit) → offset = -14d, window = 14d [0.02ms]\n(pass) TemporalParser — Chinese \"N前\" patterns > parses \"三十五周前\" → offset = -245d, window = 245d [0.01ms]\n(pass) TemporalParser — Chinese \"N前\" patterns > rejects malformed numeral string \"二十一十天前\" [0.01ms]\n(pass) TemporalParser — Chinese \"N前\" patterns > rejects malformed numeral string \"十十天前\"\n(pass) TemporalParser — Chinese \"N前\" patterns > rejects malformed numeral string \"2十天前\"\n(pass) TemporalParser — Chinese \"N前\" patterns > rejects malformed numeral string \"一百二十天前\"\n(pass) TemporalParser — Chinese \"N前\" patterns > rejects malformed numeral string \"三五周前\"\n(pass) TemporalParser — non-temporal returns null > returns null for a plain keyword query\n(pass) TemporalParser — non-temporal returns null > returns null for an empty string [0.02ms]\n(pass) TemporalParser — non-temporal returns null > returns null for a query with a year but no temporal keyword\n(pass) TemporalParser — non-temporal returns null > returns null for a Chinese query without temporal keywords\n(pass) TemporalParser — boost calculation > returns 0.4 for a target exactly at anchorDate (daysDiff = 0, window = 7)\n(pass) TemporalParser — boost calculation > returns 0 for a target outside the window [0.02ms]\n(pass) TemporalParser — boost calculation > returns positive boost for a target inside the window [0.01ms]\n(pass) TemporalParser — boost calculation > boost value decreases as target moves further from now [0.02ms]\n(pass) TemporalParser — boost calculation > boost for \"past 7 days\" at 7-day boundary is exactly 0 [0.01ms]\n(pass) TemporalParser — edge cases > uses current Date when \"now\" parameter is omitted\n(pass) TemporalParser — edge cases > query is case-insensitive for English patterns\n(pass) TemporalParser — edge cases > matches pattern within a longer sentence\n\n 44 pass\n 0 fail\n 99 expect() calls\nRan 44 tests across 1 file. [10.00ms]\n"
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/services/worker/search/TemporalParser.ts",
+        "tests/services/temporal-parser.test.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": true,
+      "evidence_score": 1,
+      "run_ids": [
+        "run-mt0ro7n7-d79bc13e"
+      ],
+      "done_run_ids": [
+        "run-mt0ro7n7-d79bc13e"
+      ],
+      "fully_closed_run_ids": [
+        "run-mt0ro7n7-d79bc13e"
+      ],
+      "active_runs": [],
+      "candidate_chain_equal": true,
+      "verification_ref": ".apex-v2/runs/run-mt0ro7n7-d79bc13e/verification-report.json",
+      "review_ref": ".apex-v2/runs/run-mt0ro7n7-d79bc13e/review-report.json",
+      "integration_ref": ".apex-v2/runs/run-mt0ro7n7-d79bc13e/integration-report.json",
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "38e07ec93f6fef70e14267d5ce1ac0a72aa8fd58bcc5023c9c1b28d79b10dfad",
+        "replay_hash": "38e07ec93f6fef70e14267d5ce1ac0a72aa8fd58bcc5023c9c1b28d79b10dfad",
+        "hash_equal": true
+      }
+    }
+  }
+}

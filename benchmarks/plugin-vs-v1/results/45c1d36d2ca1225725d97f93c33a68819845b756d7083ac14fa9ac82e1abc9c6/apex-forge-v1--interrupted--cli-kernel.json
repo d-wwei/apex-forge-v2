@@ -1,0 +1,169 @@
+{
+  "task_id": "apex-forge-v1--interrupted",
+  "task_digest": "a17310b08172656638d4adbd96e963823bb3650b7e005a126aabbb614a1f629a",
+  "repository": "apex-forge-v1",
+  "scenario": "interrupted",
+  "mode": "cli-kernel",
+  "candidate_digest": "45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 0.25,
+    "wall_ms": 1308253,
+    "cost": 5454087,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 0,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "3755583552540121bcb1287c5bdba3c8b2578726",
+    "runtime_hash": "fbb9635c7fd7b24c7799126c3640c4ddc3239b4be5e2a5b9dd3f5cce103f16fc",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "b36c57cb57e71682b35e3fb8d1f42bdbd38f5b44dcdd1de4bd6c31923bf0a411",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--interrupted--cli-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--interrupted--cli-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--interrupted--cli-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--interrupted--cli-kernel/codex-home/sessions/2026/08/20/rollout-2026-08-20T08-47-21-01a01ca3-05c6-7ca2-aa1f-76993e6a97df.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--interrupted--cli-kernel/execution-2.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--interrupted--cli-kernel/process-2.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--interrupted--cli-kernel/process-2.stderr.log"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--interrupted--cli-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--interrupted--cli-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--interrupted--cli-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--interrupted--cli-kernel/codex-home/sessions/2026/08/20/rollout-2026-08-20T08-47-21-01a01ca3-05c6-7ca2-aa1f-76993e6a97df.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--interrupted--cli-kernel/execution-2.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--interrupted--cli-kernel/process-2.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--interrupted--cli-kernel/process-2.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--interrupted--cli-kernel/agent-output-2.json"
+    ],
+    "artifact_hashes": [
+      "fa5dafd0f58191e4d88430f26cc79a067c46a7fa1b488a92a05fa8756c23f5a9",
+      "06cac3e5eb63e2517bef2d54d8287fa1ac62c6e7f36e969f55dc56cfb78cec5c",
+      "7e3770a43d636315e9a69db1a24d3a6e0259a15073c3954c36de9f0dc2494fec",
+      "30d652d5c37630f56f77299ee2a35b641431b3af8ba67b5210f29f5537fdb6a3",
+      "13a34e7a4f57bc27d5e7a711c3dffc36787720a8019817b7be3ab69c2b553fe4",
+      "744710997d3ef9c4ccae896498b718fda8d00702c2ed1f1615bfc4c3bc3c7ce5",
+      "e1a9083a894c3c20cd0278f77ad6ac0b26396ed4b26e275f005e19022068555c",
+      "336c7004c7384c2cc5d0efe7370f587de6e8d2f38a764724872381c34b457105"
+    ]
+  },
+  "evidence": {
+    "task_digest": "a17310b08172656638d4adbd96e963823bb3650b7e005a126aabbb614a1f629a",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a01ca3-05c6-7ca2-aa1f-76993e6a97df",
+    "agent_output": {
+      "verdict": "blocked",
+      "summary": "Implementation is complete, but run run-mt0swfk1-e16eca75 could not be closed: kernel verification rejected operation-empty patch bundles created after the resumed edits.",
+      "tests": [
+        {
+          "command": "bun -e 'import { recoverState } from \"./src/state/recovery.ts\"; const issues=await recoverState(); if (!Array.isArray(issues)) process.exit(1)'",
+          "status": "pass",
+          "detail": "Passed directly and in governed verification."
+        },
+        {
+          "command": "bunx biome check src/state/recovery.ts src/__tests__/session-isolation.test.ts",
+          "status": "pass",
+          "detail": "Both allowed files passed."
+        },
+        {
+          "command": "bun test src/__tests__/session-isolation.test.ts",
+          "status": "fail",
+          "detail": "13 passed, including the new test; existing T37 failed with EPERM writing outside the workspace."
+        },
+        {
+          "command": "kernel verify run",
+          "status": "fail",
+          "detail": "Acceptance command passed, but patch materialization failed because queued patches had no operations."
+        }
+      ],
+      "risks": [
+        "The governed run remains open and was not integrated or closed.",
+        "Workspace changes are not represented by materializable kernel patch artifacts."
+      ],
+      "evidence_refs": [
+        "artifact-mt103kih-8d9dfa3c",
+        "artifact-mt105x26-e59f876b",
+        "patch-mt101wvw-47cdfff8",
+        "patch-mt101xdl-e10a660a"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "bun -e 'import { recoverState } from \"./src/state/recovery.ts\"; const issues=await recoverState(); if (!Array.isArray(issues)) process.exit(1)'",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 55,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "root=$PWD; tmp=$(mktemp -d); mkdir -p \"$tmp/.apex\"; touch \"$tmp/.apex/tasks.json.tmp.123\"; touch -t 202001010000 \"$tmp/.apex/tasks.json.tmp.123\"; (cd \"$tmp\" && bun -e \"import { recoverState } from '$root/src/state/recovery.ts'; const issues=await recoverState(); if (await Bun.file('.apex/tasks.json.tmp.123').exists() || !issues.some(x=>x.includes('tasks.json.tmp.123'))) process.exit(1)\"); rc=$?; rm -rf \"$tmp\"; exit $rc",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 99,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      },
+      {
+        "command": "root=$PWD; tmp=$(mktemp -d); mkdir -p \"$tmp/.apex\"; touch \"$tmp/.apex/keep.tmp.123\"; touch -t 202001010000 \"$tmp/.apex/keep.tmp.123\"; (cd \"$tmp\" && bun -e \"import { recoverState } from '$root/src/state/recovery.ts'; await recoverState(); if (!(await Bun.file('.apex/keep.tmp.123').exists())) process.exit(1)\"); rc=$?; rm -rf \"$tmp\"; exit $rc",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 62,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/__tests__/session-isolation.test.ts",
+        "src/state/recovery.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": false,
+      "evidence_score": 0.25,
+      "run_ids": [
+        "run-mt0swfk1-e16eca75"
+      ],
+      "done_run_ids": [],
+      "fully_closed_run_ids": [],
+      "active_runs": [
+        "run-mt0swfk1-e16eca75"
+      ],
+      "candidate_chain_equal": false,
+      "verification_ref": null,
+      "review_ref": null,
+      "integration_ref": null,
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "b9cfced6ac1f403956b050401c72b382f1edf8bcf2c426490c98f7d9cda9c435",
+        "replay_hash": "b9cfced6ac1f403956b050401c72b382f1edf8bcf2c426490c98f7d9cda9c435",
+        "hash_equal": true
+      }
+    }
+  }
+}

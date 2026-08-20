@@ -1,6 +1,6 @@
 import { closeSync, openSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { now, readJson, writeJson } from "../lib/common.mjs";
 
 const DAEMON = new URL("./heartbeat-daemon.mjs", import.meta.url).pathname;
@@ -48,16 +48,51 @@ export function heartbeatDaemonStatus(projectDir) {
 export function stopHeartbeatDaemon(projectDir) {
   const state = readJson(join(resolve(projectDir), ".apex-v2", "heartbeat", "daemon.json"), null);
   if (!state || !processAlive(state.pid)) return { stopped: false, reason: "not-running" };
-  process.kill(state.pid, "SIGTERM");
-  return { stopped: true, pid: state.pid };
+  signalDaemon(state.pid, "SIGTERM");
+  waitForExit(state.pid, 1000);
+  let forceKilled = false;
+  if (processAlive(state.pid)) {
+    signalDaemon(state.pid, "SIGKILL");
+    forceKilled = true;
+    waitForExit(state.pid, 1000);
+  }
+  if (processAlive(state.pid)) {
+    throw new Error(`heartbeat daemon 未能停止：${state.pid}`);
+  }
+  return { stopped: true, pid: state.pid, force_killed: forceKilled };
 }
 
 function processAlive(pid) {
   if (!Number.isInteger(pid) || pid <= 0) return false;
   try {
     process.kill(pid, 0);
-    return true;
   } catch {
     return false;
+  }
+  const state = spawnSync("ps", ["-o", "stat=", "-p", String(pid)], {
+    encoding: "utf8"
+  });
+  const status = String(state.stdout || "").trim();
+  return !status.startsWith("Z");
+}
+
+function signalDaemon(pid, signal) {
+  try {
+    process.kill(-pid, signal);
+  } catch (error) {
+    if (error.code !== "ESRCH") throw error;
+  }
+  try {
+    process.kill(pid, signal);
+  } catch (error) {
+    if (error.code !== "ESRCH") throw error;
+  }
+}
+
+function waitForExit(pid, timeoutMs) {
+  const deadline = Date.now() + timeoutMs;
+  const signal = new Int32Array(new SharedArrayBuffer(4));
+  while (processAlive(pid) && Date.now() < deadline) {
+    Atomics.wait(signal, 0, 0, 25);
   }
 }

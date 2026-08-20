@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { now, readJson, writeJson } from "../lib/common.mjs";
+import { updateProject } from "./store.mjs";
 
 export function loadRun(root, runId) {
   const path = join(root, "runs", runId, "run.json");
@@ -36,6 +37,33 @@ export function requirePassedNode(run, nodeId) {
   }
 }
 
+export function promoteHandledCarrySource(run, sourceNodeId, timestamp = now()) {
+  const node = getRunNode(run, sourceNodeId);
+  const carryForward = (run.carry_forward || [])
+    .filter((item) => item.source_node_id === sourceNodeId);
+  if (
+    node.status !== "partial_pass"
+    || carryForward.length === 0
+    || carryForward.some((item) => item.status === "open")
+  ) {
+    return null;
+  }
+
+  node.status = "passed";
+  node.completed_at = timestamp;
+  node.evidence_refs = Array.from(new Set([
+    ...(node.evidence_refs || []),
+    ...carryForward.flatMap((item) => item.evidence_refs || [])
+  ]));
+  node.gate = {
+    status: "PASS",
+    reason: "PARTIAL_PASS carry-forward 已全部处理，源节点提升为 PASS。",
+    blocking: [],
+    carry_forward_ids: carryForward.map((item) => item.id)
+  };
+  return node;
+}
+
 export function closeRunIfComplete(root, run) {
   const successful = run.nodes.every((node) => ["passed", "partial_pass"].includes(node.status));
   if (!successful) return;
@@ -52,20 +80,31 @@ export function closeRunIfComplete(root, run) {
     return;
   }
 
-  const hasPartial = run.nodes.some((node) => node.status === "partial_pass");
+  const partialNodes = run.nodes.filter((node) => node.status === "partial_pass");
+  if (partialNodes.length > 0) {
+    run.status = "paused";
+    run.gate = {
+      status: "PARTIAL_PASS",
+      reason: "所有 carry-forward 已处理，但仍有 partial pass 节点未提升为 PASS。",
+      blocking: partialNodes.map((node) => node.id),
+      carry_forward_ids: (run.carry_forward || []).map((item) => item.id)
+    };
+    return;
+  }
+
   run.status = "done";
   run.gate = {
-    status: hasPartial ? "PARTIAL_PASS" : "PASS",
-    reason: hasPartial ? "所有节点已结束，但存在 partial pass carry-forward。" : "所有节点已通过。",
+    status: "PASS",
+    reason: "所有节点已通过。",
     blocking: [],
     carry_forward_ids: (run.carry_forward || []).map((item) => item.id)
   };
 
-  const projectPath = join(root, "project.json");
-  const project = readJson(projectPath);
-  project.active_runs = project.active_runs.filter((id) => id !== run.run_id);
-  project.updated_at = now();
-  writeJson(projectPath, project);
+  const project = readJson(join(root, "project.json"));
+  updateProject(root, {
+    active_runs: project.active_runs.filter((id) => id !== run.run_id),
+    updated_at: now()
+  });
 
   const roadmapPath = join(root, "roadmap", "graph.json");
   const roadmap = readJson(roadmapPath);
@@ -74,6 +113,27 @@ export function closeRunIfComplete(root, run) {
     roadmapNode.status = "done";
     roadmapNode.updated_at = now();
     roadmap.updated_at = roadmapNode.updated_at;
+    writeJson(roadmapPath, roadmap);
+  }
+}
+
+export function haltRun(root, run, timestamp = now()) {
+  run.status = "halted";
+  run.updated_at = timestamp;
+
+  const project = readJson(join(root, "project.json"));
+  updateProject(root, {
+    active_runs: project.active_runs.filter((id) => id !== run.run_id),
+    updated_at: timestamp
+  });
+
+  const roadmapPath = join(root, "roadmap", "graph.json");
+  const roadmap = readJson(roadmapPath);
+  const roadmapNode = roadmap.nodes.find((node) => node.id === run.roadmap_node_id);
+  if (roadmapNode) {
+    roadmapNode.status = "blocked";
+    roadmapNode.updated_at = timestamp;
+    roadmap.updated_at = timestamp;
     writeJson(roadmapPath, roadmap);
   }
 }

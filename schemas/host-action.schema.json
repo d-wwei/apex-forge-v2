@@ -22,6 +22,9 @@
     },
     "payload": { "type": "object" },
     "idempotency_key": { "type": "string", "minLength": 1 },
+    "claim_token": { "type": "string", "minLength": 1 },
+    "fencing_token": { "type": "integer", "minimum": 1 },
+    "lease_expires_at": { "type": "string" },
     "created_at": { "type": "string" }
   },
   "additionalProperties": false

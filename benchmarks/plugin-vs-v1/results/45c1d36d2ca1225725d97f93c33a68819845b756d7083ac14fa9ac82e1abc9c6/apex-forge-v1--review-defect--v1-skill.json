@@ -1,0 +1,138 @@
+{
+  "task_id": "apex-forge-v1--review-defect",
+  "task_digest": "d68b6c54f9faccaf79ddfcaad231c303b4cf7d785ca2d846615e3effeb2e9922",
+  "repository": "apex-forge-v1",
+  "scenario": "review-defect",
+  "mode": "v1-skill",
+  "candidate_digest": "45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 0.6666666666666666,
+    "wall_ms": 128640,
+    "cost": 242722,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 0,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "3755583552540121bcb1287c5bdba3c8b2578726",
+    "runtime_hash": "fbb9635c7fd7b24c7799126c3640c4ddc3239b4be5e2a5b9dd3f5cce103f16fc",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "b1c121e8af6903182ff24e5782c41aaf5cdf620a02db4d64bc413b29c3324516",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--review-defect--v1-skill/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--review-defect--v1-skill/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--review-defect--v1-skill/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--review-defect--v1-skill/codex-home/sessions/2026/08/20/rollout-2026-08-20T08-49-25-01a01ca4-eb27-7712-a777-815a7768dc11.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--review-defect--v1-skill/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--review-defect--v1-skill/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--review-defect--v1-skill/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--review-defect--v1-skill/codex-home/sessions/2026/08/20/rollout-2026-08-20T08-49-25-01a01ca4-eb27-7712-a777-815a7768dc11.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--review-defect--v1-skill/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "bec1a9c5cc5d3186fb48e4b6dcbfbb5ada2aa8edac19c4affe05b8d714f9aae5",
+      "bf0e2173f5a5b1d34bc42de457a19037d0e070398e8b8dffdb17c742ce7f5c23",
+      "db67abc0db7373819cd1f706e4c69ed5c439753a9280750a4918d5e4ae7474bf",
+      "de5f034d33b01dd0db2fb78970ad64532b2183cd2fd0444b428fa56939e46c53",
+      "27361747d5a758b050a3ee40663636d7239aff9e1d94e12c298cb1391aa55420"
+    ]
+  },
+  "evidence": {
+    "task_digest": "d68b6c54f9faccaf79ddfcaad231c303b4cf7d785ca2d846615e3effeb2e9922",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a01ca4-eb27-7712-a777-815a7768dc11",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Subprocess sandboxes now expose only allowlisted runtime variables and explicit options.env values. Added regression coverage for host-secret isolation.",
+      "tests": [
+        {
+          "command": "APEX_NO_DOCKER=1 bun test src/__tests__/orchestrator-v2.test.ts --test-name-pattern \"subprocess exposes explicit env without leaking host secrets\"",
+          "status": "pass",
+          "detail": "1 passed, 0 failed."
+        },
+        {
+          "command": "APEX_NO_DOCKER=1 bun -e 'import { runInSandbox } from \"./src/sandbox.ts\"; const r=await runInSandbox(\"console.log(process.env.ALLOWED_VALUE)\", \"javascript\", { env: { APEX_NO_DOCKER: \"1\", ALLOWED_VALUE: \"visible\" } }); if (r.exitCode !== 0 || r.stdout.trim() !== \"visible\") process.exit(1)'",
+          "status": "pass",
+          "detail": "Public acceptance command exited 0."
+        },
+        {
+          "command": "APEX_NO_DOCKER=1 bun test src/__tests__/orchestrator-v2.test.ts",
+          "status": "pass",
+          "detail": "34 passed, 0 failed."
+        },
+        {
+          "command": "bunx biome check src/sandbox.ts src/__tests__/orchestrator-v2.test.ts",
+          "status": "pass",
+          "detail": "Exited 0 with two pre-existing warnings outside changed lines."
+        },
+        {
+          "command": "git diff --check",
+          "status": "pass",
+          "detail": "No whitespace errors."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "src/sandbox.ts:207",
+        "src/__tests__/orchestrator-v2.test.ts:294"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "APEX_NO_DOCKER=1 bun -e 'import { runInSandbox } from \"./src/sandbox.ts\"; const r=await runInSandbox(\"console.log(process.env.ALLOWED_VALUE)\", \"javascript\", { env: { APEX_NO_DOCKER: \"1\", ALLOWED_VALUE: \"visible\" } }); if (r.exitCode !== 0 || r.stdout.trim() !== \"visible\") process.exit(1)'",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 68,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "HOST_ONLY_SECRET=leaked APEX_NO_DOCKER=1 bun -e 'import { runInSandbox } from \"./src/sandbox.ts\"; const r=await runInSandbox(\"console.log(process.env.HOST_ONLY_SECRET || \\\"absent\\\")\", \"javascript\", { env: { APEX_NO_DOCKER: \"1\" } }); if (r.exitCode !== 0 || r.stdout.trim() !== \"absent\") process.exit(1)'",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 67,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      },
+      {
+        "command": "APEX_NO_DOCKER=1 bun -e 'import { runInSandbox } from \"./src/sandbox.ts\"; const r=await runInSandbox(\"console.log(process.env.ALLOWED_VALUE)\", \"javascript\", { env: { APEX_NO_DOCKER: \"1\", ALLOWED_VALUE: \"visible\" } }); if (r.exitCode !== 0 || r.stdout.trim() !== \"visible\") process.exit(1)'",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 65,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/__tests__/orchestrator-v2.test.ts",
+        "src/sandbox.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": false,
+      "evidence_score": 0.6666666666666666,
+      "reason": "no .apex-v2 durable state"
+    }
+  }
+}

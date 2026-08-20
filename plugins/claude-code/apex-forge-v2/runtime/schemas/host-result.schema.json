@@ -14,6 +14,7 @@
     },
     "summary": { "type": "string" },
     "artifact_refs": { "type": "array", "items": { "type": "string" } },
+    "semantic_evidence_ref": { "type": ["string", "null"] },
     "error": { "type": ["string", "null"] },
     "created_at": { "type": "string" }
   },

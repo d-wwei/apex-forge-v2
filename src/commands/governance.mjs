@@ -1,10 +1,11 @@
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { normalizeEnum, readJson, required, splitList } from "../lib/common.mjs";
 import { appendEvent, projectRoot, requireStore, updateProject } from "../core/store.mjs";
 import { migrateLegacyContracts, scanProjectContracts } from "../core/contracts.mjs";
 import { decideApproval } from "../core/governance.mjs";
 import { addRisk, listRisks, updateRisk } from "../core/risks.mjs";
 import { acknowledgeNotification, dispatchNotifications, listNotifications } from "../core/notifications.mjs";
+import { withProjectTransaction } from "../core/project-transaction.mjs";
 
 export function handleContractsCommand(subcommand, args) {
   const projectDir = projectRoot(args);
@@ -24,7 +25,8 @@ export function handleContractsCommand(subcommand, args) {
 }
 
 export function handleApprovalCommand(subcommand, args) {
-  const root = requireStore(projectRoot(args));
+  const projectDir = projectRoot(args);
+  const root = requireStore(projectDir);
   if (subcommand === "list") {
     console.log(JSON.stringify(readJson(join(root, "approvals", "items.json"), []), null, 2));
     return;
@@ -35,17 +37,24 @@ export function handleApprovalCommand(subcommand, args) {
     const approvalItem = readJson(join(root, "approvals", "items.json"), [])
       .find((item) => item.id === approvalId);
     if (!approvalItem) throw new Error(`找不到 approval：${approvalId}`);
-    const approval = decideApproval(root, approvalId, decision, String(args.reason || ""), {
-      actor: String(args.actor || "human"),
-      capabilities: args.capabilities ? splitList(args.capabilities) : [approvalItem.capability]
-    });
-    const event = appendEvent(root, "approval.decided", "human", {
-      approval_id: approval.id,
-      decision,
-      capability: approval.capability,
-      decided_by: approval.decided_by
-    });
-    updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
+    const approval = withProjectTransaction(resolve(projectDir), {
+      kind: "approval-decide",
+      idempotencyKey: `approval-decide:${approvalId}:${decision}:${approvalItem.revision || 1}`
+    }, () => {
+      const decided = decideApproval(root, approvalId, decision, String(args.reason || ""), {
+        actor: String(args.actor || "human"),
+        capabilities: args.capabilities ? splitList(args.capabilities) : [approvalItem.capability]
+      });
+      const event = appendEvent(root, "approval.decided", "human", {
+        approval_id: decided.id,
+        decision,
+        capability: decided.capability,
+        candidate_digest: decided.candidate_digest,
+        decided_by: decided.decided_by
+      });
+      updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
+      return decided;
+    }).result;
     console.log(JSON.stringify(approval, null, 2));
     return;
   }
@@ -102,4 +111,3 @@ export function handleNotificationCommand(subcommand, args) {
   }
   throw new Error(`未知 notification 子命令：${subcommand || "(空)"}`);
 }
-

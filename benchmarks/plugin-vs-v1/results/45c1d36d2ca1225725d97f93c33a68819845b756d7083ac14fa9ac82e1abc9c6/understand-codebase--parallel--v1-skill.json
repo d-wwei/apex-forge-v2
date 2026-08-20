@@ -1,0 +1,134 @@
+{
+  "task_id": "understand-codebase--parallel",
+  "task_digest": "231675abb1db30406df6c5f458855b1dffb4d235e08a35263cdb5f9d04cb1ebd",
+  "repository": "understand-codebase",
+  "scenario": "parallel",
+  "mode": "v1-skill",
+  "candidate_digest": "45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 227923,
+    "cost": 331486,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 0,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "b5eb3607e982743adfdc28eb8929043ed3a2b478",
+    "runtime_hash": "fbb9635c7fd7b24c7799126c3640c4ddc3239b4be5e2a5b9dd3f5cce103f16fc",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "1d6b53ea152e195d3f8511aebdeecaf19de055213bd5b8127bcfc93dd6d41073",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/understand-codebase--parallel--v1-skill/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/understand-codebase--parallel--v1-skill/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/understand-codebase--parallel--v1-skill/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/understand-codebase--parallel--v1-skill/codex-home/sessions/2026/08/20/rollout-2026-08-20T11-16-16-01a01d2b-5f20-7562-8400-b05c2e255f60.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/understand-codebase--parallel--v1-skill/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/understand-codebase--parallel--v1-skill/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/understand-codebase--parallel--v1-skill/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/understand-codebase--parallel--v1-skill/codex-home/sessions/2026/08/20/rollout-2026-08-20T11-16-16-01a01d2b-5f20-7562-8400-b05c2e255f60.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/understand-codebase--parallel--v1-skill/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "0ac92a665dfbc5cbb7a37c4ae96639be1fd406c66e39c0e38bd8b46c7c5ad5d7",
+      "a5c4a2a3118c91cb1cf8f8e7f2585871d04fbe3eb9bba5472bffa498ceb4b08e",
+      "16fefda230ec946efc28e7224768934daf363743f5ebfe7f25a9dc455df6281e",
+      "f72335ffca0318f0bc2947ac2357b3302c76afcdf51e56a1ff158085afd8acd2",
+      "f7dc018cd7de3dd532b60560a6a695ca8c7760177bc3194277546b7e447969b7"
+    ]
+  },
+  "evidence": {
+    "task_digest": "231675abb1db30406df6c5f458855b1dffb4d235e08a35263cdb5f9d04cb1ebd",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a01d2b-5f20-7562-8400-b05c2e255f60",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Added the original query to context prompts and requested path to explain prompts. Traversal logic is unchanged.",
+      "tests": [
+        {
+          "command": "pnpm vitest run understand-codebase-plugin/src/__tests__/context-builder.test.ts understand-codebase-plugin/src/__tests__/explain-builder.test.ts",
+          "status": "fail",
+          "detail": "Vitest startup EPERM; no tests executed."
+        },
+        {
+          "command": "pnpm vitest run --configLoader runner understand-codebase-plugin/src/__tests__/context-builder.test.ts understand-codebase-plugin/src/__tests__/explain-builder.test.ts",
+          "status": "pass",
+          "detail": "24 tests passed."
+        },
+        {
+          "command": "git diff --check -- understand-codebase-plugin/src/context-builder.ts understand-codebase-plugin/src/__tests__/context-builder.test.ts understand-codebase-plugin/src/explain-builder.ts understand-codebase-plugin/src/__tests__/explain-builder.test.ts",
+          "status": "pass",
+          "detail": "No whitespace errors."
+        }
+      ],
+      "risks": [
+        "The exact acceptance command is blocked by non-writable node_modules/.vite-temp; the runner-loader equivalent passes."
+      ],
+      "evidence_refs": [
+        "understand-codebase-plugin/src/context-builder.ts",
+        "understand-codebase-plugin/src/__tests__/context-builder.test.ts",
+        "understand-codebase-plugin/src/explain-builder.ts",
+        "understand-codebase-plugin/src/__tests__/explain-builder.test.ts"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "pnpm vitest run understand-codebase-plugin/src/__tests__/context-builder.test.ts understand-codebase-plugin/src/__tests__/explain-builder.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 859,
+        "stdout_tail": "\n RUN  v3.2.4 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/understand-codebase--parallel--v1-skill/workspace\n\n ✓ understand-codebase-plugin/src/__tests__/explain-builder.test.ts (9 tests) 2ms\n ✓ understand-codebase-plugin/src/__tests__/context-builder.test.ts (15 tests) 7ms\n\n Test Files  2 passed (2)\n      Tests  24 passed (24)\n   Start at  11:20:04\n   Duration  459ms (transform 174ms, setup 0ms, collect 308ms, tests 8ms, environment 0ms, prepare 76ms)\n\n",
+        "stderr_tail": ""
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "node --input-type=module -e \"import { formatContextForPrompt } from './understand-codebase-plugin/src/context-builder.ts'; import { formatExplainPrompt } from './understand-codebase-plugin/src/explain-builder.ts'; const q='original query'; const chat=formatContextForPrompt({projectName:'P',projectDescription:'D',languages:[],frameworks:[],relevantNodes:[],relevantEdges:[],relevantLayers:[],query:q}); const p='src/a.ts:fn'; const explain=formatExplainPrompt({projectName:'P',path:p,targetNode:{id:'1',name:'fn',type:'function',complexity:'simple',summary:'s',tags:[],filePath:'src/a.ts'},childNodes:[],connectedNodes:[],relevantEdges:[],layer:null}); if(!chat.includes('## User Query')||!chat.includes(q)||!explain.includes(p)) process.exit(1)\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 123,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      },
+      {
+        "command": "pnpm vitest run understand-codebase-plugin/src/__tests__",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 1206,
+        "stdout_tail": "\n RUN  v3.2.4 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/understand-codebase--parallel--v1-skill/workspace\n\n ✓ understand-codebase-plugin/src/__tests__/understand-codebase-human-map-builder.test.ts (1 test) 3ms\n ✓ understand-codebase-plugin/src/__tests__/understand-codebase-backend-selection.test.ts (7 tests) 3ms\n ✓ understand-codebase-plugin/src/__tests__/understand-codebase-codegraph-sqlite-adapter.test.ts (1 test) 4ms\n ✓ understand-codebase-plugin/src/__tests__/understand-codebase-redaction-pipeline.test.ts (5 tests) 8ms\n ✓ understand-codebase-plugin/src/__tests__/understand-codebase-artifact-store.test.ts (6 tests) 58ms\n ✓ understand-codebase-plugin/src/__tests__/understand-codebase-run-default.test.ts (2 tests) 78ms\n ✓ understand-codebase-plugin/src/__tests__/understand-codebase-human-map-schema.test.ts (6 tests) 4ms\n ✓ understand-codebase-plugin/src/__tests__/understand-codebase-codebase-graph-schema.test.ts (2 tests) 2ms\n ✓ understand-codebase-plugin/src/__tests__/onboard-builder.test.ts (9 tests) 3ms\n ✓ understand-codebase-plugin/src/__tests__/diff-analyzer.test.ts (11 tests) 3ms\n ✓ understand-codebase-plugin/src/__tests__/understand-codebase-human-map-qa.test.ts (3 tests) 4ms\n ✓ understand-codebase-plugin/src/__tests__/merge-recover-imports.test.mjs (6 tests) 318ms\n ✓ understand-codebase-plugin/src/__tests__/understand-codebase-dashboard-manifest.test.ts (4 tests) 2ms\n ✓ understand-codebase-plugin/src/__tests__/explain-builder.test.ts (9 tests) 2ms\n ✓ understand-codebase-plugin/src/__tests__/worktree-redirect.test.mjs (5 tests) 384ms\n ✓ understand-codebase-plugin/src/__tests__/extract-structure.test.mjs (10 tests) 1ms\n ✓ understand-codebase-plugin/src/__tests__/context-builder.test.ts (15 tests) 7ms\n\n Test Files  17 passed (17)\n      Tests  102 passed (102)\n   Start at  11:20:05\n   Duration  808ms (transform 624ms, setup 0ms, collect 1.43s, tests 883ms, environment 1ms, prepare 858ms)\n\n",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "understand-codebase-plugin/src/__tests__/context-builder.test.ts",
+        "understand-codebase-plugin/src/__tests__/explain-builder.test.ts",
+        "understand-codebase-plugin/src/context-builder.ts",
+        "understand-codebase-plugin/src/explain-builder.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": false,
+      "evidence_score": 1,
+      "reason": "no .apex-v2 durable state"
+    }
+  }
+}

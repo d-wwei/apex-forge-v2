@@ -11,10 +11,15 @@ import { join } from "node:path";
 import { tail } from "../lib/common.mjs";
 import { spawnCapabilityProcess } from "../core/capability-sandbox.mjs";
 import { providerSecretPaths } from "./secret-boundaries.mjs";
+import {
+  cancelProcessTree,
+  collectExecutionUsage,
+  resumeWithExecute
+} from "./lifecycle.mjs";
 
 export function inspectGeminiAdapter(executable = "gemini") {
   const result = spawnSync(executable, ["--version"], { encoding: "utf8", timeout: 5000 });
-  return { adapter: "gemini", executable, available: result.status === 0, version: result.status === 0 ? result.stdout.trim() : "", capabilities: ["json_output", "session_resume", "workspace_write", "sandbox"], error: result.status === 0 ? "" : tail(result.stderr) };
+  return { adapter: "gemini", executable, available: result.status === 0, version: result.status === 0 ? result.stdout.trim() : "", capabilities: ["structured_output", "session_resume", "workspace_write", "tool_use", "sandbox", "process_tree_cancel"], error: result.status === 0 ? "" : tail(result.stderr) };
 }
 
 export function executeGeminiAdapter(options) {
@@ -94,5 +99,8 @@ function parseEnvelope(stdout) {
 export const geminiCliExecutor = {
   id: "gemini",
   inspect: inspectGeminiAdapter,
-  execute: executeGeminiAdapter
+  execute: executeGeminiAdapter,
+  resume: (input) => resumeWithExecute("gemini", executeGeminiAdapter, input),
+  cancel: (input) => cancelProcessTree("gemini", input),
+  collectUsage: collectExecutionUsage
 };

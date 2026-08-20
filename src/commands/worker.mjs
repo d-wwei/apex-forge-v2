@@ -1,8 +1,9 @@
 import { cpSync, existsSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { appendEvent, projectRoot, requireStore, SCHEMA_VERSION, updateProject } from "../core/store.mjs";
-import { applyPatchOperations, createWorkerForPlanNode, ensureWorkerSandboxReady, executeWorkerShell, findGitRoot, findPatch, findWorker, getWorkers, isFileAllowedByScope, workerDir } from "../core/worker.mjs";
+import { applyPatchOperations, createWorkerForPlanNode, ensureWorkerSandboxReady, executeWorkerShell, findGitRoot, findPatch, findWorker, getWorkers, isFileAllowedByScope, patchBundleRef, persistPatchBundle, workerDir } from "../core/worker.mjs";
 import { executeWorkerExecutor } from "../core/worker-execution.mjs";
 import { inspectWorkerExecutors } from "../executors/registry.mjs";
 import { assertAdapterAllowed, assertPatchWithinBudget, effectiveAgentTimeout, ensureAdapterBaselineApproval } from "../core/governance.mjs";
@@ -12,6 +13,7 @@ import { buildWorkerSummary } from "../core/worker-results.mjs";
 import { runAdapterSmoke } from "../core/adapter-smoke.mjs";
 import { buildAdapterTrend, recordAdapterObservation, recordAdapterSmokeReport } from "../core/adapter-observability.mjs";
 import { assertSafeRelativePath, dirnameForPath, ensureDir, normalizeEnum, now, readJson, required, shortId, splitList, tail, writeJson, writeTextIfMissing } from "../lib/common.mjs";
+import { withProjectTransaction } from "../core/project-transaction.mjs";
 
 export function handleWorkerCommand(subcommand, args) {
   if (subcommand === "create") {
@@ -81,7 +83,9 @@ function createWorker(args) {
   if (getWorkers(root, run.run_id).some((worker) => worker.plan_node_id === planNode.id && worker.status !== "merged")) {
     throw new Error(`plan node 已有未完成 worker：${planNode.id}`);
   }
-  const worker = createWorkerForPlanNode(root, run, planNode);
+  const worker = createWorkerForPlanNode(root, run, planNode, {
+    mode: args.mode ? String(args.mode) : null
+  });
   console.log(JSON.stringify(worker, null, 2));
 }
 
@@ -182,7 +186,13 @@ export function initializeWorkerSandbox(root, worker, requestedType) {
 }
 
 function copyProjectIntoScratchSandbox(projectDir, sandboxDir) {
-  const ignored = new Set([".git", ".apex-v2", ".apex-v2.lock", "node_modules"]);
+  const ignored = new Set([
+    ".git",
+    ".apex-v2",
+    ".apex-v2.lock",
+    ".apex-v2.transaction-backups",
+    "node_modules"
+  ]);
   for (const entry of readdirSync(projectDir, { withFileTypes: true })) {
     if (ignored.has(entry.name)) continue;
     cpSync(join(projectDir, entry.name), join(sandboxDir, entry.name), {
@@ -244,9 +254,30 @@ function writeWorkerSandbox(args) {
 function promoteWorkerSandbox(args) {
   const root = requireStore(projectRoot(args));
   const worker = findWorker(root, required(args, "worker-id"));
-  ensureWorkerSandboxReady(worker);
   const sandboxPath = required(args, "sandbox-path");
   const targetFile = required(args, "target-file");
+  const summary = required(args, "summary");
+  const result = withProjectTransaction(resolve(root, ".."), {
+    kind: "worker-promote-sandbox",
+    idempotencyKey: transitionKey("worker-promote-sandbox", {
+      worker_id: worker.worker_id,
+      sandbox_path: sandboxPath,
+      target_file: targetFile,
+      summary
+    })
+  }, () => promoteWorkerSandboxTransaction(
+    root,
+    worker,
+    sandboxPath,
+    targetFile,
+    summary,
+    splitList(args.evidence)
+  )).result;
+  console.log(JSON.stringify(result, null, 2));
+}
+
+function promoteWorkerSandboxTransaction(root, worker, sandboxPath, targetFile, summary, evidenceRefs) {
+  ensureWorkerSandboxReady(worker);
   assertSafeRelativePath(sandboxPath);
   assertSafeRelativePath(targetFile);
   if (!isFileAllowedByScope(targetFile, worker.write_scope)) {
@@ -263,16 +294,16 @@ function promoteWorkerSandbox(args) {
     worker_id: worker.worker_id,
     run_id: worker.run_id,
     plan_node_id: worker.plan_node_id,
-    summary: required(args, "summary"),
+    summary,
     changed_files: [targetFile],
     operations: [{ op: "write_text", path: targetFile, content }],
-    evidence_refs: splitList(args.evidence),
+    evidence_refs: evidenceRefs,
     status: "submitted",
     created_at: timestamp,
     updated_at: timestamp
   };
   assertPatchWithinBudget(root, patch);
-  writeJson(join(workerDir(root, worker.run_id, worker.worker_id), "patch-bundle.json"), patch);
+  persistPatchBundle(root, patch);
   worker.status = "patch_submitted";
   worker.updated_at = timestamp;
   writeJson(join(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
@@ -281,7 +312,7 @@ function promoteWorkerSandbox(args) {
     title: `SandboxPatch：${worker.plan_node_id}`,
     body: patch.summary,
     refs: [
-      `${worker.namespace}/patch-bundle.json`,
+      patchBundleRef(worker, patch.patch_id),
       `${worker.sandbox.path}/${sandboxPath}`,
       targetFile
     ],
@@ -295,13 +326,31 @@ function promoteWorkerSandbox(args) {
     target_file: targetFile
   });
   updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
-  console.log(JSON.stringify({ patch, artifact_id: artifact.artifact_id }, null, 2));
+  return { patch, artifact_id: artifact.artifact_id };
 }
 
 function submitWorkerPatch(args) {
   const root = requireStore(projectRoot(args));
   const workerId = required(args, "worker-id");
   const worker = findWorker(root, workerId);
+  const result = withProjectTransaction(resolve(root, ".."), {
+    kind: "worker-submit-patch",
+    idempotencyKey: transitionKey("worker-submit-patch", {
+      worker_id: workerId,
+      summary: args.summary,
+      files: args.files,
+      write_text_file: args["write-text-file"],
+      write_text: args["write-text"],
+      replace_file: args["replace-file"],
+      old_text: args["old-text"],
+      new_text: args["new-text"],
+      evidence: args.evidence
+    })
+  }, () => submitWorkerPatchTransaction(root, worker, args)).result;
+  console.log(JSON.stringify(result, null, 2));
+}
+
+function submitWorkerPatchTransaction(root, worker, args) {
   const run = loadRun(root, worker.run_id);
   const changedFiles = splitList(required(args, "files"));
   if (changedFiles.length === 0) throw new Error("patch bundle 必须包含 changed files");
@@ -333,7 +382,7 @@ function submitWorkerPatch(args) {
   };
   assertPatchWithinBudget(root, patch);
 
-  writeJson(join(workerDir(root, worker.run_id, worker.worker_id), "patch-bundle.json"), patch);
+  persistPatchBundle(root, patch);
   worker.status = "patch_submitted";
   worker.updated_at = timestamp;
   writeJson(join(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
@@ -343,7 +392,7 @@ function submitWorkerPatch(args) {
     title: `PatchBundle：${worker.plan_node_id}`,
     body: patch.summary,
     refs: [
-      `${worker.namespace}/patch-bundle.json`,
+      patchBundleRef(worker, patch.patch_id),
       ...changedFiles
     ],
     timestamp
@@ -356,7 +405,7 @@ function submitWorkerPatch(args) {
     changed_files: changedFiles
   });
   updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
-  console.log(JSON.stringify({ patch, artifact_id: artifact.artifact_id }, null, 2));
+  return { patch, artifact_id: artifact.artifact_id };
 }
 
 function execWorkerShell(args) {
@@ -683,6 +732,10 @@ function buildPatchOperations(args) {
     });
   }
   return operations;
+}
+
+function transitionKey(kind, value) {
+  return `${kind}:${createHash("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 
 

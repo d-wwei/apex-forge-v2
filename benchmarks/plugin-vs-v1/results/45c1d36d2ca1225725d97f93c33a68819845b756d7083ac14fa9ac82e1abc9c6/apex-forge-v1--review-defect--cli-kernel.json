@@ -1,0 +1,156 @@
+{
+  "task_id": "apex-forge-v1--review-defect",
+  "task_digest": "d68b6c54f9faccaf79ddfcaad231c303b4cf7d785ca2d846615e3effeb2e9922",
+  "repository": "apex-forge-v1",
+  "scenario": "review-defect",
+  "mode": "cli-kernel",
+  "candidate_digest": "45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 0.25,
+    "wall_ms": 627361,
+    "cost": 3412693,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 0,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "3755583552540121bcb1287c5bdba3c8b2578726",
+    "runtime_hash": "fbb9635c7fd7b24c7799126c3640c4ddc3239b4be5e2a5b9dd3f5cce103f16fc",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "b36c57cb57e71682b35e3fb8d1f42bdbd38f5b44dcdd1de4bd6c31923bf0a411",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--review-defect--cli-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--review-defect--cli-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--review-defect--cli-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--review-defect--cli-kernel/codex-home/sessions/2026/08/20/rollout-2026-08-20T08-51-36-01a01ca6-eced-77e1-b7a8-b19884903171.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--review-defect--cli-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--review-defect--cli-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--review-defect--cli-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--review-defect--cli-kernel/codex-home/sessions/2026/08/20/rollout-2026-08-20T08-51-36-01a01ca6-eced-77e1-b7a8-b19884903171.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--review-defect--cli-kernel/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "7504f90f04b0cccfcfa3c97901fbf83c6e8b47d00cc797eeb1d8b2a864f71e66",
+      "4cfbb781358d6c06793d38da0dbee5b0c0350909654a7360765fa0432bb1670d",
+      "ff6690d7ab148b39c2c792a489bbf2b0365a5cf187feff6c9fe1a1d195071520",
+      "02544b390be221464695a4a29079354d204bf9fc20aad16fe905897a47024986",
+      "681239f1ff4a5911623950deb0c62ed16233cf2865d15686459bb90704934ebb"
+    ]
+  },
+  "evidence": {
+    "task_digest": "d68b6c54f9faccaf79ddfcaad231c303b4cf7d785ca2d846615e3effeb2e9922",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a01ca6-eced-77e1-b7a8-b19884903171",
+    "agent_output": {
+      "verdict": "blocked",
+      "summary": "Fix and regression test pass, but kernel verification could not materialize operation-less patch bundles. Run remains unclosed.",
+      "tests": [
+        {
+          "command": "Public acceptance command",
+          "status": "pass",
+          "detail": "Exited 0."
+        },
+        {
+          "command": "APEX_NO_DOCKER=1 bun test src/__tests__/orchestrator-v2.test.ts",
+          "status": "pass",
+          "detail": "34 passed, 0 failed."
+        },
+        {
+          "command": "git diff --check",
+          "status": "pass",
+          "detail": "No errors."
+        },
+        {
+          "command": "Apex verify run",
+          "status": "fail",
+          "detail": "Patch materialization failed: patches had no operations."
+        }
+      ],
+      "risks": [
+        "Kernel review, integration, and run closure remain incomplete."
+      ],
+      "evidence_refs": [
+        "artifact-mt0teko5-38b6d73f"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "APEX_NO_DOCKER=1 bun -e 'import { runInSandbox } from \"./src/sandbox.ts\"; const r=await runInSandbox(\"console.log(process.env.ALLOWED_VALUE)\", \"javascript\", { env: { APEX_NO_DOCKER: \"1\", ALLOWED_VALUE: \"visible\" } }); if (r.exitCode !== 0 || r.stdout.trim() !== \"visible\") process.exit(1)'",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 192,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "HOST_ONLY_SECRET=leaked APEX_NO_DOCKER=1 bun -e 'import { runInSandbox } from \"./src/sandbox.ts\"; const r=await runInSandbox(\"console.log(process.env.HOST_ONLY_SECRET || \\\"absent\\\")\", \"javascript\", { env: { APEX_NO_DOCKER: \"1\" } }); if (r.exitCode !== 0 || r.stdout.trim() !== \"absent\") process.exit(1)'",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 70,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      },
+      {
+        "command": "APEX_NO_DOCKER=1 bun -e 'import { runInSandbox } from \"./src/sandbox.ts\"; const r=await runInSandbox(\"console.log(process.env.ALLOWED_VALUE)\", \"javascript\", { env: { APEX_NO_DOCKER: \"1\", ALLOWED_VALUE: \"visible\" } }); if (r.exitCode !== 0 || r.stdout.trim() !== \"visible\") process.exit(1)'",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 79,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/__tests__/orchestrator-v2.test.ts",
+        "src/sandbox.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": false,
+      "evidence_score": 0.25,
+      "run_ids": [
+        "run-mt0t1wxp-28aa7c1a"
+      ],
+      "done_run_ids": [],
+      "fully_closed_run_ids": [],
+      "active_runs": [
+        "run-mt0t1wxp-28aa7c1a"
+      ],
+      "candidate_chain_equal": false,
+      "verification_ref": null,
+      "review_ref": null,
+      "integration_ref": null,
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "ee1b73893b4359080626779609a513fa42ceb9994ea4c804a0263b32c89fcffb",
+        "replay_hash": "ee1b73893b4359080626779609a513fa42ceb9994ea4c804a0263b32c89fcffb",
+        "hash_equal": true
+      }
+    }
+  }
+}

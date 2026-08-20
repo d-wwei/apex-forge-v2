@@ -17,6 +17,8 @@ const PLUGIN = new URL("../plugins/codex/apex-forge-v2/", import.meta.url).pathn
 const CLAUDE_PLUGIN = new URL("../plugins/claude-code/apex-forge-v2/", import.meta.url).pathname;
 const BRIDGE = join(PLUGIN, "scripts", "apex-host.mjs");
 const VALIDATE_PLUGINS = new URL("../scripts/validate-agent-plugins.mjs", import.meta.url).pathname;
+const RELEASE_VERIFY = new URL("../scripts/release-verify.mjs", import.meta.url).pathname;
+const BUILD_PLUGIN = new URL("../scripts/build-codex-plugin.mjs", import.meta.url).pathname;
 
 test("Codex plugin package contains validated Skills and a self-contained runtime", () => {
   const manifest = JSON.parse(readFileSync(join(PLUGIN, ".codex-plugin", "plugin.json"), "utf8"));
@@ -26,7 +28,7 @@ test("Codex plugin package contains validated Skills and a self-contained runtim
     .sort();
 
   assert.equal(manifest.name, "apex-forge-v2");
-  assert.match(manifest.version, /^0\.1\.0(?:\+codex\.[0-9]+)?$/);
+  assert.match(manifest.version, /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/);
   assert.ok(Array.isArray(manifest.interface.defaultPrompt));
   assert.equal(skillDirs.length, 6);
   for (const skill of skillDirs) {
@@ -34,7 +36,17 @@ test("Codex plugin package contains validated Skills and a self-contained runtim
     assert.doesNotMatch(source, /\[TODO|TODO:/);
   }
   assert.equal(existsSync(join(PLUGIN, "runtime", "apex-v2.mjs")), true);
+  assert.equal(existsSync(join(PLUGIN, "runtime", "capability-runner.mjs")), true);
   assert.equal(existsSync(join(PLUGIN, "runtime", "schemas", "project-state.schema.json")), true);
+  for (const file of ["LICENSE", "THIRD_PARTY_NOTICES", "SBOM.json", "PROVENANCE.json", "CHECKSUMS.sha256"]) {
+    assert.equal(existsSync(join(PLUGIN, file)), true, file);
+  }
+  const runtime = JSON.parse(readFileSync(join(PLUGIN, "runtime", "runtime.json"), "utf8"));
+  assert.match(runtime.source_commit, /^[a-f0-9]{40}$/);
+  assert.match(runtime.source_tree_hash, /^[a-f0-9]{64}$/);
+  assert.match(runtime.runtime_sha256, /^[a-f0-9]{64}$/);
+  assert.match(runtime.schemas_sha256, /^[a-f0-9]{64}$/);
+  assert.equal(typeof runtime.source_dirty, "boolean");
 });
 
 test("ship Skill requires durable run closure before claiming completion", () => {
@@ -57,6 +69,49 @@ test("plugin validation resolves Codex tooling without a machine-specific home p
   assert.match(source, /CODEX_HOME/);
   assert.match(source, /CODEX_PLUGIN_VALIDATOR/);
   assert.match(source, /homedir\(\)/);
+});
+
+test("release verification exposes every mandatory gate in fixed order", () => {
+  const result = spawnSync(process.execPath, [RELEASE_VERIFY, "--list"], {
+    cwd: new URL("../", import.meta.url).pathname,
+    encoding: "utf8"
+  });
+  assert.equal(result.status, 0, result.stderr);
+  const plan = JSON.parse(result.stdout);
+  assert.deepEqual(plan.steps.map((step) => step.id), [
+    "clean-source",
+    "full-tests",
+    "strict-validate",
+    "contract-validation",
+    "full-reconcile",
+    "host-workspace-adversarial",
+    "candidate-mutation",
+    "crash-recovery",
+    "executor-host-conformance",
+    "candidate-codex-validator",
+    "candidate-claude-validator",
+    "native-plugin-lifecycle",
+    "dependency-audit",
+    "plugin-build",
+    "plugin-provenance",
+    "product-gate"
+  ]);
+  assert.match(plan.steps[0].command, /release:validate-candidate/);
+  assert.match(
+    plan.steps.find((step) => step.id === "plugin-build").command,
+    /release:candidate/
+  );
+  assert.ok(plan.steps.every((step) => step.timeout_ms > 0));
+});
+
+test("plugin build captures source provenance before mutating generated output", () => {
+  const source = readFileSync(BUILD_PLUGIN, "utf8");
+  const dirtyIndex = source.indexOf("const sourceDirty =");
+  const sourceHashIndex = source.indexOf("const sourceTreeHash =");
+  const mutationIndex = source.indexOf("rmSync(runtimeRoot");
+  assert.ok(dirtyIndex >= 0 && dirtyIndex < mutationIndex);
+  assert.ok(sourceHashIndex >= 0 && sourceHashIndex < mutationIndex);
+  assert.match(source, /APEX_BUILD_TIMESTAMP/);
 });
 
 test("installed-shape Host Bridge initializes and reads a project without repository source", () => {
@@ -87,7 +142,7 @@ test("installed-shape Host Bridge initializes and reads a project without reposi
   assert.deepEqual(parsed.active_runs, []);
 });
 
-test("Claude Code plugin reuses the same Skills and bundled Kernel runtime", () => {
+test("Codex and Claude packages share workflows but render native Host identity", () => {
   const manifest = JSON.parse(readFileSync(join(CLAUDE_PLUGIN, ".claude-plugin", "plugin.json"), "utf8"));
   const codexSkills = readdirSync(join(PLUGIN, "skills")).sort();
   const claudeSkills = readdirSync(join(CLAUDE_PLUGIN, "skills")).sort();
@@ -95,11 +150,20 @@ test("Claude Code plugin reuses the same Skills and bundled Kernel runtime", () 
   assert.equal(manifest.name, "apex-forge-v2");
   assert.deepEqual(claudeSkills, codexSkills);
   for (const skill of codexSkills) {
-    assert.equal(
-      readFileSync(join(CLAUDE_PLUGIN, "skills", skill, "SKILL.md"), "utf8"),
-      readFileSync(join(PLUGIN, "skills", skill, "SKILL.md"), "utf8")
-    );
+    const codex = readFileSync(join(PLUGIN, "skills", skill, "SKILL.md"), "utf8");
+    const claude = readFileSync(join(CLAUDE_PLUGIN, "skills", skill, "SKILL.md"), "utf8");
+    assert.doesNotMatch(codex, /\{\{HOST_/);
+    assert.doesNotMatch(claude, /\{\{HOST_/);
+    assert.doesNotMatch(claude, /current Codex session|codex-host/);
   }
+  assert.match(
+    readFileSync(join(CLAUDE_PLUGIN, "skills", "using-apex-forge", "SKILL.md"), "utf8"),
+    /current Claude Code session/
+  );
+  assert.match(
+    readFileSync(join(CLAUDE_PLUGIN, "skills", "apex-forge-plan", "SKILL.md"), "utf8"),
+    /claude-code-host/
+  );
   assert.equal(existsSync(join(CLAUDE_PLUGIN, "runtime", "apex-v2.mjs")), true);
 });
 

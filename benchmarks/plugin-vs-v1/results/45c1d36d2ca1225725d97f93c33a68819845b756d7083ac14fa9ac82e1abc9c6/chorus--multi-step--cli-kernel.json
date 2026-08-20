@@ -1,0 +1,157 @@
+{
+  "task_id": "chorus--multi-step",
+  "task_digest": "652031ea9833f07cc0f20aff5b2a86870416f1122fc539d13a60272537c9e00a",
+  "repository": "chorus",
+  "scenario": "multi-step",
+  "mode": "cli-kernel",
+  "candidate_digest": "45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 799662,
+    "cost": 3724149,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 1,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "0713b8ddd34fe9c9b368e6d1cb0a96fa4ab69a92",
+    "runtime_hash": "fbb9635c7fd7b24c7799126c3640c4ddc3239b4be5e2a5b9dd3f5cce103f16fc",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "e665a5b1b0ef8db49ae9fb83ccb5176365b59263286d76daef6086bb6c2efbfb",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--multi-step--cli-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--multi-step--cli-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--multi-step--cli-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--multi-step--cli-kernel/codex-home/sessions/2026/08/20/rollout-2026-08-20T09-53-35-01a01cdf-ab8a-76b1-a75e-3b31d32ba524.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--multi-step--cli-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--multi-step--cli-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--multi-step--cli-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--multi-step--cli-kernel/codex-home/sessions/2026/08/20/rollout-2026-08-20T09-53-35-01a01cdf-ab8a-76b1-a75e-3b31d32ba524.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--multi-step--cli-kernel/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "1297fd28302668de76ba0c9a362b6ed729368cb29c0bb0d483b5f0dac832704f",
+      "13795878ec524ce6985fbd82adec8e1375cf17120fa6940c0f8b5be95cbfffdc",
+      "04baa285fbe1abe824460017b4f412e722e32755db2ed75f6c4e580ad7c7bfcd",
+      "ec580c3ef4534721e1eafbb48d076dcfe610c8c350d1ae6f3595858ff3a9ddb8",
+      "e5f2557ef63753a912b2177dac993916a6f933197377301dba9287e6d20dcc5f"
+    ]
+  },
+  "evidence": {
+    "task_digest": "652031ea9833f07cc0f20aff5b2a86870416f1122fc539d13a60272537c9e00a",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a01cdf-ab8a-76b1-a75e-3b31d32ba524",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Normalized both source and destination idea statuses, added valid/invalid legacy-destination coverage, preserved closed terminal behavior, integrated changes, and closed run run-mt0v9mdo-96550451.",
+      "tests": [
+        {
+          "command": "pnpm exec vitest run src/services/__tests__/idea.service.pure.test.ts",
+          "status": "pass",
+          "detail": "Executed in staged candidate and integrated workspace; 45 tests passed."
+        },
+        {
+          "command": "pnpm exec tsc --noEmit",
+          "status": "pass",
+          "detail": "Executed in staged candidate and integrated workspace; exit code 0."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "artifact-mt0vniy5-96cb8524",
+        "artifact-mt0vo6di-4c394d73",
+        "artifact-mt0vokmh-38cfb4a3",
+        "artifact-mt0vpwp9-084c8ce5"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "pnpm exec vitest run src/services/__tests__/idea.service.pure.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 566,
+        "stdout_tail": "\n RUN  v4.1.0 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--multi-step--cli-kernel/workspace\n\n ✓ src/services/__tests__/idea.service.pure.test.ts (45 tests) 3ms\n\n Test Files  1 passed (1)\n      Tests  45 passed (45)\n   Start at  10:06:55\n   Duration  168ms (transform 43ms, setup 0ms, import 99ms, tests 3ms, environment 0ms)\n\n",
+        "stderr_tail": "(node:71722) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      },
+      {
+        "command": "pnpm exec tsc --noEmit",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 1233,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "pnpm exec vitest run src/services/__tests__/idea.service.pure.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 563,
+        "stdout_tail": "\n RUN  v4.1.0 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--multi-step--cli-kernel/workspace\n\n ✓ src/services/__tests__/idea.service.pure.test.ts (45 tests) 3ms\n\n Test Files  1 passed (1)\n      Tests  45 passed (45)\n   Start at  10:06:57\n   Duration  167ms (transform 44ms, setup 0ms, import 98ms, tests 3ms, environment 0ms)\n\n",
+        "stderr_tail": "(node:71762) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      },
+      {
+        "command": "test -n \"$(git diff --name-only -- src/services/idea.service.ts)\" && test -n \"$(git diff --name-only -- src/services/__tests__/idea.service.pure.test.ts)\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 32,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/services/__tests__/idea.service.pure.test.ts",
+        "src/services/idea.service.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": true,
+      "evidence_score": 1,
+      "run_ids": [
+        "run-mt0v9mdo-96550451"
+      ],
+      "done_run_ids": [
+        "run-mt0v9mdo-96550451"
+      ],
+      "fully_closed_run_ids": [
+        "run-mt0v9mdo-96550451"
+      ],
+      "active_runs": [],
+      "candidate_chain_equal": true,
+      "verification_ref": ".apex-v2/runs/run-mt0v9mdo-96550451/verification-report.json",
+      "review_ref": ".apex-v2/runs/run-mt0v9mdo-96550451/review-report.json",
+      "integration_ref": ".apex-v2/runs/run-mt0v9mdo-96550451/integration-report.json",
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "a33ce9c6b83921e6fc4bcf310daf5d8113ca7d87f87af6bc9c5aa3334bb030c1",
+        "replay_hash": "a33ce9c6b83921e6fc4bcf310daf5d8113ca7d87f87af6bc9c5aa3334bb030c1",
+        "hash_equal": true
+      }
+    }
+  }
+}

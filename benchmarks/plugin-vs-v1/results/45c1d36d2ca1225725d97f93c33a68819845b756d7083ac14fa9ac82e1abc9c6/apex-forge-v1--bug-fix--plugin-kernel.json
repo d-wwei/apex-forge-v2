@@ -1,0 +1,177 @@
+{
+  "task_id": "apex-forge-v1--bug-fix",
+  "task_digest": "9412475b3359c783cbd23e13933842ea2c6ef3e54f7db6aa83157583cbc3d306",
+  "repository": "apex-forge-v1",
+  "scenario": "bug-fix",
+  "mode": "plugin-kernel",
+  "candidate_digest": "45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 75324,
+    "cost": 72267,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 1,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "3755583552540121bcb1287c5bdba3c8b2578726",
+    "runtime_hash": "fbb9635c7fd7b24c7799126c3640c4ddc3239b4be5e2a5b9dd3f5cce103f16fc",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "e56886ee0f0752a3051af64ddee8a7e3fba089ddd67c35652e22e92bef608970",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--bug-fix--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--bug-fix--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--bug-fix--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--bug-fix--plugin-kernel/codex-home/sessions/2026/08/20/rollout-2026-08-20T08-45-01-01a01ca0-e5c4-7410-8236-c9b4b65e70b7.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--bug-fix--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--bug-fix--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--bug-fix--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--bug-fix--plugin-kernel/codex-home/sessions/2026/08/20/rollout-2026-08-20T08-45-01-01a01ca0-e5c4-7410-8236-c9b4b65e70b7.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--bug-fix--plugin-kernel/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "e317dba149ca405f333001e6a17c3053946fce94906958448b01e2dd56688c3b",
+      "b0c4376f6e446c0df3cf9065bde828ea4a3cbfadb45943ab8e6ea59eb11675d0",
+      "b8bd625038c54119f9d66a76672373354c494d55b6258aa227320b2ea831cd89",
+      "1425adb82b6c907393086939dc4beadee339ae011ac173d4a6f1c17c4f24fa93",
+      "cc819833639a4b583c4339aa8cb32d0859d8f24f7286e1afe2bd244f0db7cecd"
+    ]
+  },
+  "evidence": {
+    "task_digest": "9412475b3359c783cbd23e13933842ea2c6ef3e54f7db6aa83157583cbc3d306",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a01ca0-e5c4-7410-8236-c9b4b65e70b7",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Changed shouldRetry to reject attempts at or above maxRetries and added boundary regression coverage.",
+      "tests": [
+        {
+          "command": "bun -e 'import { shouldRetry } from \"./src/orchestrator/retry.ts\"; if (!shouldRetry(1,3,1) || shouldRetry(1,3,0)) process.exit(1)'",
+          "status": "pass",
+          "detail": "Exited successfully."
+        }
+      ],
+      "risks": [
+        "Full test suite was not run per fast-path instructions."
+      ],
+      "evidence_refs": [
+        "src/orchestrator/retry.ts",
+        "src/__tests__/orchestrator-v2.test.ts"
+      ],
+      "review": {
+        "claims": [
+          "Retries are allowed only when attempt is below maxRetries.",
+          "Attempts at and above maxRetries are rejected.",
+          "Successful exit code 0 prevents retries.",
+          "Regression coverage includes below, at, and above the limit."
+        ],
+        "uncertainties": [],
+        "acceptance_mapping": [
+          {
+            "criterion": "Prevent an extra retry when attempt equals maxRetries",
+            "status": "supported"
+          },
+          {
+            "criterion": "Cover attempts below, at, and above the limit",
+            "status": "supported"
+          },
+          {
+            "criterion": "Cover successful exit code handling",
+            "status": "supported"
+          },
+          {
+            "criterion": "Pass the public acceptance command",
+            "status": "supported"
+          }
+        ],
+        "findings": [
+          "No blocking findings."
+        ],
+        "residual_risks": [
+          "Only the mandated public check was executed."
+        ],
+        "merge_posture": "approve"
+      }
+    },
+    "acceptance": [
+      {
+        "command": "bun -e 'import { shouldRetry } from \"./src/orchestrator/retry.ts\"; if (!shouldRetry(1,3,1) || shouldRetry(1,3,0)) process.exit(1)'",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 32,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "bun -e 'import { shouldRetry } from \"./src/orchestrator/retry.ts\"; if (!shouldRetry(2,3,1) || shouldRetry(3,3,1) || shouldRetry(4,3,1) || shouldRetry(1,3,0)) process.exit(1)'",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 28,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      },
+      {
+        "command": "bun -e 'import { shouldRetry } from \"./src/orchestrator/retry.ts\"; if (!shouldRetry(1,3,1) || shouldRetry(1,3,0)) process.exit(1)'",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 29,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/__tests__/orchestrator-v2.test.ts",
+        "src/orchestrator/retry.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": true,
+      "evidence_score": 1,
+      "run_ids": [
+        "run-mt0stfp6-e7fd8cf0"
+      ],
+      "done_run_ids": [
+        "run-mt0stfp6-e7fd8cf0"
+      ],
+      "fully_closed_run_ids": [
+        "run-mt0stfp6-e7fd8cf0"
+      ],
+      "active_runs": [],
+      "candidate_chain_equal": true,
+      "verification_ref": ".apex-v2/runs/run-mt0stfp6-e7fd8cf0/verification-report.json",
+      "review_ref": ".apex-v2/runs/run-mt0stfp6-e7fd8cf0/review-report.json",
+      "integration_ref": ".apex-v2/runs/run-mt0stfp6-e7fd8cf0/integration-report.json",
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "a7551429b1264387c74380279ee1f1d4724a26c60c208e3bba79d728fca43e43",
+        "replay_hash": "a7551429b1264387c74380279ee1f1d4724a26c60c208e3bba79d728fca43e43",
+        "hash_equal": true
+      }
+    }
+  }
+}

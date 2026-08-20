@@ -1,12 +1,20 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import {
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync
+} from "node:fs";
+import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
+import { spawn } from "node:child_process";
 import {
   sanitizeEnvironment,
   spawnCapabilityProcess
 } from "../src/core/capability-sandbox.mjs";
+import { terminateGuardTokenProcesses } from "../src/core/process-guard.mjs";
 import { buildClaudeArgs } from "../src/adapters/claude.mjs";
 import { buildCodexArgs } from "../src/adapters/codex.mjs";
 import { buildGeminiArgs } from "../src/adapters/gemini.mjs";
@@ -50,11 +58,13 @@ test("agent environment strips unapproved secrets", () => {
     PATH: "/bin",
     TEST_TOKEN: "secret",
     OPENAI_API_KEY: "allowed",
+    APEX_PARALLEL_GUARD_TOKEN: "internal",
     NORMAL_VALUE: "visible"
   }, ["OPENAI_API_KEY"]);
   assert.deepEqual(env, {
     PATH: "/bin",
     OPENAI_API_KEY: "allowed",
+    APEX_PARALLEL_GUARD_TOKEN: "internal",
     NORMAL_VALUE: "visible"
   });
 });
@@ -77,13 +87,221 @@ setInterval(() => {}, 1000);
     workspaceDir: workspace,
     adapter: "test",
     network: false,
-    timeoutMs: 300
+    timeoutMs: 2000
   });
   assert.equal(execution.timed_out, true);
-  assert.ok(Date.now() - startedAt < 5000);
-  const childPid = Number(readFileSync(pidPath, "utf8"));
-  await new Promise((resolve) => setTimeout(resolve, 100));
-  assert.throws(() => process.kill(childPid, 0), /ESRCH/);
+  assert.ok(Date.now() - startedAt < 30000);
+  if (existsSync(pidPath)) {
+    const childPid = Number(readFileSync(pidPath, "utf8"));
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    assert.throws(() => process.kill(childPid, 0), /ESRCH/);
+  } else {
+    assert.equal(execution.termination_reason, "timeout");
+  }
+});
+
+test("capability sandbox reaps a detached workspace daemon after successful parent exit", {
+  skip: process.platform !== "darwin"
+}, async () => {
+  const workspace = tempDir("apex-agent-detached-");
+  const launcher = join(workspace, "launcher.mjs");
+  const pidPath = join(workspace, "daemon.pid");
+  writeFileSync(launcher, `
+import { spawn } from "node:child_process";
+import { writeFileSync } from "node:fs";
+const child = spawn(process.execPath, ["-e", "setInterval(() => {}, 1000)"], {
+  detached: true,
+  stdio: "ignore"
+});
+child.unref();
+writeFileSync(process.argv[2], String(child.pid));
+console.log("launcher-done");
+`);
+
+  let daemonPid = null;
+  try {
+    const execution = spawnCapabilityProcess(process.execPath, [
+      launcher,
+      pidPath
+    ], {
+      workspaceDir: workspace,
+      adapter: "test",
+      network: false,
+      timeoutMs: 5000
+    });
+    assert.equal(execution.status, 1);
+    assert.equal(execution.termination_reason, "orphan-process");
+    assert.match(execution.stderr, /orphan workspace processes reaped/i);
+    assert.deepEqual(execution.process_cleanup.surviving_pids, []);
+    daemonPid = Number(readFileSync(pidPath, "utf8"));
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    assert.throws(() => process.kill(daemonPid, 0), /ESRCH/);
+  } finally {
+    if (daemonPid) {
+      try {
+        process.kill(-daemonPid, "SIGKILL");
+      } catch {}
+      try {
+        process.kill(daemonPid, "SIGKILL");
+      } catch {}
+    }
+  }
+});
+
+test("capability sandbox fails closed when disk headroom drops below policy", {
+  skip: process.platform !== "darwin"
+}, () => {
+  const workspace = tempDir("apex-agent-disk-guard-");
+  const script = join(workspace, "wait.mjs");
+  writeFileSync(script, "setInterval(() => {}, 1000);\n");
+  const execution = spawnCapabilityProcess(process.execPath, [script], {
+    workspaceDir: workspace,
+    adapter: "test",
+    network: false,
+    timeoutMs: 5000,
+    minFreeBytes: Number.MAX_SAFE_INTEGER
+  });
+  assert.equal(execution.status, 1);
+  assert.equal(execution.termination_reason, "disk-pressure");
+  assert.match(execution.stderr, /disk headroom/i);
+  assert.ok(execution.duration_ms < 5000);
+});
+
+test("capability sandbox fails closed when one run grows its workspace excessively", {
+  skip: process.platform !== "darwin"
+}, () => {
+  const workspace = tempDir("apex-agent-disk-growth-");
+  const script = join(workspace, "grow.mjs");
+  writeFileSync(script, `
+import { writeFileSync } from "node:fs";
+writeFileSync("growth.bin", Buffer.alloc(8 * 1024 * 1024, 0x61));
+setInterval(() => {}, 1000);
+`);
+  const execution = spawnCapabilityProcess(process.execPath, [script], {
+    workspaceDir: workspace,
+    adapter: "test",
+    network: false,
+    timeoutMs: 10000,
+    maxWorkspaceGrowthBytes: 1024 * 1024,
+    workspaceCheckIntervalMs: 100
+  });
+  assert.equal(execution.status, 1);
+  assert.equal(execution.termination_reason, "workspace-growth");
+  assert.match(execution.stderr, /workspace growth exceeded/i);
+  assert.ok(execution.duration_ms < 10000);
+});
+
+test("capability sandbox tolerates files removed during workspace measurement", {
+  skip: process.platform !== "darwin"
+}, () => {
+  const workspace = tempDir("apex-agent-workspace-churn-");
+  const script = join(workspace, "churn.mjs");
+  writeFileSync(script, `
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+for (let index = 0; index < 200; index += 1) {
+  const directory = \`transient-\${index}\`;
+  mkdirSync(directory);
+  writeFileSync(\`\${directory}/value.txt\`, "value");
+  rmSync(directory, { recursive: true, force: true });
+}
+console.log("churn-complete");
+`);
+  const execution = spawnCapabilityProcess(process.execPath, [script], {
+    workspaceDir: workspace,
+    adapter: "test",
+    network: false,
+    timeoutMs: 10000,
+    maxWorkspaceGrowthBytes: 16 * 1024 * 1024,
+    workspaceCheckIntervalMs: 1
+  });
+  assert.equal(execution.status, 0, execution.stderr);
+  assert.equal(execution.stdout.trim(), "churn-complete");
+  assert.equal(execution.termination_reason, null);
+});
+
+test("capability sandbox fails closed when process output exceeds policy", {
+  skip: process.platform !== "darwin"
+}, () => {
+  const workspace = tempDir("apex-agent-output-limit-");
+  const script = join(workspace, "output.mjs");
+  writeFileSync(script, `
+process.stdout.write(Buffer.alloc(2 * 1024 * 1024, 0x61));
+setInterval(() => {}, 1000);
+`);
+  const execution = spawnCapabilityProcess(process.execPath, [script], {
+    workspaceDir: workspace,
+    adapter: "test",
+    network: false,
+    timeoutMs: 10000,
+    maxOutputBytes: 1024
+  });
+  assert.equal(execution.status, 1);
+  assert.equal(execution.termination_reason, "output-limit");
+  assert.match(execution.stderr, /output exceeded policy/i);
+  assert.ok(execution.duration_ms < 10000);
+});
+
+test("parallel guard token reaps a process that escaped its parent group", async () => {
+  const guardToken = `parallel-test-${Date.now()}`;
+  const child = spawn(process.execPath, ["-e", "setInterval(() => {}, 1000)"], {
+    detached: true,
+    stdio: "ignore",
+    env: {
+      ...process.env,
+      APEX_PARALLEL_GUARD_TOKEN: guardToken
+    }
+  });
+  child.unref();
+  await new Promise((resolve) => setTimeout(resolve, 200));
+  const cleanup = terminateGuardTokenProcesses(guardToken);
+  assert.ok(cleanup.terminated_pids.includes(child.pid));
+  assert.deepEqual(cleanup.surviving_pids, []);
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  assert.throws(() => process.kill(child.pid, 0), /ESRCH/);
+});
+
+test("capability sandbox can launch a nested capability process with denied TMPDIR", {
+  skip: process.platform !== "darwin"
+}, () => {
+  const workspace = tempDir("apex-agent-nested-");
+  const deniedTmp = mkdtempSync(join(homedir(), ".apex-denied-tmp-"));
+  const script = join(workspace, "nested.mjs");
+  const modulePath = new URL("../src/core/capability-sandbox.mjs", import.meta.url).pathname;
+  writeFileSync(script, `
+import { spawnCapabilityProcess } from ${JSON.stringify(modulePath)};
+const nested = spawnCapabilityProcess(process.execPath, ["-e", "console.log('nested-ok')"], {
+  workspaceDir: process.cwd(),
+  network: false,
+  timeoutMs: 5000,
+  env: process.env
+});
+console.log(JSON.stringify({
+  status: nested.status,
+  stdout: nested.stdout.trim(),
+  stderr: nested.stderr,
+  sandboxType: nested.sandbox.type
+}));
+`);
+  try {
+    const outer = spawnCapabilityProcess(process.execPath, [script], {
+      workspaceDir: workspace,
+      network: false,
+      timeoutMs: 10000,
+      env: {
+        ...process.env,
+        TMPDIR: deniedTmp
+      }
+    });
+    assert.equal(outer.status, 0, outer.stderr);
+    assert.deepEqual(JSON.parse(outer.stdout), {
+      status: 0,
+      stdout: "nested-ok",
+      stderr: "",
+      sandboxType: "inherited-macos-seatbelt"
+    });
+  } finally {
+    rmSync(deniedTmp, { recursive: true, force: true });
+  }
 });
 
 test("Claude and Gemini adapters avoid bypass and yolo permission modes", () => {

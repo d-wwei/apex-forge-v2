@@ -1,10 +1,66 @@
 {
   "repositories": [
-    { "id": "node-cli", "archetype": "CLI application" },
-    { "id": "js-library", "archetype": "JavaScript library" },
-    { "id": "api-service", "archetype": "HTTP API service" },
-    { "id": "data-pipeline", "archetype": "Data pipeline" },
-    { "id": "docs-tool", "archetype": "Documentation generator" }
+    {
+      "id": "apex-forge-v1",
+      "archetype": "CLI application and execution protocol",
+      "source_path": "/Users/admin/Documents/AI/Apex-forge/apex-forge",
+      "source_url": "https://github.com/d-wwei/apex-forge.git",
+      "source_commit": "3755583552540121bcb1287c5bdba3c8b2578726",
+      "source_tree": "baad5e37b7b3e1e3bf4d7e7aac88d5dc684e6457",
+      "install_command": "bun install",
+      "prepare_command": "bun run build",
+      "prepare_outputs": ["dist"],
+      "baseline_command": "bun test src/__tests__/orchestrator-v2.test.ts src/__tests__/cli.test.ts src/__tests__/session-isolation.test.ts src/__tests__/orchestrator-e2e.test.ts",
+      "test_command": "bun test"
+    },
+    {
+      "id": "apex-manager",
+      "archetype": "Multi-agent orchestration CLI",
+      "source_path": "/Users/admin/Documents/AI/Apex-forge/apex-manager",
+      "source_url": "https://github.com/d-wwei/apex-manager.git",
+      "source_commit": "2da4c45e9bc278590ff0a908bf7e6bbbc0966e12",
+      "source_tree": "e6f0a80531a9abeca7d2ced510a782179afe3587",
+      "install_command": "npm ci",
+      "baseline_command": "node --import tsx --test tests/worker/cost.test.ts tests/commands/init.test.ts tests/worker/interrupt.test.ts tests/worker/messages.test.ts tests/daemon/notify.test.ts && npm run typecheck",
+      "test_command": "npm test"
+    },
+    {
+      "id": "agent-recall",
+      "archetype": "Agent memory service and CLI",
+      "source_path": "/Users/admin/Documents/AI/Agent-recall/agent-recall",
+      "source_url": "https://github.com/d-wwei/agent-recall.git",
+      "source_commit": "362bd78657a4f346af7218a571ab2698303ffb2a",
+      "source_tree": "89b7cfaca32052c6063cf7711fdb2742ddaac73e",
+      "install_command": "bun install",
+      "baseline_command": "bun test tests/services/output-formatter.test.ts tests/services/temporal-parser.test.ts tests/context/token-calculator.test.ts tests/worker/search/search-orchestrator.test.ts tests/supervisor/env-sanitizer.test.ts tests/services/compilation/response-parser.test.ts tests/supervisor/process-registry.test.ts",
+      "test_command": "bun test"
+    },
+    {
+      "id": "understand-codebase",
+      "archetype": "Code intelligence platform",
+      "source_path": "/Users/admin/Documents/AI/Understand-Codebase",
+      "source_url": "https://github.com/d-wwei/Understand-Codebase.git",
+      "source_commit": "b5eb3607e982743adfdc28eb8929043ed3a2b478",
+      "source_tree": "c40a8d602fdc09996b866b17d7bc5ce4ae028202",
+      "install_command": "pnpm install --frozen-lockfile",
+      "prepare_command": "pnpm --filter @understand-codebase/core build",
+      "prepare_outputs": ["understand-codebase-plugin/packages/core/dist"],
+      "baseline_command": "pnpm --dir understand-codebase-plugin --filter @understand-codebase/core test -- src/__tests__/ignore-filter.test.ts src/__tests__/change-classifier.test.ts src/__tests__/normalize-graph.test.ts && pnpm vitest run understand-codebase-plugin/src/__tests__/understand-codebase-redaction-pipeline.test.ts understand-codebase-plugin/src/__tests__/context-builder.test.ts understand-codebase-plugin/src/__tests__/explain-builder.test.ts",
+      "test_command": "pnpm --filter @understand-codebase/core test && pnpm vitest run"
+    },
+    {
+      "id": "chorus",
+      "archetype": "Multi-agent development framework",
+      "source_path": "/Users/admin/Documents/AI/muster/reference_repos/Chorus",
+      "source_url": "https://github.com/Chorus-AIDLC/Chorus.git",
+      "source_commit": "0713b8ddd34fe9c9b368e6d1cb0a96fa4ab69a92",
+      "source_tree": "97b1010c2ca36c2373779d9b2c6cb7d5e5a08ba0",
+      "install_command": "pnpm install --frozen-lockfile",
+      "prepare_command": "pnpm exec prisma generate",
+      "prepare_outputs": ["src/generated/prisma"],
+      "baseline_command": "pnpm exec vitest run src/services/__tests__/elaboration.service.pure.test.ts src/services/__tests__/idea.service.pure.test.ts src/lib/__tests__/cookie-utils.test.ts src/lib/__tests__/api-response.test.ts src/lib/__tests__/errors.test.ts src/lib/__tests__/utils.test.ts && pnpm exec tsc --noEmit",
+      "test_command": "pnpm test"
+    }
   ],
   "scenarios": [
     { "id": "simple", "purpose": "Single-file behavior change" },

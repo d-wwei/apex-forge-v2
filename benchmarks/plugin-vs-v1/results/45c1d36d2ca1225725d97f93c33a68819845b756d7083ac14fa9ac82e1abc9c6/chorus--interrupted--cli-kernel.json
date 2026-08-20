@@ -1,0 +1,166 @@
+{
+  "task_id": "chorus--interrupted",
+  "task_digest": "65cdb242dbf405aed7ffbfff51a9c1eeb15318e83f7afa7faac84641a6cc05bc",
+  "repository": "chorus",
+  "scenario": "interrupted",
+  "mode": "cli-kernel",
+  "candidate_digest": "45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 0.25,
+    "wall_ms": 233436,
+    "cost": 633622,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 0,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "0713b8ddd34fe9c9b368e6d1cb0a96fa4ab69a92",
+    "runtime_hash": "fbb9635c7fd7b24c7799126c3640c4ddc3239b4be5e2a5b9dd3f5cce103f16fc",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "e665a5b1b0ef8db49ae9fb83ccb5176365b59263286d76daef6086bb6c2efbfb",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--cli-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--cli-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--cli-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--cli-kernel/codex-home/sessions/2026/08/20/rollout-2026-08-20T10-31-00-01a01d01-eade-7ec2-8746-d310ded975b9.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--cli-kernel/execution-2.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--cli-kernel/process-2.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--cli-kernel/process-2.stderr.log"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--cli-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--cli-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--cli-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--cli-kernel/codex-home/sessions/2026/08/20/rollout-2026-08-20T10-31-00-01a01d01-eade-7ec2-8746-d310ded975b9.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--cli-kernel/execution-2.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--cli-kernel/process-2.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--cli-kernel/process-2.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--cli-kernel/agent-output-2.json"
+    ],
+    "artifact_hashes": [
+      "bc3fe86b6d7b7d3a5048e62dca0e9d5aa6633b93572f38fa2653a0382c5d10bc",
+      "1371130bae66d95faf7b188fd7211b8f35b5b9d9fc68250331b1ffcb26290bd3",
+      "9ce66aebf81cf73c5d8cf2543344cba12e40f5f137c342f527c9b32f2fb7ffec",
+      "d4bebfcf04dfb041a05ceb9b0b8943434fecc172c1eda5dbf25048fc5510b370",
+      "d94aec22d84d1eda0c16d5cb7d4defd0dd04d1b26815bc0140a21b9bfeecd6b4",
+      "7d26c8be9a1d94881aba86e2d31ea109f75aade67ce3d5989b34131df58537db",
+      "146e2aa6adb963589745c2f43ef7af97f081ab7725a828860cad9f24a3dfbcd2",
+      "bfe2d1dd2be8a1f0aecac3f7db6f74929bb947de846c7c8f8c179d40cbd89981"
+    ]
+  },
+  "evidence": {
+    "task_digest": "65cdb242dbf405aed7ffbfff51a9c1eeb15318e83f7afa7faac84641a6cc05bc",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a01d01-eade-7ec2-8746-d310ded975b9",
+    "agent_output": {
+      "verdict": "blocked",
+      "summary": "Code and tests are complete, but the Apex Forge run could not be closed because its execute gate still requires typed worker evidence.",
+      "tests": [
+        {
+          "command": "pnpm exec vitest run src/lib/__tests__/api-response.test.ts",
+          "status": "pass",
+          "detail": "22 tests passed."
+        },
+        {
+          "command": "pnpm exec tsc --noEmit",
+          "status": "pass",
+          "detail": "No diagnostics."
+        }
+      ],
+      "risks": [
+        "Verify, review, integrate, and close gates remain incomplete; PASS cannot be claimed."
+      ],
+      "evidence_refs": [
+        "run-mt0wlq6q-10eafd96",
+        "artifact-mt0wlq8k-eb6746bf",
+        "artifact-mt0wlq9m-01491bd2",
+        "artifact-mt0wlqbb-b5793cf5"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "pnpm exec vitest run src/lib/__tests__/api-response.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 699,
+        "stdout_tail": "\n RUN  v4.1.0 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--cli-kernel/workspace\n\n ✓ src/lib/__tests__/api-response.test.ts (22 tests) 6ms\n\n Test Files  1 passed (1)\n      Tests  22 passed (22)\n   Start at  12:33:38\n   Duration  165ms (transform 23ms, setup 0ms, import 63ms, tests 6ms, environment 0ms)\n\n",
+        "stderr_tail": "(node:40859) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      },
+      {
+        "command": "pnpm exec tsc --noEmit",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 2190,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "pnpm exec vitest run src/lib/__tests__/api-response.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 753,
+        "stdout_tail": "\n RUN  v4.1.0 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--interrupted--cli-kernel/workspace\n\n ✓ src/lib/__tests__/api-response.test.ts (22 tests) 7ms\n\n Test Files  1 passed (1)\n      Tests  22 passed (22)\n   Start at  12:33:41\n   Duration  179ms (transform 27ms, setup 0ms, import 68ms, tests 7ms, environment 0ms)\n\n",
+        "stderr_tail": "(node:40955) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      },
+      {
+        "command": "test -n \"$(git diff --name-only -- src/lib/api-response.ts)\" && test -n \"$(git diff --name-only -- src/lib/__tests__/api-response.test.ts)\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 58,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/lib/__tests__/api-response.test.ts",
+        "src/lib/api-response.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": false,
+      "evidence_score": 0.25,
+      "run_ids": [
+        "run-mt0wlq6q-10eafd96"
+      ],
+      "done_run_ids": [],
+      "fully_closed_run_ids": [],
+      "active_runs": [
+        "run-mt0wlq6q-10eafd96"
+      ],
+      "candidate_chain_equal": false,
+      "verification_ref": null,
+      "review_ref": null,
+      "integration_ref": null,
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "62e4210ed46481fb0fc403593fe384aa0da3c1d375c3d88ba88dfaa76254296a",
+        "replay_hash": "62e4210ed46481fb0fc403593fe384aa0da3c1d375c3d88ba88dfaa76254296a",
+        "hash_equal": true
+      }
+    }
+  }
+}

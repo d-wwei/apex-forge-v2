@@ -1,10 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawn } from "node:child_process";
-import { atomicWriteFile, readJson, writeJson } from "../src/lib/common.mjs";
+import { appendDurableFile, atomicWriteFile, readJson, writeJson } from "../src/lib/common.mjs";
+import { acquireProjectLock } from "../src/core/project-lock.mjs";
+import { updateProject } from "../src/core/store.mjs";
 
 const COMMON = new URL("../src/lib/common.mjs", import.meta.url).pathname;
 const LOCK = new URL("../src/core/project-lock.mjs", import.meta.url).pathname;
@@ -30,6 +32,16 @@ function child(script, args = [], env = {}) {
   });
 }
 
+async function waitForFile(path, timeoutMs = 5000) {
+  const started = Date.now();
+  while (!existsSync(path)) {
+    if (Date.now() - started >= timeoutMs) {
+      throw new Error(`timed out waiting for file: ${path}`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  }
+}
+
 test("atomic write failpoint preserves the previous complete JSON", () => {
   const dir = tempDir();
   const target = join(dir, "state.json");
@@ -46,6 +58,53 @@ test("atomic write failpoint preserves the previous complete JSON", () => {
   }, /before_rename/);
   assert.deepEqual(readJson(target), { version: 1 });
   assert.equal(readdirSync(dir).some((name) => name.includes(".tmp-")), false);
+});
+
+test("durable append persists complete ordered records", () => {
+  const dir = tempDir();
+  const target = join(dir, "events.jsonl");
+  appendDurableFile(target, "{\"id\":1}\n");
+  appendDurableFile(target, "{\"id\":2}\n");
+  assert.equal(readFileSync(target, "utf8"), "{\"id\":1}\n{\"id\":2}\n");
+});
+
+test("ProjectState update supports revision CAS and monotonic increments", () => {
+  const project = tempDir();
+  const root = join(project, ".apex-v2");
+  writeJson(join(root, "project.json"), {
+    schema_version: "v0",
+    format_version: 1,
+    revision: 0,
+    project_id: "project-cas",
+    project_name: "CAS",
+    created_at: "2026-08-14T00:00:00.000Z",
+    updated_at: "2026-08-14T00:00:00.000Z",
+    active_milestone: null,
+    knowledge_version: 0,
+    last_event_id: null,
+    active_runs: [],
+    wip_limits: { active_runs: 1, parallel_workers: 1 }
+  });
+  updateProject(root, { project_name: "CAS 1" }, { expectedRevision: 0 });
+  assert.equal(readJson(join(root, "project.json")).revision, 1);
+  assert.throws(
+    () => updateProject(root, { project_name: "stale" }, { expectedRevision: 0 }),
+    /revision 冲突/
+  );
+  updateProject(root, { project_name: "CAS 2" }, { expectedRevision: 1 });
+  assert.equal(readJson(join(root, "project.json")).revision, 2);
+});
+
+test("empty stale project lock is recovered after grace period", () => {
+  const project = tempDir();
+  mkdirSync(join(project, ".apex-v2.lock"));
+  const release = acquireProjectLock(project, {
+    timeoutMs: 1000,
+    retryMs: 5,
+    staleGraceMs: 0
+  });
+  release();
+  assert.equal(existsSync(join(project, ".apex-v2.lock")), false);
 });
 
 test("concurrent writers preserve every locked increment", async () => {
@@ -79,6 +138,8 @@ test("concurrent event writers keep JSONL complete and last_event_id monotonic",
   await import("node:fs").then(({ mkdirSync }) => mkdirSync(root, { recursive: true }));
   writeJson(join(root, "project.json"), {
     schema_version: "v0",
+    format_version: 1,
+    revision: 0,
     project_id: "project-atomic",
     project_name: "Atomic",
     created_at: "2026-08-13T00:00:00.000Z",
@@ -108,5 +169,65 @@ for (let index = 0; index < Number(iterations); index += 1) {
     .map(JSON.parse);
   assert.equal(events.length, 60);
   assert.equal(new Set(events.map((event) => event.event_id)).size, 60);
+  assert.ok(events.every((event, index) =>
+    index === 0 || events[index - 1].timestamp < event.timestamp
+  ));
   assert.equal(readJson(join(root, "project.json")).last_event_id, events.at(-1).event_id);
+});
+
+test("event timestamps follow locked append order under contention", async () => {
+  const project = tempDir();
+  const root = join(project, ".apex-v2");
+  const ready = join(project, "lock-ready");
+  mkdirSync(root, { recursive: true });
+  writeJson(join(root, "project.json"), {
+    schema_version: "v0",
+    format_version: 1,
+    revision: 0,
+    project_id: "project-event-order",
+    project_name: "Event Order",
+    created_at: "2026-08-18T00:00:00.000Z",
+    updated_at: "2026-08-18T00:00:00.000Z",
+    active_milestone: null,
+    knowledge_version: 0,
+    last_event_id: null,
+    active_runs: [],
+    wip_limits: { active_runs: 1, parallel_workers: 2 }
+  });
+  writeFileSync(join(root, "events.jsonl"), "");
+
+  const holder = join(project, "event-lock-holder.mjs");
+  writeFileSync(holder, `
+import { writeFileSync } from "node:fs";
+import { appendEvent } from ${JSON.stringify(`file://${STORE}`)};
+import { withProjectLock } from ${JSON.stringify(`file://${LOCK}`)};
+const [project, root, ready] = process.argv.slice(2);
+withProjectLock(project, () => {
+  writeFileSync(ready, "ready\\n");
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1000);
+  appendEvent(root, "atomic.holder", "holder", {});
+}, { timeoutMs: 60000 });
+`);
+  const waiter = join(project, "event-lock-waiter.mjs");
+  writeFileSync(waiter, `
+import { appendEvent } from ${JSON.stringify(`file://${STORE}`)};
+const [root] = process.argv.slice(2);
+appendEvent(root, "atomic.waiter", "waiter", {});
+`);
+
+  const holderExecution = child(holder, [project, root, ready]);
+  await waitForFile(ready);
+  const waiterExecution = child(waiter, [root]);
+  const executions = await Promise.all([holderExecution, waiterExecution]);
+  assert.ok(executions.every((item) => item.code === 0), JSON.stringify(executions));
+
+  const events = readFileSync(join(root, "events.jsonl"), "utf8")
+    .trim()
+    .split("\n")
+    .map(JSON.parse);
+  assert.deepEqual(events.map((event) => event.actor), ["holder", "waiter"]);
+  assert.ok(
+    events[0].timestamp <= events[1].timestamp,
+    `${events[0].timestamp} > ${events[1].timestamp}`
+  );
 });

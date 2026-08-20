@@ -1,0 +1,21 @@
+# Progress & session state
+shared/progress.md
+test/**/progress.md
+test/.active-sessions/
+
+# Platform adapter outputs (regenerated from source)
+adapters/
+
+# Sensitive files (NEVER commit)
+*.pem
+*.key
+credentials*
+*.env
+.env.*
+
+# OS/IDE noise
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/

@@ -103,5 +103,8 @@ test("generic Agent runner turns a ModelProvider response into executor output",
     tool_calls: null
   });
   assert.equal(JSON.parse(readFileSync(outputPath, "utf8")).verdict, "pass");
-  assert.deepEqual(executor.inspect().capabilities, ["structured_output"]);
+  assert.deepEqual(
+    executor.inspect().capabilities,
+    ["structured_output", "process_tree_cancel", "usage_reporting"]
+  );
 });

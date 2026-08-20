@@ -1,6 +1,7 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 
@@ -10,6 +11,8 @@ const pluginValidator = process.env.CODEX_PLUGIN_VALIDATOR
   || join(codexHome, "skills", ".system", "plugin-creator", "scripts", "validate_plugin.py");
 const codexPlugin = join(repoRoot, "plugins", "codex", "apex-forge-v2");
 const claudePlugin = join(repoRoot, "plugins", "claude-code", "apex-forge-v2");
+const codexManifest = JSON.parse(readFileSync(join(codexPlugin, ".codex-plugin", "plugin.json"), "utf8"));
+const claudeManifest = JSON.parse(readFileSync(join(claudePlugin, ".claude-plugin", "plugin.json"), "utf8"));
 const evidencePath = join(
   repoRoot,
   ".product-audit",
@@ -25,18 +28,50 @@ const checks = [
   ]),
   run("claude-plugin-validator", "claude", ["plugin", "validate", claudePlugin]),
   run("codex-plugin-installed", "codex", ["plugin", "list"]),
-  run("claude-plugin-installed", "claude", ["plugin", "list"]),
-  run("node-runtime", "node", ["--version"])
+  runClaudeInstalled(),
+  run("node-runtime", "node", ["--version"]),
+  verifyPackage("codex-package-provenance", codexPlugin, codexManifest.version),
+  verifyPackage("claude-package-provenance", claudePlugin, claudeManifest.version)
 ];
 
 const installedCheck = checks.find((check) => check.id === "codex-plugin-installed");
-installedCheck.status = installedCheck.status === "PASS" && installedCheck.stdout.includes("apex-forge-v2@apex-forge-local")
+installedCheck.status = installedCheck.status === "PASS"
+  && installedCheck.stdout.includes("apex-forge-v2@apex-forge-local")
+  && installedCheck.stdout.includes(codexManifest.version)
+  && installedCheck.stdout.includes(codexPlugin)
   ? "PASS"
   : "FAIL";
 const claudeInstalledCheck = checks.find((check) => check.id === "claude-plugin-installed");
-claudeInstalledCheck.status = claudeInstalledCheck.status === "PASS" && claudeInstalledCheck.stdout.includes("apex-forge-v2@apex-forge-local")
-  ? "PASS"
-  : "FAIL";
+if (claudeInstalledCheck.status === "PASS") {
+  try {
+    const installed = JSON.parse(claudeInstalledCheck.stdout)
+      .find((item) => item.id === "apex-forge-v2@apex-forge-local");
+    claudeInstalledCheck.status = installed
+      && installed.version === claudeManifest.version
+      && installed.projectPath === repoRoot
+      && verifyInstalledRuntime(installed.installPath, claudePlugin)
+      ? "PASS"
+      : "FAIL";
+  } catch {
+    claudeInstalledCheck.status = "FAIL";
+  }
+}
+
+const codexCache = join(
+  codexHome,
+  "plugins",
+  "cache",
+  "apex-forge-local",
+  "apex-forge-v2",
+  codexManifest.version
+);
+checks.push({
+  id: "codex-installed-runtime",
+  status: verifyInstalledRuntime(codexCache, codexPlugin) ? "PASS" : "FAIL",
+  exit_code: verifyInstalledRuntime(codexCache, codexPlugin) ? 0 : 1,
+  stdout: codexCache,
+  stderr: ""
+});
 
 const report = {
   schema_version: "v0",
@@ -58,4 +93,93 @@ function run(id, command, args) {
     stdout: String(result.stdout || "").slice(-4000),
     stderr: String(result.stderr || result.error?.message || "").slice(-4000)
   };
+}
+
+function runClaudeInstalled() {
+  const result = spawnSync("claude", ["plugin", "list", "--json"], {
+    cwd: repoRoot,
+    encoding: "utf8"
+  });
+  let selected = [];
+  try {
+    selected = JSON.parse(String(result.stdout || "[]"))
+      .filter((item) => item.id === "apex-forge-v2@apex-forge-local");
+  } catch {}
+  return {
+    id: "claude-plugin-installed",
+    status: result.status === 0 ? "PASS" : "FAIL",
+    exit_code: result.status ?? 1,
+    stdout: JSON.stringify(selected),
+    stderr: String(result.stderr || result.error?.message || "").slice(-4000)
+  };
+}
+
+function verifyPackage(id, pluginPath, version) {
+  const errors = [];
+  for (const file of ["LICENSE", "THIRD_PARTY_NOTICES", "SBOM.json", "PROVENANCE.json", "CHECKSUMS.sha256"]) {
+    if (!existsSync(join(pluginPath, file))) errors.push(`missing ${file}`);
+  }
+  const runtimePath = join(pluginPath, "runtime", "runtime.json");
+  if (!existsSync(runtimePath)) {
+    errors.push("missing runtime/runtime.json");
+  } else {
+    const runtime = JSON.parse(readFileSync(runtimePath, "utf8"));
+    if (runtime.release_version !== version) errors.push("release version mismatch");
+    if (runtime.runtime_sha256 !== fileHash(join(pluginPath, "runtime", "apex-v2.mjs"))) {
+      errors.push("runtime hash mismatch");
+    }
+    if (runtime.schemas_sha256 !== treeHash(join(pluginPath, "runtime", "schemas"))) {
+      errors.push("schemas hash mismatch");
+    }
+  }
+  return {
+    id,
+    status: errors.length === 0 ? "PASS" : "FAIL",
+    exit_code: errors.length === 0 ? 0 : 1,
+    stdout: pluginPath,
+    stderr: errors.join("; ")
+  };
+}
+
+function verifyInstalledRuntime(installedPath, sourcePlugin) {
+  if (!installedPath || !existsSync(installedPath)) return false;
+  for (const relativePath of [
+    "runtime/apex-v2.mjs",
+    "runtime/capability-runner.mjs",
+    "runtime/runtime.json",
+    "PROVENANCE.json"
+  ]) {
+    const installed = join(installedPath, relativePath);
+    const source = join(sourcePlugin, relativePath);
+    if (!existsSync(installed) || !existsSync(source)) return false;
+    if (fileHash(installed) !== fileHash(source)) return false;
+  }
+  return true;
+}
+
+function treeHash(directory) {
+  if (!existsSync(directory)) return "";
+  const hash = createHash("sha256");
+  for (const file of listFiles(directory)) {
+    hash.update(relative(directory, file));
+    hash.update("\0");
+    hash.update(readFileSync(file));
+    hash.update("\n");
+  }
+  return hash.digest("hex");
+}
+
+function listFiles(directory) {
+  const files = [];
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) files.push(...listFiles(path));
+    else if (entry.isFile()) files.push(path);
+  }
+  return files.sort();
+}
+
+function fileHash(path) {
+  if (!existsSync(path)) return "";
+  return createHash("sha256").update(readFileSync(path)).digest("hex");
 }

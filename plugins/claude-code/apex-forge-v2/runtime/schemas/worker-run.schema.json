@@ -63,6 +63,10 @@
     "session_adapter": { "type": ["string", "null"] },
     "claimed_by": { "type": ["string", "null"] },
     "claimed_at": { "type": ["string", "null"] },
+    "claim_token": { "type": ["string", "null"] },
+    "claim_expires_at": { "type": ["string", "null"] },
+    "fencing_token": { "type": "integer", "minimum": 0 },
+    "route_id": { "type": ["string", "null"] },
     "factory_executor_id": { "type": ["string", "null"] },
     "created_at": { "type": "string" },
     "updated_at": { "type": "string" }

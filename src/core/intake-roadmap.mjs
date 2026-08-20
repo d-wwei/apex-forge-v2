@@ -14,6 +14,7 @@ export function addIntakeItem(root, args) {
     priority: normalizeEnum(args.priority || "P2", ["P0", "P1", "P2", "P3"], "priority"),
     risk: normalizeEnum(args.risk || "medium", ["low", "medium", "high", "critical"], "risk"),
     affected_area: String(args.area || "unknown"),
+    acceptance_commands: parseAcceptanceCommands(args),
     evidence_refs: splitList(args.evidence),
     triage: {
       status: "new",
@@ -32,6 +33,23 @@ export function addIntakeItem(root, args) {
   const event = appendEvent(root, "intake.added", "apex-v2", { intake_id: item.id, title: item.title });
   updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
   return item;
+}
+
+function parseAcceptanceCommands(args) {
+  if (!args["acceptance-json"]) return [];
+  let commands;
+  try {
+    commands = JSON.parse(String(args["acceptance-json"]));
+  } catch (error) {
+    throw new Error(`acceptance-json 必须是 JSON 数组：${error.message}`);
+  }
+  if (
+    !Array.isArray(commands)
+    || commands.some((command) => typeof command !== "string" || !command.trim())
+  ) {
+    throw new Error("acceptance-json 必须是非空字符串数组");
+  }
+  return [...new Set(commands.map((command) => command.trim()))];
 }
 
 export function listIntakeItems(root, statusFilter = null) {
@@ -105,4 +123,3 @@ export function compareRoadmapPriority(a, b) {
     || (riskRank[a.risk] ?? 9) - (riskRank[b.risk] ?? 9)
     || a.created_at.localeCompare(b.created_at);
 }
-

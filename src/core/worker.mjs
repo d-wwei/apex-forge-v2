@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { createHash } from "node:crypto";
+import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import {
   assertSafeRelativePath,
@@ -14,19 +15,28 @@ import {
   writeJson,
   writeTextIfMissing
 } from "../lib/common.mjs";
-import {
-  normalizeExecutionCapabilities
-} from "../contracts/execution-capability.mjs";
+import { routeExecution } from "./execution-router.mjs";
+import { withProjectTransaction } from "./project-transaction.mjs";
 import { appendEvent, SCHEMA_VERSION, updateProject } from "./store.mjs";
 import { createArtifact } from "./artifacts.mjs";
 import { loadRun } from "./run-state.mjs";
 
-export function createWorkerForPlanNode(root, run, planNode) {
+export function createWorkerForPlanNode(root, run, planNode, options = {}) {
+  const generation = getWorkers(root, run.run_id)
+    .filter((worker) => worker.plan_node_id === planNode.id).length + 1;
+  return withProjectTransaction(resolve(root, ".."), {
+    kind: "worker-create",
+    idempotencyKey: `worker-create:${run.run_id}:${planNode.id}:${generation}`
+  }, () => createWorkerForPlanNodeTransaction(root, run, planNode, options)).result;
+}
+
+function createWorkerForPlanNodeTransaction(root, run, planNode, options) {
   const timestamp = now();
   const workerId = shortId("worker");
   const namespace = `.apex-v2/runs/${run.run_id}/workers/${workerId}`;
   const executionPolicy = readJson(join(root, "policies", "execution.json"));
-  const assignment = resolveWorkerAssignment(planNode, executionPolicy);
+  const route = routeExecution(planNode, executionPolicy, options);
+  const assignment = resolveWorkerAssignment(planNode, executionPolicy, route);
   const worker = {
     schema_version: SCHEMA_VERSION,
     worker_id: workerId,
@@ -49,12 +59,27 @@ export function createWorkerForPlanNode(root, run, planNode) {
     verification: planNode.verification,
     attempt: 0,
     last_adapter: null,
+    claim_token: null,
+    claim_expires_at: null,
+    fencing_token: 0,
+    route_id: null,
     created_at: timestamp,
     updated_at: timestamp
   };
 
   const dir = workerDir(root, run.run_id, workerId);
   ensureDir(dir);
+  const routeRecord = {
+    schema_version: SCHEMA_VERSION,
+    route_id: shortId("route"),
+    run_id: run.run_id,
+    worker_id: workerId,
+    plan_node_id: planNode.id,
+    ...route,
+    created_at: timestamp
+  };
+  worker.route_id = routeRecord.route_id;
+  writeJson(join(dir, "execution-route.json"), routeRecord);
   writeJson(join(dir, "worker.json"), worker);
   writeTextIfMissing(join(dir, "README.md"), workerReadme(worker, planNode));
   const event = appendEvent(root, "worker.created", "apex-v2", {
@@ -66,10 +91,10 @@ export function createWorkerForPlanNode(root, run, planNode) {
   return worker;
 }
 
-export function resolveWorkerAssignment(planNode, executionPolicy) {
+export function resolveWorkerAssignment(planNode, executionPolicy, route = routeExecution(planNode, executionPolicy)) {
   const executionClass = planNode.execution_class || legacyExecutionClass(planNode);
-  const preferredMode = planNode.preferred_mode || legacyPreferredMode(executionClass);
-  const requiredCapabilities = normalizeExecutionCapabilities(planNode.required_capabilities || []);
+  const preferredMode = route.mode;
+  const requiredCapabilities = route.required_capabilities;
   let adapter = planNode.adapter;
   if (!adapter) {
     if (executionClass === "cognitive" && preferredMode === "interactive") adapter = "host";
@@ -97,12 +122,6 @@ function legacyExecutionClass(planNode) {
   return "cognitive";
 }
 
-function legacyPreferredMode(executionClass) {
-  if (executionClass === "deterministic_check") return "deterministic";
-  if (executionClass === "human_decision") return "human";
-  return "factory";
-}
-
 export function getWorkers(root, runId) {
   const dir = join(root, "runs", runId, "workers");
   if (!existsSync(dir)) {
@@ -116,6 +135,53 @@ export function getWorkers(root, runId) {
 
 export function workerDir(root, runId, workerId) {
   return join(root, "runs", runId, "workers", workerId);
+}
+
+export function patchBundleRef(worker, patchId) {
+  assertPatchId(patchId);
+  return `${worker.namespace}/patches/${patchId}/patch-bundle.json`;
+}
+
+export function persistPatchBundle(root, patch) {
+  return writePatchBundle(root, patch, { latest: true });
+}
+
+export function updatePatchBundle(root, patch) {
+  return writePatchBundle(root, patch, { latest: false });
+}
+
+export function readWorkerPatchBundles(dir) {
+  const patches = [];
+  const seen = new Set();
+  const versionsDir = join(dir, "patches");
+  if (existsSync(versionsDir)) {
+    for (const entry of readdirSync(versionsDir, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const path = join(versionsDir, entry.name, "patch-bundle.json");
+      const patch = readJson(path, null);
+      if (!patch?.patch_id || seen.has(patch.patch_id)) continue;
+      patches.push({ patch, path });
+      seen.add(patch.patch_id);
+    }
+  }
+  const legacyPath = join(dir, "patch-bundle.json");
+  const legacyPatch = readJson(legacyPath, null);
+  if (legacyPatch?.patch_id && !seen.has(legacyPatch.patch_id)) {
+    patches.push({ patch: legacyPatch, path: legacyPath });
+  }
+  return patches.sort((left, right) =>
+    String(left.patch.created_at || left.patch.patch_id)
+      .localeCompare(String(right.patch.created_at || right.patch.patch_id))
+  );
+}
+
+export function workerStatusForMergeItems(items) {
+  const statuses = new Set(items.map((item) => item.status));
+  if (statuses.has("blocked_conflict")) return "blocked";
+  if (statuses.has("queued")) return "queued";
+  if (statuses.has("merged")) return "merged";
+  if (statuses.has("dropped")) return "dropped";
+  return "patch_submitted";
 }
 
 export function workerReadme(worker, planNode) {
@@ -159,15 +225,50 @@ export function findPatch(root, runId, patchId) {
 }
 
 export function findPatchWithPath(root, runId, patchId) {
+  assertPatchId(patchId);
   const workersDir = join(root, "runs", runId, "workers");
   if (!existsSync(workersDir)) throw new Error(`run 尚无 workers：${runId}`);
   for (const workerEntry of readdirSync(workersDir, { withFileTypes: true })) {
     if (!workerEntry.isDirectory()) continue;
-    const path = join(workersDir, workerEntry.name, "patch-bundle.json");
-    const patch = readJson(path, null);
-    if (patch?.patch_id === patchId) return { patch, path };
+    const dir = join(workersDir, workerEntry.name);
+    for (const value of readWorkerPatchBundles(dir)) {
+      if (value.patch.patch_id === patchId) return value;
+    }
   }
   throw new Error(`找不到 patch：${patchId}`);
+}
+
+function writePatchBundle(root, patch, { latest }) {
+  assertPatchId(patch?.patch_id);
+  const dir = workerDir(root, patch.run_id, patch.worker_id);
+  const path = join(dir, "patches", patch.patch_id, "patch-bundle.json");
+  ensureDir(dirnameForPath(path));
+  const existing = readJson(path, null);
+  if (
+    existing
+    && patchContentHash(existing) !== patchContentHash(patch)
+  ) {
+    throw new Error(`patch immutable content drift：${patch.patch_id}`);
+  }
+  writeJson(path, patch);
+
+  const aliasPath = join(dir, "patch-bundle.json");
+  const alias = readJson(aliasPath, null);
+  if (latest || alias?.patch_id === patch.patch_id) {
+    writeJson(aliasPath, patch);
+  }
+  return { path, alias_path: aliasPath };
+}
+
+function patchContentHash(patch) {
+  const { status: _status, updated_at: _updatedAt, ...content } = patch;
+  return createHash("sha256").update(JSON.stringify(content)).digest("hex");
+}
+
+function assertPatchId(patchId) {
+  if (typeof patchId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(patchId)) {
+    throw new Error(`patch_id 不安全：${patchId || "(空)"}`);
+  }
 }
 
 export function isFileAllowedByScope(file, scopes) {
@@ -198,7 +299,10 @@ export function applyPatchOperations(projectDir, patch) {
       if (count !== 1) {
         throw new Error(`replace_text 要求 old_text 唯一匹配，${operation.path} 实际匹配 ${count} 次`);
       }
-      writeFileSync(target, current.replace(operation.old_text, operation.new_text));
+      writeFileSync(
+        target,
+        current.replace(operation.old_text, () => operation.new_text)
+      );
     } else {
       throw new Error(`未知 patch operation：${operation.op}`);
     }
@@ -250,6 +354,30 @@ export function executeWorkerShell(root, worker, command, via) {
     refs: [],
     created_at: timestamp
   };
+  const expectedWorkerUpdatedAt = worker.updated_at;
+  return withProjectTransaction(resolve(root, ".."), {
+    kind: "worker-shell-commit",
+    idempotencyKey: [
+      "worker-shell-commit",
+      worker.worker_id,
+      Number(worker.attempt || 0) + 1,
+      createHash("sha256").update(command).digest("hex")
+    ].join(":")
+  }, () => commitWorkerShell(
+    root,
+    worker.worker_id,
+    expectedWorkerUpdatedAt,
+    adapterResult,
+    timestamp,
+    via
+  )).result;
+}
+
+function commitWorkerShell(root, workerId, expectedWorkerUpdatedAt, adapterResult, timestamp, via) {
+  const worker = findWorker(root, workerId);
+  if (worker.status !== "active" || worker.updated_at !== expectedWorkerUpdatedAt) {
+    throw new Error(`shell worker commit 遇到并发状态变化：${worker.worker_id}`);
+  }
   const file = `adapter-result-${adapterResult.result_id}.json`;
   writeJson(join(workerDir(root, worker.run_id, worker.worker_id), file), adapterResult);
   worker.status = adapterResult.status === "PASS" ? "evidence_submitted" : "blocked";
@@ -261,7 +389,7 @@ export function executeWorkerShell(root, worker, command, via) {
   const artifact = createArtifact(root, run, "execute", {
     type: "evidence",
     title: `ShellAdapter：${adapterResult.status}`,
-    body: `worker=${worker.worker_id}\ncommand=${command}\nexit_code=${adapterResult.exit_code}`,
+    body: `worker=${worker.worker_id}\ncommand=${adapterResult.command}\nexit_code=${adapterResult.exit_code}`,
     refs: [`${worker.namespace}/${file}`],
     timestamp
   });
@@ -270,6 +398,7 @@ export function executeWorkerShell(root, worker, command, via) {
     worker_id: worker.worker_id,
     result_id: adapterResult.result_id,
     status: adapterResult.status,
+    worker_status: worker.status,
     artifact_id: artifact.artifact_id,
     via
   });

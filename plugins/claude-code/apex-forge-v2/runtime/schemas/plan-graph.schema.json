@@ -29,6 +29,7 @@
     "source_title": { "type": "string" },
     "affected_area": { "type": "string" },
     "generated_at": { "type": "string" },
+    "profile": { "type": "string", "enum": ["full", "quick"] },
     "strategy": { "type": "string" },
     "planning_basis": { "type": "array", "items": { "type": "string" } },
     "quality_bar": { "type": "array", "items": { "type": "string" } },
@@ -77,6 +78,24 @@
           "preferred_mode": {
             "type": "string",
             "enum": ["interactive", "factory", "deterministic", "human"]
+          },
+          "execution_hints": {
+            "type": "object",
+            "required": [
+              "estimated_duration_minutes",
+              "requires_isolation",
+              "requires_resume",
+              "background",
+              "requires_parallel_execution"
+            ],
+            "properties": {
+              "estimated_duration_minutes": { "type": "number", "minimum": 0 },
+              "requires_isolation": { "type": "boolean" },
+              "requires_resume": { "type": "boolean" },
+              "background": { "type": "boolean" },
+              "requires_parallel_execution": { "type": "boolean" }
+            },
+            "additionalProperties": false
           },
           "output_contract": { "type": "string", "enum": ["evidence", "patch", "decision"] },
           "risk": { "type": "string", "enum": ["low", "medium", "high", "critical"] }

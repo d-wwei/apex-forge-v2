@@ -1,0 +1,140 @@
+{
+  "task_id": "apex-manager--interrupted",
+  "task_digest": "068f41d86647f4ef59cdad2d646111baba728a3518945f29a6a6fa10c154febe",
+  "repository": "apex-manager",
+  "scenario": "interrupted",
+  "mode": "v1-skill",
+  "candidate_digest": "45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 0.6666666666666666,
+    "wall_ms": 135538,
+    "cost": 228695,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 0,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "2da4c45e9bc278590ff0a908bf7e6bbbc0966e12",
+    "runtime_hash": "fbb9635c7fd7b24c7799126c3640c4ddc3239b4be5e2a5b9dd3f5cce103f16fc",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "e020fc07d9b7280805cdf04f2331fcc784575594a8690a7b28b133b3475eeba0",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--interrupted--v1-skill/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--interrupted--v1-skill/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--interrupted--v1-skill/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--interrupted--v1-skill/codex-home/sessions/2026/08/20/rollout-2026-08-20T08-50-37-01a01ca6-0591-7b43-8360-935ac0c2095e.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--interrupted--v1-skill/execution-2.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--interrupted--v1-skill/process-2.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--interrupted--v1-skill/process-2.stderr.log"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--interrupted--v1-skill/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--interrupted--v1-skill/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--interrupted--v1-skill/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--interrupted--v1-skill/codex-home/sessions/2026/08/20/rollout-2026-08-20T08-50-37-01a01ca6-0591-7b43-8360-935ac0c2095e.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--interrupted--v1-skill/execution-2.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--interrupted--v1-skill/process-2.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--interrupted--v1-skill/process-2.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--interrupted--v1-skill/agent-output-2.json"
+    ],
+    "artifact_hashes": [
+      "b4bc7f623b8a159605e023bc1317f857b9caa6e62c6cac57dd0e8c41a354e4e9",
+      "0998a84ac99273fdd9188406cf4eb6c1d5ad7823d76cbe4a2d417997cad107ae",
+      "f31fa8a9f5825eb302f614d83956a4df745eddce4c6e81e07a6940d37eb973b9",
+      "b9b2231fca22f3d3dc9172aeaf81cdf7a22eb70dafd86f42b37fd3dad2c88865",
+      "6380e8ee2b1bc41bb0d35f49a3beb9dc1688f5936b2409fd95672bc4c458b03d",
+      "d7fba6ff1188452c5f194fdf6fc843a58f73a968eaa8b2e201514c33bf1182b9",
+      "a873a22771565fc2730f7eb1c370fbe252b7674d8f890ae7a175e22d9b1557f2",
+      "8984fa0015f5cf6d34a4e99ade44d98b771f7a7956277940157db88bb3f67822"
+    ]
+  },
+  "evidence": {
+    "task_digest": "068f41d86647f4ef59cdad2d646111baba728a3518945f29a6a6fa10c154febe",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a01ca6-0591-7b43-8360-935ac0c2095e",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Added `working` as a busy hint for codex, gemini, and opencode, with a messaging regression covering prompt-like output. Claude behavior remains unchanged.",
+      "tests": [
+        {
+          "command": "node --import tsx --test tests/worker/messages.test.ts",
+          "status": "pass",
+          "detail": "7 tests passed."
+        },
+        {
+          "command": "npm run typecheck",
+          "status": "pass",
+          "detail": "TypeScript check passed."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "src/worker/idle.ts",
+        "tests/worker/messages.test.ts"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "node --import tsx --test tests/worker/messages.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 554,
+        "stdout_tail": "(node:21686) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n▶ structured worker messaging\n  ✔ stores, envelopes, and delivers a structured message (36.538541ms)\n  ✔ can wait for and record ACKs (9.827458ms)\n  ✔ keeps normal messages pending while the worker is busy (7.14525ms)\n  ✔ keeps messages pending when working output contains a shell-like prompt (16.175875ms)\n  ✔ interrupts first for urgent messages before delivering (7.414833ms)\n  ✔ uses the worker's recorded cmux adapter when no adapter override is provided (220.297667ms)\n  ✔ allocates unique message IDs under concurrent sends (30.620959ms)\n✔ structured worker messaging (328.879875ms)\nℹ tests 7\nℹ suites 1\nℹ pass 7\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 478.563542\n",
+        "stderr_tail": ""
+      },
+      {
+        "command": "npm run typecheck",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 881,
+        "stdout_tail": "\n> apex-manager@0.1.1 typecheck\n> tsc --noEmit\n\n",
+        "stderr_tail": ""
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "node --import tsx -e \"import {isWorkerIdleScreen} from './src/worker/idle.ts'; if(isWorkerIdleScreen('$ working on changes','codex')) process.exit(1); if(!isWorkerIdleScreen('$ ready','codex')) process.exit(1)\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 149,
+        "stdout_tail": "",
+        "stderr_tail": "(node:21754) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      },
+      {
+        "command": "node --import tsx --test tests/worker/messages.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 489,
+        "stdout_tail": "(node:21791) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n▶ structured worker messaging\n  ✔ stores, envelopes, and delivers a structured message (28.515666ms)\n  ✔ can wait for and record ACKs (15.55675ms)\n  ✔ keeps normal messages pending while the worker is busy (8.906333ms)\n  ✔ keeps messages pending when working output contains a shell-like prompt (22.711417ms)\n  ✔ interrupts first for urgent messages before delivering (19.793125ms)\n  ✔ uses the worker's recorded cmux adapter when no adapter override is provided (176.533459ms)\n  ✔ allocates unique message IDs under concurrent sends (34.7385ms)\n✔ structured worker messaging (307.793917ms)\nℹ tests 7\nℹ suites 1\nℹ pass 7\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 423.882\n",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/worker/idle.ts",
+        "tests/worker/messages.test.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": false,
+      "evidence_score": 0.6666666666666666,
+      "reason": "no .apex-v2 durable state"
+    }
+  }
+}

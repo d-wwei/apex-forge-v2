@@ -2,7 +2,7 @@ import { writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { ensureDir, normalizeEnum, now, readJson, required, shortId, splitList, writeJson, writeTextIfMissing } from "../lib/common.mjs";
 import { appendEvent, projectRoot, requireStore, SCHEMA_VERSION, updateProject } from "../core/store.mjs";
-import { closeRunIfComplete, createRunNode, getRunNode, loadRun, requirePassedNode, runHandoffTemplate, writeRun } from "../core/run-state.mjs";
+import { closeRunIfComplete, createRunNode, getRunNode, haltRun, loadRun, promoteHandledCarrySource, requirePassedNode, runHandoffTemplate, writeRun } from "../core/run-state.mjs";
 import { assertArtifact, createArtifact, listArtifactsForRun } from "../core/artifacts.mjs";
 import { buildTaskPlanGraph, renderPlanGraphMarkdown, validatePlanGraph } from "../core/plan-graph.mjs";
 import { buildProjectInventory } from "./knowledge.mjs";
@@ -196,9 +196,10 @@ function createRunForRoadmapNodeTransaction(root, roadmapId, timestamp) {
   graph.updated_at = timestamp;
   writeJson(roadmapPath, graph);
 
-  project.active_runs.push(runId);
-  project.updated_at = timestamp;
-  writeJson(projectPath, project);
+  updateProject(root, {
+    active_runs: [...project.active_runs, runId],
+    updated_at: timestamp
+  }, { expectedRevision: project.revision });
 
   const event = appendEvent(root, "run.created", "apex-v2", { run_id: runId, roadmap_node_id: roadmapId });
   updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
@@ -304,14 +305,24 @@ function completeRunNode(args) {
   };
   run.updated_at = timestamp;
   run.gate = node.gate;
-  closeRunIfComplete(root, run);
+  if (gateStatus === "HALT") haltRun(root, run, timestamp);
+  else closeRunIfComplete(root, run);
   writeRun(root, run);
-  const event = appendEvent(root, "run.node.completed", "apex-v2", {
+  const nodeEvent = appendEvent(root, "run.node.completed", "apex-v2", {
     run_id: run.run_id,
     node_id: node.id,
     gate: gateStatus,
-    evidence_refs: evidenceRefs
+    evidence_refs: evidenceRefs,
+    carry_forward_ids: carryForward.map((item) => item.id)
   });
+  const event = gateStatus === "HALT"
+    ? appendEvent(root, "run.halted", "apex-v2", {
+        run_id: run.run_id,
+        roadmap_node_id: run.roadmap_node_id,
+        node_id: node.id,
+        reason
+      })
+    : nodeEvent;
   updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
   console.log(JSON.stringify(run, null, 2));
 }
@@ -359,15 +370,32 @@ function updateRunCarry(args, action) {
   carry.evidence_refs = Array.from(new Set([...carry.evidence_refs, ...evidenceRefs]));
   carry.updated_at = now();
   syncCarryRisk(root, run.run_id, carry);
+  const promotedNode = promoteHandledCarrySource(run, carry.source_node_id, carry.updated_at);
+  const remainingOpenCarryIds = (run.carry_forward || [])
+    .filter((item) => item.status === "open")
+    .map((item) => item.id);
   run.updated_at = carry.updated_at;
   closeRunIfComplete(root, run);
   writeRun(root, run);
-  const event = appendEvent(root, "run.carry.updated", "apex-v2", {
+  const carryEvent = appendEvent(root, "run.carry.updated", "apex-v2", {
     run_id: run.run_id,
     carry_id: carry.id,
     status: carry.status,
-    evidence_refs: evidenceRefs
+    evidence_refs: evidenceRefs,
+    source_node_id: carry.source_node_id,
+    source_node_promoted: Boolean(promotedNode),
+    remaining_open_carry_ids: remainingOpenCarryIds
   });
+  const event = promotedNode
+    ? appendEvent(root, "run.node.completed", "apex-v2", {
+        run_id: run.run_id,
+        node_id: promotedNode.id,
+        gate: "PASS",
+        evidence_refs: promotedNode.evidence_refs,
+        carry_forward_ids: promotedNode.gate.carry_forward_ids,
+        via: "carry-forward"
+      })
+    : carryEvent;
   updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
   console.log(JSON.stringify({ run, carry }, null, 2));
 }

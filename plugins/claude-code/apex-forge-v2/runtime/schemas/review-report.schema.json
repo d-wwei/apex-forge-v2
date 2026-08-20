@@ -8,6 +8,8 @@
     "schema_version": { "type": "string", "const": "v0" },
     "report_id": { "type": "string" },
     "run_id": { "type": "string" },
+    "candidate_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "verification_report_id": { "type": ["string", "null"] },
     "status": { "type": "string", "enum": ["PASS", "BLOCKED"] },
     "created_at": { "type": "string" },
     "blocking_findings": { "type": "array", "items": { "type": "string" } },

@@ -73,6 +73,23 @@ export function atomicWriteFile(path, content) {
   }
 }
 
+export function appendDurableFile(path, content) {
+  const directory = dirname(path);
+  mkdirSync(directory, { recursive: true });
+  const existed = existsSync(path);
+  let descriptor = null;
+  try {
+    descriptor = openSync(path, "a", 0o644);
+    writeFileSync(descriptor, content);
+    fsyncSync(descriptor);
+    closeSync(descriptor);
+    descriptor = null;
+    if (!existed) fsyncDirectory(directory);
+  } finally {
+    if (descriptor != null) closeSync(descriptor);
+  }
+}
+
 function fsyncDirectory(directory) {
   let descriptor = null;
   try {

@@ -1,0 +1,148 @@
+{
+  "task_id": "agent-recall--review-defect",
+  "task_digest": "91ae2a61d3909db18c160cee28318f9f563ae74bc8ee3b7db4ae625a5cf56b10",
+  "repository": "agent-recall",
+  "scenario": "review-defect",
+  "mode": "plugin-kernel",
+  "candidate_digest": "45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 770889,
+    "cost": 4866095,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 1,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "362bd78657a4f346af7218a571ab2698303ffb2a",
+    "runtime_hash": "fbb9635c7fd7b24c7799126c3640c4ddc3239b4be5e2a5b9dd3f5cce103f16fc",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "979bdedee4c2e5652357a88d864cbd38a82634d1888d9a492c49850d8d1f173d",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--review-defect--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--review-defect--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--review-defect--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--review-defect--plugin-kernel/codex-home/sessions/2026/08/20/rollout-2026-08-20T08-58-19-01a01cad-115e-72e0-b422-e9adec3ae3aa.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--review-defect--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--review-defect--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--review-defect--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--review-defect--plugin-kernel/codex-home/sessions/2026/08/20/rollout-2026-08-20T08-58-19-01a01cad-115e-72e0-b422-e9adec3ae3aa.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--review-defect--plugin-kernel/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "6241c16effaa12741cade6d0e699e87ae4bbbedf2ad6c048564ff3bf54403104",
+      "b7fa4650ce882e78c032cda352305fe676faf925ec5012acc5af8b2a1c46d293",
+      "7c66f2e3f5ab32ed0bb5e64b80a41d878f64911db472f32f41bb8b5e0836153c",
+      "2768b1f1806d94d27e89395ed44ca19f919c17cb6c05cfb395a0f9343d42fa3a",
+      "1532c7cf733da73f23784e7d7345572a757b4ac90b6727a917745d7d20df2ea6"
+    ]
+  },
+  "evidence": {
+    "task_digest": "91ae2a61d3909db18c160cee28318f9f563ae74bc8ee3b7db4ae625a5cf56b10",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a01cad-115e-72e0-b422-e9adec3ae3aa",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Explicitly denies CLAUDE_CODE_SESSION, preserves OAuth and SDK entrypoint variables, and strengthens regression coverage with exact-output validation. Apex Forge run completed and integrated without conflicts.",
+      "tests": [
+        {
+          "command": "bun test tests/supervisor/env-sanitizer.test.ts",
+          "status": "pass",
+          "detail": "Integrated workspace: 8 passed, 0 failed."
+        },
+        {
+          "command": "bun test tests/supervisor/env-sanitizer.test.ts",
+          "status": "pass",
+          "detail": "Kernel staged candidate: 8 passed, 0 failed."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        ".apex-v2/runs/run-mt0tajdq-c619d0f7/verification-report.json",
+        ".apex-v2/runs/run-mt0tajdq-c619d0f7/review-report.json",
+        ".apex-v2/runs/run-mt0tajdq-c619d0f7/integration-report.json"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "bun test tests/supervisor/env-sanitizer.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 34,
+        "stdout_tail": "bun test v1.3.11 (af24e281)\n",
+        "stderr_tail": "\ntests/supervisor/env-sanitizer.test.ts:\n(pass) sanitizeEnv > strips variables with CLAUDECODE_ prefix [0.17ms]\n(pass) sanitizeEnv > strips variables with CLAUDE_CODE_ prefix (except allowlisted) [0.03ms]\n(pass) sanitizeEnv > strips exact-match variables (CLAUDECODE, CLAUDE_CODE_SESSION, MCP_SESSION_ID) but preserves allowlisted CLAUDE_CODE_ENTRYPOINT [0.02ms]\n(pass) sanitizeEnv > preserves allowed variables like PATH, HOME, NODE_PATH [0.02ms]\n(pass) sanitizeEnv > returns a new object and does not mutate the original [0.02ms]\n(pass) sanitizeEnv > handles empty env gracefully [0.02ms]\n(pass) sanitizeEnv > skips entries with undefined values\n(pass) sanitizeEnv > combines prefix and exact match removal in a single pass [0.04ms]\n\n 8 pass\n 0 fail\n 25 expect() calls\nRan 8 tests across 1 file. [8.00ms]\n"
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "bun -e \"import { sanitizeEnv } from './src/supervisor/env-sanitizer.ts'; const out=sanitizeEnv({CLAUDE_CODE_SESSION:'secret',CLAUDE_CODE_OAUTH_TOKEN:'token',CLAUDE_CODE_ENTRYPOINT:'sdk-ts'}); if(out.CLAUDE_CODE_SESSION!==undefined||out.CLAUDE_CODE_OAUTH_TOKEN!=='token'||out.CLAUDE_CODE_ENTRYPOINT!=='sdk-ts') process.exit(1);\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 29,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      },
+      {
+        "command": "bun test tests/supervisor/env-sanitizer.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 32,
+        "stdout_tail": "bun test v1.3.11 (af24e281)\n",
+        "stderr_tail": "\ntests/supervisor/env-sanitizer.test.ts:\n(pass) sanitizeEnv > strips variables with CLAUDECODE_ prefix\n(pass) sanitizeEnv > strips variables with CLAUDE_CODE_ prefix (except allowlisted) [0.32ms]\n(pass) sanitizeEnv > strips exact-match variables (CLAUDECODE, CLAUDE_CODE_SESSION, MCP_SESSION_ID) but preserves allowlisted CLAUDE_CODE_ENTRYPOINT [0.02ms]\n(pass) sanitizeEnv > preserves allowed variables like PATH, HOME, NODE_PATH [0.04ms]\n(pass) sanitizeEnv > returns a new object and does not mutate the original [0.01ms]\n(pass) sanitizeEnv > handles empty env gracefully [0.02ms]\n(pass) sanitizeEnv > skips entries with undefined values\n(pass) sanitizeEnv > combines prefix and exact match removal in a single pass [0.04ms]\n\n 8 pass\n 0 fail\n 25 expect() calls\nRan 8 tests across 1 file. [7.00ms]\n"
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/supervisor/env-sanitizer.ts",
+        "tests/supervisor/env-sanitizer.test.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": true,
+      "evidence_score": 1,
+      "run_ids": [
+        "run-mt0tajdq-c619d0f7"
+      ],
+      "done_run_ids": [
+        "run-mt0tajdq-c619d0f7"
+      ],
+      "fully_closed_run_ids": [
+        "run-mt0tajdq-c619d0f7"
+      ],
+      "active_runs": [],
+      "candidate_chain_equal": true,
+      "verification_ref": ".apex-v2/runs/run-mt0tajdq-c619d0f7/verification-report.json",
+      "review_ref": ".apex-v2/runs/run-mt0tajdq-c619d0f7/review-report.json",
+      "integration_ref": ".apex-v2/runs/run-mt0tajdq-c619d0f7/integration-report.json",
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "eeb56a3786a2eb10ffcc6fc7ecd0fa7de0dc4b78b568fc21843979ac030bfd71",
+        "replay_hash": "eeb56a3786a2eb10ffcc6fc7ecd0fa7de0dc4b78b568fc21843979ac030bfd71",
+        "hash_equal": true
+      }
+    }
+  }
+}

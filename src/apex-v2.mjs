@@ -73,6 +73,8 @@ import {
   inspectEventLog,
   inspectProjectConsistency
 } from "./core/reconcile.mjs";
+import { inspectOperationalIntegrity } from "./core/operational-state.mjs";
+import { withProjectTransaction } from "./core/project-transaction.mjs";
 import {
   migrateLegacyContracts,
   scanProjectContracts,
@@ -438,32 +440,45 @@ function listLearning(args) {
 
 function approveLearning(args) {
   const root = requireStore(projectRoot(args));
-  const proposal = updateLearningProposal(root, required(args, "id"), (item) => {
-    if (item.status !== "proposed") throw new Error(`只有 proposed proposal 可以 approve，当前状态：${item.status}`);
-    item.status = "approved";
-    item.updated_at = now();
-  });
-  const event = appendEvent(root, "learning.approved", "apex-v2", { proposal_id: proposal.id });
-  updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
+  const id = required(args, "id");
+  const proposal = withProjectTransaction(resolve(root, ".."), {
+    kind: "learning-approve",
+    idempotencyKey: `learning-approve:${id}`
+  }, () => {
+    const approved = updateLearningProposal(root, id, (item) => {
+      if (item.status !== "proposed") throw new Error(`只有 proposed proposal 可以 approve，当前状态：${item.status}`);
+      item.status = "approved";
+      item.updated_at = now();
+    });
+    const event = appendEvent(root, "learning.approved", "apex-v2", { proposal_id: approved.id });
+    updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
+    return approved;
+  }).result;
   console.log(JSON.stringify(proposal, null, 2));
 }
 
 function applyLearning(args) {
   const root = requireStore(projectRoot(args));
   const id = required(args, "id");
-  const proposal = updateLearningProposal(root, id, (item) => {
-    if (item.status !== "approved") throw new Error(`只有 approved proposal 可以 apply，当前状态：${item.status}`);
-    appendLearningToKnowledge(root, item);
-    item.status = "applied";
-    item.updated_at = now();
-  });
-  const knowledgeVersion = bumpKnowledgeVersion(root);
-  const event = appendEvent(root, "learning.applied", "apex-v2", {
-    proposal_id: proposal.id,
-    target_file: proposal.target_file,
-    knowledge_version: knowledgeVersion
-  });
-  updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
+  const proposal = withProjectTransaction(resolve(root, ".."), {
+    kind: "learning-apply",
+    idempotencyKey: `learning-apply:${id}`
+  }, () => {
+    const applied = updateLearningProposal(root, id, (item) => {
+      if (item.status !== "approved") throw new Error(`只有 approved proposal 可以 apply，当前状态：${item.status}`);
+      appendLearningToKnowledge(root, item);
+      item.status = "applied";
+      item.updated_at = now();
+    });
+    const knowledgeVersion = bumpKnowledgeVersion(root);
+    const event = appendEvent(root, "learning.applied", "apex-v2", {
+      proposal_id: applied.id,
+      target_file: applied.target_file,
+      knowledge_version: knowledgeVersion
+    });
+    updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
+    return applied;
+  }).result;
   console.log(JSON.stringify(proposal, null, 2));
 }
 
@@ -619,11 +634,14 @@ function reconcileProject(args) {
       throw new Error(`reconcile 拒绝 apply：event/state integrity 有 ${inspection.issues.length} 个问题`);
     }
     applyProjectReconciliation(root, inspection);
+    const operational = inspectOperationalIntegrity(root);
     const event = appendEvent(root, "project.reconciled", "apex-v2", {
       report_id: report.report_id,
       change_count: inspection.changes.length,
       active_runs: inspection.derived.active_runs,
-      knowledge_version: inspection.derived.knowledge_version
+      knowledge_version: inspection.derived.knowledge_version,
+      operational_state_hash: operational.state_hash,
+      operational_state: operational.state
     });
     updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
     report.applied = true;
@@ -727,7 +745,9 @@ function projectTick(args) {
 
   if (args.dispatch) {
     const refreshedProject = readJson(projectPath);
-    dispatchedWorkers = dispatchReadyWorkers(root, refreshedProject.active_runs);
+    dispatchedWorkers = dispatchReadyWorkers(root, refreshedProject.active_runs, {
+      mode: args["execution-mode"] ? String(args["execution-mode"]) : null
+    });
   }
 
   if (args["retry-workers"]) {
@@ -972,42 +992,50 @@ function learnReadyRuns(root, runIds, applyLearning) {
     const run = loadRun(root, runId);
     if (getRunNode(run, "integrate").status !== "passed") continue;
     if (getRunNode(run, "learn").status !== "pending") continue;
-    const result = proposeLearningInternal(root, run);
-    const proposalIds = result.proposals.map((proposal) => proposal.id);
-    const applied = [];
-    if (applyLearning) {
-      for (const proposalId of proposalIds) {
-        const proposal = getLearningProposal(root, proposalId);
-        if (proposal.status === "proposed") {
-          updateLearningProposal(root, proposalId, (item) => {
-            item.status = "approved";
-            item.updated_at = now();
-          });
-        }
-        const updated = getLearningProposal(root, proposalId);
-        if (updated.status === "approved") {
-          updateLearningProposal(root, proposalId, (item) => {
-            appendLearningToKnowledge(root, item);
-            item.status = "applied";
-            item.updated_at = now();
-          });
-          applied.push(proposalId);
-        }
-      }
-      if (applied.length > 0) {
-        const knowledgeVersion = bumpKnowledgeVersion(root);
-        appendEvent(root, "learning.applied", "apex-v2", {
-          run_id: run.run_id,
-          proposal_ids: applied,
-          knowledge_version: knowledgeVersion,
-          via: "project.tick"
-        });
-      }
-      passNode(root, run.run_id, "learn", result.artifact_id, "project tick 自动完成 learning governance。");
-    }
-    out.push({ run_id: run.run_id, proposal_ids: proposalIds, applied, artifact_id: result.artifact_id });
+    const transition = withProjectTransaction(resolve(root, ".."), {
+      kind: "learning-governance",
+      idempotencyKey: `learning-governance:${run.run_id}:${applyLearning ? "apply" : "propose"}`
+    }, () => learnReadyRunTransaction(root, run, applyLearning)).result;
+    out.push(transition);
   }
   return out;
+}
+
+function learnReadyRunTransaction(root, run, applyLearning) {
+  const result = proposeLearningInternal(root, run);
+  const proposalIds = result.proposals.map((proposal) => proposal.id);
+  const applied = [];
+  if (applyLearning) {
+    for (const proposalId of proposalIds) {
+      const proposal = getLearningProposal(root, proposalId);
+      if (proposal.status === "proposed") {
+        updateLearningProposal(root, proposalId, (item) => {
+          item.status = "approved";
+          item.updated_at = now();
+        });
+      }
+      const updated = getLearningProposal(root, proposalId);
+      if (updated.status === "approved") {
+        updateLearningProposal(root, proposalId, (item) => {
+          appendLearningToKnowledge(root, item);
+          item.status = "applied";
+          item.updated_at = now();
+        });
+        applied.push(proposalId);
+      }
+    }
+    if (applied.length > 0) {
+      const knowledgeVersion = bumpKnowledgeVersion(root);
+      appendEvent(root, "learning.applied", "apex-v2", {
+        run_id: run.run_id,
+        proposal_ids: applied,
+        knowledge_version: knowledgeVersion,
+        via: "project.tick"
+      });
+    }
+    passNode(root, run.run_id, "learn", result.artifact_id, "project tick 自动完成 learning governance。");
+  }
+  return { run_id: run.run_id, proposal_ids: proposalIds, applied, artifact_id: result.artifact_id };
 }
 
 function runReadyWorkerAdapters(root, runIds, limit) {
@@ -1266,7 +1294,7 @@ function findAdapterResultsForWorker(root, worker) {
   return results;
 }
 
-function dispatchReadyWorkers(root, runIds) {
+function dispatchReadyWorkers(root, runIds, options = {}) {
   const project = readJson(join(root, "project.json"));
   const dispatched = [];
   let available = Math.max(0, project.wip_limits.parallel_workers - countOpenWorkers(root));
@@ -1291,7 +1319,7 @@ function dispatchReadyWorkers(root, runIds) {
 
     for (const planNode of readyNodes) {
       if (available <= 0) break;
-      const worker = createWorkerForPlanNode(root, run, planNode);
+      const worker = createWorkerForPlanNode(root, run, planNode, options);
       dispatched.push({
         run_id: run.run_id,
         worker_id: worker.worker_id,
@@ -1466,10 +1494,10 @@ function bumpKnowledgeVersion(root) {
   manifest.version = Number(manifest.version || 0) + 1;
   manifest.updated_at = timestamp;
   writeJson(manifestPath, manifest);
-  const project = readJson(join(root, "project.json"));
-  project.knowledge_version = manifest.version;
-  project.updated_at = timestamp;
-  writeJson(join(root, "project.json"), project);
+  updateProject(root, {
+    knowledge_version: manifest.version,
+    updated_at: timestamp
+  });
   return manifest.version;
 }
 

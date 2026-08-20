@@ -9,7 +9,7 @@ export function assertWorkerExecutor(executor) {
   if (!executor.id || typeof executor.id !== "string") {
     throw new Error("WorkerExecutor 必须声明 id");
   }
-  for (const method of ["inspect", "execute"]) {
+  for (const method of ["inspect", "execute", "resume", "cancel", "collectUsage"]) {
     if (typeof executor[method] !== "function") {
       throw new Error(`WorkerExecutor ${executor.id} 缺少方法：${method}`);
     }

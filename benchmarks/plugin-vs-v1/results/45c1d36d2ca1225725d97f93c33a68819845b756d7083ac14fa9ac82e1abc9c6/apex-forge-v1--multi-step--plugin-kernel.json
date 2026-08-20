@@ -1,0 +1,152 @@
+{
+  "task_id": "apex-forge-v1--multi-step",
+  "task_digest": "096d755ee28b942e5721bc9ddac30569c7d9432ee3d2de71c1a43a41634303d2",
+  "repository": "apex-forge-v1",
+  "scenario": "multi-step",
+  "mode": "plugin-kernel",
+  "candidate_digest": "45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 453424,
+    "cost": 2756066,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 1,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "3755583552540121bcb1287c5bdba3c8b2578726",
+    "runtime_hash": "fbb9635c7fd7b24c7799126c3640c4ddc3239b4be5e2a5b9dd3f5cce103f16fc",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "e56886ee0f0752a3051af64ddee8a7e3fba089ddd67c35652e22e92bef608970",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--multi-step--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--multi-step--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--multi-step--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--multi-step--plugin-kernel/codex-home/sessions/2026/08/20/rollout-2026-08-20T08-29-52-01a01c93-0410-7640-a3a7-8f3ac27d3c7d.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--multi-step--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--multi-step--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--multi-step--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--multi-step--plugin-kernel/codex-home/sessions/2026/08/20/rollout-2026-08-20T08-29-52-01a01c93-0410-7640-a3a7-8f3ac27d3c7d.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-forge-v1--multi-step--plugin-kernel/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "01908626ef5a7f437ac9b8cd509e2c4e1659b886c27ab21ed15fbb5b811d4f90",
+      "5e113df1860c1735553df2a5f2b146caecdbad5296d24f5dc543bb3896234cc9",
+      "9dc3a2b32f758d7ad5084fa8cd4e3727e0e1e7aa1cf4a2673d6ec093dc3785d3",
+      "6dad830ca6b91e7bec6ad1df18d7cfed528e9386ee52e4513bc3d083903827da",
+      "ba4877c81babd2061b9094741702e553dec9b81bd314d62a9a65fedfa7186e7f"
+    ]
+  },
+  "evidence": {
+    "task_digest": "096d755ee28b942e5721bc9ddac30569c7d9432ee3d2de71c1a43a41634303d2",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a01c93-0410-7640-a3a7-8f3ac27d3c7d",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Implemented quote-aware YAML inline comments and added the requested focused test. Apex Forge run completed with all gates passed and consistent durable state.",
+      "tests": [
+        {
+          "command": "bun -e 'import { parseSimpleYaml } from \"./src/state/config.ts\"; const v=parseSimpleYaml(\"a: plain\\nb: '\\''quoted'\\''\\n\"); if (v.a !== \"plain\" || v.b !== \"quoted\") process.exit(1)'",
+          "status": "pass",
+          "detail": "Passed in both ActionWorkspaces, the staged candidate, and integrated project."
+        },
+        {
+          "command": "bun test src/__tests__/cli.test.ts --test-name-pattern 'parseSimpleYaml preserves hashes inside quoted values'",
+          "status": "pass",
+          "detail": "1 passed, 0 failed."
+        }
+      ],
+      "risks": [
+        "General YAML escaped-quote semantics remain outside this intentionally flat parser."
+      ],
+      "evidence_refs": [
+        "artifact-mt0si8dm-9e257a04",
+        "artifact-mt0si8ya-b6336b49",
+        "artifact-mt0si9iw-2bcc4ddf",
+        "artifact-mt0sip9k-0661819a",
+        "reconcile-mt0siykx-689d327b"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "bun -e 'import { parseSimpleYaml } from \"./src/state/config.ts\"; const v=parseSimpleYaml(\"a: plain\\nb: '\\''quoted'\\''\\n\"); if (v.a !== \"plain\" || v.b !== \"quoted\") process.exit(1)'",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 33,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "bun -e 'import { parseSimpleYaml } from \"./src/state/config.ts\"; const v=parseSimpleYaml(\"label: \\\"release #1\\\"\\nmode: fast # local\\n\"); if (v.label !== \"release #1\" || v.mode !== \"fast\") process.exit(1)'",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 29,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      },
+      {
+        "command": "bun -e 'import { parseSimpleYaml } from \"./src/state/config.ts\"; const v=parseSimpleYaml(\"a: plain\\nb: '\\''quoted'\\''\\n\"); if (v.a !== \"plain\" || v.b !== \"quoted\") process.exit(1)'",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 29,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/__tests__/cli.test.ts",
+        "src/state/config.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": true,
+      "evidence_score": 1,
+      "run_ids": [
+        "run-mt0s9y0e-8378abc1"
+      ],
+      "done_run_ids": [
+        "run-mt0s9y0e-8378abc1"
+      ],
+      "fully_closed_run_ids": [
+        "run-mt0s9y0e-8378abc1"
+      ],
+      "active_runs": [],
+      "candidate_chain_equal": true,
+      "verification_ref": ".apex-v2/runs/run-mt0s9y0e-8378abc1/verification-report.json",
+      "review_ref": ".apex-v2/runs/run-mt0s9y0e-8378abc1/review-report.json",
+      "integration_ref": ".apex-v2/runs/run-mt0s9y0e-8378abc1/integration-report.json",
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "90e46ae467817d4dc9e70d9b15be5a93d50cced0edea63293e05067867659d5e",
+        "replay_hash": "90e46ae467817d4dc9e70d9b15be5a93d50cced0edea63293e05067867659d5e",
+        "hash_equal": true
+      }
+    }
+  }
+}

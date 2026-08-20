@@ -1,0 +1,189 @@
+{
+  "task_id": "apex-manager--bug-fix",
+  "task_digest": "ece9fc91028536cd3c94b316c078f0f057fefeec0565a2b868abb6a9c8f5e907",
+  "repository": "apex-manager",
+  "scenario": "bug-fix",
+  "mode": "plugin-kernel",
+  "candidate_digest": "45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 73193,
+    "cost": 72160,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 1,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "2da4c45e9bc278590ff0a908bf7e6bbbc0966e12",
+    "runtime_hash": "fbb9635c7fd7b24c7799126c3640c4ddc3239b4be5e2a5b9dd3f5cce103f16fc",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "6bc505990fcb8ccc00715ea764325f2562448bae7243a34618b36953f79c9107",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--bug-fix--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--bug-fix--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--bug-fix--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--bug-fix--plugin-kernel/codex-home/sessions/2026/08/20/rollout-2026-08-20T08-49-23-01a01ca4-e3c7-7fa3-a897-b10c1675b629.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--bug-fix--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--bug-fix--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--bug-fix--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--bug-fix--plugin-kernel/codex-home/sessions/2026/08/20/rollout-2026-08-20T08-49-23-01a01ca4-e3c7-7fa3-a897-b10c1675b629.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--bug-fix--plugin-kernel/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "5efe7065e21b51a7b32f05cb5796454c2ace24daad798d9836e32a4c9c888bb3",
+      "584742f123372498a780e65f1e5ce130ede7dafa2ab1ff66654af7a01e30c8d4",
+      "48355dc3a9286ed93b3b24aa668fd66dae0037c65e1c5485bb7db661e604c44f",
+      "70c3104b5741950641ae54252fe3831a6ccad0dc841a738e83ea2f3012ad9d6d",
+      "120abe5821fa4c121c202ec9965e7cd21d232f8833f117b7f165df02d924a5fa"
+    ]
+  },
+  "evidence": {
+    "task_digest": "ece9fc91028536cd3c94b316c078f0f057fefeec0565a2b868abb6a9c8f5e907",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a01ca4-e3c7-7fa3-a897-b10c1675b629",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Restored tmux `ctrlc` mapping from `Escape` to `C-c`. Existing coverage verifies codex, gemini, unknown-agent fallback, and cmux behavior.",
+      "tests": [
+        {
+          "command": "node --import tsx --test tests/worker/interrupt.test.ts",
+          "status": "pass",
+          "detail": "7 tests passed."
+        },
+        {
+          "command": "npm run typecheck",
+          "status": "pass",
+          "detail": "TypeScript completed with no errors."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "src/worker/interrupt.ts",
+        "tests/worker/interrupt.test.ts"
+      ],
+      "review": {
+        "claims": [
+          "The tmux `ctrlc` mapping now resolves to `C-c`.",
+          "Codex and Gemini use `C-c` under tmux.",
+          "Unknown agents retain `Escape` then `C-c` fallback behavior.",
+          "Cmux mappings remain unchanged."
+        ],
+        "uncertainties": [],
+        "acceptance_mapping": [
+          {
+            "criterion": "Restore tmux Ctrl-C mapping",
+            "status": "supported"
+          },
+          {
+            "criterion": "Protect codex behavior",
+            "status": "supported"
+          },
+          {
+            "criterion": "Protect gemini behavior",
+            "status": "supported"
+          },
+          {
+            "criterion": "Protect unknown-agent behavior",
+            "status": "supported"
+          },
+          {
+            "criterion": "Protect cmux behavior",
+            "status": "supported"
+          }
+        ],
+        "findings": [
+          "No blocking findings."
+        ],
+        "residual_risks": [],
+        "merge_posture": "approve"
+      }
+    },
+    "acceptance": [
+      {
+        "command": "node --import tsx --test tests/worker/interrupt.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 143,
+        "stdout_tail": "(node:74088) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n▶ interruptKeys\n  ✔ claude returns Escape (tmux default) (0.497834ms)\n  ✔ codex returns C-c (tmux default) (0.039583ms)\n  ✔ gemini returns C-c (tmux default) (0.03025ms)\n  ✔ unknown agent returns both Escape and C-c (tmux) (0.033792ms)\n  ✔ claude returns escape for cmux adapter (0.028375ms)\n  ✔ codex returns ctrl-c for cmux adapter (0.032375ms)\n  ✔ unknown agent returns both for cmux adapter (0.030916ms)\n✔ interruptKeys (1.105958ms)\nℹ tests 7\nℹ suites 1\nℹ pass 7\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 94.339125\n",
+        "stderr_tail": ""
+      },
+      {
+        "command": "npm run typecheck",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 564,
+        "stdout_tail": "\n> apex-manager@0.1.1 typecheck\n> tsc --noEmit\n\n",
+        "stderr_tail": ""
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "node --import tsx -e \"import {interruptKeys} from './src/worker/interrupt.ts'; if(JSON.stringify(interruptKeys('ctrlc','tmux'))!=='[\\\"C-c\\\"]'||JSON.stringify(interruptKeys('ctrlc','cmux'))!=='[\\\"ctrl-c\\\"]') process.exit(1)\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 108,
+        "stdout_tail": "",
+        "stderr_tail": "(node:74127) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      },
+      {
+        "command": "node --import tsx --test tests/worker/interrupt.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 127,
+        "stdout_tail": "(node:74154) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n▶ interruptKeys\n  ✔ claude returns Escape (tmux default) (0.523875ms)\n  ✔ codex returns C-c (tmux default) (0.043334ms)\n  ✔ gemini returns C-c (tmux default) (0.031917ms)\n  ✔ unknown agent returns both Escape and C-c (tmux) (0.033708ms)\n  ✔ claude returns escape for cmux adapter (0.0305ms)\n  ✔ codex returns ctrl-c for cmux adapter (0.031917ms)\n  ✔ unknown agent returns both for cmux adapter (0.030458ms)\n✔ interruptKeys (1.151917ms)\nℹ tests 7\nℹ suites 1\nℹ pass 7\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 78.536166\n",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/worker/interrupt.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": true,
+      "evidence_score": 1,
+      "run_ids": [
+        "run-mt0sz1ht-c51483c3"
+      ],
+      "done_run_ids": [
+        "run-mt0sz1ht-c51483c3"
+      ],
+      "fully_closed_run_ids": [
+        "run-mt0sz1ht-c51483c3"
+      ],
+      "active_runs": [],
+      "candidate_chain_equal": true,
+      "verification_ref": ".apex-v2/runs/run-mt0sz1ht-c51483c3/verification-report.json",
+      "review_ref": ".apex-v2/runs/run-mt0sz1ht-c51483c3/review-report.json",
+      "integration_ref": ".apex-v2/runs/run-mt0sz1ht-c51483c3/integration-report.json",
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "f06588c138235ccc8393287340202b70605e0afb27b28816cfb296bdedc747aa",
+        "replay_hash": "f06588c138235ccc8393287340202b70605e0afb27b28816cfb296bdedc747aa",
+        "hash_equal": true
+      }
+    }
+  }
+}

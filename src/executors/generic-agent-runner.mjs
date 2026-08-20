@@ -1,4 +1,9 @@
 import { writeFileSync } from "node:fs";
+import {
+  cancelProcessTree,
+  collectExecutionUsage,
+  unsupportedResume
+} from "./lifecycle.mjs";
 
 export function createGenericAgentRunner(options) {
   const { id, provider } = options;
@@ -11,7 +16,7 @@ export function createGenericAgentRunner(options) {
         executor_id: id,
         available: providerInfo.available,
         version: `${providerInfo.provider_id}:${providerInfo.model}`,
-        capabilities: ["structured_output"],
+        capabilities: ["structured_output", "process_tree_cancel", "usage_reporting"],
         error: providerInfo.available ? "" : `${providerInfo.provider_id} provider unavailable`
       };
     },
@@ -73,6 +78,9 @@ export function createGenericAgentRunner(options) {
           }
         };
       }
-    }
+    },
+    resume: unsupportedResume(id),
+    cancel: (input) => cancelProcessTree(id, input),
+    collectUsage: collectExecutionUsage
   };
 }

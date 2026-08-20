@@ -1,0 +1,156 @@
+{
+  "task_id": "apex-manager--review-defect",
+  "task_digest": "6c85680592372fd6cd7fa3fe93f9440eb20e4d4bc2969bd59700f9a801a58c44",
+  "repository": "apex-manager",
+  "scenario": "review-defect",
+  "mode": "plugin-kernel",
+  "candidate_digest": "45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 932159,
+    "cost": 8828514,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 1,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "2da4c45e9bc278590ff0a908bf7e6bbbc0966e12",
+    "runtime_hash": "fbb9635c7fd7b24c7799126c3640c4ddc3239b4be5e2a5b9dd3f5cce103f16fc",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "6bc505990fcb8ccc00715ea764325f2562448bae7243a34618b36953f79c9107",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--review-defect--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--review-defect--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--review-defect--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--review-defect--plugin-kernel/codex-home/sessions/2026/08/20/rollout-2026-08-20T09-10-18-01a01cb8-0afa-7e50-bdb3-b348e3a4f30e.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--review-defect--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--review-defect--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--review-defect--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--review-defect--plugin-kernel/codex-home/sessions/2026/08/20/rollout-2026-08-20T09-10-18-01a01cb8-0afa-7e50-bdb3-b348e3a4f30e.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/apex-manager--review-defect--plugin-kernel/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "ccb8d50d8607db12bf6cb2d8c009e130c36b18660d0d061fbc79f74c652c2828",
+      "2389ba42656e9af2d30404f54036515198ef524ca9b01acdff98e272cbc55102",
+      "a52bd881feaccb09c08c6c3c0b30ed54579573a9df758705a07868ed747891c6",
+      "84f005824c3997987f4b1c1a69023dc4113c96453b4297a2a5d8f3edbbc11fb1",
+      "46e23b34319983f8546f8ccc093acb7c5384bb68b495778e58bd06549ceba93c"
+    ]
+  },
+  "evidence": {
+    "task_digest": "6c85680592372fd6cd7fa3fe93f9440eb20e4d4bc2969bd59700f9a801a58c44",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a01cb8-0afa-7e50-bdb3-b348e3a4f30e",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Restored prefix-preserving Authorization Bearer redaction for ':' and '=' separators. Added focused tests proving surrounding text remains visible. Apex Forge run completed and reconciled consistently.",
+      "tests": [
+        {
+          "command": "node --import tsx --test tests/daemon/notify.test.ts",
+          "status": "pass",
+          "detail": "8/8 tests passed after integration."
+        },
+        {
+          "command": "npm run typecheck",
+          "status": "pass",
+          "detail": "TypeScript typecheck passed after integration."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "artifact-mt0u79tv-a6e69327",
+        "artifact-mt0u8lqj-7c48c8f8",
+        "reconcile-mt0u94to-2e8920ab"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "node --import tsx --test tests/daemon/notify.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 166,
+        "stdout_tail": "(node:48071) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n▶ notification queue\n  ✔ appendNotification creates file in .apex-manager/notifications/ (2.663375ms)\n  ✔ redacts secrets before persisting notifications (1.229291ms)\n  ✔ redacts Authorization Bearer values after a colon while preserving surrounding text (1.402875ms)\n  ✔ redacts Authorization Bearer values after equals while preserving surrounding text (1.34675ms)\n  ✔ readPendingNotifications returns empty when no notifications (0.836166ms)\n  ✔ readPendingNotifications returns notifications in order (2.408416ms)\n  ✔ readPendingNotifications marks files as processed (1.4275ms)\n  ✔ readPendingNotifications does not return already-processed files (1.983125ms)\n✔ notification queue (13.815125ms)\nℹ tests 8\nℹ suites 1\nℹ pass 8\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 111.456333\n",
+        "stderr_tail": ""
+      },
+      {
+        "command": "npm run typecheck",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 567,
+        "stdout_tail": "\n> apex-manager@0.1.1 typecheck\n> tsc --noEmit\n\n",
+        "stderr_tail": ""
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "node --import tsx -e \"import {redactSecrets} from './src/utils/redact.ts'; for(const s of ['Authorization: Bearer secret.token-123','Authorization=Bearer abcDEF123+/=']){const r=redactSecrets(s); if(r.includes('secret.token-123')||r.includes('abcDEF123+/=')||!r.includes('[REDACTED]')) process.exit(1)}\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 99,
+        "stdout_tail": "",
+        "stderr_tail": "(node:48108) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      },
+      {
+        "command": "node --import tsx --test tests/daemon/notify.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 140,
+        "stdout_tail": "(node:48135) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n▶ notification queue\n  ✔ appendNotification creates file in .apex-manager/notifications/ (2.732709ms)\n  ✔ redacts secrets before persisting notifications (1.25975ms)\n  ✔ redacts Authorization Bearer values after a colon while preserving surrounding text (2.024125ms)\n  ✔ redacts Authorization Bearer values after equals while preserving surrounding text (1.433708ms)\n  ✔ readPendingNotifications returns empty when no notifications (0.724208ms)\n  ✔ readPendingNotifications returns notifications in order (3.02675ms)\n  ✔ readPendingNotifications marks files as processed (1.744625ms)\n  ✔ readPendingNotifications does not return already-processed files (1.148625ms)\n✔ notification queue (14.595167ms)\nℹ tests 8\nℹ suites 1\nℹ pass 8\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 93.100667\n",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/utils/redact.ts",
+        "tests/daemon/notify.test.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": true,
+      "evidence_score": 1,
+      "run_ids": [
+        "run-mt0tpyfa-0ba1f59b"
+      ],
+      "done_run_ids": [
+        "run-mt0tpyfa-0ba1f59b"
+      ],
+      "fully_closed_run_ids": [
+        "run-mt0tpyfa-0ba1f59b"
+      ],
+      "active_runs": [],
+      "candidate_chain_equal": true,
+      "verification_ref": ".apex-v2/runs/run-mt0tpyfa-0ba1f59b/verification-report.json",
+      "review_ref": ".apex-v2/runs/run-mt0tpyfa-0ba1f59b/review-report.json",
+      "integration_ref": ".apex-v2/runs/run-mt0tpyfa-0ba1f59b/integration-report.json",
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "6334084ce61de9dd423f3eac396dc2c1e7d1066c0c3f87e3712619315a649581",
+        "replay_hash": "6334084ce61de9dd423f3eac396dc2c1e7d1066c0c3f87e3712619315a649581",
+        "hash_equal": true
+      }
+    }
+  }
+}

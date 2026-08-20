@@ -1,6 +1,16 @@
 {
   "schema_version": "v0",
-  "generated_at": "2026-08-14T12:14:14.420Z",
+  "release_version": "0.2.0-rc.1+codex.20260819173000",
+  "source_commit": "330e71ce39d1e3b6064972691f4cece128c918a0",
+  "source_tree_hash": "52366d6a822e73804ffeff70185c7030c0255bc4958802f06b8103d41148c7b8",
+  "source_dirty": true,
+  "runtime_sha256": "c4d42d6359f6ad73354721a76c8c47e289a728eec1b8d023a0afbe98c1c72142",
+  "schemas_sha256": "cf8830be920e7cf2e5987e7de219c681609c376614dc07721574bf2a3ce95a88",
+  "build_tool_versions": {
+    "node": "v26.7.0",
+    "esbuild": "0.25.9"
+  },
+  "generated_at": "2026-08-19T17:30:00.000Z",
   "entrypoint": "apex-v2.mjs",
   "schema_dir": "schemas"
 }

@@ -1,0 +1,153 @@
+{
+  "task_id": "agent-recall--interrupted",
+  "task_digest": "365c62f82cbae3b8a6d22caff7c761e81b88cd80fc5920b8f7fc23d779b863ec",
+  "repository": "agent-recall",
+  "scenario": "interrupted",
+  "mode": "plugin-kernel",
+  "candidate_digest": "45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 924748,
+    "cost": 4983940,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 1,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "362bd78657a4f346af7218a571ab2698303ffb2a",
+    "runtime_hash": "fbb9635c7fd7b24c7799126c3640c4ddc3239b4be5e2a5b9dd3f5cce103f16fc",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "979bdedee4c2e5652357a88d864cbd38a82634d1888d9a492c49850d8d1f173d",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--interrupted--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--interrupted--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--interrupted--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--interrupted--plugin-kernel/codex-home/sessions/2026/08/20/rollout-2026-08-20T08-45-30-01a01ca1-57ca-72e0-b862-fe1e3907eb99.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--interrupted--plugin-kernel/execution-2.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--interrupted--plugin-kernel/process-2.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--interrupted--plugin-kernel/process-2.stderr.log"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--interrupted--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--interrupted--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--interrupted--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--interrupted--plugin-kernel/codex-home/sessions/2026/08/20/rollout-2026-08-20T08-45-30-01a01ca1-57ca-72e0-b862-fe1e3907eb99.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--interrupted--plugin-kernel/execution-2.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--interrupted--plugin-kernel/process-2.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--interrupted--plugin-kernel/process-2.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/agent-recall--interrupted--plugin-kernel/agent-output-2.json"
+    ],
+    "artifact_hashes": [
+      "2b30cfeceea3647bcbc856e673203c023bafed4af83b8bf5d94d517ecef561ce",
+      "477e0ec08b372daf02e8cd2a3023adf6e744a83e58d9d105d5d8b8c3c395d2a4",
+      "f36310cfca73645fe03a23c93e67dfbfa55df1fca8a30b692ad2cb29ee6f7e61",
+      "f6601d61484d2193bb678bf337966f43930c7d2f12a2a52d073acad28192c717",
+      "ba17976114b466e71023e92f06dc61b04580ea630108ce160129fc9618244ddb",
+      "0cb929ca220f44d7b9e38d791b6caf494fd31f56eb06ca35ddb282ba7e6aa58d",
+      "633d9f4ea1a4ffe5d5733c9c85ce2dab1f2bf2276001009afc4d20e49c4cabf2",
+      "49204fce88a9679e86fa56ddc25b345301e7cef88a32d84a2831be74531c0470"
+    ]
+  },
+  "evidence": {
+    "task_digest": "365c62f82cbae3b8a6d22caff7c761e81b88cd80fc5920b8f7fc23d779b863ec",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a01ca1-57ca-72e0-b862-fe1e3907eb99",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Normalized project filters before matching and added focused coverage for trimmed, whitespace-only, exact, and non-matching filters. Apex Forge run completed, merged, and reconciled consistently.",
+      "tests": [
+        {
+          "command": "bun test tests/worker/search/search-orchestrator.test.ts",
+          "status": "pass",
+          "detail": "Integrated workspace: 22 passed, 0 failed, 34 assertions."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "artifact-mt10zme6-bf609b6a",
+        "artifact-mt1105cn-1a622bf8",
+        "artifact-mt110h72-e0d34985",
+        "reconcile-mt113hzm-4432e334"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "bun test tests/worker/search/search-orchestrator.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 86,
+        "stdout_tail": "bun test v1.3.11 (af24e281)\n",
+        "stderr_tail": "\ntests/worker/search/search-orchestrator.test.ts:\n(pass) ProjectFilter > should trim project filters before filtering [0.06ms]\n(pass) ProjectFilter > should preserve no-filter behavior for whitespace-only filters [0.08ms]\n(pass) ProjectFilter > should match exact project names\n(pass) ProjectFilter > should reject non-matching projects\n(pass) SearchOrchestrator > search > should select SQLite strategy for filter-only queries (no query text) [0.10ms]\n(pass) SearchOrchestrator > search > should use SQLite for query search (vector search handled externally) [0.28ms]\n(pass) SearchOrchestrator > search > should normalize comma-separated concepts [0.07ms]\n(pass) SearchOrchestrator > search > should normalize comma-separated files\n(pass) SearchOrchestrator > search > should normalize dateStart/dateEnd into dateRange object [0.03ms]\n(pass) SearchOrchestrator > search > should map type to searchType for observations/sessions/prompts [0.03ms]\n(pass) SearchOrchestrator > findByConcept > should use SQLite strategy [0.03ms]\n(pass) SearchOrchestrator > findByConcept > should return observations matching concept [0.05ms]\n(pass) SearchOrchestrator > findByType > should use SQLite strategy [0.03ms]\n(pass) SearchOrchestrator > findByType > should handle array of types [0.04ms]\n(pass) SearchOrchestrator > findByFile > should return observations and sessions for file [0.04ms]\n(pass) SearchOrchestrator > findByFile > should include usedVector in result [0.05ms]\n(pass) SearchOrchestrator > formatSearchResults > should format results as markdown [7.93ms]\n(pass) SearchOrchestrator > formatSearchResults > should handle empty results [0.04ms]\n(pass) SearchOrchestrator > formatSearchResults > should indicate vector failure when vectorFailed is true [0.03ms]\n(pass) SearchOrchestrator > parameter normalization > should parse obs_type into obsType array [0.11ms]\n(pass) SearchOrchestrator > parameter normalization > should handle already-array concepts [0.03ms]\n(pass) SearchOrchestrator > parameter normalization > should handle empty string filters [0.05ms]\n\n 22 pass\n 0 fail\n 34 expect() calls\nRan 22 tests across 1 file. [45.00ms]\n"
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "bun -e \"import { filterResultsByProject } from './src/services/worker/search/filters/ProjectFilter.ts'; const rows=[{project:'alpha'},{project:'beta'}]; if(filterResultsByProject(rows,' alpha ').length!==1||filterResultsByProject(rows,'   ').length!==2) process.exit(1);\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 48,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      },
+      {
+        "command": "test -n \"$(git diff --name-only -- src/services/worker/search/filters/ProjectFilter.ts)\" && test -n \"$(git diff --name-only -- tests/worker/search/search-orchestrator.test.ts)\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 52,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/services/worker/search/filters/ProjectFilter.ts",
+        "tests/worker/search/search-orchestrator.test.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": true,
+      "evidence_score": 1,
+      "run_ids": [
+        "run-mt0su2hx-de196912"
+      ],
+      "done_run_ids": [
+        "run-mt0su2hx-de196912"
+      ],
+      "fully_closed_run_ids": [
+        "run-mt0su2hx-de196912"
+      ],
+      "active_runs": [],
+      "candidate_chain_equal": true,
+      "verification_ref": ".apex-v2/runs/run-mt0su2hx-de196912/verification-report.json",
+      "review_ref": ".apex-v2/runs/run-mt0su2hx-de196912/review-report.json",
+      "integration_ref": ".apex-v2/runs/run-mt0su2hx-de196912/integration-report.json",
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "84d35dec23b065c68ac49cef94cf3129ff159be2451da262857229c97355025f",
+        "replay_hash": "84d35dec23b065c68ac49cef94cf3129ff159be2451da262857229c97355025f",
+        "hash_equal": true
+      }
+    }
+  }
+}

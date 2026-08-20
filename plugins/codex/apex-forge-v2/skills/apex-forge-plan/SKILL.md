@@ -16,16 +16,19 @@ description: Use when the user wants to add a requirement, bug, review finding, 
 5. Repeatedly list Host actions.
 6. For each cognitive action:
    - claim it as `codex-host`;
+   - preserve the returned `claim_token` and lease;
    - inspect the declared read scope and existing evidence;
    - perform the objective;
-   - submit a concrete summary with source refs.
+   - create role-specific typed evidence with source refs, claims,
+     uncertainties, and acceptance mapping;
+   - submit the evidence and summary with the exact `claim_token`.
 7. Run `project tick --collect-results --dispatch` after each completed layer.
 8. Stop when implementation/test actions are ready or when a typed blocker
    requires the user.
 
 ## Quality Bar
 
-- Context must name affected files, constraints, and acceptance criteria.
-- Risk must include failure paths and regression scope.
-- Design must state slices, dependencies, verification, and rollback.
+- Context names affected files, constraints, unknowns, and acceptance criteria.
+- Risk includes failure paths, blast radius, mitigation, and rollback.
+- Design states slices, dependencies, verification, and rollback.
 - Do not edit production code during planning.

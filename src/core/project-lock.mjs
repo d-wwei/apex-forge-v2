@@ -2,7 +2,9 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  renameSync,
   rmSync,
+  statSync,
   writeFileSync
 } from "node:fs";
 import { randomUUID } from "node:crypto";
@@ -39,6 +41,7 @@ export function acquireProjectLock(projectDir, options = {}) {
   const startedAt = Date.now();
   const timeoutMs = options.timeoutMs ?? 30000;
   const retryMs = options.retryMs ?? 20;
+  const staleGraceMs = options.staleGraceMs ?? 1000;
 
   while (true) {
     try {
@@ -51,7 +54,7 @@ export function acquireProjectLock(projectDir, options = {}) {
       return () => releaseOwnedLock(lockPath, ownerPath, token);
     } catch (error) {
       if (error.code !== "EEXIST") throw error;
-      clearDeadOwner(lockPath, ownerPath);
+      clearDeadOwner(lockPath, ownerPath, staleGraceMs);
       if (!existsSync(lockPath)) continue;
       if (Date.now() - startedAt >= timeoutMs) {
         throw new Error(`project lock timeout：${lockPath}`);
@@ -61,15 +64,48 @@ export function acquireProjectLock(projectDir, options = {}) {
   }
 }
 
-function clearDeadOwner(lockPath, ownerPath) {
+function clearDeadOwner(lockPath, ownerPath, staleGraceMs) {
   let owner = null;
   try {
     owner = JSON.parse(readFileSync(ownerPath, "utf8"));
   } catch {
+    if (lockAgeMs(lockPath) >= staleGraceMs) quarantineAndRemove(lockPath, null);
     return;
   }
   if (!processAlive(owner.pid)) {
-    rmSync(lockPath, { recursive: true, force: true });
+    quarantineAndRemove(lockPath, owner.token);
+  }
+}
+
+function quarantineAndRemove(lockPath, expectedToken) {
+  if (!existsSync(lockPath)) return;
+  const quarantine = `${lockPath}.stale-${randomUUID()}`;
+  try {
+    renameSync(lockPath, quarantine);
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+    return;
+  }
+  if (expectedToken) {
+    try {
+      const owner = JSON.parse(readFileSync(join(quarantine, "owner.json"), "utf8"));
+      if (owner.token !== expectedToken) {
+        if (!existsSync(lockPath)) renameSync(quarantine, lockPath);
+        return;
+      }
+    } catch {
+      if (!existsSync(lockPath)) renameSync(quarantine, lockPath);
+      return;
+    }
+  }
+  rmSync(quarantine, { recursive: true, force: true });
+}
+
+function lockAgeMs(lockPath) {
+  try {
+    return Date.now() - statSync(lockPath).mtimeMs;
+  } catch {
+    return 0;
   }
 }
 

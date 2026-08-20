@@ -5,8 +5,8 @@ description: Use when the user explicitly asks for Apex Forge, when a project co
 
 # Using Apex Forge
 
-Apex Forge uses the current Codex session as the default reasoning and coding
-host. The Kernel owns durable state, gates, evidence, verification, and merge.
+Apex Forge uses the current Claude Code session as the default reasoning and coding host.
+The Kernel owns durable state, gates, evidence, verification, and merge.
 
 ## Start
 
@@ -27,8 +27,13 @@ host. The Kernel owns durable state, gates, evidence, verification, and merge.
 - Do not ask the user to type raw Kernel CLI commands.
 - Use Interactive Mode unless the task is explicitly long-running, parallel, or
   background work that benefits from Factory Mode.
-- Claim Host actions before doing their work.
-- Submit semantic summaries for cognitive actions.
-- For workspace actions, let Host claim create the baseline before editing.
+- Claim Host actions as `claude-code-host` before doing their work.
+- Preserve the claim token, lease, and fencing token; submit/cancel only with
+  the current claim token.
+- Submit typed semantic evidence for cognitive actions.
+- For workspace actions, edit only the action-owned workspace returned by claim.
 - Never mark a cognitive action complete from a shell exit code.
 - Keep `.apex-v2` as the only project state source.
+- When the generated PlanGraph uses `profile: quick`, preserve that route:
+  one ActionWorkspace patch, deterministic verification, one semantic review,
+  and consolidated durable closeout. Do not expand it back into the full plan.

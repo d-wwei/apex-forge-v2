@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-14T15:47:45.094Z",
+  "generated_at": "2026-08-20T04:54:05.655Z",
   "modes": [
     "v1-skill",
     "cli-kernel",
@@ -16,154 +16,214 @@
   ],
   "tasks": [
     {
-      "task_id": "node-cli--simple",
-      "repository": "node-cli",
-      "scenario": "simple"
+      "task_id": "apex-forge-v1--simple",
+      "repository": "apex-forge-v1",
+      "scenario": "simple",
+      "task_digest": "f04609003cd0dd18c5140718b357f46b7301c801291c3fa89d96ca7c1c9d697f",
+      "source_commit": "3755583552540121bcb1287c5bdba3c8b2578726"
     },
     {
-      "task_id": "node-cli--multi-step",
-      "repository": "node-cli",
-      "scenario": "multi-step"
+      "task_id": "apex-forge-v1--multi-step",
+      "repository": "apex-forge-v1",
+      "scenario": "multi-step",
+      "task_digest": "096d755ee28b942e5721bc9ddac30569c7d9432ee3d2de71c1a43a41634303d2",
+      "source_commit": "3755583552540121bcb1287c5bdba3c8b2578726"
     },
     {
-      "task_id": "node-cli--bug-fix",
-      "repository": "node-cli",
-      "scenario": "bug-fix"
+      "task_id": "apex-forge-v1--bug-fix",
+      "repository": "apex-forge-v1",
+      "scenario": "bug-fix",
+      "task_digest": "9412475b3359c783cbd23e13933842ea2c6ef3e54f7db6aa83157583cbc3d306",
+      "source_commit": "3755583552540121bcb1287c5bdba3c8b2578726"
     },
     {
-      "task_id": "node-cli--interrupted",
-      "repository": "node-cli",
-      "scenario": "interrupted"
+      "task_id": "apex-forge-v1--interrupted",
+      "repository": "apex-forge-v1",
+      "scenario": "interrupted",
+      "task_digest": "a17310b08172656638d4adbd96e963823bb3650b7e005a126aabbb614a1f629a",
+      "source_commit": "3755583552540121bcb1287c5bdba3c8b2578726"
     },
     {
-      "task_id": "node-cli--review-defect",
-      "repository": "node-cli",
-      "scenario": "review-defect"
+      "task_id": "apex-forge-v1--review-defect",
+      "repository": "apex-forge-v1",
+      "scenario": "review-defect",
+      "task_digest": "d68b6c54f9faccaf79ddfcaad231c303b4cf7d785ca2d846615e3effeb2e9922",
+      "source_commit": "3755583552540121bcb1287c5bdba3c8b2578726"
     },
     {
-      "task_id": "node-cli--parallel",
-      "repository": "node-cli",
-      "scenario": "parallel"
+      "task_id": "apex-forge-v1--parallel",
+      "repository": "apex-forge-v1",
+      "scenario": "parallel",
+      "task_digest": "17558161f3e6e98ec8ef42156362d6e9032f040181ff1fc4533ad8860eb88265",
+      "source_commit": "3755583552540121bcb1287c5bdba3c8b2578726"
     },
     {
-      "task_id": "js-library--simple",
-      "repository": "js-library",
-      "scenario": "simple"
+      "task_id": "apex-manager--simple",
+      "repository": "apex-manager",
+      "scenario": "simple",
+      "task_digest": "3db094d0da2232c24ecc47f8227433a438c72c6de499d3f6a9b9528d510cbab3",
+      "source_commit": "2da4c45e9bc278590ff0a908bf7e6bbbc0966e12"
     },
     {
-      "task_id": "js-library--multi-step",
-      "repository": "js-library",
-      "scenario": "multi-step"
+      "task_id": "apex-manager--multi-step",
+      "repository": "apex-manager",
+      "scenario": "multi-step",
+      "task_digest": "db31bcf40f8e645dda2a662b68cbff3d741c1a1322fecd4e7a4a859a4cc1e89c",
+      "source_commit": "2da4c45e9bc278590ff0a908bf7e6bbbc0966e12"
     },
     {
-      "task_id": "js-library--bug-fix",
-      "repository": "js-library",
-      "scenario": "bug-fix"
+      "task_id": "apex-manager--bug-fix",
+      "repository": "apex-manager",
+      "scenario": "bug-fix",
+      "task_digest": "ece9fc91028536cd3c94b316c078f0f057fefeec0565a2b868abb6a9c8f5e907",
+      "source_commit": "2da4c45e9bc278590ff0a908bf7e6bbbc0966e12"
     },
     {
-      "task_id": "js-library--interrupted",
-      "repository": "js-library",
-      "scenario": "interrupted"
+      "task_id": "apex-manager--interrupted",
+      "repository": "apex-manager",
+      "scenario": "interrupted",
+      "task_digest": "068f41d86647f4ef59cdad2d646111baba728a3518945f29a6a6fa10c154febe",
+      "source_commit": "2da4c45e9bc278590ff0a908bf7e6bbbc0966e12"
     },
     {
-      "task_id": "js-library--review-defect",
-      "repository": "js-library",
-      "scenario": "review-defect"
+      "task_id": "apex-manager--review-defect",
+      "repository": "apex-manager",
+      "scenario": "review-defect",
+      "task_digest": "6c85680592372fd6cd7fa3fe93f9440eb20e4d4bc2969bd59700f9a801a58c44",
+      "source_commit": "2da4c45e9bc278590ff0a908bf7e6bbbc0966e12"
     },
     {
-      "task_id": "js-library--parallel",
-      "repository": "js-library",
-      "scenario": "parallel"
+      "task_id": "apex-manager--parallel",
+      "repository": "apex-manager",
+      "scenario": "parallel",
+      "task_digest": "6e9dbe42342ca3c93492ff6354f7dc5e3e01e058837bf8992136005b95920902",
+      "source_commit": "2da4c45e9bc278590ff0a908bf7e6bbbc0966e12"
     },
     {
-      "task_id": "api-service--simple",
-      "repository": "api-service",
-      "scenario": "simple"
+      "task_id": "agent-recall--simple",
+      "repository": "agent-recall",
+      "scenario": "simple",
+      "task_digest": "0b89490b1725ae856a4a74956d2d760770a67bc9708638b1f5cac757462e5375",
+      "source_commit": "362bd78657a4f346af7218a571ab2698303ffb2a"
     },
     {
-      "task_id": "api-service--multi-step",
-      "repository": "api-service",
-      "scenario": "multi-step"
+      "task_id": "agent-recall--multi-step",
+      "repository": "agent-recall",
+      "scenario": "multi-step",
+      "task_digest": "6e3f5d57f583677ad57b358fd6c23015cbb7a1b0eababcc79a80e3561de1ff38",
+      "source_commit": "362bd78657a4f346af7218a571ab2698303ffb2a"
     },
     {
-      "task_id": "api-service--bug-fix",
-      "repository": "api-service",
-      "scenario": "bug-fix"
+      "task_id": "agent-recall--bug-fix",
+      "repository": "agent-recall",
+      "scenario": "bug-fix",
+      "task_digest": "5703822a836d28d95b994a9585f4132b9096d947e57a288e4b0e7d4276d2a470",
+      "source_commit": "362bd78657a4f346af7218a571ab2698303ffb2a"
     },
     {
-      "task_id": "api-service--interrupted",
-      "repository": "api-service",
-      "scenario": "interrupted"
+      "task_id": "agent-recall--interrupted",
+      "repository": "agent-recall",
+      "scenario": "interrupted",
+      "task_digest": "365c62f82cbae3b8a6d22caff7c761e81b88cd80fc5920b8f7fc23d779b863ec",
+      "source_commit": "362bd78657a4f346af7218a571ab2698303ffb2a"
     },
     {
-      "task_id": "api-service--review-defect",
-      "repository": "api-service",
-      "scenario": "review-defect"
+      "task_id": "agent-recall--review-defect",
+      "repository": "agent-recall",
+      "scenario": "review-defect",
+      "task_digest": "91ae2a61d3909db18c160cee28318f9f563ae74bc8ee3b7db4ae625a5cf56b10",
+      "source_commit": "362bd78657a4f346af7218a571ab2698303ffb2a"
     },
     {
-      "task_id": "api-service--parallel",
-      "repository": "api-service",
-      "scenario": "parallel"
+      "task_id": "agent-recall--parallel",
+      "repository": "agent-recall",
+      "scenario": "parallel",
+      "task_digest": "4135267038a8c12f82f94b4904bf6f85e3acd2b4fb26e545a0bd98ca5db79620",
+      "source_commit": "362bd78657a4f346af7218a571ab2698303ffb2a"
     },
     {
-      "task_id": "data-pipeline--simple",
-      "repository": "data-pipeline",
-      "scenario": "simple"
+      "task_id": "understand-codebase--simple",
+      "repository": "understand-codebase",
+      "scenario": "simple",
+      "task_digest": "e170ac6c8df925ab0bb6373c263c6c443dcc0385bf71f53a3f1d0f03bb697541",
+      "source_commit": "b5eb3607e982743adfdc28eb8929043ed3a2b478"
     },
     {
-      "task_id": "data-pipeline--multi-step",
-      "repository": "data-pipeline",
-      "scenario": "multi-step"
+      "task_id": "understand-codebase--multi-step",
+      "repository": "understand-codebase",
+      "scenario": "multi-step",
+      "task_digest": "b279f8ac1979353183061fb77e114d19bd18ac3b65cd9190c262492bfeb4801f",
+      "source_commit": "b5eb3607e982743adfdc28eb8929043ed3a2b478"
     },
     {
-      "task_id": "data-pipeline--bug-fix",
-      "repository": "data-pipeline",
-      "scenario": "bug-fix"
+      "task_id": "understand-codebase--bug-fix",
+      "repository": "understand-codebase",
+      "scenario": "bug-fix",
+      "task_digest": "1dc3ca734b5b033ad5b3b4f47fbc0e97b8e272abf91ed628d6a9f49e9f9e0514",
+      "source_commit": "b5eb3607e982743adfdc28eb8929043ed3a2b478"
     },
     {
-      "task_id": "data-pipeline--interrupted",
-      "repository": "data-pipeline",
-      "scenario": "interrupted"
+      "task_id": "understand-codebase--interrupted",
+      "repository": "understand-codebase",
+      "scenario": "interrupted",
+      "task_digest": "4832a6cfd6bf35d619f77078d93997073139e771b00879b326535fdec2ffe93d",
+      "source_commit": "b5eb3607e982743adfdc28eb8929043ed3a2b478"
     },
     {
-      "task_id": "data-pipeline--review-defect",
-      "repository": "data-pipeline",
-      "scenario": "review-defect"
+      "task_id": "understand-codebase--review-defect",
+      "repository": "understand-codebase",
+      "scenario": "review-defect",
+      "task_digest": "a754002ac127650ee3d1f51918490a5d3edea4e85817ed6459e206c8c9c3e16f",
+      "source_commit": "b5eb3607e982743adfdc28eb8929043ed3a2b478"
     },
     {
-      "task_id": "data-pipeline--parallel",
-      "repository": "data-pipeline",
-      "scenario": "parallel"
+      "task_id": "understand-codebase--parallel",
+      "repository": "understand-codebase",
+      "scenario": "parallel",
+      "task_digest": "231675abb1db30406df6c5f458855b1dffb4d235e08a35263cdb5f9d04cb1ebd",
+      "source_commit": "b5eb3607e982743adfdc28eb8929043ed3a2b478"
     },
     {
-      "task_id": "docs-tool--simple",
-      "repository": "docs-tool",
-      "scenario": "simple"
+      "task_id": "chorus--simple",
+      "repository": "chorus",
+      "scenario": "simple",
+      "task_digest": "7f305da54c12f38083a3ec96eb1e244d4c431120259cb356703cfb4a71764b58",
+      "source_commit": "0713b8ddd34fe9c9b368e6d1cb0a96fa4ab69a92"
     },
     {
-      "task_id": "docs-tool--multi-step",
-      "repository": "docs-tool",
-      "scenario": "multi-step"
+      "task_id": "chorus--multi-step",
+      "repository": "chorus",
+      "scenario": "multi-step",
+      "task_digest": "652031ea9833f07cc0f20aff5b2a86870416f1122fc539d13a60272537c9e00a",
+      "source_commit": "0713b8ddd34fe9c9b368e6d1cb0a96fa4ab69a92"
     },
     {
-      "task_id": "docs-tool--bug-fix",
-      "repository": "docs-tool",
-      "scenario": "bug-fix"
+      "task_id": "chorus--bug-fix",
+      "repository": "chorus",
+      "scenario": "bug-fix",
+      "task_digest": "e9c5e9c11d14f64553fa1410300d2e4f97f75ad67d731561d4fe77a0027ffc8c",
+      "source_commit": "0713b8ddd34fe9c9b368e6d1cb0a96fa4ab69a92"
     },
     {
-      "task_id": "docs-tool--interrupted",
-      "repository": "docs-tool",
-      "scenario": "interrupted"
+      "task_id": "chorus--interrupted",
+      "repository": "chorus",
+      "scenario": "interrupted",
+      "task_digest": "65cdb242dbf405aed7ffbfff51a9c1eeb15318e83f7afa7faac84641a6cc05bc",
+      "source_commit": "0713b8ddd34fe9c9b368e6d1cb0a96fa4ab69a92"
     },
     {
-      "task_id": "docs-tool--review-defect",
-      "repository": "docs-tool",
-      "scenario": "review-defect"
+      "task_id": "chorus--review-defect",
+      "repository": "chorus",
+      "scenario": "review-defect",
+      "task_digest": "6c09f79bdfe841fb768e7eeeb83ff9d1d70a0f66f66cb98187ac732cacd56b1e",
+      "source_commit": "0713b8ddd34fe9c9b368e6d1cb0a96fa4ab69a92"
     },
     {
-      "task_id": "docs-tool--parallel",
-      "repository": "docs-tool",
-      "scenario": "parallel"
+      "task_id": "chorus--parallel",
+      "repository": "chorus",
+      "scenario": "parallel",
+      "task_digest": "cbe5eff0a2c5750d0eb68ea24dad33b85e629794e3a51dc459fa164b8bbd170b",
+      "source_commit": "0713b8ddd34fe9c9b368e6d1cb0a96fa4ab69a92"
     }
   ]
 }

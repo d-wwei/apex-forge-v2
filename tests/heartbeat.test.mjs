@@ -15,6 +15,8 @@ function fixture() {
   }
   writeJson(join(root, "project.json"), {
     schema_version: "v0",
+    format_version: 1,
+    revision: 0,
     project_id: "heartbeat",
     project_name: "Heartbeat",
     created_at: "2026-08-13T00:00:00.000Z",

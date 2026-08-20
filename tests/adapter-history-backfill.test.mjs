@@ -16,6 +16,8 @@ test("historical smoke and capability artifacts backfill trend idempotently", ()
   mkdirSync(join(root, "approvals"), { recursive: true });
   writeJson(join(root, "project.json"), {
     schema_version: "v0",
+    format_version: 1,
+    revision: 0,
     project_id: "backfill",
     project_name: "Backfill",
     created_at: "2026-08-01T00:00:00.000Z",

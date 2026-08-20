@@ -1,0 +1,178 @@
+{
+  "repository_id": "apex-forge-v1",
+  "tasks": [
+    {
+      "scenario": "simple",
+      "title": "Add less-than-or-equal semver constraints",
+      "instructions": "Extend `satisfies` to support `<=X.Y.Z`, update its documentation, and add focused assertions to the existing orchestrator test file. Preserve all existing operators and reject malformed constraints.",
+      "affected_files": [
+        "src/utils/semver.ts",
+        "src/__tests__/orchestrator-v2.test.ts"
+      ],
+      "acceptance_commands": [
+        "bun -e 'import { satisfies } from \"./src/utils/semver.ts\"; if (!satisfies(\"1.2.3\", \">=1.0.0\") || satisfies(\"1.2.3\", \">2.0.0\")) process.exit(1)'"
+      ],
+      "setup_operations": [],
+      "hidden_checks": [
+        {
+          "kind": "behavior",
+          "description": "Less-than-or-equal constraints accept equal and lower versions and reject higher versions.",
+          "command": "bun -e 'import { satisfies } from \"./src/utils/semver.ts\"; if (!satisfies(\"1.2.3\", \"<=1.2.3\") || !satisfies(\"1.2.2\", \"<=1.2.3\") || satisfies(\"1.2.4\", \"<=1.2.3\")) process.exit(1)'"
+        },
+        {
+          "kind": "regression",
+          "description": "Existing semver-backed orchestrator behavior remains green.",
+          "command": "bun -e 'import { satisfies } from \"./src/utils/semver.ts\"; if (!satisfies(\"1.2.3\", \">=1.0.0\") || satisfies(\"1.2.3\", \">2.0.0\")) process.exit(1)'"
+        }
+      ]
+    },
+    {
+      "scenario": "multi-step",
+      "title": "Preserve comment markers inside quoted YAML values",
+      "instructions": "Correct the flat YAML parser so `#` starts an inline comment only outside single- or double-quoted values. Add a focused test named `parseSimpleYaml preserves hashes inside quoted values` covering quoted hashes, ordinary inline comments, and existing quote stripping behavior.",
+      "affected_files": [
+        "src/state/config.ts",
+        "src/__tests__/cli.test.ts"
+      ],
+      "acceptance_commands": [
+        "bun -e 'import { parseSimpleYaml } from \"./src/state/config.ts\"; const v=parseSimpleYaml(\"a: plain\\nb: '\\''quoted'\\''\\n\"); if (v.a !== \"plain\" || v.b !== \"quoted\") process.exit(1)'"
+      ],
+      "setup_operations": [],
+      "hidden_checks": [
+        {
+          "kind": "behavior",
+          "description": "Quoted hashes remain data while unquoted inline comments are removed.",
+          "command": "bun -e 'import { parseSimpleYaml } from \"./src/state/config.ts\"; const v=parseSimpleYaml(\"label: \\\"release #1\\\"\\nmode: fast # local\\n\"); if (v.label !== \"release #1\" || v.mode !== \"fast\") process.exit(1)'"
+        },
+        {
+          "kind": "regression",
+          "description": "The parser still handles plain and single-quoted values.",
+          "command": "bun -e 'import { parseSimpleYaml } from \"./src/state/config.ts\"; const v=parseSimpleYaml(\"a: plain\\nb: '\\''quoted'\\''\\n\"); if (v.a !== \"plain\" || v.b !== \"quoted\") process.exit(1)'"
+        }
+      ]
+    },
+    {
+      "scenario": "bug-fix",
+      "title": "Prevent an extra retry beyond the configured limit",
+      "instructions": "A defect makes `shouldRetry` permit another run when the current attempt already equals `maxRetries`. Restore the intended boundary and add a regression test covering attempts below, at, and above the limit, plus successful exit code handling.",
+      "affected_files": [
+        "src/orchestrator/retry.ts",
+        "src/__tests__/orchestrator-v2.test.ts"
+      ],
+      "acceptance_commands": [
+        "bun -e 'import { shouldRetry } from \"./src/orchestrator/retry.ts\"; if (!shouldRetry(1,3,1) || shouldRetry(1,3,0)) process.exit(1)'"
+      ],
+      "setup_operations": [
+        {
+          "op": "replace_text",
+          "path": "src/orchestrator/retry.ts",
+          "content": "",
+          "old_text": "  return attempt < maxRetries;",
+          "new_text": "  return attempt <= maxRetries;"
+        }
+      ],
+      "hidden_checks": [
+        {
+          "kind": "behavior",
+          "description": "The final allowed attempt is not retried.",
+          "command": "bun -e 'import { shouldRetry } from \"./src/orchestrator/retry.ts\"; if (!shouldRetry(2,3,1) || shouldRetry(3,3,1) || shouldRetry(4,3,1) || shouldRetry(1,3,0)) process.exit(1)'"
+        },
+        {
+          "kind": "regression",
+          "description": "The focused orchestrator test suite closes the injected boundary defect.",
+          "command": "bun -e 'import { shouldRetry } from \"./src/orchestrator/retry.ts\"; if (!shouldRetry(1,3,1) || shouldRetry(1,3,0)) process.exit(1)'"
+        }
+      ]
+    },
+    {
+      "scenario": "interrupted",
+      "title": "Clean stale atomic-write temporary files during recovery",
+      "instructions": "Complete recovery handling for interrupted `writeJSON` operations. During `recoverState`, remove only `.apex` JSON temporary files matching the writer's `.tmp.<timestamp>` naming convention when they are older than one hour, report each cleanup, and leave recent or unrelated files untouched. Add deterministic tests using explicit file timestamps.",
+      "affected_files": [
+        "src/state/recovery.ts",
+        "src/__tests__/session-isolation.test.ts"
+      ],
+      "acceptance_commands": [
+        "bun -e 'import { recoverState } from \"./src/state/recovery.ts\"; const issues=await recoverState(); if (!Array.isArray(issues)) process.exit(1)'"
+      ],
+      "setup_operations": [],
+      "hidden_checks": [
+        {
+          "kind": "closure",
+          "description": "Recovery removes an old interrupted-write artifact and reports durable cleanup.",
+          "command": "root=$PWD; tmp=$(mktemp -d); mkdir -p \"$tmp/.apex\"; touch \"$tmp/.apex/tasks.json.tmp.123\"; touch -t 202001010000 \"$tmp/.apex/tasks.json.tmp.123\"; (cd \"$tmp\" && bun -e \"import { recoverState } from '$root/src/state/recovery.ts'; const issues=await recoverState(); if (await Bun.file('.apex/tasks.json.tmp.123').exists() || !issues.some(x=>x.includes('tasks.json.tmp.123'))) process.exit(1)\"); rc=$?; rm -rf \"$tmp\"; exit $rc"
+        },
+        {
+          "kind": "security",
+          "description": "Recovery does not delete unrelated files.",
+          "command": "root=$PWD; tmp=$(mktemp -d); mkdir -p \"$tmp/.apex\"; touch \"$tmp/.apex/keep.tmp.123\"; touch -t 202001010000 \"$tmp/.apex/keep.tmp.123\"; (cd \"$tmp\" && bun -e \"import { recoverState } from '$root/src/state/recovery.ts'; await recoverState(); if (!(await Bun.file('.apex/keep.tmp.123').exists())) process.exit(1)\"); rc=$?; rm -rf \"$tmp\"; exit $rc"
+        }
+      ]
+    },
+    {
+      "scenario": "review-defect",
+      "title": "Stop host environment leakage into subprocess sandboxes",
+      "instructions": "Review the injected subprocess sandbox change as a security defect. Restore an allowlisted environment that exposes only required runtime variables plus explicit `options.env`, and add a regression test proving arbitrary host secrets are absent while caller-provided variables remain available.",
+      "affected_files": [
+        "src/sandbox.ts",
+        "src/__tests__/orchestrator-v2.test.ts"
+      ],
+      "acceptance_commands": [
+        "APEX_NO_DOCKER=1 bun -e 'import { runInSandbox } from \"./src/sandbox.ts\"; const r=await runInSandbox(\"console.log(process.env.ALLOWED_VALUE)\", \"javascript\", { env: { APEX_NO_DOCKER: \"1\", ALLOWED_VALUE: \"visible\" } }); if (r.exitCode !== 0 || r.stdout.trim() !== \"visible\") process.exit(1)'"
+      ],
+      "setup_operations": [
+        {
+          "op": "replace_text",
+          "path": "src/sandbox.ts",
+          "content": "",
+          "old_text": "        PATH: process.env.PATH, // keep PATH so runners are found\n        HOME: absWorkdir,",
+          "new_text": "        ...process.env,\n        PATH: process.env.PATH, // keep PATH so runners are found\n        HOME: absWorkdir,"
+        }
+      ],
+      "hidden_checks": [
+        {
+          "kind": "security",
+          "description": "An arbitrary host secret is not inherited by sandboxed code.",
+          "command": "HOST_ONLY_SECRET=leaked APEX_NO_DOCKER=1 bun -e 'import { runInSandbox } from \"./src/sandbox.ts\"; const r=await runInSandbox(\"console.log(process.env.HOST_ONLY_SECRET || \\\"absent\\\")\", \"javascript\", { env: { APEX_NO_DOCKER: \"1\" } }); if (r.exitCode !== 0 || r.stdout.trim() !== \"absent\") process.exit(1)'"
+        },
+        {
+          "kind": "behavior",
+          "description": "Explicitly supplied sandbox variables remain available.",
+          "command": "APEX_NO_DOCKER=1 bun -e 'import { runInSandbox } from \"./src/sandbox.ts\"; const r=await runInSandbox(\"console.log(process.env.ALLOWED_VALUE)\", \"javascript\", { env: { APEX_NO_DOCKER: \"1\", ALLOWED_VALUE: \"visible\" } }); if (r.exitCode !== 0 || r.stdout.trim() !== \"visible\") process.exit(1)'"
+        }
+      ]
+    },
+    {
+      "scenario": "parallel",
+      "title": "Harden result validation and retry backoff independently",
+      "instructions": "Implement two independent lanes. Lane A must make `validateResult` accept only a non-empty string `verdict`, rejecting arrays, objects, numbers, booleans, and whitespace-only strings. Lane B must make `backoffMs` treat attempt values below 1 as attempt 1 so invalid counters cannot reduce delay. Add focused regression coverage in the existing corresponding test files.",
+      "affected_files": [
+        "src/orchestrator/result-validator.ts",
+        "src/orchestrator/retry.ts",
+        "src/__tests__/orchestrator-v2.test.ts",
+        "src/__tests__/orchestrator-e2e.test.ts"
+      ],
+      "acceptance_commands": [
+        "bun test src/__tests__/orchestrator-v2.test.ts --test-name-pattern 'ResultValidator|Retry'"
+      ],
+      "setup_operations": [],
+      "hidden_checks": [
+        {
+          "kind": "behavior",
+          "description": "Result validation rejects non-string and blank verdicts.",
+          "command": "tmp=$(mktemp -d); mkdir -p \"$tmp/output\"; printf '%s\\n' '{\"verdict\":[]}' > \"$tmp/output/result.json\"; bun -e 'import { validateResult } from \"./src/orchestrator/result-validator.ts\"; if (validateResult(\"'$tmp'\",0).valid) process.exit(1)'; rc=$?; rm -rf \"$tmp\"; exit $rc"
+        },
+        {
+          "kind": "regression",
+          "description": "A valid non-empty string verdict remains successful.",
+          "command": "tmp=$(mktemp -d); mkdir -p \"$tmp/output\"; printf '%s\\n' '{\"verdict\":\"pass\"}' > \"$tmp/output/result.json\"; bun -e 'import { validateResult } from \"./src/orchestrator/result-validator.ts\"; const r=validateResult(\"'$tmp'\",0); if (!r.valid || r.verdict !== \"pass\") process.exit(1)'; rc=$?; rm -rf \"$tmp\"; exit $rc"
+        },
+        {
+          "kind": "behavior",
+          "description": "Invalid low attempt counters use the first-attempt backoff range.",
+          "command": "bun -e 'import { backoffMs } from \"./src/orchestrator/retry.ts\"; for (let i=0;i<50;i++){const n=backoffMs(0,1000); if(n<800 || n>1200) process.exit(1)}'"
+        }
+      ]
+    }
+  ]
+}

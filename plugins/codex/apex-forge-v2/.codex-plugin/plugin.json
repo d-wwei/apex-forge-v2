@@ -1,6 +1,6 @@
 {
   "name": "apex-forge-v2",
-  "version": "0.1.0+codex.20260814121422",
+  "version": "0.2.0-rc.1+codex.20260819173000",
   "description": "Natural-language, Kernel-backed software delivery workflows for Codex.",
   "author": {
     "name": "d-wwei",

@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
-import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { now, readJson, shortId, writeJson } from "../lib/common.mjs";
+import { findPatch } from "./worker.mjs";
 
 export function loadExecutionPolicy(root) {
   return readJson(join(root, "policies", "execution.json"));
@@ -37,7 +37,7 @@ export function assertAdapterAllowed(root, adapter) {
   }
 }
 
-export function evaluateMergeApproval(root, run, queue) {
+export function evaluateMergeApproval(root, run, queue, candidateDigest = null) {
   const policy = loadExecutionPolicy(root);
   const roadmap = readJson(join(root, "roadmap", "graph.json"));
   const roadmapNode = roadmap.nodes.find((node) => node.id === run.roadmap_node_id);
@@ -58,6 +58,7 @@ export function evaluateMergeApproval(root, run, queue) {
   const actionHash = stableHash({
     capability,
     run_id: run.run_id,
+    candidate_digest: candidateDigest,
     changed_files: changedFiles,
     artifact_hash: artifactHash,
     policy_revision: policyRevision
@@ -78,12 +79,13 @@ export function evaluateMergeApproval(root, run, queue) {
     action_hash: actionHash,
     artifact_hash: artifactHash,
     policy_revision: policyRevision,
+    candidate_digest: candidateDigest,
     approval: existing || null
   };
 }
 
-export function ensureMergeApproval(root, run, queue) {
-  const evaluation = evaluateMergeApproval(root, run, queue);
+export function ensureMergeApproval(root, run, queue, candidateDigest = null) {
+  const evaluation = evaluateMergeApproval(root, run, queue, candidateDigest);
   if (!evaluation.required) return { ...evaluation, allowed: true, created: false };
   if (approvalAllows(evaluation.approval, evaluation)) {
     return { ...evaluation, allowed: true, created: false };
@@ -99,6 +101,7 @@ export function ensureMergeApproval(root, run, queue) {
     id: shortId("approval"),
     kind: "merge",
     run_id: run.run_id,
+    candidate_digest: evaluation.candidate_digest,
     capability: evaluation.capability,
     fingerprint: evaluation.fingerprint,
     action_hash: evaluation.action_hash,
@@ -181,6 +184,7 @@ export function ensureAdapterBaselineApproval(root, drift) {
     id: shortId("approval"),
     kind: "adapter_baseline",
     run_id: "project",
+    candidate_digest: null,
     capability,
     fingerprint,
     action_hash: fingerprint,
@@ -216,6 +220,7 @@ export function migrateApprovalRecords(root) {
     item.action_hash = item.fingerprint;
     item.artifact_hash = item.fingerprint;
     item.policy_revision = "legacy";
+    item.candidate_digest = null;
     item.requested_by = "apex-v2-legacy";
     item.expires_at = item.decided_at || item.requested_at;
     item.decision_capabilities = [];
@@ -234,6 +239,7 @@ function approvalAllows(approval, evaluation) {
     && approval.action_hash === evaluation.action_hash
     && approval.artifact_hash === evaluation.artifact_hash
     && approval.policy_revision === evaluation.policy_revision
+    && approval.candidate_digest === (evaluation.candidate_digest ?? null)
     && approval.decision_capabilities.includes(evaluation.capability)
   );
 }
@@ -251,23 +257,10 @@ function mergeArtifactHash(root, runId, queue) {
     .filter((item) => item.status !== "dropped")
     .map((item) => ({
       patch_id: item.patch_id,
-      hash: stableHash(findPatchBundle(root, runId, item.patch_id))
+      hash: stableHash(findPatch(root, runId, item.patch_id))
     }))
     .sort((left, right) => left.patch_id.localeCompare(right.patch_id));
   return stableHash(patches);
-}
-
-function findPatchBundle(root, runId, patchId) {
-  const workersDir = join(root, "runs", runId, "workers");
-  if (!existsSync(workersDir)) throw new Error(`找不到 patch workers：${runId}`);
-  for (const entry of readdirSync(workersDir, { withFileTypes: true })) {
-    if (!entry.isDirectory()) continue;
-    const path = join(workersDir, entry.name, "patch-bundle.json");
-    if (!existsSync(path)) continue;
-    const patch = readJson(path);
-    if (patch.patch_id === patchId) return patch;
-  }
-  throw new Error(`找不到 patch bundle：${patchId}`);
 }
 
 function stableHash(value) {

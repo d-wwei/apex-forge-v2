@@ -18,7 +18,7 @@
     "schema_version": { "type": "string", "const": "v0" },
     "run_id": { "type": "string" },
     "roadmap_node_id": { "type": "string" },
-    "status": { "type": "string", "enum": ["planned", "active", "paused", "done", "failed"] },
+    "status": { "type": "string", "enum": ["planned", "active", "paused", "done", "failed", "halted"] },
     "context_snapshot": {
       "type": "object",
       "required": ["knowledge_version", "files"],

@@ -11,6 +11,9 @@
     "status",
     "started_at",
     "completed_at",
+    "recovered_at",
+    "backup_path",
+    "extra_snapshots",
     "result",
     "error"
   ],
@@ -19,9 +22,24 @@
     "transaction_id": { "type": "string", "minLength": 1 },
     "kind": { "type": "string", "minLength": 1 },
     "idempotency_key": { "type": "string", "minLength": 1 },
-    "status": { "type": "string", "enum": ["started", "committed", "failed"] },
+    "status": { "type": "string", "enum": ["started", "committed", "failed", "recovered"] },
     "started_at": { "type": "string" },
     "completed_at": { "type": ["string", "null"] },
+    "recovered_at": { "type": ["string", "null"] },
+    "backup_path": { "type": "string", "minLength": 1 },
+    "extra_snapshots": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["relative_path", "backup_path", "existed"],
+        "properties": {
+          "relative_path": { "type": "string", "minLength": 1 },
+          "backup_path": { "type": "string", "minLength": 1 },
+          "existed": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      }
+    },
     "result": {},
     "error": { "type": ["string", "null"] }
   },

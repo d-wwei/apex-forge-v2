@@ -31,6 +31,11 @@
     "priority": { "type": "string", "enum": ["P0", "P1", "P2", "P3"] },
     "risk": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
     "affected_area": { "type": "string" },
+    "acceptance_commands": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
     "evidence_refs": { "type": "array", "items": { "type": "string" } },
     "triage": {
       "type": "object",
@@ -48,4 +53,3 @@
   },
   "additionalProperties": false
 }
-

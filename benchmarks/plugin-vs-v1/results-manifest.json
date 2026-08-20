@@ -1,0 +1,367 @@
+{
+  "schema_version": "v0",
+  "release_candidate_digest": "45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6",
+  "task_set_digest": "30591f062179be28924d20945d1457e68bddde98bd8bc93913e45cf4d5c20e6f",
+  "results": [
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-forge-v1--simple--v1-skill.json",
+      "sha256": "2355fd86f9518be3a736f34bd231897b2523e35c494b3a174a42b1b492ed41ff"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-forge-v1--simple--cli-kernel.json",
+      "sha256": "a15ae58c4a8e7be1158b56363c87d566968ef17c674e64db3c62328fadd32fa3"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-forge-v1--simple--plugin-kernel.json",
+      "sha256": "c4a4a675b0e7d045c4ca346f708a5518e171e976b6891f6cf325a7174147409a"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-forge-v1--multi-step--v1-skill.json",
+      "sha256": "4ad802c097422e0843f38db5a62a4a27aa5da2bb2a4a9455b8edb1229a3d3744"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-forge-v1--multi-step--cli-kernel.json",
+      "sha256": "37d062e2635be9bf1e959f70f4a20aecf81a8ccefa324a21d1d58aa61a06d89b"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-forge-v1--multi-step--plugin-kernel.json",
+      "sha256": "a0c98444fb6cb86e8ce4937445bc2d144b5c138d57284b11ea4401d99011f483"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-forge-v1--bug-fix--v1-skill.json",
+      "sha256": "f71e6098609cfd94ca5643b85414381e9393d94e51f187f344d70bbe04ee45df"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-forge-v1--bug-fix--cli-kernel.json",
+      "sha256": "20402a87a34058351028969f6cf2b22889e38700e3f06c97b693a4a406290094"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-forge-v1--bug-fix--plugin-kernel.json",
+      "sha256": "5bb5d409512989c543e6a8d9592dee21f549deb301c1e8ee0fd75ce1a7c3824c"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-forge-v1--interrupted--v1-skill.json",
+      "sha256": "8c722f5d1e15389409b5ccefc21ef2431ee2bac25cb455dcb4a81d8c4183195c"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-forge-v1--interrupted--cli-kernel.json",
+      "sha256": "93a6750ef995ff820156c4c0d261c4792f1fe832f29e4dbc68a2cbba3111e2a2"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-forge-v1--interrupted--plugin-kernel.json",
+      "sha256": "93dbf473dc66fccc6f8dbc023f3739bfc52ea7754cee44d6b4e187cf5c0ae7b1"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-forge-v1--review-defect--v1-skill.json",
+      "sha256": "707461797911615d6c384561eb8fb1db7b987fb5a73758b26087713c71992755"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-forge-v1--review-defect--cli-kernel.json",
+      "sha256": "cf4e7a01f66b1869920f924f11a754ba3400b64d553c3dd3cf0d2719c16d97eb"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-forge-v1--review-defect--plugin-kernel.json",
+      "sha256": "46f455b953c839abc3a00ebca39df53b83c2b7c70de4d242e7c0e8bdc89768b1"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-forge-v1--parallel--v1-skill.json",
+      "sha256": "78f49714b96cfda176f6acf1c21d317d6d751946f5ca88c8045dadca02cdbfc1"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-forge-v1--parallel--cli-kernel.json",
+      "sha256": "a5971c45fd2f85387ab2c51411e385a97bbf30b23aa1ce682ff277e49efff990"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-forge-v1--parallel--plugin-kernel.json",
+      "sha256": "e446f795e73622a422c9fd0949288e21282be88a2589c8f876e681ecae7e5698"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-manager--simple--v1-skill.json",
+      "sha256": "6f3110e3b55157296fd99cb49fd3a736976063fb95e1b540daa200809e2455ad"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-manager--simple--cli-kernel.json",
+      "sha256": "44644e337847dd8d32cb288961810887ede024bb5db35d40c9cffdce9eea02a9"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-manager--simple--plugin-kernel.json",
+      "sha256": "784669130846c6233e2c48b59fce5a6e40bd80a7633736c307aa6715ba9f3876"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-manager--multi-step--v1-skill.json",
+      "sha256": "9e13b8d4fd42b85914758d9d9538bde237100bf2ae981b3127a5a079fe187a67"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-manager--multi-step--cli-kernel.json",
+      "sha256": "bb4227fa45d6badc68b0dc28d418756d0519e1487e8f7eaa177cdfcd685831f7"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-manager--multi-step--plugin-kernel.json",
+      "sha256": "3ca82cee868be737a96b53f35571ca0e580cb183b521711aa1c743febf589a55"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-manager--bug-fix--v1-skill.json",
+      "sha256": "4db04b93b7b9fa0e4b88617bcc9a11b2575b543f87944285b930c7bdb246e952"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-manager--bug-fix--cli-kernel.json",
+      "sha256": "f8ff24921ab246c788aa5ed78ddd6004df20112f8b3ec85785413317bc902b86"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-manager--bug-fix--plugin-kernel.json",
+      "sha256": "24586eb89fb294e97189fd294ab21f6a22731965022fc7e384603bf97040d31f"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-manager--interrupted--v1-skill.json",
+      "sha256": "9b2a134c073cdb24d85681cce03cc471211d5997ff05c49ba534d993425f5575"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-manager--interrupted--cli-kernel.json",
+      "sha256": "733e6cd8db250f28f592a29bce12de09e3cc9abe833667ed7966c9f11b91f390"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-manager--interrupted--plugin-kernel.json",
+      "sha256": "bfb53412e1ca84541220505ecb9edd5ac8b5d4205070e28d1d6c9bd0a74d1356"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-manager--review-defect--v1-skill.json",
+      "sha256": "ddd61f2a42d84a456995e3fb30876254a27259e179e236357a02d233b5d0a04d"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-manager--review-defect--cli-kernel.json",
+      "sha256": "77080f8c8759890055c6d08fadbe372355d11fe37e2d7997636c5cb3a962f92f"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-manager--review-defect--plugin-kernel.json",
+      "sha256": "a2c971a4c6a508f2707828f9355134e16b0d0464832f7f0375d349e883537202"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-manager--parallel--v1-skill.json",
+      "sha256": "244047ec08274293c0832a3347bfe3e20156251ab91d2b8516ea0be7014f5d0c"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-manager--parallel--cli-kernel.json",
+      "sha256": "20b392fd2c303b06d0f85f739ec30d3dbbf0f92dd1aee60257e8fb2462817dcc"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/apex-manager--parallel--plugin-kernel.json",
+      "sha256": "55db0d3cc38aee0b094df017c982cc3abf0f6b756799afa8bfe3313a1d5036d2"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/agent-recall--simple--v1-skill.json",
+      "sha256": "2b008a4d02dcd38f5944bbb06980194426492c3213b258c4938b03bb33523a68"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/agent-recall--simple--cli-kernel.json",
+      "sha256": "c0d947d87ae03fb540ed31ba6dd127d838a71a50222b90e69f7e959f9e7210f7"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/agent-recall--simple--plugin-kernel.json",
+      "sha256": "2b355825bd16b0f693827fb1985bd09754d142ae896d2fb8fb4faabb27452e9f"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/agent-recall--multi-step--v1-skill.json",
+      "sha256": "cf6ca6803e18f75441d8879d4eb8492930960c68399acbbb579d652ddd08a7b6"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/agent-recall--multi-step--cli-kernel.json",
+      "sha256": "ad14c8e863408c8c0d879fec425fb80ed84db2a2070dc54fdeb5be2a37b8f56c"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/agent-recall--multi-step--plugin-kernel.json",
+      "sha256": "dc3ea1901d49b23ec1ef2f8cbb32bd22309af8ce71e459211c68f51ae4104adb"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/agent-recall--bug-fix--v1-skill.json",
+      "sha256": "8283a5bed5ade1da45318effce556aabdde487e19cc7b6dbef41f0fe41984c33"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/agent-recall--bug-fix--cli-kernel.json",
+      "sha256": "915ac5b157283bac9edc918a82a58eeced433ae6b0282faed062d75f146a3441"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/agent-recall--bug-fix--plugin-kernel.json",
+      "sha256": "1582fff74bf672df39b2c0b1fe0256ae003c44e2ebfed64755e78365e8fdbefb"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/agent-recall--interrupted--v1-skill.json",
+      "sha256": "39d43a10bb8a9fdd908c1296edd0a471029dbb096d905e287502b530dc5d324b"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/agent-recall--interrupted--cli-kernel.json",
+      "sha256": "171154867c68410a6bff369aa72272b02e4f235124cff55bdeed919aa492081e"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/agent-recall--interrupted--plugin-kernel.json",
+      "sha256": "51fd1fac73697c87acb87a48401d7926326d41044af5bf1b4f0b4e6c776ad7f0"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/agent-recall--review-defect--v1-skill.json",
+      "sha256": "7ac260d12bc3838d6b62bf6d7b5a08f0f0ab313dff47b6e68c4b01bf3d54edf9"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/agent-recall--review-defect--cli-kernel.json",
+      "sha256": "436c91bb4a5a6dbbf1f9b39a67b9af40d95dbf4356afbbcbec49adf5aaeb3c5f"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/agent-recall--review-defect--plugin-kernel.json",
+      "sha256": "dcb9ba0b07a86940f38c1d5592c2c71fba672506c098ed8513872ca86d94e58a"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/agent-recall--parallel--v1-skill.json",
+      "sha256": "f85b72825597063543bbebc24ba28916a2cdc0ec75013f52dcc8bbdff2d69e15"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/agent-recall--parallel--cli-kernel.json",
+      "sha256": "4c47c71f9288f54ae8e1558935ab65940c1a8fb6e0c15f86a595b4aac4d76eff"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/agent-recall--parallel--plugin-kernel.json",
+      "sha256": "8f17fb6658f0e4d1510d1218d298e709f044db5f884b3b70ae3fb77e56cc5a03"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/understand-codebase--simple--v1-skill.json",
+      "sha256": "f69bdd89939c8a20b556805e5bac93a32581421ecc8c9dc6e77c07ee901bc420"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/understand-codebase--simple--cli-kernel.json",
+      "sha256": "c217d91a7c7fb694cbef994c649a5ce6369c7ed38eac98a416603a7cb4d40f14"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/understand-codebase--simple--plugin-kernel.json",
+      "sha256": "1406aae41a518619c5748d3ac1f2f67eeed5d92faf30c211e334291c71e18bc9"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/understand-codebase--multi-step--v1-skill.json",
+      "sha256": "3b0014e95cf762a69f59c6322527bcaa8e3904c0547e2b2a34ef561c1e2ee2df"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/understand-codebase--multi-step--cli-kernel.json",
+      "sha256": "89d622ca05aead76fa3afefcebc810acb74001f7352300e4ba5055653abef516"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/understand-codebase--multi-step--plugin-kernel.json",
+      "sha256": "6499ec00840d8ae97fed1c1ab4d4d06d985373ea3dd4e130ad35504f4cb80072"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/understand-codebase--bug-fix--v1-skill.json",
+      "sha256": "7266259f97e54cadf1aefb526847aa743776a135aff83671e8affdb0d2ea93bb"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/understand-codebase--bug-fix--cli-kernel.json",
+      "sha256": "c26fe266b4c9ee358ed14de4d9466f50aa4d4e881943ffceb2fa27efb8a9fa5b"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/understand-codebase--bug-fix--plugin-kernel.json",
+      "sha256": "21ea77c15a9af4b1451cd52e09e75b86a66d6a5811abfb895572695580795b2f"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/understand-codebase--interrupted--v1-skill.json",
+      "sha256": "6c08f6d8e51b2141bf90c00735ceb46c850b3abf06120ae1a5da3b1c202d732f"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/understand-codebase--interrupted--cli-kernel.json",
+      "sha256": "a3845cce3f1b72ea8b520174fafa6a472460a2e5a4ff51fd23026f7eb0a66369"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/understand-codebase--interrupted--plugin-kernel.json",
+      "sha256": "e36fc1df8532ac79e1186f1ce7ba14f213d187859fca9773526ba24d23f35d38"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/understand-codebase--review-defect--v1-skill.json",
+      "sha256": "5c853e76453912559505c810b0b6c91043637f7038bee903bda78d140e97a830"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/understand-codebase--review-defect--cli-kernel.json",
+      "sha256": "c35588f9818bb75f8ac972a9feddac1e0f3afd52bea9f11f3b994a213b22e9e3"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/understand-codebase--review-defect--plugin-kernel.json",
+      "sha256": "e40837be1f41d96a0520ad5f29cac12c7412d62cd4b64e252bb6bb61f04f631d"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/understand-codebase--parallel--v1-skill.json",
+      "sha256": "d0eee2d9377f031051b0136e8beb94a57c420c4f4c60a5eb3e1f6e91a5b8b57b"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/understand-codebase--parallel--cli-kernel.json",
+      "sha256": "fa831754663ed58f1c29d28b42150595d2784f51e75237906a10968c820e5985"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/understand-codebase--parallel--plugin-kernel.json",
+      "sha256": "252156fd1d9f1526aab09ca1070dded3eaacd5dd509edaa53b695d3511ede895"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/chorus--simple--v1-skill.json",
+      "sha256": "aac51afe180172731b4f7150f29496ce885c820b259ce2aafc3d395d17034971"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/chorus--simple--cli-kernel.json",
+      "sha256": "f11bf6bda4c8391475a351bbb499d792fb14804ccd58828e96d73ad53ad91aca"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/chorus--simple--plugin-kernel.json",
+      "sha256": "1669046dd7d6fadcc57f05475f04081f0e2c580044d3592e051de7cd04f4cf50"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/chorus--multi-step--v1-skill.json",
+      "sha256": "1312764c1ca76a1790868efd76256f801680ea714f6a78c1ff2d522ad6792aa7"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/chorus--multi-step--cli-kernel.json",
+      "sha256": "a37e9e9e15d2e2b5c020eda96f09d7a10370153248305f9a747ec32b720783bc"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/chorus--multi-step--plugin-kernel.json",
+      "sha256": "7250354023928b648e7e4c9cba89ef656821961f09c9f0378ddbe5c2acc0bedf"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/chorus--bug-fix--v1-skill.json",
+      "sha256": "3c60af56b6421b11d41c8344920775c06951fdfc6b62201ff4d1bee8a21ed1d6"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/chorus--bug-fix--cli-kernel.json",
+      "sha256": "c4575e06d9493468d7d35c3e9dba053f71e35efbc8dc2a378c6c9ba5c33fa9b8"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/chorus--bug-fix--plugin-kernel.json",
+      "sha256": "375153a9e87ad1f3951a9f294071847635b418a3336775a6b75badb226ce6878"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/chorus--interrupted--v1-skill.json",
+      "sha256": "98bad40b4e7948b8fb12afe6020b3a2e4172ab80de0118121422558880fcf8b3"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/chorus--interrupted--cli-kernel.json",
+      "sha256": "88e71fe144ccc88b74ab212fad14119430fba7224ea1dcb072cc13f02d44cedd"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/chorus--interrupted--plugin-kernel.json",
+      "sha256": "057fe7315f70c20a44eaad917bd992388f15bc674d7bfa1dbd5fce6acdd5a11b"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/chorus--review-defect--v1-skill.json",
+      "sha256": "43c6f6dd7315b6a3937fd3cb7a593482c040b2934f0566bbcf7a3833eadefa03"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/chorus--review-defect--cli-kernel.json",
+      "sha256": "b863b390dc90d87384fbec90b564d1ca475edf55f8b53141df3d717c5b003d54"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/chorus--review-defect--plugin-kernel.json",
+      "sha256": "af42076f0bbcbfad32cd4cc431250f39a38c10039469f318a1c41a7bc9dc187b"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/chorus--parallel--v1-skill.json",
+      "sha256": "15f6e76616ebcab63c8bfd00e54d307e43e60e9899655e3a9dc6120f51acaa85"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/chorus--parallel--cli-kernel.json",
+      "sha256": "f07bdb90b08e63578688bc805a0f3f5d54f6710f23cd9e0ba6ed5b2c650ac083"
+    },
+    {
+      "path": "results/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/chorus--parallel--plugin-kernel.json",
+      "sha256": "f6e3db49404dc2056bb7227283dad6f28c7dac8df348c169166bcd7c92b47cc1"
+    }
+  ]
+}

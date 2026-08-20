@@ -1,0 +1,146 @@
+{
+  "task_id": "chorus--parallel",
+  "task_digest": "cbe5eff0a2c5750d0eb68ea24dad33b85e629794e3a51dc459fa164b8bbd170b",
+  "repository": "chorus",
+  "scenario": "parallel",
+  "mode": "v1-skill",
+  "candidate_digest": "45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 124496,
+    "cost": 215489,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 0,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "0713b8ddd34fe9c9b368e6d1cb0a96fa4ab69a92",
+    "runtime_hash": "fbb9635c7fd7b24c7799126c3640c4ddc3239b4be5e2a5b9dd3f5cce103f16fc",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "2340e082a8c95f3c110e5371524f9d5f32c5fd967f45f0fe3fccf1f2668b2930",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--parallel--v1-skill/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--parallel--v1-skill/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--parallel--v1-skill/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--parallel--v1-skill/codex-home/sessions/2026/08/20/rollout-2026-08-20T11-00-46-01a01d1d-2f06-7e92-8ea4-1147ed135c11.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--parallel--v1-skill/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--parallel--v1-skill/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--parallel--v1-skill/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--parallel--v1-skill/codex-home/sessions/2026/08/20/rollout-2026-08-20T11-00-46-01a01d1d-2f06-7e92-8ea4-1147ed135c11.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--parallel--v1-skill/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "9465d5a36dbb5823558ad094715fb264fa91dcb6657a06c5ba1c8e78d96d1cad",
+      "554d0470af0f71f23797d8eb1315da26936b6ecebd8a30350e8eacba5e2b5fa2",
+      "7b01a5bdefc2286efa372f7fbcc731585d5689b620d0a3a01da9280a3812454c",
+      "19e954e037df13d977ede0debcbfc6bd37d1423e6d6c851c6e131e36d40d6597",
+      "f6ba5b220626a1a1a8a75eae98cf8742716087ee251cee396f7d949394a9e496"
+    ]
+  },
+  "evidence": {
+    "task_digest": "cbe5eff0a2c5750d0eb68ea24dad33b85e629794e3a51dc459fa164b8bbd170b",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a01d1d-2f06-7e92-8ea4-1147ed135c11",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "DONE. `isPrismaNotFound` now rejects inherited `code`; responsive Tailwind conflict coverage was added for `cn`.",
+      "tests": [
+        {
+          "command": "pnpm exec vitest run src/lib/__tests__/errors.test.ts src/lib/__tests__/utils.test.ts",
+          "status": "pass",
+          "detail": "24 tests passed across 2 files."
+        },
+        {
+          "command": "pnpm exec tsc --noEmit",
+          "status": "pass",
+          "detail": "Completed with no diagnostics."
+        },
+        {
+          "command": "git diff --check -- src/lib/errors.ts src/lib/__tests__/errors.test.ts src/lib/__tests__/utils.test.ts",
+          "status": "pass",
+          "detail": "No whitespace errors."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "src/lib/errors.ts",
+        "src/lib/__tests__/errors.test.ts",
+        "src/lib/__tests__/utils.test.ts"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "pnpm exec vitest run src/lib/__tests__/errors.test.ts src/lib/__tests__/utils.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 511,
+        "stdout_tail": "\n RUN  v4.1.0 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--parallel--v1-skill/workspace\n\n ✓ src/lib/__tests__/errors.test.ts (15 tests) 2ms\n ✓ src/lib/__tests__/utils.test.ts (9 tests) 4ms\n\n Test Files  2 passed (2)\n      Tests  24 passed (24)\n   Start at  11:02:51\n   Duration  103ms (transform 27ms, setup 0ms, import 41ms, tests 6ms, environment 0ms)\n\n",
+        "stderr_tail": "(node:99346) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      },
+      {
+        "command": "pnpm exec tsc --noEmit",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 1372,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "pnpm exec vitest run src/lib/__tests__/errors.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 521,
+        "stdout_tail": "\n RUN  v4.1.0 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--parallel--v1-skill/workspace\n\n ✓ src/lib/__tests__/errors.test.ts (15 tests) 2ms\n\n Test Files  1 passed (1)\n      Tests  15 passed (15)\n   Start at  11:02:53\n   Duration  98ms (transform 17ms, setup 0ms, import 23ms, tests 2ms, environment 0ms)\n\n",
+        "stderr_tail": "(node:99445) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      },
+      {
+        "command": "pnpm exec vitest run src/lib/__tests__/utils.test.ts && test -n \"$(git diff --name-only -- src/lib/__tests__/utils.test.ts)\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 491,
+        "stdout_tail": "\n RUN  v4.1.0 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--parallel--v1-skill/workspace\n\n ✓ src/lib/__tests__/utils.test.ts (9 tests) 4ms\n\n Test Files  1 passed (1)\n      Tests  9 passed (9)\n   Start at  11:02:53\n   Duration  87ms (transform 11ms, setup 0ms, import 18ms, tests 4ms, environment 0ms)\n\n",
+        "stderr_tail": "(node:99469) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      },
+      {
+        "command": "pnpm exec vitest run src/lib/__tests__/errors.test.ts src/lib/__tests__/utils.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 490,
+        "stdout_tail": "\n RUN  v4.1.0 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--parallel--v1-skill/workspace\n\n ✓ src/lib/__tests__/errors.test.ts (15 tests) 2ms\n ✓ src/lib/__tests__/utils.test.ts (9 tests) 4ms\n\n Test Files  2 passed (2)\n      Tests  24 passed (24)\n   Start at  11:02:54\n   Duration  95ms (transform 24ms, setup 0ms, import 39ms, tests 5ms, environment 0ms)\n\n",
+        "stderr_tail": "(node:99530) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/lib/__tests__/errors.test.ts",
+        "src/lib/__tests__/utils.test.ts",
+        "src/lib/errors.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": false,
+      "evidence_score": 1,
+      "reason": "no .apex-v2 durable state"
+    }
+  }
+}

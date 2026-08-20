@@ -1,6 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  symlinkSync,
+  writeFileSync
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -13,6 +22,7 @@ import { inspectAgentAdapters, resolveAgentAdapter } from "../src/adapters/regis
 import { executeClaudeAdapter } from "../src/adapters/claude.mjs";
 import { executeGeminiAdapter } from "../src/adapters/gemini.mjs";
 import { syncAdapterSmokeRisk } from "../src/core/risks.mjs";
+import { buildCandidateSet } from "../src/core/candidate.mjs";
 
 const CLI = new URL("../src/apex-v2.mjs", import.meta.url).pathname;
 
@@ -61,6 +71,15 @@ function writeProjectFile(project, relativePath, content) {
 function createFakeCodex(project, options = {}) {
   const target = options.target || "src/apex-v2.mjs";
   const content = options.content || "console.log('from fake codex');\n";
+  const resultValue = options.invalidResult
+    ? { summary: "invalid result without verdict" }
+    : {
+        verdict: "pass",
+        summary: "fake codex completed scoped change",
+        tests: [{ command: "node --check", status: "pass", detail: "fixture" }],
+        risks: [],
+        evidence_refs: []
+      };
   const path = join(project, `fake-codex-${Math.random().toString(36).slice(2)}.mjs`);
   writeFileSync(path, `#!/usr/bin/env node
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -83,13 +102,7 @@ if (!prompt.includes("## Objective") || !prompt.includes("## Write Scope")) {
 const target = join(workspace, ${JSON.stringify(target)});
 mkdirSync(dirname(target), { recursive: true });
 writeFileSync(target, ${JSON.stringify(content)});
-writeFileSync(output, JSON.stringify({
-  verdict: "pass",
-  summary: "fake codex completed scoped change",
-  tests: [{ command: "node --check", status: "pass", detail: "fixture" }],
-  risks: [],
-  evidence_refs: []
-}));
+writeFileSync(output, JSON.stringify(${JSON.stringify(resultValue)}));
 `);
   chmodSync(path, 0o755);
   return path;
@@ -240,6 +253,7 @@ function createRunWithPlanGraph(project) {
 }
 
 function submitEvidenceForRemainingPlanNodes(project, runId) {
+  enableInteractiveWorkspacePatch(project);
   const root = join(project, ".apex-v2");
   const plan = readJson(join(root, "runs", runId, "plan-graph.json"));
   const existing = new Set(
@@ -274,23 +288,97 @@ function submitEvidenceForRemainingPlanNodes(project, runId) {
 }
 
 function completeHostWorker(project, worker, summary, modifyWorkspace = false) {
-  run([
+  if (modifyWorkspace) enableInteractiveWorkspacePatch(project);
+  const claimed = JSON.parse(run([
     "host", "claim", "--project", project, "--host-id", "codex-host",
     "--worker-id", worker.worker_id
-  ]);
+  ]).stdout);
   if (modifyWorkspace) {
     const target = worker.write_scope.find((scope) => !scope.endsWith("/"))
       || (worker.write_scope.some((scope) => scope.startsWith("tests/"))
         ? "tests/apex-v2.test.mjs"
         : "src/apex-v2.mjs");
-    const path = join(project, target);
+    const path = join(project, claimed.action.payload.workspace_path, target);
     const current = existsSync(path) ? readFileSync(path, "utf8") : "";
-    writeProjectFile(project, target, `${current}\n// ${worker.worker_id}\n`);
+    mkdirSync(join(path, ".."), { recursive: true });
+    writeFileSync(path, `${current}\n// ${worker.worker_id}\n`);
   }
-  return JSON.parse(run([
+  const submitArgs = [
     "host", "submit", "--project", project, "--host-id", "codex-host",
-    "--worker-id", worker.worker_id, "--summary", summary
-  ]).stdout);
+    "--worker-id", worker.worker_id, "--claim-token", claimed.action.claim_token,
+    "--summary", summary
+  ];
+  if (!modifyWorkspace) {
+    submitArgs.push("--evidence-json", JSON.stringify(semanticEvidenceForWorker(project, worker)));
+  }
+  return JSON.parse(run(submitArgs).stdout);
+}
+
+function enableInteractiveWorkspacePatch(project) {
+  const policyPath = join(project, ".apex-v2", "policies", "execution.json");
+  const policy = readJson(policyPath);
+  policy.interactive_workspace_patch = { enabled: true };
+  writeFileSync(policyPath, `${JSON.stringify(policy, null, 2)}\n`);
+}
+
+function semanticEvidenceForWorker(project, worker) {
+  const evidenceType = worker.plan_node_id.split("-").at(-1);
+  const sourceRef = worker.read_scope[0] || "README.md";
+  const evidence = {
+    schema_version: "v0",
+    evidence_type: evidenceType,
+    objective: worker.objective,
+    source_refs: [sourceRef],
+    claims: [`${worker.plan_node_id} typed claim`],
+    uncertainties: [],
+    acceptance_mapping: [{
+      criterion: worker.required_evidence[0] || "typed evidence",
+      evidence_ref: sourceRef,
+      status: "supported"
+    }],
+    created_at: new Date().toISOString()
+  };
+  if (evidenceType === "context") {
+    return { ...evidence, affected_files: worker.read_scope, constraints: [], unknowns: [] };
+  }
+  if (evidenceType === "risk") {
+    return {
+      ...evidence,
+      failure_paths: ["fixture failure path"],
+      blast_radius: worker.read_scope,
+      mitigations: ["fixture mitigation"],
+      rollback: ["revert candidate"]
+    };
+  }
+  if (evidenceType === "design") {
+    return {
+      ...evidence,
+      slices: worker.deliverables,
+      dependencies: [],
+      verification: worker.verification,
+      rollback: ["revert candidate"]
+    };
+  }
+  if (evidenceType === "review") {
+    const root = join(project, ".apex-v2");
+    const runState = readJson(join(root, "runs", worker.run_id, "run.json"));
+    const queue = readJson(join(root, "runs", worker.run_id, "merge-queue.json"), {
+      schema_version: "v0",
+      run_id: worker.run_id,
+      updated_at: new Date().toISOString(),
+      items: [],
+      conflicts: [],
+      resolutions: []
+    });
+    return {
+      ...evidence,
+      candidate_digest: buildCandidateSet(root, runState, queue, project).candidate_digest,
+      findings: [],
+      residual_risks: [],
+      merge_posture: "approve"
+    };
+  }
+  throw new Error(`unsupported cognitive evidence type: ${evidenceType}`);
 }
 
 function createRunWithQueuedPatches(project) {
@@ -626,10 +714,22 @@ test("认知节点由当前 Host Agent claim 并提交语义 evidence", () => {
   ]).stdout);
   assert.equal(claimed.worker.status, "claimed");
   assert.equal(claimed.worker.claimed_by, "codex-host");
+  assert.match(claimed.action.claim_token, /^claim-/);
+  assert.equal(claimed.action.fencing_token, 1);
+  assert.ok(Date.parse(claimed.action.lease_expires_at) > Date.now());
+
+  const rejected = run([
+    "host", "submit", "--project", project, "--host-id", "codex-host",
+    "--worker-id", worker.worker_id, "--claim-token", "claim-invalid",
+    "--summary", "invalid token must fail"
+  ], { expectFailure: true });
+  assert.match(rejected.stderr, /claim token 无效/);
 
   const submitted = JSON.parse(run([
     "host", "submit", "--project", project, "--host-id", "codex-host",
     "--worker-id", worker.worker_id,
+    "--claim-token", claimed.action.claim_token,
+    "--evidence-json", JSON.stringify(semanticEvidenceForWorker(project, worker)),
     "--summary", "已核对任务上下文、验收边界与未知项。"
   ]).stdout);
   assert.equal(submitted.result.status, "completed");
@@ -646,9 +746,159 @@ test("认知节点由当前 Host Agent claim 并提交语义 evidence", () => {
     "host-result.json"
   ));
   assert.equal(persisted.host_id, "codex-host");
+  assert.match(persisted.semantic_evidence_ref, /cognitive-evidence\.json$/);
 });
 
-test("Interactive Host Agent 对 workspace patch 建立基线并提交 merge queue", () => {
+test("cognitive Host action 拒绝 summary-only、空 source refs 和复制 objective", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithPlanGraph(project);
+  const worker = JSON.parse(run([
+    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
+    "--plan-node-id", "delivery-context"
+  ]).stdout);
+  const claimed = JSON.parse(run([
+    "host", "claim", "--project", project, "--host-id", "codex-host",
+    "--worker-id", worker.worker_id
+  ]).stdout);
+
+  const summaryOnly = run([
+    "host", "submit", "--project", project, "--host-id", "codex-host",
+    "--worker-id", worker.worker_id, "--claim-token", claimed.action.claim_token,
+    "--summary", "generic summary"
+  ], { expectFailure: true });
+  assert.match(summaryOnly.stderr, /typed semantic evidence/);
+
+  const invalid = semanticEvidenceForWorker(project, worker);
+  invalid.source_refs = [];
+  const emptyRefs = run([
+    "host", "submit", "--project", project, "--host-id", "codex-host",
+    "--worker-id", worker.worker_id, "--claim-token", claimed.action.claim_token,
+    "--evidence-json", JSON.stringify(invalid),
+    "--summary", "invalid refs"
+  ], { expectFailure: true });
+  assert.match(emptyRefs.stderr, /cognitive evidence contract 无效/);
+
+  const copied = semanticEvidenceForWorker(project, worker);
+  copied.claims = [worker.objective];
+  const copiedClaim = run([
+    "host", "submit", "--project", project, "--host-id", "codex-host",
+    "--worker-id", worker.worker_id, "--claim-token", claimed.action.claim_token,
+    "--evidence-json", JSON.stringify(copied),
+    "--summary", "copied objective"
+  ], { expectFailure: true });
+  assert.match(copiedClaim.stderr, /semantic conflict.*copied the objective/);
+});
+
+test("Host submit transaction failpoint 全量回滚并支持幂等重试", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithPlanGraph(project);
+  const worker = JSON.parse(run([
+    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
+    "--plan-node-id", "delivery-context"
+  ]).stdout);
+  const claimed = JSON.parse(run([
+    "host", "claim", "--project", project, "--host-id", "codex-host",
+    "--worker-id", worker.worker_id
+  ]).stdout);
+  const args = [
+    "host", "submit", "--project", project, "--host-id", "codex-host",
+    "--worker-id", worker.worker_id, "--claim-token", claimed.action.claim_token,
+    "--evidence-json", JSON.stringify(semanticEvidenceForWorker(project, worker)),
+    "--summary", "transactional cognitive evidence"
+  ];
+  const failed = run(args, {
+    expectFailure: true,
+    env: { ...process.env, APEX_V2_TRANSACTION_FAILPOINT: "host-submit" }
+  });
+  assert.match(failed.stderr, /transaction failpoint/);
+
+  const dir = join(
+    project,
+    ".apex-v2",
+    "runs",
+    deliveryRun.run_id,
+    "workers",
+    worker.worker_id
+  );
+  assert.equal(readJson(join(dir, "worker.json")).status, "claimed");
+  assert.equal(existsSync(join(dir, "host-result.json")), false);
+  assert.equal(existsSync(join(dir, "cognitive-evidence.json")), false);
+
+  const first = JSON.parse(run(args).stdout);
+  const replay = JSON.parse(run(args).stdout);
+  assert.equal(first.worker.status, "evidence_submitted");
+  assert.equal(replay.artifact_id, first.artifact_id);
+  assert.equal(replay.result.action_id, first.result.action_id);
+});
+
+test("过期 Host claim 可被重新领取且旧 fencing token 失效", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithPlanGraph(project);
+  const worker = JSON.parse(run([
+    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
+    "--plan-node-id", "delivery-context"
+  ]).stdout);
+  const first = JSON.parse(run([
+    "host", "claim", "--project", project, "--host-id", "codex-host",
+    "--worker-id", worker.worker_id
+  ]).stdout);
+  const dir = join(
+    project,
+    ".apex-v2",
+    "runs",
+    deliveryRun.run_id,
+    "workers",
+    worker.worker_id
+  );
+  const workerState = readJson(join(dir, "worker.json"));
+  workerState.claim_expires_at = "2000-01-01T00:00:00.000Z";
+  writeFileSync(join(dir, "worker.json"), `${JSON.stringify(workerState, null, 2)}\n`);
+  const actionState = readJson(join(dir, "host-action.json"));
+  actionState.lease_expires_at = "2000-01-01T00:00:00.000Z";
+  writeFileSync(join(dir, "host-action.json"), `${JSON.stringify(actionState, null, 2)}\n`);
+
+  const second = JSON.parse(run([
+    "host", "claim", "--project", project, "--host-id", "claude-code-host",
+    "--worker-id", worker.worker_id
+  ]).stdout);
+  assert.equal(second.worker.claimed_by, "claude-code-host");
+  assert.equal(second.action.fencing_token, first.action.fencing_token + 1);
+  assert.notEqual(second.action.claim_token, first.action.claim_token);
+
+  const stale = run([
+    "host", "submit", "--project", project, "--host-id", "codex-host",
+    "--worker-id", worker.worker_id, "--claim-token", first.action.claim_token,
+    "--summary", "stale claim"
+  ], { expectFailure: true });
+  assert.match(stale.stderr, /当前 host claim|claim token 无效/);
+});
+
+test("Interactive workspace patch 可显式禁用并保留 Factory 路径", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithPlanGraph(project);
+  const policyPath = join(project, ".apex-v2", "policies", "execution.json");
+  const policy = readJson(policyPath);
+  policy.interactive_workspace_patch = { enabled: false };
+  writeFileSync(policyPath, `${JSON.stringify(policy, null, 2)}\n`);
+  const worker = JSON.parse(run([
+    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
+    "--plan-node-id", "delivery-implementation"
+  ]).stdout);
+
+  const listed = JSON.parse(run([
+    "host", "actions", "--project", project, "--host-id", "codex-host"
+  ]).stdout);
+  assert.equal(listed.some((item) => item.worker_id === worker.worker_id), false);
+  assert.equal(worker.preferred_mode, "factory");
+  const blocked = run([
+    "host", "claim", "--project", project, "--host-id", "codex-host",
+    "--worker-id", worker.worker_id
+  ], { expectFailure: true });
+  assert.match(blocked.stderr, /不是可 claim 的 Interactive Host action/);
+  assert.equal(worker.adapter, "codex");
+});
+
+test("Interactive Host Agent 在 ActionWorkspace 提交 merge queue", () => {
   const project = tempProject();
   const { deliveryRun } = createRunWithPlanGraph(project);
   const worker = JSON.parse(run([
@@ -664,11 +914,18 @@ test("Interactive Host Agent 对 workspace patch 建立基线并提交 merge que
   ]).stdout);
   assert.equal(claimed.worker.adapter, "host");
   assert.equal(claimed.worker.factory_executor_id, "codex");
+  assert.ok(claimed.action.payload.workspace_path);
+  assert.match(claimed.workspace.base_fingerprint, /^[a-f0-9]{64}$/);
 
-  writeProjectFile(project, "src/apex-v2.mjs", "console.log('interactive host change');\n");
+  writeProjectFile(
+    project,
+    `${claimed.action.payload.workspace_path}/src/apex-v2.mjs`,
+    "console.log('interactive host change');\n"
+  );
   const submitted = JSON.parse(run([
     "host", "submit", "--project", project, "--host-id", "codex-host",
     "--worker-id", worker.worker_id,
+    "--claim-token", claimed.action.claim_token,
     "--summary", "当前 Codex 已完成受控实现。"
   ]).stdout);
   assert.ok(submitted.patch_id);
@@ -685,35 +942,47 @@ test("Interactive Host Agent 对 workspace patch 建立基线并提交 merge que
     "patch-bundle.json"
   ));
   assert.deepEqual(patch.changed_files, ["src/apex-v2.mjs"]);
+  assert.equal(
+    readFileSync(join(project, "src", "apex-v2.mjs"), "utf8"),
+    "console.log('cli');\n"
+  );
 });
 
-test("Interactive Host Agent 取消 action 时恢复工作区基线", () => {
+test("Interactive Host Agent 取消 action 时只删除 ActionWorkspace", () => {
   const project = tempProject();
   const { deliveryRun } = createRunWithPlanGraph(project);
+  enableInteractiveWorkspacePatch(project);
   const original = readFileSync(join(project, "src", "apex-v2.mjs"), "utf8");
   const worker = JSON.parse(run([
     "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
     "--plan-node-id", "delivery-implementation"
   ]).stdout);
-  run([
+  const claimed = JSON.parse(run([
     "host", "claim", "--project", project, "--host-id", "codex-host",
     "--worker-id", worker.worker_id
-  ]);
-  writeProjectFile(project, "src/apex-v2.mjs", "console.log('cancel me');\n");
+  ]).stdout);
+  writeProjectFile(
+    project,
+    `${claimed.action.payload.workspace_path}/src/apex-v2.mjs`,
+    "console.log('cancel me');\n"
+  );
 
   const cancelled = JSON.parse(run([
     "host", "cancel", "--project", project, "--host-id", "codex-host",
-    "--worker-id", worker.worker_id, "--reason", "user cancelled"
+    "--worker-id", worker.worker_id, "--claim-token", claimed.action.claim_token,
+    "--reason", "user cancelled"
   ]).stdout);
 
   assert.equal(cancelled.result.status, "cancelled");
   assert.equal(cancelled.worker.status, "cancelled");
   assert.equal(readFileSync(join(project, "src", "apex-v2.mjs"), "utf8"), original);
+  assert.equal(existsSync(join(project, claimed.action.payload.workspace_path)), false);
 });
 
 test("Interactive workspace patch action 必须串行 claim", () => {
   const project = tempProject();
   const { deliveryRun } = createRunWithPlanGraph(project);
+  enableInteractiveWorkspacePatch(project);
   const implementation = JSON.parse(run([
     "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
     "--plan-node-id", "delivery-implementation"
@@ -723,20 +992,26 @@ test("Interactive workspace patch action 必须串行 claim", () => {
     "--plan-node-id", "delivery-tests"
   ]).stdout);
 
-  run([
+  const firstClaim = JSON.parse(run([
     "host", "claim", "--project", project, "--host-id", "codex-host",
     "--worker-id", implementation.worker_id
-  ]);
+  ]).stdout);
   const blocked = run([
     "host", "claim", "--project", project, "--host-id", "codex-host",
     "--worker-id", testsWorker.worker_id
   ], { expectFailure: true });
   assert.match(blocked.stderr, /已有 workspace_patch action 被 claim/);
 
-  writeProjectFile(project, "src/apex-v2.mjs", "console.log('first patch');\n");
+  writeProjectFile(
+    project,
+    `${firstClaim.action.payload.workspace_path}/src/apex-v2.mjs`,
+    "console.log('first patch');\n"
+  );
   run([
     "host", "submit", "--project", project, "--host-id", "codex-host",
-    "--worker-id", implementation.worker_id, "--summary", "first patch"
+    "--worker-id", implementation.worker_id,
+    "--claim-token", firstClaim.action.claim_token,
+    "--summary", "first patch"
   ]);
   const claimed = JSON.parse(run([
     "host", "claim", "--project", project, "--host-id", "codex-host",
@@ -798,6 +1073,7 @@ test("project tick --complete-execute 必须等待全部 PlanGraph 节点完成"
   const project = tempProject();
   seedProjectFiles(project);
   const { deliveryRun } = createRunWithPlanGraph(project);
+  enableInteractiveWorkspacePatch(project);
 
   const evidenceWorker = JSON.parse(run([
     "worker",
@@ -1154,15 +1430,15 @@ test("PARTIAL_PASS 必须声明 carry-forward，且未处理风险会暂停 run"
     "run", "node", "complete", "--project", project, "--run-id", deliveryRun.run_id,
     "--node-id", "mandate", "--gate", "PARTIAL_PASS",
     "--evidence", mandateArtifact.artifact_id,
-    "--carry-forward", "验收 owner 尚未最终确认",
+    "--carry-forward", "验收 owner 尚未最终确认,安全 owner 尚未最终确认",
     "--carry-severity", "high",
     "--carry-target", "review",
     "--reason", "目标可继续规划，但最终验收需人工确认"
   ]).stdout);
   assert.equal(partial.nodes.find((node) => node.id === "mandate").status, "partial_pass");
-  assert.equal(partial.carry_forward.length, 1);
+  assert.equal(partial.carry_forward.length, 2);
   assert.equal(partial.carry_forward[0].status, "open");
-  assert.equal(JSON.parse(run(["risk", "list", "--project", project, "--status", "open"]).stdout).length, 1);
+  assert.equal(JSON.parse(run(["risk", "list", "--project", project, "--status", "open"]).stdout).length, 2);
 
   const contextArtifact = passNode(project, deliveryRun.run_id, "context");
   for (const nodeId of ["plan_graph", "execute", "verify", "review", "integrate", "learn"]) {
@@ -1175,16 +1451,45 @@ test("PARTIAL_PASS 必须声明 carry-forward，且未处理风险会暂停 run"
   assert.deepEqual(readJson(join(root, "project.json")).active_runs, [deliveryRun.run_id]);
   assert.equal(readJson(join(root, "roadmap", "graph.json")).nodes.find((node) => node.id === roadmapNode.id).status, "active");
 
-  const resolved = JSON.parse(run([
+  const firstResolved = JSON.parse(run([
     "run", "carry", "resolve", "--project", project, "--run-id", deliveryRun.run_id,
     "--id", paused.carry_forward[0].id, "--evidence", contextArtifact.artifact_id,
     "--reason", "验收 owner 已通过 context evidence 确认"
   ]).stdout);
+  assert.equal(firstResolved.carry.status, "resolved");
+  assert.equal(firstResolved.run.status, "paused");
+  assert.equal(firstResolved.run.nodes.find((node) => node.id === "mandate").status, "partial_pass");
+  assert.equal(JSON.parse(run(["risk", "list", "--project", project, "--status", "open"]).stdout).length, 1);
+
+  const resolved = JSON.parse(run([
+    "run", "carry", "resolve", "--project", project, "--run-id", deliveryRun.run_id,
+    "--id", paused.carry_forward[1].id, "--evidence", contextArtifact.artifact_id,
+    "--reason", "安全 owner 已通过 context evidence 确认"
+  ]).stdout);
   assert.equal(resolved.carry.status, "resolved");
   assert.equal(resolved.run.status, "done");
-  assert.equal(JSON.parse(run(["risk", "list", "--project", project, "--status", "mitigated"]).stdout).length, 1);
+  assert.equal(resolved.run.gate.status, "PASS");
+  assert.equal(resolved.run.nodes.find((node) => node.id === "mandate").status, "passed");
+  assert.equal(resolved.run.nodes.find((node) => node.id === "mandate").gate.status, "PASS");
+  assert.equal(JSON.parse(run(["risk", "list", "--project", project, "--status", "mitigated"]).stdout).length, 2);
   assert.deepEqual(readJson(join(root, "project.json")).active_runs, []);
   assert.equal(readJson(join(root, "roadmap", "graph.json")).nodes.find((node) => node.id === roadmapNode.id).status, "done");
+
+  const events = readFileSync(join(root, "events.jsonl"), "utf8")
+    .trim()
+    .split("\n")
+    .map(JSON.parse);
+  const carryEvents = events.filter((event) => event.type === "run.carry.updated");
+  assert.equal(carryEvents[0].payload.source_node_promoted, false);
+  assert.deepEqual(carryEvents[0].payload.remaining_open_carry_ids, [paused.carry_forward[1].id]);
+  assert.equal(carryEvents[1].payload.source_node_promoted, true);
+  assert.deepEqual(carryEvents[1].payload.remaining_open_carry_ids, []);
+  assert.ok(events.some((event) =>
+    event.type === "run.node.completed"
+    && event.payload.node_id === "mandate"
+    && event.payload.gate === "PASS"
+    && event.payload.via === "carry-forward"
+  ));
 });
 
 test("所有节点 PASS 后自动关闭 delivery run 并回写 roadmap/project 状态", () => {
@@ -1278,6 +1583,44 @@ test("fail 和 escalate 节点动作写入可追踪 gate 状态", () => {
   const review = escalated.nodes.find((node) => node.id === "review");
   assert.equal(review.status, "escalated");
   assert.equal(review.gate.status, "ESCALATE");
+});
+
+test("HALT 将 run 终止并从 active_runs 移除", () => {
+  const project = tempProject();
+  const { roadmapNode, deliveryRun } = createAcceptedRun(project);
+  const halted = JSON.parse(run([
+    "run",
+    "node",
+    "complete",
+    "--project",
+    project,
+    "--run-id",
+    deliveryRun.run_id,
+    "--node-id",
+    "plan_graph",
+    "--gate",
+    "HALT",
+    "--reason",
+    "superseded run"
+  ]).stdout);
+  assert.equal(halted.status, "halted");
+  assert.equal(halted.nodes.find((node) => node.id === "plan_graph").status, "halted");
+  const root = join(project, ".apex-v2");
+  assert.deepEqual(readJson(join(root, "project.json")).active_runs, []);
+  assert.equal(
+    readJson(join(root, "roadmap", "graph.json")).nodes
+      .find((node) => node.id === roadmapNode.id).status,
+    "blocked"
+  );
+  const reconciled = JSON.parse(run([
+    "project", "reconcile", "--project", project, "--dry-run"
+  ]).stdout);
+  assert.equal(reconciled.status, "CONSISTENT");
+  assert.deepEqual(reconciled.inspection.event_replay.active_runs, []);
+  assert.match(
+    readFileSync(join(root, "events.jsonl"), "utf8"),
+    /"type":"run\.halted"/
+  );
 });
 
 test("knowledge refresh 将占位知识库升级为带来源的 Context Fabric", () => {
@@ -1404,7 +1747,7 @@ test("plan graph 会按 intake 类型、标题和 affected area 生成任务相�
     "--title",
     "修复 session 恢复丢失状态",
     "--description",
-    "恢复后必须保留最后一个 gate 和 evidence refs。",
+    "恢复后必须保留最后一个 gate 和 evidence refs。\nPublic acceptance commands: node --test tests/session.test.mjs; node --check src/session.mjs",
     "--area",
     "src/session.mjs,tests/session.test.mjs"
   ]).stdout);
@@ -1416,9 +1759,15 @@ test("plan graph 会按 intake 类型、标题和 affected area 生成任务相�
 
   const generated = JSON.parse(run(["run", "plan", "generate", "--project", project, "--run-id", deliveryRun.run_id]).stdout);
   assert.equal(generated.plan.source_intake_id, intake.id);
+  assert.equal(generated.plan.profile, "full");
   assert.equal(generated.plan.source_intake_type, "bug");
   assert.equal(generated.plan.source_title, "修复 session 恢复丢失状态");
   assert.match(generated.plan.strategy, /先复现失败/);
+  assert.deepEqual(generated.plan.verification_policy.required_commands, [
+    "node --test tests/session.test.mjs",
+    "node --check src/session.mjs"
+  ]);
+  assert.equal(generated.plan.verification_policy.schema_check, null);
   assert.ok(generated.plan.planning_basis.some((ref) => ref.includes(intake.id)));
   const implementation = generated.plan.nodes.find((node) => node.id === "delivery-implementation");
   const tests = generated.plan.nodes.find((node) => node.id === "delivery-tests");
@@ -1433,6 +1782,54 @@ test("plan graph 会按 intake 类型、标题和 affected area 生成任务相�
   assert.equal(tests.execution_class, "workspace_patch");
   assert.ok(generated.plan.nodes.every((node) => node.objective.includes("修复 session 恢复丢失状态")));
   assert.ok(generated.plan.nodes.every((node) => !node.title.includes("Project Kernel")));
+});
+
+test("明确低风险少文件任务使用 quick PlanGraph 单 patch 路由", () => {
+  const project = tempProject();
+  seedProjectFiles(project);
+  writeProjectFile(project, "src/semver.mjs", "export function satisfies() { return true; }\n");
+  writeProjectFile(project, "tests/semver.test.mjs", "import test from 'node:test';\n");
+  run(["init", "--project", project, "--name", "Quick Plan"]);
+  const intake = JSON.parse(run([
+    "intake",
+    "add",
+    "--project",
+    project,
+    "--type",
+    "feature",
+    "--title",
+    "Add semver boundary",
+    "--description",
+    "Extend semver behavior and update focused tests. Only the declared files may change.",
+    "--area",
+    "src/semver.mjs,tests/semver.test.mjs"
+  ]).stdout);
+  run(["intake", "triage", "--project", project, "--id", intake.id, "--decision", "accepted"]);
+  const roadmap = JSON.parse(run([
+    "roadmap", "promote", "--project", project, "--intake-id", intake.id
+  ]).stdout);
+  const deliveryRun = JSON.parse(run([
+    "run", "create", "--project", project, "--roadmap-id", roadmap.id
+  ]).stdout);
+  passNode(project, deliveryRun.run_id, "mandate");
+  passNode(project, deliveryRun.run_id, "context");
+
+  const generated = JSON.parse(run([
+    "run", "plan", "generate", "--project", project, "--run-id", deliveryRun.run_id
+  ]).stdout);
+  assert.equal(generated.validation.status, "PASS");
+  assert.equal(generated.plan.profile, "quick");
+  assert.deepEqual(
+    generated.plan.nodes.map((node) => node.id),
+    ["delivery-implementation", "delivery-review"]
+  );
+  const implementation = generated.plan.nodes[0];
+  assert.deepEqual(
+    implementation.write_scope,
+    ["src/semver.mjs", "tests/semver.test.mjs"]
+  );
+  assert.equal(implementation.execution_hints.estimated_duration_minutes, 8);
+  assert.deepEqual(generated.plan.nodes[1].dependencies, ["delivery-implementation"]);
 });
 
 test("worker 只能按 plan node 的 write_scope 提交 patch bundle", () => {
@@ -1784,20 +2181,34 @@ test("shell 仅执行 deterministic worker，human decision 保持可追踪", ()
   assert.equal(decision.result.status, "DECISION");
   assert.match(decision.artifact_id, /^artifact-/);
 
+  const failureProject = tempProject();
+  const { deliveryRun: failureRun } = createRunWithPlanGraph(failureProject);
+  const failureWorker = JSON.parse(run([
+    "worker",
+    "create",
+    "--project",
+    failureProject,
+    "--run-id",
+    failureRun.run_id,
+    "--plan-node-id",
+    "delivery-verification"
+  ]).stdout);
   const failed = JSON.parse(run([
     "worker",
     "exec-shell",
     "--project",
-    project,
+    failureProject,
     "--worker-id",
-    shellWorker.worker_id,
+    failureWorker.worker_id,
     "--cmd",
     "node -e \"process.exit(7)\""
   ]).stdout);
   assert.equal(failed.result.status, "FAIL");
 
-  const workers = JSON.parse(run(["worker", "list", "--project", project, "--run-id", deliveryRun.run_id]).stdout);
-  assert.equal(workers.find((item) => item.worker_id === shellWorker.worker_id).status, "blocked");
+  const workers = JSON.parse(run([
+    "worker", "list", "--project", failureProject, "--run-id", failureRun.run_id
+  ]).stdout);
+  assert.equal(workers.find((item) => item.worker_id === failureWorker.worker_id).status, "blocked");
 });
 
 test("adapter registry 检测多 CLI 并按显式 fallback order 解析", () => {
@@ -2020,6 +2431,45 @@ test("worker exec-agent 在 scratch 副本执行 Codex 并自动生成 patch bun
   assert.ok(existsSync(join(root, "runs", deliveryRun.run_id, "workers", worker.worker_id, "agent-result.json")));
 });
 
+test("worker execution commit failpoint 回滚 authority 并可重试", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithPlanGraph(project);
+  const fakeCodex = createFakeCodex(project);
+  const worker = JSON.parse(run([
+    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
+    "--plan-node-id", "delivery-implementation"
+  ]).stdout);
+  run([
+    "worker", "sandbox", "init", "--project", project, "--worker-id", worker.worker_id,
+    "--type", "scratch"
+  ]);
+  const args = [
+    "worker", "exec-agent", "--project", project, "--worker-id", worker.worker_id,
+    "--adapter", "codex", "--command", fakeCodex, "--timeout-ms", "10000"
+  ];
+  const failed = run(args, {
+    expectFailure: true,
+    env: { ...process.env, APEX_V2_TRANSACTION_FAILPOINT: "worker-execution-commit" }
+  });
+  assert.match(failed.stderr, /transaction failpoint/);
+  const dir = join(
+    project,
+    ".apex-v2",
+    "runs",
+    deliveryRun.run_id,
+    "workers",
+    worker.worker_id
+  );
+  assert.equal(readJson(join(dir, "worker.json")).status, "active");
+  assert.equal(existsSync(join(dir, "patch-bundle.json")), false);
+  assert.equal(readdirSync(dir).some((file) => file.startsWith("adapter-result-")), false);
+
+  const retried = JSON.parse(run(args).stdout);
+  assert.equal(retried.result.status, "PASS");
+  assert.equal(retried.patch.changed_files[0], "src/apex-v2.mjs");
+  assert.equal(readJson(join(dir, "worker.json")).status, "patch_submitted");
+});
+
 test("project tick --run-agents 自动初始化 sandbox、运行 Codex 并把 patch 加入 merge queue", () => {
   const project = tempProject();
   const { deliveryRun } = createRunWithPlanGraph(project);
@@ -2080,6 +2530,39 @@ test("worker exec-agent 检测并阻断 Codex 越界写入", () => {
   ], { expectFailure: true });
   assert.match(retryRejected.stderr, /不允许 retry：scope_violation/);
   assert.equal(existsSync(join(project, workerState.sandbox.path)), true);
+});
+
+test("invalid Agent output 保留为非权威 evidence 且 strict contracts 继续通过", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithPlanGraph(project);
+  const fakeCodex = createFakeCodex(project, { invalidResult: true });
+  const worker = JSON.parse(run([
+    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
+    "--plan-node-id", "delivery-implementation"
+  ]).stdout);
+  run([
+    "worker", "sandbox", "init", "--project", project, "--worker-id", worker.worker_id,
+    "--type", "scratch"
+  ]);
+
+  const executed = JSON.parse(run([
+    "worker", "exec-agent", "--project", project, "--worker-id", worker.worker_id,
+    "--adapter", "codex", "--command", fakeCodex, "--timeout-ms", "10000"
+  ]).stdout);
+  assert.equal(executed.result.status, "FAIL");
+  assert.equal(executed.result.failure_kind, "contract_error");
+  const dir = join(
+    project,
+    ".apex-v2",
+    "runs",
+    deliveryRun.run_id,
+    "workers",
+    worker.worker_id
+  );
+  assert.equal(existsSync(join(dir, "agent-result.json")), false);
+  assert.equal(existsSync(join(dir, "agent-output-invalid.txt")), true);
+  const contracts = JSON.parse(run(["contracts", "validate", "--project", project]).stdout);
+  assert.equal(contracts.status, "PASS");
 });
 
 test("worker fallback 在 retryable adapter failure 后切换到下一个可用 runtime", () => {
@@ -2270,6 +2753,46 @@ test("merge queue 接收无冲突并行 patch，并在同文件 patch 时生成�
   assert.ok(blockedWorkers.length >= 2);
 });
 
+test("merge enqueue transaction failpoint 回滚 queue 和 worker 后可重试", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithPlanGraph(project);
+  const worker = JSON.parse(run([
+    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
+    "--plan-node-id", "delivery-implementation"
+  ]).stdout);
+  const patch = JSON.parse(run([
+    "worker", "submit-patch", "--project", project, "--worker-id", worker.worker_id,
+    "--summary", "enqueue failpoint", "--files", "src/apex-v2.mjs",
+    "--replace-file", "src/apex-v2.mjs",
+    "--old-text", "console.log('cli');",
+    "--new-text", "console.log('queued');"
+  ]).stdout);
+  const args = [
+    "merge", "enqueue", "--project", project, "--run-id", deliveryRun.run_id,
+    "--patch-id", patch.patch.patch_id
+  ];
+  const failed = run(args, {
+    expectFailure: true,
+    env: { ...process.env, APEX_V2_TRANSACTION_FAILPOINT: "merge-enqueue" }
+  });
+  assert.match(failed.stderr, /transaction failpoint/);
+  const root = join(project, ".apex-v2");
+  const queuePath = join(root, "runs", deliveryRun.run_id, "merge-queue.json");
+  assert.equal(existsSync(queuePath), false);
+  assert.equal(readJson(join(
+    root,
+    "runs",
+    deliveryRun.run_id,
+    "workers",
+    worker.worker_id,
+    "worker.json"
+  )).status, "patch_submitted");
+
+  const queued = JSON.parse(run(args).stdout);
+  assert.equal(queued.items.length, 1);
+  assert.equal(queued.items[0].status, "queued");
+});
+
 test("verify run 运行验证命令并产出 verification artifact", () => {
   const project = tempProject();
   const { deliveryRun } = createRunWithQueuedPatches(project);
@@ -2288,6 +2811,117 @@ test("verify run 运行验证命令并产出 verification artifact", () => {
   passNodeWithEvidence(project, deliveryRun.run_id, "verify", verified.artifact_id);
   const runState = readJson(join(root, "runs", deliveryRun.run_id, "run.json"));
   assert.equal(runState.nodes.find((node) => node.id === "verify").status, "passed");
+});
+
+test("staged verification preserves Git semantics and linked dependencies", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithQueuedPatches(project);
+  const dependencies = mkdtempSync(join(tmpdir(), "apex-v2-verification-deps-"));
+  mkdirSync(join(dependencies, "fixture-package"), { recursive: true });
+  writeFileSync(
+    join(dependencies, "fixture-package", "package.json"),
+    `${JSON.stringify({ name: "fixture-package", version: "1.0.0" })}\n`
+  );
+  symlinkSync(dependencies, join(project, "node_modules"), "dir");
+  const planPath = join(
+    project,
+    ".apex-v2",
+    "runs",
+    deliveryRun.run_id,
+    "plan-graph.json"
+  );
+  const plan = readJson(planPath);
+  plan.verification_policy.required_commands = [
+    "git rev-parse --is-inside-work-tree",
+    "node -e \"require.resolve('fixture-package/package.json')\"",
+    "node -e \"require('node:fs').mkdirSync('node_modules/.vite-temp', { recursive: true }); require('node:fs').writeFileSync('node_modules/.vite-temp/cache.mjs', 'ok')\"",
+    "node -e \"if (!process.env.HOME.includes('apex-v2-verify-') || !process.env.TMPDIR.includes('apex-v2-verify-')) process.exit(1)\""
+  ];
+  plan.verification_policy.schema_check = "";
+  writeFileSync(planPath, `${JSON.stringify(plan, null, 2)}\n`);
+  const projectTmp = join(project, ".apex-v2", "tmp");
+  mkdirSync(projectTmp, { recursive: true });
+
+  const verified = JSON.parse(run([
+    "verify", "run", "--project", project, "--run-id", deliveryRun.run_id
+  ], {
+    env: {
+      ...process.env,
+      TMPDIR: projectTmp
+    }
+  }).stdout);
+  assert.equal(verified.report.status, "PASS");
+  assert.equal(verified.report.workspace.preparation_error, "");
+  assert.ok(verified.report.checks.every((check) => check.status === "PASS"));
+  assert.equal(existsSync(join(dependencies, ".vite-temp")), false);
+});
+
+test("staged verification reaps escaped daemons and fails closed", async () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithQueuedPatches(project);
+  const daemonPidPath = join(project, ".apex-v2", "tmp", "verification-daemon.pid");
+  mkdirSync(join(project, ".apex-v2", "tmp"), { recursive: true });
+  const planPath = join(
+    project,
+    ".apex-v2",
+    "runs",
+    deliveryRun.run_id,
+    "plan-graph.json"
+  );
+  const plan = readJson(planPath);
+  plan.verification_policy.required_commands = [
+    "node -e \"const {spawn}=require('node:child_process'); const fs=require('node:fs'); const child=spawn(process.execPath,['-e','setInterval(() => {}, 1000)'],{detached:true,stdio:'ignore'}); child.unref(); fs.writeFileSync(process.env.APEX_TEST_DAEMON_PID_PATH,String(child.pid))\""
+  ];
+  plan.verification_policy.schema_check = "";
+  writeFileSync(planPath, `${JSON.stringify(plan, null, 2)}\n`);
+
+  let daemonPid = null;
+  try {
+    const verified = JSON.parse(run([
+      "verify", "run", "--project", project, "--run-id", deliveryRun.run_id
+    ], {
+      env: {
+        ...process.env,
+        APEX_TEST_DAEMON_PID_PATH: daemonPidPath
+      }
+    }).stdout);
+    assert.equal(verified.report.status, "FAIL");
+    assert.ok(verified.report.checks.some((check) =>
+      check.status === "FAIL"
+      && /orphan workspace processes reaped/i.test(check.stderr_tail)
+    ));
+    daemonPid = Number(readFileSync(daemonPidPath, "utf8"));
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    assert.throws(() => process.kill(daemonPid, 0), /ESRCH/);
+  } finally {
+    if (daemonPid) {
+      try {
+        process.kill(-daemonPid, "SIGKILL");
+      } catch {}
+      try {
+        process.kill(daemonPid, "SIGKILL");
+      } catch {}
+    }
+  }
+});
+
+test("verification commit failpoint 不留下半完成 authority 并可重试", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithQueuedPatches(project);
+  const args = ["verify", "run", "--project", project, "--run-id", deliveryRun.run_id];
+  const failed = run(args, {
+    expectFailure: true,
+    env: { ...process.env, APEX_V2_TRANSACTION_FAILPOINT: "verification-commit" }
+  });
+  assert.match(failed.stderr, /transaction failpoint/);
+  const runDir = join(project, ".apex-v2", "runs", deliveryRun.run_id);
+  assert.equal(existsSync(join(runDir, "verification-report.json")), false);
+  assert.equal(existsSync(join(runDir, "candidates")), false);
+
+  const verified = JSON.parse(run(args).stdout);
+  assert.equal(verified.report.status, "PASS");
+  assert.equal(existsSync(join(runDir, "verification-report.json")), true);
+  assert.equal(readdirSync(join(runDir, "candidates")).length, 1);
 });
 
 test("verify run 在 staged workspace 捕获候选 patch 语法错误且不污染项目根目录", () => {
@@ -2349,8 +2983,52 @@ test("review generate 在验证未通过或 merge queue 冲突时阻断，在条
   const review = JSON.parse(run(["review", "generate", "--project", project, "--run-id", deliveryRun.run_id]).stdout);
   assert.equal(review.report.status, "PASS");
   assert.equal(review.report.blocking_findings.length, 0);
+  assert.match(verified.report.candidate_digest, /^[a-f0-9]{64}$/);
+  assert.equal(review.report.candidate_digest, verified.report.candidate_digest);
   assert.ok(JSON.parse(run(["risk", "list", "--project", project, "--status", "mitigated"]).stdout).some((risk) => risk.source === "review"));
   passNodeWithEvidence(project, deliveryRun.run_id, "review", review.artifact_id);
+});
+
+test("patch 内容在 verification 后变化会使 review BLOCKED", () => {
+  const project = tempProject();
+  const { deliveryRun, workerA, patchA } = createRunWithQueuedPatches(project);
+  const verified = JSON.parse(run(["verify", "run", "--project", project, "--run-id", deliveryRun.run_id]).stdout);
+  passNodeWithEvidence(project, deliveryRun.run_id, "verify", verified.artifact_id);
+
+  const patchPath = join(
+    project,
+    ".apex-v2",
+    "runs",
+    deliveryRun.run_id,
+    "workers",
+    workerA.worker_id,
+    "patches",
+    patchA.patch.patch_id,
+    "patch-bundle.json"
+  );
+  const patch = readJson(patchPath);
+  patch.operations[0].new_text = "console.log('mutated after verification');";
+  writeFileSync(patchPath, `${JSON.stringify(patch, null, 2)}\n`);
+
+  const review = JSON.parse(run(["review", "generate", "--project", project, "--run-id", deliveryRun.run_id]).stdout);
+  assert.equal(review.report.status, "BLOCKED");
+  assert.ok(review.report.blocking_findings.some((finding) => finding.includes("当前 candidate")));
+  assert.notEqual(review.report.candidate_digest, verified.report.candidate_digest);
+});
+
+test("review 后 source drift 会使 merge 拒绝旧 candidate", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithQueuedPatches(project);
+  const verified = JSON.parse(run(["verify", "run", "--project", project, "--run-id", deliveryRun.run_id]).stdout);
+  passNodeWithEvidence(project, deliveryRun.run_id, "verify", verified.artifact_id);
+  const review = JSON.parse(run(["review", "generate", "--project", project, "--run-id", deliveryRun.run_id]).stdout);
+  passNodeWithEvidence(project, deliveryRun.run_id, "review", review.artifact_id);
+  writeProjectFile(project, "README.md", "concurrent source drift\n");
+
+  const blocked = run(["merge", "apply", "--project", project, "--run-id", deliveryRun.run_id], {
+    expectFailure: true
+  });
+  assert.match(blocked.stderr, /当前 candidate/);
 });
 
 test("merge apply 必须等待 review PASS，成功后标记 patch 和 worker 为 merged", () => {
@@ -2369,6 +3047,7 @@ test("merge apply 必须等待 review PASS，成功后标记 patch 和 worker �
 
   const applied = JSON.parse(run(["merge", "apply", "--project", project, "--run-id", deliveryRun.run_id]).stdout);
   assert.equal(applied.report.status, "MERGED");
+  assert.equal(applied.report.candidate_digest, verified.report.candidate_digest);
   assert.deepEqual(applied.report.merged_patches.sort(), [patchA.patch.patch_id, patchB.patch.patch_id].sort());
   assert.match(applied.artifact_id, /^artifact-/);
 
@@ -2380,6 +3059,15 @@ test("merge apply 必须等待 review PASS，成功后标记 patch 和 worker �
 
   const workers = JSON.parse(run(["worker", "list", "--project", project, "--run-id", deliveryRun.run_id]).stdout);
   assert.ok(workers.every((worker) => worker.status === "merged"));
+
+  const frozenVerification = run([
+    "verify", "run", "--project", project, "--run-id", deliveryRun.run_id
+  ], { expectFailure: true });
+  assert.match(frozenVerification.stderr, /verification 已冻结/);
+  assert.equal(
+    readJson(join(root, "runs", deliveryRun.run_id, "verification-report.json")).candidate_digest,
+    verified.report.candidate_digest
+  );
 
   passNodeWithEvidence(project, deliveryRun.run_id, "integrate", applied.artifact_id);
 });
@@ -2403,6 +3091,7 @@ test("critical merge 必须通过内容指纹 approval 后才能 apply", () => {
   assert.equal(approvals.length, 1);
   assert.equal(approvals[0].status, "pending");
   assert.ok(approvals[0].reasons.includes("risk=critical"));
+  assert.equal(approvals[0].candidate_digest, verified.report.candidate_digest);
 
   const approved = JSON.parse(run([
     "approval", "decide", "--project", project, "--id", approvals[0].id,
@@ -2627,7 +3316,81 @@ test("merge resolve 可选择保留一个冲突 patch 并丢弃其他 patch 后�
   assert.equal(readFileSync(join(project, "src", "apex-v2.mjs"), "utf8"), "const alpha = 10;\n");
 });
 
-test("merge apply 拒绝 replace_text old_text 非唯一匹配", () => {
+test("同一 worker 重提 patch 保留不可变历史且 merge queue 可 reconcile", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithPlanGraph(project);
+  writeProjectFile(project, "src/apex-v2.mjs", "const alpha = 1;\n");
+  const worker = JSON.parse(run([
+    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
+    "--plan-node-id", "delivery-implementation"
+  ]).stdout);
+  const first = JSON.parse(run([
+    "worker", "submit-patch", "--project", project, "--worker-id", worker.worker_id,
+    "--summary", "first alpha patch", "--files", "src/apex-v2.mjs",
+    "--replace-file", "src/apex-v2.mjs", "--old-text", "const alpha = 1;", "--new-text", "const alpha = 10;"
+  ]).stdout);
+  run([
+    "merge", "enqueue", "--project", project, "--run-id", deliveryRun.run_id,
+    "--patch-id", first.patch.patch_id
+  ]);
+  const second = JSON.parse(run([
+    "worker", "submit-patch", "--project", project, "--worker-id", worker.worker_id,
+    "--summary", "second alpha patch", "--files", "src/apex-v2.mjs",
+    "--replace-file", "src/apex-v2.mjs", "--old-text", "const alpha = 1;", "--new-text", "const alpha = 11;"
+  ]).stdout);
+  const conflictQueue = JSON.parse(run([
+    "merge", "enqueue", "--project", project, "--run-id", deliveryRun.run_id,
+    "--patch-id", second.patch.patch_id
+  ]).stdout);
+  assert.equal(conflictQueue.conflicts.length, 1);
+
+  const workerRoot = join(
+    project,
+    ".apex-v2",
+    "runs",
+    deliveryRun.run_id,
+    "workers",
+    worker.worker_id
+  );
+  for (const patch of [first.patch, second.patch]) {
+    const immutablePath = join(
+      workerRoot,
+      "patches",
+      patch.patch_id,
+      "patch-bundle.json"
+    );
+    assert.equal(readJson(immutablePath).patch_id, patch.patch_id);
+  }
+
+  const reconciled = JSON.parse(run([
+    "project", "reconcile", "--project", project, "--dry-run"
+  ]).stdout);
+  assert.equal(reconciled.status, "CONSISTENT", JSON.stringify(reconciled.inspection?.issues));
+
+  const resolved = JSON.parse(run([
+    "merge", "resolve", "--project", project, "--run-id", deliveryRun.run_id,
+    "--keep-patch-id", second.patch.patch_id,
+    "--reason", "保留第二版 patch"
+  ]).stdout);
+  assert.equal(resolved.queue.conflicts.length, 0);
+  assert.deepEqual(resolved.resolution.dropped_patch_ids, [first.patch.patch_id]);
+  assert.equal(readJson(join(
+    workerRoot,
+    "patches",
+    first.patch.patch_id,
+    "patch-bundle.json"
+  )).status, "dropped");
+  const reconciledAfterResolve = JSON.parse(run([
+    "project", "reconcile", "--project", project, "--dry-run"
+  ]).stdout);
+  assert.equal(
+    reconciledAfterResolve.status,
+    "CONSISTENT",
+    JSON.stringify(reconciledAfterResolve.inspection?.issues)
+  );
+});
+
+test("staged verification 拒绝 replace_text old_text 非唯一匹配", () => {
   const project = tempProject();
   const { deliveryRun } = createRunWithPlanGraph(project);
   writeProjectFile(project, "src/apex-v2.mjs", "const alpha = 1;\nconst alpha = 1;\n");
@@ -2640,11 +3403,12 @@ test("merge apply 拒绝 replace_text old_text 非唯一匹配", () => {
   run(["merge", "enqueue", "--project", project, "--run-id", deliveryRun.run_id, "--patch-id", patch.patch.patch_id]);
   passNodeWithEvidence(project, deliveryRun.run_id, "execute", patch.artifact_id);
   const verified = JSON.parse(run(["verify", "run", "--project", project, "--run-id", deliveryRun.run_id]).stdout);
-  passNodeWithEvidence(project, deliveryRun.run_id, "verify", verified.artifact_id);
-  const review = JSON.parse(run(["review", "generate", "--project", project, "--run-id", deliveryRun.run_id]).stdout);
-  passNodeWithEvidence(project, deliveryRun.run_id, "review", review.artifact_id);
-  const failed = run(["merge", "apply", "--project", project, "--run-id", deliveryRun.run_id], { expectFailure: true });
-  assert.match(failed.stderr, /唯一匹配/);
+  assert.equal(verified.report.status, "FAIL");
+  assert.match(verified.report.workspace.preparation_error, /唯一匹配/);
+  assert.equal(
+    verified.report.checks.find((check) => check.id === "patch-materialization").status,
+    "FAIL"
+  );
 });
 
 test("submit-patch 拒绝 operation path 不在 changed_files 或不安全路径", () => {
@@ -2812,6 +3576,92 @@ test("project reconcile 检测并修复 ProjectState、Roadmap 和 knowledge 漂
   assert.match(currentProject.last_event_id, /^event-/);
   assert.equal(readJson(roadmapPath).nodes.find((node) => node.id === roadmapNode.id).status, "active");
   assert.ok(existsSync(join(root, "reconciliations", `${repaired.report_id}.json`)));
+});
+
+test("project reconcile 迁移历史 handled carry 时保持已完成 run 关闭", () => {
+  const project = tempProject();
+  seedProjectFiles(project);
+  const { roadmapNode, deliveryRun } = createAcceptedRun(project);
+  run(["run", "node", "start", "--project", project, "--run-id", deliveryRun.run_id, "--node-id", "mandate"]);
+  const mandateArtifact = JSON.parse(run([
+    "artifact", "submit", "--project", project, "--run-id", deliveryRun.run_id,
+    "--node-id", "mandate", "--type", "evidence", "--title", "historical partial mandate"
+  ]).stdout);
+  const partial = JSON.parse(run([
+    "run", "node", "complete", "--project", project, "--run-id", deliveryRun.run_id,
+    "--node-id", "mandate", "--gate", "PARTIAL_PASS",
+    "--evidence", mandateArtifact.artifact_id,
+    "--carry-forward", "预算 policy 进入下一波工作",
+    "--carry-severity", "low",
+    "--carry-target", "learn",
+    "--reason", "当前交付可关闭，但预算 policy 后续补齐"
+  ]).stdout);
+  for (const nodeId of ["context", "plan_graph", "execute", "verify", "review", "integrate", "learn"]) {
+    passNode(project, deliveryRun.run_id, nodeId);
+  }
+  run([
+    "run", "carry", "resolve", "--project", project, "--run-id", deliveryRun.run_id,
+    "--id", partial.carry_forward[0].id, "--evidence", mandateArtifact.artifact_id,
+    "--reason", "已接受进入下一波预算 policy 工作"
+  ]);
+
+  const root = join(project, ".apex-v2");
+  const runPath = join(root, "runs", deliveryRun.run_id, "run.json");
+  const historicalRun = readJson(runPath);
+  const mandate = historicalRun.nodes.find((node) => node.id === "mandate");
+  mandate.status = "partial_pass";
+  mandate.gate = {
+    status: "PARTIAL_PASS",
+    reason: "历史版本在 carry 已处理后未提升源节点",
+    blocking: [],
+    carry_forward_ids: [historicalRun.carry_forward[0].id]
+  };
+  historicalRun.status = "done";
+  historicalRun.gate = {
+    status: "PARTIAL_PASS",
+    reason: "历史版本允许 handled carry 的 partial node 直接关闭",
+    blocking: [],
+    carry_forward_ids: [historicalRun.carry_forward[0].id]
+  };
+  writeFileSync(runPath, `${JSON.stringify(historicalRun, null, 2)}\n`);
+
+  const dryRun = JSON.parse(run([
+    "project", "reconcile", "--project", project, "--dry-run"
+  ]).stdout);
+  assert.equal(dryRun.status, "DRIFT");
+  assert.deepEqual(dryRun.inspection.derived.active_runs, []);
+  assert.ok(dryRun.inspection.changes.some((change) =>
+    change.field === "nodes.mandate.status"
+    && change.actual === "partial_pass"
+    && change.expected === "passed"
+  ));
+  assert.equal(dryRun.inspection.changes.some((change) => change.field === "active_runs"), false);
+  assert.equal(dryRun.inspection.changes.some((change) =>
+    change.path.endsWith(`/runs/${deliveryRun.run_id}/run.json`)
+    && change.field === "status"
+  ), false);
+  assert.equal(dryRun.inspection.changes.some((change) =>
+    change.field === `nodes.${roadmapNode.id}.status`
+  ), false);
+
+  const repaired = JSON.parse(run([
+    "project", "reconcile", "--project", project, "--apply"
+  ]).stdout);
+  assert.equal(repaired.status, "REPAIRED");
+  assert.equal(repaired.post_check.status, "CONSISTENT");
+  const migratedRun = readJson(runPath);
+  assert.equal(migratedRun.status, "done");
+  assert.equal(migratedRun.gate.status, "PASS");
+  assert.equal(migratedRun.nodes.find((node) => node.id === "mandate").status, "passed");
+  assert.deepEqual(readJson(join(root, "project.json")).active_runs, []);
+  assert.equal(
+    readJson(join(root, "roadmap", "graph.json")).nodes.find((node) => node.id === roadmapNode.id).status,
+    "done"
+  );
+  assert.equal(
+    repaired.post_check.event_replay.operational_state_hash,
+    repaired.post_check.operational_state.state_hash
+  );
 });
 
 test("project reconcile 在 event log 损坏时拒绝 apply", () => {

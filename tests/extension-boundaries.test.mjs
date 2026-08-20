@@ -39,7 +39,10 @@ test("WorkerExecutor registry resolves arbitrary providers by capability", () =>
         version: "fixture",
         capabilities: ["workspace_write", "structured_output", "tool_use"]
       }),
-      execute: () => ({ exit_code: 0 })
+      execute: () => ({ exit_code: 0 }),
+      resume: () => ({ exit_code: 0 }),
+      cancel: () => ({ cancelled: true }),
+      collectUsage: () => ({})
     },
     {
       id: "read-only-runner",
@@ -48,7 +51,10 @@ test("WorkerExecutor registry resolves arbitrary providers by capability", () =>
         version: "fixture",
         capabilities: ["structured_output"]
       }),
-      execute: () => ({ exit_code: 0 })
+      execute: () => ({ exit_code: 0 }),
+      resume: () => ({ exit_code: 0 }),
+      cancel: () => ({ cancelled: true }),
+      collectUsage: () => ({})
     }
   ]);
 

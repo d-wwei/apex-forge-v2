@@ -50,7 +50,8 @@ function runLiveProbe(name, info, timeoutMs) {
       prompt,
       outputSchemaPath: RESULT_SCHEMA,
       outputPath,
-      timeoutMs
+      timeoutMs,
+      smoke: true
     });
     if (execution.exit_code !== 0 || !existsSync(outputPath)) {
       return { adapter: name, status: "FAIL", mode: "live", version: info.version, session_id: execution.session_id || null, duration_ms: execution.duration_ms, errors: [execution.stderr_tail || "missing structured output"] };

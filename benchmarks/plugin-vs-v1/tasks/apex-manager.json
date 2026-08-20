@@ -1,0 +1,184 @@
+{
+  "repository_id": "apex-manager",
+  "tasks": [
+    {
+      "scenario": "simple",
+      "title": "Use singular call wording in cost reports",
+      "instructions": "Update cost report formatting so a task with exactly one request displays `1 call`, while all other counts continue displaying `N calls`. Add focused coverage to the existing cost tests.",
+      "affected_files": [
+        "src/worker/cost.ts",
+        "tests/worker/cost.test.ts"
+      ],
+      "acceptance_commands": [
+        "node --import tsx --test tests/worker/cost.test.ts",
+        "npm run typecheck"
+      ],
+      "setup_operations": [],
+      "hidden_checks": [
+        {
+          "kind": "behavior",
+          "description": "A one-request cost entry uses singular wording.",
+          "command": "node --import tsx -e \"import {formatCostReport} from './src/worker/cost.ts'; const s={total_cost_usd:1,total_requests:1,by_task:{T1:{total_cost_usd:1,total_input_tokens:1,total_output_tokens:1,request_count:1}}}; const r=formatCostReport(s); if(!r.includes('1 call')||r.includes('1 calls')) process.exit(1)\""
+        },
+        {
+          "kind": "regression",
+          "description": "Existing cost behavior remains covered.",
+          "command": "node --import tsx --test tests/worker/cost.test.ts"
+        }
+      ]
+    },
+    {
+      "scenario": "multi-step",
+      "title": "Preserve comment markers inside quoted YAML values",
+      "instructions": "Correct `parseSimpleYaml` so `#` characters inside single- or double-quoted values are preserved, while trailing comments on unquoted values are still removed. Add tests for quoted values, unquoted inline comments, and ordinary values.",
+      "affected_files": [
+        "src/utils/config.ts",
+        "tests/commands/init.test.ts"
+      ],
+      "acceptance_commands": [
+        "node --import tsx --test tests/commands/init.test.ts",
+        "npm run typecheck"
+      ],
+      "setup_operations": [],
+      "hidden_checks": [
+        {
+          "kind": "behavior",
+          "description": "Quoted hash characters survive parsing while real inline comments do not.",
+          "command": "node --import tsx -e \"import {parseSimpleYaml} from './src/utils/config.ts'; const r=parseSimpleYaml('label: \\\"alpha # beta\\\"\\nmode: fast # local'); if(r.label!=='alpha # beta'||r.mode!=='fast') process.exit(1)\""
+        },
+        {
+          "kind": "regression",
+          "description": "Initialization behavior remains intact.",
+          "command": "node --import tsx --test tests/commands/init.test.ts"
+        }
+      ]
+    },
+    {
+      "scenario": "bug-fix",
+      "title": "Restore the tmux Ctrl-C interrupt mapping",
+      "instructions": "A regression maps the abstract `ctrlc` interrupt to Escape for tmux workers. Restore the correct `C-c` mapping and ensure the existing interrupt tests protect codex, gemini, unknown-agent, and cmux behavior.",
+      "affected_files": [
+        "src/worker/interrupt.ts",
+        "tests/worker/interrupt.test.ts"
+      ],
+      "acceptance_commands": [
+        "node --import tsx --test tests/worker/interrupt.test.ts",
+        "npm run typecheck"
+      ],
+      "setup_operations": [
+        {
+          "op": "replace_text",
+          "path": "src/worker/interrupt.ts",
+          "content": "",
+          "old_text": "  ctrlc: { cmux: \"ctrl-c\", tmux: \"C-c\" },",
+          "new_text": "  ctrlc: { cmux: \"ctrl-c\", tmux: \"Escape\" },"
+        }
+      ],
+      "hidden_checks": [
+        {
+          "kind": "behavior",
+          "description": "Configured Ctrl-C produces the correct adapter-specific keys.",
+          "command": "node --import tsx -e \"import {interruptKeys} from './src/worker/interrupt.ts'; if(JSON.stringify(interruptKeys('ctrlc','tmux'))!=='[\\\"C-c\\\"]'||JSON.stringify(interruptKeys('ctrlc','cmux'))!=='[\\\"ctrl-c\\\"]') process.exit(1)\""
+        },
+        {
+          "kind": "regression",
+          "description": "All interrupt aliases and fallback sequences still pass.",
+          "command": "node --import tsx --test tests/worker/interrupt.test.ts"
+        }
+      ]
+    },
+    {
+      "scenario": "interrupted",
+      "title": "Finish busy-screen detection for working workers",
+      "instructions": "Resume an interrupted idle-detection change. Extend codex, gemini, and opencode busy hints to recognize terminal output containing `working`, so a visible shell-like prompt in progress text is not mistaken for an idle worker. Add a regression case to the existing worker messaging tests without changing Claude behavior.",
+      "affected_files": [
+        "src/worker/idle.ts",
+        "tests/worker/messages.test.ts"
+      ],
+      "acceptance_commands": [
+        "node --import tsx --test tests/worker/messages.test.ts",
+        "npm run typecheck"
+      ],
+      "setup_operations": [],
+      "hidden_checks": [
+        {
+          "kind": "behavior",
+          "description": "Working screens are busy for supported CLI agents, but ready prompts remain idle.",
+          "command": "node --import tsx -e \"import {isWorkerIdleScreen} from './src/worker/idle.ts'; if(isWorkerIdleScreen('$ working on changes','codex')) process.exit(1); if(!isWorkerIdleScreen('$ ready','codex')) process.exit(1)\""
+        },
+        {
+          "kind": "closure",
+          "description": "Message delivery still defers busy workers and handles urgent interruption.",
+          "command": "node --import tsx --test tests/worker/messages.test.ts"
+        }
+      ]
+    },
+    {
+      "scenario": "review-defect",
+      "title": "Review and repair Authorization header redaction",
+      "instructions": "Review the injected redaction change as a security defect. Restore redaction of `Authorization: Bearer ...` and `Authorization=Bearer ...` values while preserving the header prefix. Add focused tests covering both separators and ensuring surrounding text remains visible.",
+      "affected_files": [
+        "src/utils/redact.ts",
+        "tests/daemon/notify.test.ts"
+      ],
+      "acceptance_commands": [
+        "node --import tsx --test tests/daemon/notify.test.ts",
+        "npm run typecheck"
+      ],
+      "setup_operations": [
+        {
+          "op": "replace_text",
+          "path": "src/utils/redact.ts",
+          "content": "",
+          "old_text": "  /\\b(Authorization\\s*[:=]\\s*Bearer\\s+)[A-Za-z0-9._~+/=-]+/gi,\n",
+          "new_text": ""
+        }
+      ],
+      "hidden_checks": [
+        {
+          "kind": "security",
+          "description": "Bearer credentials never remain in redacted output.",
+          "command": "node --import tsx -e \"import {redactSecrets} from './src/utils/redact.ts'; for(const s of ['Authorization: Bearer secret.token-123','Authorization=Bearer abcDEF123+/=']){const r=redactSecrets(s); if(r.includes('secret.token-123')||r.includes('abcDEF123+/=')||!r.includes('[REDACTED]')) process.exit(1)}\""
+        },
+        {
+          "kind": "regression",
+          "description": "Notification persistence continues redacting other secret forms.",
+          "command": "node --import tsx --test tests/daemon/notify.test.ts"
+        }
+      ]
+    },
+    {
+      "scenario": "parallel",
+      "title": "Harden rate-limit formatting and interrupt normalization",
+      "instructions": "Complete two independent changes in parallel. First, make rate-limit formatting produce deterministic percentages when token or request limits are zero, using `0%` rather than `NaN%` or `Infinity%`. Second, normalize configured interrupt names by trimming whitespace and matching case-insensitively. Add focused tests to the existing cost and interrupt suites.",
+      "affected_files": [
+        "src/worker/cost.ts",
+        "tests/worker/cost.test.ts",
+        "src/worker/interrupt.ts",
+        "tests/worker/interrupt.test.ts"
+      ],
+      "acceptance_commands": [
+        "node --import tsx --test tests/worker/cost.test.ts tests/worker/interrupt.test.ts",
+        "npm run typecheck"
+      ],
+      "setup_operations": [],
+      "hidden_checks": [
+        {
+          "kind": "behavior",
+          "description": "Zero rate-limit denominators never leak non-finite percentages.",
+          "command": "node --import tsx -e \"import {formatRateLimitStatus} from './src/worker/cost.ts'; const r=formatRateLimitStatus({tokens_remaining:0,tokens_limit:0,requests_remaining:0,requests_limit:0,utilization_5h:0,throttled:false,updated_at:''}); if(r.includes('NaN')||r.includes('Infinity')||(r.match(/0%/g)?.length??0)<2) process.exit(1)\""
+        },
+        {
+          "kind": "behavior",
+          "description": "Interrupt configuration accepts harmless whitespace and case variation.",
+          "command": "node --import tsx -e \"import {interruptKeys} from './src/worker/interrupt.ts'; if(JSON.stringify(interruptKeys(' CtrlC ','tmux'))!=='[\\\"C-c\\\"]'||JSON.stringify(interruptKeys(' ESC ','cmux'))!=='[\\\"escape\\\"]') process.exit(1)\""
+        },
+        {
+          "kind": "closure",
+          "description": "Both independent test suites close successfully together.",
+          "command": "node --import tsx --test tests/worker/cost.test.ts tests/worker/interrupt.test.ts"
+        }
+      ]
+    }
+  ]
+}

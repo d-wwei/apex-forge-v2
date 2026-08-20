@@ -1,0 +1,124 @@
+{
+  "task_id": "chorus--simple",
+  "task_digest": "7f305da54c12f38083a3ec96eb1e244d4c431120259cb356703cfb4a71764b58",
+  "repository": "chorus",
+  "scenario": "simple",
+  "mode": "v1-skill",
+  "candidate_digest": "45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 65758,
+    "cost": 230992,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 0,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "0713b8ddd34fe9c9b368e6d1cb0a96fa4ab69a92",
+    "runtime_hash": "fbb9635c7fd7b24c7799126c3640c4ddc3239b4be5e2a5b9dd3f5cce103f16fc",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "2340e082a8c95f3c110e5371524f9d5f32c5fd967f45f0fe3fccf1f2668b2930",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--simple--v1-skill/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--simple--v1-skill/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--simple--v1-skill/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--simple--v1-skill/codex-home/sessions/2026/08/20/rollout-2026-08-20T09-44-22-01a01cd7-3bf7-7093-924e-7fc159a19197.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--simple--v1-skill/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--simple--v1-skill/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--simple--v1-skill/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--simple--v1-skill/codex-home/sessions/2026/08/20/rollout-2026-08-20T09-44-22-01a01cd7-3bf7-7093-924e-7fc159a19197.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--simple--v1-skill/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "3cd35d504071f03c3dff5d8c3ad98acddead3ff499043962ec9b1411e7b28827",
+      "559d1ddf047dc4e94e88df0468d4a5c9ed5768497325c1925a4a40cb02ef3588",
+      "3535edeb9200d141360122978108e6ca958a318d05db7f49019730cb11086ba2",
+      "d6df221a9fa413e0b3ad9d9dd9cf3da4335a12d90a927feae69e6905bd8ca748",
+      "12777ed7f3e889edba68d172f65ad843151d83ba05578ec978dcb358c9ea9718"
+    ]
+  },
+  "evidence": {
+    "task_digest": "7f305da54c12f38083a3ec96eb1e244d4c431120259cb356703cfb4a71764b58",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a01cd7-3bf7-7093-924e-7fc159a19197",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Rejected whitespace-only option IDs and labels using trimmed validation. Added focused regression coverage.",
+      "tests": [
+        {
+          "command": "pnpm exec vitest run src/services/__tests__/elaboration.service.pure.test.ts",
+          "status": "fail",
+          "detail": "TDD red run: 2 new tests failed, 18 passed."
+        },
+        {
+          "command": "pnpm exec vitest run src/services/__tests__/elaboration.service.pure.test.ts",
+          "status": "pass",
+          "detail": "Final run: all 20 tests passed."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "src/services/elaboration.service.ts:486",
+        "src/services/__tests__/elaboration.service.pure.test.ts:89",
+        "src/services/__tests__/elaboration.service.pure.test.ts:100"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "pnpm exec vitest run src/services/__tests__/elaboration.service.pure.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 651,
+        "stdout_tail": "\n RUN  v4.1.0 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--simple--v1-skill/workspace\n\n ✓ src/services/__tests__/elaboration.service.pure.test.ts (20 tests) 3ms\n\n Test Files  1 passed (1)\n      Tests  20 passed (20)\n   Start at  09:45:28\n   Duration  236ms (transform 104ms, setup 0ms, import 166ms, tests 3ms, environment 0ms)\n\n",
+        "stderr_tail": "(node:59557) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "tmp=src/services/__tests__/benchmark-hidden-whitespace.test.ts; printf '%s\\n' 'import { it, expect, vi } from \"vitest\";' 'vi.mock(\"@/lib/prisma\", () => ({ prisma: {} }));' 'vi.mock(\"@/lib/event-bus\", () => ({ eventBus: { emitChange: vi.fn() } }));' 'vi.mock(\"@/services/activity.service\", () => ({ createActivity: vi.fn() }));' 'vi.mock(\"@/lib/uuid-resolver\", () => ({}));' 'import { validateQuestionsFormat } from \"@/services/elaboration.service\";' 'it(\"rejects whitespace-only option ids and labels\", () => {' '  const base={id:\"q\",text:\"Question?\",category:\"scope\",options:[{id:\"o1\",label:\"Valid\"},{id:\"o2\",label:\"Also valid\"}]};' '  expect(() => validateQuestionsFormat([{...base,options:[{id:\"   \",label:\"Valid\"},base.options[1]]}])).toThrow();' '  expect(() => validateQuestionsFormat([{...base,options:[{id:\"o1\",label:\"   \"},base.options[1]]}])).toThrow();' '});' > \"$tmp\"; pnpm exec vitest run \"$tmp\"; rc=$?; rm -f \"$tmp\"; exit $rc",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 643,
+        "stdout_tail": "\n RUN  v4.1.0 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6/runs/chorus--simple--v1-skill/workspace\n\n ✓ src/services/__tests__/benchmark-hidden-whitespace.test.ts (1 test) 1ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  09:45:29\n   Duration  213ms (transform 81ms, setup 0ms, import 140ms, tests 1ms, environment 0ms)\n\n",
+        "stderr_tail": "(node:59590) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      },
+      {
+        "command": "pnpm exec tsc --noEmit",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 4950,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/services/__tests__/elaboration.service.pure.test.ts",
+        "src/services/elaboration.service.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": false,
+      "evidence_score": 1,
+      "reason": "no .apex-v2 durable state"
+    }
+  }
+}

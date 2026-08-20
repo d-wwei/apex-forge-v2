@@ -9,12 +9,16 @@
 - Confirmed By: not yet confirmed
 - Confirmed At: not yet confirmed
 - Expectations: `EXPECTATIONS.md`
-- Current Phase: Phase 5 comparative Product Gate
-- Latest Report Status: provisional
+- Current Phase: Phase A complete; Phase B full replay and transition coverage in progress; release blocked
+- Latest Scored Report Status: provisional
 - Latest Report: `reports/audit-2026-08-14.md`
 - Latest Raw Results: `reports/audit-2026-08-14.json`
-- Current Readiness Score: 96.4%
-- Current Readiness Grade: A
+- Code And Plan Re-Audit: `CODE_AND_PLAN_REAUDIT.md`
+- Final Upgrade Plan: `planning/plugin-upgrade-plan.md`
+- Release Readiness: BLOCKED
+- Local Dogfood: allowed with Interactive workspace patch disabled or explicitly treated as unsafe
+- Current Readiness Score: 96.4% (legacy direction score; not valid as release readiness)
+- Current Readiness Grade: A (provisional and overridden by release blockers)
 - Strategic Direction Score: 88/100
 - Recommended Direction: Codex-first Plugin + platform-neutral thin Kernel + optional Factory Mode
 
@@ -43,14 +47,21 @@ audit_of_audit:
     open_issues:
       - Comparative Product Gate has 9/90 real runs.
   result_review:
-    status: provisional
-    rounds: 2
-    artifact: AUDIT_RESULT_REVIEW.md
+    status: blocked
+    rounds: 3
+    artifact: CODE_AND_PLAN_REAUDIT.md
     report: reports/audit-2026-08-14.md
-    weak_evidence_pass: []
+    weak_evidence_pass:
+      - E-401 checks execution type but not semantic evidence quality.
+      - E-403 treats a blocked Product Gate as WARN and permits a misleading A grade.
+      - E-501 validates package shape and plugin name but not installed release provenance.
     open_issues:
       - E-403 remains WARN until 90 real comparison runs are complete.
-  latest_report_status: provisional
+      - Interactive Host workspace patch is not safe for release.
+      - Verification, review, and merge are not bound to one immutable candidate.
+      - Product Gate can PASS with zero absolute completion and safety.
+      - Claude package still contains Codex host identity and behavior.
+  latest_report_status: blocked
   explicit_provisional_acceptance:
     diagnose: false
     prescribe: false

@@ -11,6 +11,7 @@
     "id": { "type": "string" },
     "kind": { "type": "string", "enum": ["merge", "adapter_baseline"] },
     "run_id": { "type": "string" },
+    "candidate_digest": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
     "capability": { "type": "string", "enum": ["merge_apply", "adapter_baseline_update"] },
     "fingerprint": { "type": "string" },
     "action_hash": { "type": "string" },

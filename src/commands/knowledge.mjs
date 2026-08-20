@@ -65,10 +65,10 @@ function refreshKnowledge(args, deps) {
     source_refs: inventory.sourceRefs
   });
 
-  const project = readJson(join(root, "project.json"));
-  project.knowledge_version = nextVersion;
-  project.updated_at = timestamp;
-  writeJson(join(root, "project.json"), project);
+  updateProject(root, {
+    knowledge_version: nextVersion,
+    updated_at: timestamp
+  });
   const updatedRuns = refreshActiveRunContextSnapshots(root, nextVersion);
   const event = appendEvent(root, "knowledge.refreshed", "apex-v2", {
     knowledge_version: nextVersion,
@@ -173,5 +173,4 @@ function refreshActiveRunContextSnapshots(root, knowledgeVersion) {
   }
   return updated;
 }
-
 
