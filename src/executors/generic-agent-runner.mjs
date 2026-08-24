@@ -24,6 +24,7 @@ export function createGenericAgentRunner(options) {
       const startedAt = Date.now();
       try {
         const response = provider.complete({
+          model: input.model,
           messages: [
             {
               role: "system",
@@ -52,6 +53,7 @@ export function createGenericAgentRunner(options) {
           stdout_tail: "",
           stderr_tail: "",
           session_id: null,
+          reported_model: response.model || input.model || provider.inspect().model || null,
           usage: {
             input_tokens: response.usage?.prompt_tokens ?? null,
             output_tokens: response.usage?.completion_tokens ?? null,
@@ -71,6 +73,7 @@ export function createGenericAgentRunner(options) {
           stdout_tail: "",
           stderr_tail: error.message,
           session_id: null,
+          reported_model: null,
           usage: {
             input_tokens: null,
             output_tokens: null,

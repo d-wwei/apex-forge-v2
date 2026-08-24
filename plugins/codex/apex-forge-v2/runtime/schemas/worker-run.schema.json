@@ -22,7 +22,7 @@
     "worker_id": { "type": "string" },
     "run_id": { "type": "string" },
     "plan_node_id": { "type": "string" },
-    "status": { "type": "string", "enum": ["active", "claimed", "evidence_submitted", "decision_submitted", "patch_submitted", "queued", "merged", "blocked", "cancelled", "dropped"] },
+    "status": { "type": "string", "enum": ["active", "running", "claimed", "evidence_submitted", "decision_submitted", "patch_submitted", "queued", "merged", "blocked", "cancelled", "dropped"] },
     "namespace": { "type": "string" },
     "adapter": { "type": "string", "minLength": 1 },
     "executor_id": { "type": "string", "minLength": 1 },
@@ -37,6 +37,20 @@
     "required_capabilities": {
       "type": "array",
       "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+      "uniqueItems": true
+    },
+    "initial_model_tier": {
+      "type": "string",
+      "enum": ["cheap", "standard", "strong", "deterministic"]
+    },
+    "model_tier": {
+      "type": "string",
+      "enum": ["cheap", "standard", "strong", "deterministic"]
+    },
+    "model_id": { "type": ["string", "null"], "minLength": 1 },
+    "model_reason": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
       "uniqueItems": true
     },
     "output_contract": { "type": "string", "enum": ["evidence", "patch", "decision"] },
@@ -115,6 +129,10 @@
     "claim_token": { "type": ["string", "null"] },
     "claim_expires_at": { "type": ["string", "null"] },
     "fencing_token": { "type": "integer", "minimum": 0 },
+    "execution_claim_token": { "type": ["string", "null"] },
+    "execution_claimed_at": { "type": ["string", "null"] },
+    "execution_claim_expires_at": { "type": ["string", "null"] },
+    "execution_fencing_token": { "type": "integer", "minimum": 0 },
     "route_id": { "type": ["string", "null"] },
     "factory_executor_id": { "type": ["string", "null"] },
     "created_at": { "type": "string" },

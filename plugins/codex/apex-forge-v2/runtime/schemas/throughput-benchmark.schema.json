@@ -1,0 +1,233 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/throughput-benchmark.schema.json",
+  "title": "Apex Forge V2 Deterministic Throughput Benchmark",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "benchmark_id",
+    "evaluator",
+    "input_digest",
+    "window",
+    "counts",
+    "metrics",
+    "gates",
+    "task_results"
+  ],
+  "properties": {
+    "schema_version": { "const": "v1" },
+    "benchmark_id": { "type": "string", "minLength": 1 },
+    "evaluator": { "const": "deterministic-throughput-v1" },
+    "input_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "window": {
+      "type": "object",
+      "required": ["started_at", "ended_at", "duration_ms", "worker_slots"],
+      "properties": {
+        "started_at": { "type": "string", "format": "date-time" },
+        "ended_at": { "type": "string", "format": "date-time" },
+        "duration_ms": { "type": "integer", "minimum": 1 },
+        "worker_slots": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "counts": {
+      "type": "object",
+      "required": [
+        "tasks_submitted",
+        "runs_started",
+        "worker_attempts",
+        "merge_attempts",
+        "merged_changes",
+        "conflicts",
+        "local_retry_attempts",
+        "tasks_with_local_retry",
+        "duplicate_merges",
+        "orphans"
+      ],
+      "properties": {
+        "tasks_submitted": { "type": "integer", "minimum": 0 },
+        "runs_started": { "type": "integer", "minimum": 0 },
+        "worker_attempts": { "type": "integer", "minimum": 0 },
+        "merge_attempts": { "type": "integer", "minimum": 0 },
+        "merged_changes": { "type": "integer", "minimum": 0 },
+        "conflicts": { "type": "integer", "minimum": 0 },
+        "local_retry_attempts": { "type": "integer", "minimum": 0 },
+        "tasks_with_local_retry": { "type": "integer", "minimum": 0 },
+        "duplicate_merges": { "type": "integer", "minimum": 0 },
+        "orphans": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "metrics": {
+      "type": "object",
+      "required": [
+        "tasks_per_hour",
+        "lead_time_ms",
+        "queue_wait_ms",
+        "parallel_utilization",
+        "conflict_rate",
+        "local_retry_rate",
+        "cost_per_merged_change",
+        "mean_quality_score",
+        "quality_adjusted_throughput"
+      ],
+      "properties": {
+        "tasks_per_hour": { "type": "number", "minimum": 0 },
+        "lead_time_ms": { "$ref": "#/$defs/percentiles" },
+        "queue_wait_ms": { "$ref": "#/$defs/percentiles" },
+        "parallel_utilization": { "type": "number", "minimum": 0, "maximum": 1 },
+        "conflict_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "local_retry_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "cost_per_merged_change": {
+          "type": ["number", "null"],
+          "minimum": 0
+        },
+        "mean_quality_score": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "quality_adjusted_throughput": { "type": "number", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "gates": {
+      "type": "object",
+      "required": [
+        "status",
+        "no_duplicate_merge",
+        "no_orphan",
+        "quality_threshold_not_decreased"
+      ],
+      "properties": {
+        "status": { "type": "string", "enum": ["PASS", "FAIL"] },
+        "no_duplicate_merge": { "$ref": "#/$defs/gate" },
+        "no_orphan": { "$ref": "#/$defs/gate" },
+        "quality_threshold_not_decreased": {
+          "type": "object",
+          "required": [
+            "status",
+            "violations",
+            "required_threshold",
+            "baseline_threshold",
+            "failing_task_ids",
+            "missing_quality_task_ids"
+          ],
+          "properties": {
+            "status": { "type": "string", "enum": ["PASS", "FAIL"] },
+            "violations": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 },
+              "uniqueItems": true
+            },
+            "required_threshold": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "baseline_threshold": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "failing_task_ids": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 },
+              "uniqueItems": true
+            },
+            "missing_quality_task_ids": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 },
+              "uniqueItems": true
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "task_results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "task_id",
+          "run_ids",
+          "queued_at",
+          "first_worker_started_at",
+          "merged_at",
+          "merge_ids",
+          "lead_time_ms",
+          "queue_wait_ms",
+          "quality_score",
+          "worker_attempts",
+          "local_retry_attempts",
+          "cost",
+          "status"
+        ],
+        "properties": {
+          "task_id": { "type": "string", "minLength": 1 },
+          "run_ids": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 },
+            "uniqueItems": true
+          },
+          "queued_at": { "type": "string", "format": "date-time" },
+          "first_worker_started_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "merged_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "merge_ids": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 },
+            "uniqueItems": true
+          },
+          "lead_time_ms": { "type": ["integer", "null"], "minimum": 0 },
+          "queue_wait_ms": { "type": ["integer", "null"], "minimum": 0 },
+          "quality_score": {
+            "type": ["number", "null"],
+            "minimum": 0,
+            "maximum": 1
+          },
+          "worker_attempts": { "type": "integer", "minimum": 0 },
+          "local_retry_attempts": { "type": "integer", "minimum": 0 },
+          "cost": { "type": "number", "minimum": 0 },
+          "status": {
+            "type": "string",
+            "enum": ["MERGED", "UNMERGED", "CANCELLED"]
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "$defs": {
+    "percentiles": {
+      "type": "object",
+      "required": ["median", "p90"],
+      "properties": {
+        "median": { "type": ["number", "null"], "minimum": 0 },
+        "p90": { "type": ["number", "null"], "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "gate": {
+      "type": "object",
+      "required": ["status", "violations"],
+      "properties": {
+        "status": { "type": "string", "enum": ["PASS", "FAIL"] },
+        "violations": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -45,6 +45,20 @@
 - **必跑检查**：`npm run check:schemas && node --test tests/contract-authority.test.mjs tests/project-audit-integrity.test.mjs`
 - **历史证据**：Plugin runtime schemas 由 build 复制，源码与分发包必须同步验证。（source: `scripts/build-codex-plugin.mjs`）
 
+## `src/core/scheduler-lock.mjs`、`src/core/worker.mjs` 与 Factory scheduler
+
+- **影响范围**：并发槽位、重复执行、worker lease、fencing、局部重试和孤儿恢复。
+- **为什么危险**：缺少原子 claim 会让两个 tick 同时执行同一 worker；陈旧失败结果可能覆盖已成功状态；无上限 refill 会放大 token 成本。
+- **改之前做**：`rg -n "runProjectAgentScheduler|claimWorkerExecution|recoverExpiredWorkerExecutions|recordSupervisorFailure" src tests`
+- **必跑检查**：`npm run benchmark:throughput && node --test tests/concurrent-worker.test.mjs tests/worker-supervisor.test.mjs`
+
+## Learning Queue 与 Run Closure
+
+- **影响范围**：delivery 是否可关闭、knowledge version、apply 幂等、receipt 和 event replay。
+- **为什么危险**：把 knowledge apply 放在交付热路径会阻塞完成；先标记 applied 再写知识会制造假完成；缺少 receipt 会让 reconcile 无法验证。
+- **改之前做**：`rg -n "learning.proposed|learning.applied|run.closed|processLearningJobs|recordRunClosure" src tests schemas`
+- **必跑检查**：`node --test --test-name-pattern='project tick --learn|learn propose/approve/apply' tests/apex-v2.test.mjs && node --test tests/event-replay.test.mjs tests/operational-state.test.mjs`
+
 ## `src/benchmark/`、`scripts/product-benchmark-controller.mjs`
 
 - **入度**：Product Gate、release verify 和 90-run official records 依赖该边界。（source: `src/benchmark/`, `scripts/product-benchmark-controller.mjs`）

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/learning-apply-job.schema.json",
+  "title": "Apex Forge V2 Learning Apply Job",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "job_id",
+    "run_id",
+    "proposal_id",
+    "status",
+    "attempt",
+    "idempotency_key",
+    "requested_at",
+    "updated_at"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "job_id": { "type": "string", "minLength": 1 },
+    "run_id": { "type": "string", "minLength": 1 },
+    "proposal_id": { "type": "string", "minLength": 1 },
+    "status": {
+      "type": "string",
+      "enum": ["waiting_approval", "queued", "running", "applied", "failed"]
+    },
+    "attempt": { "type": "integer", "minimum": 0 },
+    "idempotency_key": { "type": "string", "minLength": 1 },
+    "requested_at": { "type": "string" },
+    "started_at": { "type": ["string", "null"] },
+    "completed_at": { "type": ["string", "null"] },
+    "receipt_id": { "type": ["string", "null"] },
+    "error": { "type": ["string", "null"] },
+    "updated_at": { "type": "string" }
+  },
+  "additionalProperties": false
+}

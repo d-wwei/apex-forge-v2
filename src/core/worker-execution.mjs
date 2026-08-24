@@ -43,6 +43,12 @@ import {
   persistPatchBundle,
   workerDir
 } from "./worker.mjs";
+import { resolveModelSelection } from "./model-routing.mjs";
+import {
+  cognitiveEvidenceCandidateDigest,
+  cognitiveEvidenceType,
+  validateWorkerSemanticEvidence
+} from "./semantic-evidence.mjs";
 
 const AGENT_RESULT_SCHEMA = schemaPath("agent-result.schema.json");
 const IGNORED_WORKSPACE_NAMES = new Set([
@@ -69,7 +75,15 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
   if (!worker.sandbox || worker.sandbox.status !== "ready") {
     throw new Error(`coding-agent adapter 要求 ready sandbox：${worker.worker_id}`);
   }
-  if (worker.status !== "active") {
+  const executionClaimToken = options.executionClaimToken || null;
+  const expectedStatus = executionClaimToken ? "running" : "active";
+  if (
+    worker.status !== expectedStatus
+    || (
+      executionClaimToken
+      && worker.execution_claim_token !== executionClaimToken
+    )
+  ) {
     throw new Error(`worker 当前状态不可执行 coding-agent adapter：${worker.status}`);
   }
 
@@ -82,7 +96,14 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
   const dir = workerDir(root, worker.run_id, worker.worker_id);
   const promptPath = join(dir, "agent-prompt.md");
   const outputPath = join(workspaceDir, ".apex-agent", `result-${worker.worker_id}.json`);
-  const prompt = buildWorkerAgentPrompt(worker, planNode);
+  const prompt = buildWorkerAgentPrompt(worker, planNode, {
+    semanticEvidenceType: worker.execution_class === "cognitive"
+      ? cognitiveEvidenceType(worker.plan_node_id)
+      : null,
+    candidateDigest: worker.execution_class === "cognitive"
+      ? cognitiveEvidenceCandidateDigest(root, worker)
+      : null
+  });
   writeFileSync(promptPath, prompt);
   rmSync(outputPath, { force: true });
   const protectedBefore = snapshotProtectedWorkspace(workspaceDir);
@@ -102,16 +123,30 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
       requiredCapabilities
     );
   const adapterInfo = resolved.info;
+  const priorResults = readPriorAdapterResults(dir);
+  const route = readJson(join(dir, "execution-route.json"), null);
+  const modelSelection = resolveModelSelection({
+    planNode,
+    executionPolicy: policy,
+    adapter: resolved.name,
+    requestedModel: options.model || null,
+    worker,
+    route,
+    priorResults
+  });
+  const modelChanged = worker.model_tier !== modelSelection.model_tier
+    || worker.model_id !== modelSelection.model_id;
+  const sessionId = modelChanged ? undefined : options.sessionId;
   const execution = resolved.executor.execute({
     executable: options.command || resolved.name,
     workspaceDir,
     prompt,
     outputSchemaPath: AGENT_RESULT_SCHEMA,
     outputPath,
-    model: options.model,
+    model: modelSelection.model_id,
     profile: options.profile,
     timeoutMs: options.timeoutMs,
-    sessionId: options.sessionId
+    sessionId
   });
   const structured = readAgentResult(outputPath);
   const rawAgentOutput = existsSync(outputPath) ? readFileSync(outputPath, "utf8") : "";
@@ -123,6 +158,19 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
   const capabilityEvidence = structured.valid
     ? structured.value.capability_evidence || []
     : [];
+  let semanticEvidence = null;
+  let semanticEvidenceError = "";
+  if (structured.valid && worker.execution_class === "cognitive") {
+    try {
+      semanticEvidence = validateWorkerSemanticEvidence(
+        root,
+        worker,
+        structured.value.semantic_evidence
+      );
+    } catch (error) {
+      semanticEvidenceError = error.message;
+    }
+  }
   let capabilityEvidenceValidation = {
     valid: true,
     required: [],
@@ -151,7 +199,6 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
       };
     }
   }
-  const route = readJson(join(dir, "execution-route.json"), null);
   const costEvaluation = evaluateRouteUsage(route, execution);
   const budgetFailed = costEvaluation.status === "FAIL"
     || (costEvaluation.status === "UNKNOWN" && route?.usage_policy === "fail");
@@ -162,12 +209,15 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
     && changes.unsupported_files.length === 0
     && !budgetFailed
     && capabilityEvidenceValidation.valid
+    && semanticEvidenceError === ""
     && (worker.output_contract !== "patch" || changes.operations.length > 0);
   const failureKind = success
     ? null
     : budgetFailed
       ? "budget_exceeded"
       : !capabilityEvidenceValidation.valid
+      ? "contract_error"
+      : semanticEvidenceError
         ? "contract_error"
       : classifyFailure(execution, structured, changes, worker);
   const timestamp = now();
@@ -180,6 +230,9 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
     adapter: resolved.name,
     executor_id: resolved.id,
     adapter_version: adapterInfo.version,
+    model_tier: modelSelection.model_tier,
+    requested_model: modelSelection.model_id,
+    reported_model: execution.reported_model || null,
     session_id: execution.session_id || null,
     executable: execution.executable,
     status: success ? "PASS" : "FAIL",
@@ -204,6 +257,11 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
       submitted: capabilityEvidenceValidation.submitted,
       missing: capabilityEvidenceValidation.missing,
       error: capabilityEvidenceValidation.error
+    },
+    semantic_evidence_status: {
+      required: worker.execution_class === "cognitive",
+      valid: semanticEvidenceError === "",
+      error: semanticEvidenceError
     },
     refs: [
       `${worker.namespace}/agent-prompt.md`,
@@ -243,6 +301,8 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
     ].join(":")
   }, () => commitWorkerExecution(root, {
     workerId: worker.worker_id,
+    executionClaimToken,
+    expectedWorkerStatus: expectedStatus,
     expectedWorkerUpdatedAt,
     adapterResult,
     patch,
@@ -251,6 +311,9 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
     changes,
     execution,
     resolved,
+    modelSelection,
+    modelChanged,
+    semanticEvidence,
     rawAgentOutput,
     capabilityEvidence,
     timestamp
@@ -259,7 +322,14 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
 
 function commitWorkerExecution(root, input) {
   const worker = findWorker(root, input.workerId);
-  if (worker.status !== "active" || worker.updated_at !== input.expectedWorkerUpdatedAt) {
+  if (
+    worker.status !== input.expectedWorkerStatus
+    || worker.updated_at !== input.expectedWorkerUpdatedAt
+    || (
+      input.executionClaimToken
+      && worker.execution_claim_token !== input.executionClaimToken
+    )
+  ) {
     throw new Error(`worker execution commit 遇到并发状态变化：${worker.worker_id}`);
   }
   const dir = workerDir(root, worker.run_id, worker.worker_id);
@@ -268,9 +338,15 @@ function commitWorkerExecution(root, input) {
     worker.namespace,
     input.capabilityEvidence
   );
+  let semanticEvidenceRef = null;
+  if (input.semanticEvidence) {
+    semanticEvidenceRef = `${worker.namespace}/cognitive-evidence.json`;
+    writeJson(join(dir, "cognitive-evidence.json"), input.semanticEvidence);
+  }
   input.adapterResult.refs = Array.from(new Set([
     ...input.adapterResult.refs,
-    ...capabilityEvidenceRefs
+    ...capabilityEvidenceRefs,
+    ...(semanticEvidenceRef ? [semanticEvidenceRef] : [])
   ]));
   if (input.structured.valid) {
     writeFileSync(
@@ -320,12 +396,33 @@ function commitWorkerExecution(root, input) {
   }
 
   worker.last_adapter = input.resolved.name;
+  worker.initial_model_tier = input.modelSelection.initial_model_tier;
+  worker.model_tier = input.modelSelection.model_tier;
+  worker.model_id = input.modelSelection.model_id;
+  worker.model_reason = input.modelSelection.model_reason;
+  if (input.modelChanged) {
+    worker.session_id = null;
+    worker.session_adapter = null;
+  }
   if (input.execution.session_id) {
     worker.session_id = input.execution.session_id;
     worker.session_adapter = input.resolved.name;
   }
   worker.attempt = Number(worker.attempt || 0) + 1;
+  worker.execution_claim_token = null;
+  worker.execution_claimed_at = null;
+  worker.execution_claim_expires_at = null;
   worker.updated_at = input.timestamp;
+  const routePath = join(dir, "execution-route.json");
+  const route = readJson(routePath, null);
+  if (route) {
+    route.initial_model_tier = input.modelSelection.initial_model_tier;
+    route.model_tier = input.modelSelection.model_tier;
+    route.model_id = input.modelSelection.model_id;
+    route.model_reason = input.modelSelection.model_reason;
+    route.retry_action = input.modelSelection.retry_action;
+    writeJson(routePath, route);
+  }
   writeJson(join(dir, "worker.json"), worker);
   const event = appendEvent(root, `worker.adapter.${input.resolved.name}`, "apex-v2", {
     run_id: worker.run_id,
@@ -346,6 +443,17 @@ function persistCapabilityEvidence(dir, namespace, evidenceItems = []) {
     writeJson(join(dir, name), evidence);
     return `${namespace}/${name}`;
   });
+}
+
+function readPriorAdapterResults(dir) {
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir)
+    .filter((file) => file.startsWith("adapter-result-") && file.endsWith(".json"))
+    .map((file) => readJson(join(dir, file), null))
+    .filter(Boolean)
+    .sort((left, right) =>
+      String(left.created_at || "").localeCompare(String(right.created_at || ""))
+    );
 }
 
 function customExecutorResolution(executorId, executable) {
@@ -397,7 +505,20 @@ function fileHash(path) {
   return createHash("sha256").update(readFileSync(path)).digest("hex");
 }
 
-export function buildWorkerAgentPrompt(worker, planNode) {
+export function buildWorkerAgentPrompt(worker, planNode, options = {}) {
+  const semanticEvidence = options.semanticEvidenceType
+    ? `## Required Semantic Evidence
+
+Return a \`semantic_evidence\` object with:
+- evidence_type: ${options.semanticEvidenceType}
+- objective: exactly the Objective below
+- source_refs, claims, uncertainties, and acceptance_mapping
+${options.candidateDigest
+    ? `- candidate_digest: ${options.candidateDigest}`
+    : ""}
+- every evidence ref must identify a source you actually inspected.
+`
+    : "";
   return `You are an isolated coding worker in Apex Forge V2.
 
 ## Objective
@@ -428,6 +549,7 @@ ${capabilityProtocols(planNode.capability_bindings || [])}
 
 ${lines(worker.capability_invocation_refs || [])}
 
+${semanticEvidence}
 ## Verification
 
 ${lines(worker.verification)}

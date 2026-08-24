@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { evaluateRouteUsage, routeExecution } from "../src/core/execution-router.mjs";
 import { inferQuickVerificationCommands } from "../src/core/plan-graph.mjs";
+import { defaultExecutionPolicy } from "../src/core/policy-defaults.mjs";
 
 const policy = {
   interactive_workspace_patch: { enabled: true },
@@ -47,6 +48,53 @@ test("cognitive, deterministic, and human classes keep fixed execution semantics
     execution_class: "human_decision",
     preferred_mode: "factory"
   }, policy).mode, "human");
+});
+
+test("delegated cognitive nodes route to Factory while main-agent nodes stay Interactive", () => {
+  const delegated = routeExecution({
+    execution_class: "cognitive",
+    preferred_mode: "interactive",
+    delegation: {
+      eligible: true,
+      default: true,
+      parallel: true,
+      main_agent_required: false
+    },
+    model_tier: "cheap"
+  }, policy);
+  assert.equal(delegated.mode, "factory");
+  assert.ok(delegated.reasons.includes("delegated_subagent"));
+
+  const mainAgent = routeExecution({
+    execution_class: "cognitive",
+    preferred_mode: "interactive",
+    delegation: {
+      eligible: true,
+      default: true,
+      parallel: false,
+      main_agent_required: true
+    },
+    model_tier: "strong"
+  }, policy);
+  assert.equal(mainAgent.mode, "interactive");
+  assert.ok(mainAgent.reasons.includes("main_agent_required"));
+});
+
+test("delegated workspace patch defaults to Factory when isolation allows it", () => {
+  const route = routeExecution({
+    execution_class: "workspace_patch",
+    preferred_mode: "interactive",
+    delegation: {
+      eligible: true,
+      default: true,
+      parallel: true,
+      main_agent_required: false
+    },
+    model_tier: "cheap",
+    risk: "medium"
+  }, policy);
+  assert.equal(route.mode, "factory");
+  assert.ok(route.reasons.includes("delegated_subagent"));
 });
 
 test("workspace patch routes to Factory when Interactive patch is disabled", () => {
@@ -171,6 +219,21 @@ test("user override is persisted but cannot bypass execution class or policy", (
   assert.throws(() => routeExecution({
     execution_class: "workspace_patch"
   }, policy, { mode: "deterministic" }), /不兼容/);
+});
+
+test("route persists the node model floor and resolved Codex model", () => {
+  const route = routeExecution({
+    execution_class: "workspace_patch",
+    preferred_mode: "factory",
+    model_tier: "cheap"
+  }, defaultExecutionPolicy("2026-08-24T00:00:00.000Z"), {
+    adapter: "codex"
+  });
+
+  assert.equal(route.initial_model_tier, "cheap");
+  assert.equal(route.model_tier, "cheap");
+  assert.equal(route.model_id, "gpt-5.6-luna");
+  assert.deepEqual(route.model_reason, ["plan_node=cheap"]);
 });
 
 test("quick route uses declared public acceptance commands only", () => {

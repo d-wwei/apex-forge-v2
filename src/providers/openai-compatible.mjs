@@ -30,7 +30,7 @@ export function createOpenAICompatibleProvider(options) {
           "content-type": "application/json"
         },
         body: {
-          model,
+          model: input.model || model,
           messages: input.messages,
           ...(input.responseFormat ? { response_format: input.responseFormat } : {}),
           ...(input.tools ? { tools: input.tools } : {}),

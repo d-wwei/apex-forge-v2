@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "apex-forge-v2",
-      "version": "0.2.0-rc.1+codex.20260824111410",
+      "version": "0.2.0-rc.1+codex.20260824153545",
       "source": "./apex-forge-v2",
       "description": "Kernel-backed planning, execution, review, and recovery workflows"
     }

@@ -14,10 +14,10 @@ discoverable Skill.
 6. Apply merge only when verification, review, approval, and merge recompute the
    same candidate digest.
 7. Run final verification against the integrated project.
-8. Complete learning governance:
-   - use `project tick --integrate --learn --apply-learning` when generated
-     knowledge changes are safe;
-   - otherwise leave `learn` pending and report the required decision.
+8. Queue learning governance with `project tick --integrate --learn`.
+   Delivery closure waits for the durable proposal and apply job, not for
+   knowledge mutation. Approved jobs may be applied later with
+   `project tick --learning-worker`.
 9. Verify persisted closure with `run show`, `status`, and `project reconcile`.
    Only report completion when `run.status=done`, every node passed, the run is
    absent from `project.active_runs`, and reconcile is `CONSISTENT`.

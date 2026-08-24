@@ -428,6 +428,9 @@ function contractTargets(path, value) {
   else if (name === "review-report.json") push("review-report.schema.json");
   else if (name === "integration-report.json") push("integration-report.schema.json");
   else if (name === "learning-report.json") push("learning-report.schema.json");
+  else if (name.startsWith("receipt-") && normalized.includes("/learning/receipts/")) {
+    push("learning-apply-receipt.schema.json");
+  }
   else if (name === "retry.json" && normalized.includes("/policies/")) push("retry-policy.schema.json");
   else if (name === "execution.json" && normalized.includes("/policies/")) push("execution-policy.schema.json");
   else if (name === "method-packs.json" && normalized.includes("/policies/")) push("method-pack-registry.schema.json");
@@ -463,6 +466,8 @@ function contractTargets(path, value) {
     for (const [index, item] of value.entries()) push("intake-item.schema.json", item, `#${index}`);
   } else if (name === "proposals.json" && normalized.includes("/learning/")) {
     for (const [index, item] of value.entries()) push("learning-proposal.schema.json", item, `#${index}`);
+  } else if (name === "jobs.json" && normalized.includes("/learning/")) {
+    for (const [index, item] of value.entries()) push("learning-apply-job.schema.json", item, `#${index}`);
   } else if (name === "items.json" && normalized.includes("/approvals/")) {
     for (const [index, item] of value.entries()) push("approval-request.schema.json", item, `#${index}`);
   }

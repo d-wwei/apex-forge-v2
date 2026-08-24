@@ -54,6 +54,24 @@
       "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
       "uniqueItems": true
     },
+    "initial_model_tier": {
+      "type": "string",
+      "enum": ["cheap", "standard", "strong", "deterministic"]
+    },
+    "model_tier": {
+      "type": "string",
+      "enum": ["cheap", "standard", "strong", "deterministic"]
+    },
+    "model_id": { "type": ["string", "null"], "minLength": 1 },
+    "model_reason": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "retry_action": {
+      "type": "string",
+      "enum": ["initial", "same_tier_retry", "escalate", "adapter_fallback", "blocked"]
+    },
     "method_pack_id": { "type": "string", "minLength": 1 },
     "cost_budget": {
       "type": ["object", "null"],

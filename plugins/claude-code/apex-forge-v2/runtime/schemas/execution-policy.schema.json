@@ -49,6 +49,40 @@
       },
       "additionalProperties": false
     },
+    "model_routing": {
+      "type": "object",
+      "required": ["tier_order", "default_agent_tier", "executor_models"],
+      "properties": {
+        "tier_order": {
+          "type": "array",
+          "prefixItems": [
+            { "const": "cheap" },
+            { "const": "standard" },
+            { "const": "strong" }
+          ],
+          "items": false,
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "default_agent_tier": {
+          "type": "string",
+          "enum": ["cheap", "standard", "strong"]
+        },
+        "executor_models": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "cheap": { "type": "string", "minLength": 1 },
+              "standard": { "type": "string", "minLength": 1 },
+              "strong": { "type": "string", "minLength": 1 }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
     "cost_governor": {
       "type": "object",
       "required": ["enabled", "unknown_usage", "default_budget", "method_pack_budgets"],
@@ -70,7 +104,8 @@
         "max_changed_files_per_patch": { "type": "integer", "minimum": 1 },
         "max_patch_bytes": { "type": "integer", "minimum": 1 },
         "max_agent_duration_ms": { "type": "integer", "minimum": 1000 },
-        "max_agent_runs_per_tick": { "type": "integer", "minimum": 1 }
+        "max_agent_runs_per_tick": { "type": "integer", "minimum": 1 },
+        "max_agent_cycles_per_tick": { "type": "integer", "minimum": 1 }
       },
       "additionalProperties": false
     },

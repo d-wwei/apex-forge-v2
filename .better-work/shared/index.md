@@ -31,10 +31,13 @@ Apex Forge V2 是 Node.js ESM 实现的 CLI/Agent orchestration platform，以 `
 9. Reconcile 必须先把已全部处理 carry 的历史 `partial_pass` 源节点提升为 `passed`；不得把旧 `done` run 重新加入 `active_runs`。（source: `src/core/reconcile.mjs`, `src/core/run-state.mjs`, `tests/apex-v2.test.mjs`）
 10. Managed process 正常退出、超时或父进程消失后都必须回收新产生的 daemon；发现 orphan 时 verification 必须 FAIL，不能静默清理后 PASS。（source: `src/core/process-guard.mjs`, `src/core/capability-sandbox.mjs`, `tests/agent-sandbox.test.mjs`）
 11. 正式 benchmark 并发只能通过 controller lock + revision CAS + lease/fencing；同一 repository 保持串行，跨 repository 最多 3 个正式 worker。（source: `src/benchmark/controller-coordinator.mjs`, `scripts/product-benchmark-controller.mjs`）
+12. Factory scheduler 使用独立 scheduler lock；每个 Agent worker 在运行前取得 execution lease/fencing，陈旧结果不得覆盖新状态。（source: `src/core/scheduler-lock.mjs`, `src/core/worker.mjs`, `src/apex-v2.mjs`）
+13. Learning proposal 与 apply job 入队即可关闭 delivery；知识写回必须由独立 job 产生 receipt，且不重新打开已完成 run。（source: `src/apex-v2.mjs`, `src/core/run-state.mjs`, `schemas/learning-apply-*.schema.json`）
 
 ## Testing
 
-- 全量：`npm test`，当前稳定基线 `255/255 PASS`；post-full 资源/并发增量回归 36/36 PASS。（source: `package.json`, `planning/plugin-upgrade-execution-status.md`）
+- 全量：`npm test`，当前稳定基线 `630/630 PASS`。（source: `package.json`, `.better-work/shared/progress.md`）
+- 吞吐架构：`npm run benchmark:throughput`，当前 `11/11 PASS`。（source: `package.json`, `tests/project-agent-scheduler.test.mjs`, `tests/throughput-benchmark.test.mjs`）
 - Contract：`npm run check:schemas`。（source: `package.json`）
 - Strict state：`npm run validate`。（source: `package.json`）
 - Plugin build/validate：`npm run build:plugin && npm run validate:plugins`。（source: `package.json`）
@@ -65,6 +68,8 @@ Apex Forge V2 是 Node.js ESM 实现的 CLI/Agent orchestration platform，以 `
 | 修改持久事务或锁 | `src/core/project-transaction.mjs`, `src/core/project-lock.mjs`, `tests/project-transaction.test.mjs` |
 | 修改 schema/contract | `schemas/`, `src/core/contracts.mjs`, `tests/contract-authority.test.mjs` |
 | 修改 WorkerExecutor | `src/contracts/worker-executor.mjs`, `src/executors/`, `tests/extension-boundaries.test.mjs` |
+| 修改 Factory scheduler / worker lease | `src/apex-v2.mjs`, `src/core/scheduler-lock.mjs`, `src/core/worker.mjs`, `tests/project-agent-scheduler.test.mjs` |
+| 修改异步 Learning | `src/apex-v2.mjs`, `src/core/run-state.mjs`, `src/core/operational-state.mjs`, `schemas/learning-apply-*.schema.json` |
 | 修改 Product Gate | `src/benchmark/plugin-benchmark.mjs`, `src/benchmark/result-provenance.mjs`, `tests/benchmark-harness.test.mjs`, `tests/benchmark-result-provenance.test.mjs` |
 | 修改 benchmark 任务或 controller | `benchmarks/plugin-vs-v1/tasks/`, `src/benchmark/controller-state.mjs`, `scripts/product-benchmark-controller.mjs` |
 | 修改 release candidate | `src/release/candidate-bundle.mjs`, `scripts/freeze-release-candidate.mjs`, `tests/release-candidate.test.mjs` |

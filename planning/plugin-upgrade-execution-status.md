@@ -1,5 +1,21 @@
 # Apex Forge V2 插件化升级最终执行状态
 
+## 2026-08-24 后续吞吐升级
+
+`planning/throughput-architecture-v1.md` 的 P0 实现已完成并通过：
+
+- Governed 三 Barrier；
+- 默认 cheap/Luna subagent 路由；
+- 有界持续补位 scheduler；
+- worker execution lease/fencing 与 sibling failure isolation；
+- 异步 Learning apply job/receipt；
+- throughput architecture release gate；
+- `npm test` 630/630 PASS。
+
+本节不改写 2026-08-20 的历史发布证据。下方 90-run Product Benchmark 和 Release
+Candidate 仍属于旧候选；本次版本需要在提交后重新冻结 Candidate，正式重跑后才能
+声称真实 token 或 wall-time 改善。
+
 - 日期：2026-08-20
 - 计划：`planning/plugin-upgrade-plan.md`
 - 总体状态：`COMPLETE`

@@ -1,9 +1,13 @@
 import { normalizeExecutionCapabilities } from "../contracts/execution-capability.mjs";
+import { resolveModelSelection } from "./model-routing.mjs";
 
 export function routeExecution(planNode, executionPolicy, options = {}) {
   const executionClass = planNode.execution_class || legacyExecutionClass(planNode);
   const requestedMode = options.mode || null;
   const preferredMode = planNode.preferred_mode || legacyPreferredMode(executionClass);
+  const delegatedSubagent = planNode.delegation?.eligible === true
+    && planNode.delegation?.default === true
+    && planNode.delegation?.main_agent_required !== true;
   const hints = {
     estimated_duration_minutes: Number(planNode.execution_hints?.estimated_duration_minutes || 0),
     requires_isolation: Boolean(planNode.execution_hints?.requires_isolation),
@@ -19,11 +23,20 @@ export function routeExecution(planNode, executionPolicy, options = {}) {
     factory_on_parallel_execution: true
   };
   const reasons = [];
-  let mode = preferredMode;
+  let mode = delegatedSubagent ? "factory" : preferredMode;
 
   if (executionClass === "cognitive") {
-    mode = "interactive";
-    reasons.push("cognitive_host");
+    if (delegatedSubagent) {
+      mode = "factory";
+      reasons.push("delegated_subagent");
+    } else {
+      mode = "interactive";
+      reasons.push(
+        planNode.delegation?.main_agent_required === true
+          ? "main_agent_required"
+          : "cognitive_host"
+      );
+    }
   } else if (executionClass === "deterministic_check") {
     mode = "deterministic";
     reasons.push("deterministic_check");
@@ -31,6 +44,7 @@ export function routeExecution(planNode, executionPolicy, options = {}) {
     mode = "human";
     reasons.push("human_decision");
   } else {
+    if (delegatedSubagent) reasons.push("delegated_subagent");
     if (executionPolicy?.interactive_workspace_patch?.enabled !== true) {
       mode = "factory";
       reasons.push("interactive_workspace_patch_disabled");
@@ -57,12 +71,26 @@ export function routeExecution(planNode, executionPolicy, options = {}) {
       throw new Error(`execution mode override 无效：${requestedMode}`);
     }
     if (
-      (executionClass === "cognitive" && requestedMode !== "interactive")
+      (
+        executionClass === "cognitive"
+        && requestedMode !== "interactive"
+        && !(
+          requestedMode === "factory"
+          && planNode.delegation?.eligible === true
+          && planNode.delegation?.main_agent_required !== true
+        )
+      )
       || (executionClass === "deterministic_check" && requestedMode !== "deterministic")
       || (executionClass === "human_decision" && requestedMode !== "human")
       || (executionClass === "workspace_patch" && !["interactive", "factory"].includes(requestedMode))
     ) {
       throw new Error(`execution mode override 与 execution_class 不兼容：${executionClass} -> ${requestedMode}`);
+    }
+    if (
+      requestedMode === "factory"
+      && planNode.delegation?.main_agent_required === true
+    ) {
+      throw new Error("execution mode override 不能绕过 main_agent_required");
     }
     if (
       executionClass === "workspace_patch"
@@ -104,6 +132,13 @@ export function routeExecution(planNode, executionPolicy, options = {}) {
     );
   }
 
+  const modelSelection = resolveModelSelection({
+    planNode,
+    executionPolicy,
+    adapter: options.adapter || planNode.adapter || null,
+    requestedModel: options.model || null
+  });
+
   return {
     mode,
     preferred_mode: preferredMode,
@@ -114,7 +149,8 @@ export function routeExecution(planNode, executionPolicy, options = {}) {
     method_pack_id: methodPackId,
     cost_budget: costBudget,
     budget_status: budgetStatus,
-    usage_policy: governor?.unknown_usage || "record"
+    usage_policy: governor?.unknown_usage || "record",
+    ...modelSelection
   };
 }
 

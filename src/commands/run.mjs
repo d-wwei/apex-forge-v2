@@ -2,7 +2,7 @@ import { writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { ensureDir, normalizeEnum, now, readJson, required, shortId, splitList, writeJson, writeTextIfMissing } from "../lib/common.mjs";
 import { appendEvent, projectRoot, requireStore, SCHEMA_VERSION, updateProject } from "../core/store.mjs";
-import { closeRunIfComplete, createRunNode, getRunNode, haltRun, loadRun, promoteHandledCarrySource, requirePassedNode, runHandoffTemplate, writeRun } from "../core/run-state.mjs";
+import { closeRunIfComplete, createRunNode, getRunNode, haltRun, loadRun, promoteHandledCarrySource, recordRunClosure, requirePassedNode, runHandoffTemplate, writeRun } from "../core/run-state.mjs";
 import { assertArtifact, createArtifact, listArtifactsForRun } from "../core/artifacts.mjs";
 import { buildTaskPlanGraph, renderPlanGraphMarkdown, validatePlanGraph } from "../core/plan-graph.mjs";
 import { buildProjectInventory } from "./knowledge.mjs";
@@ -324,6 +324,7 @@ function completeRunNode(args) {
       })
     : nodeEvent;
   updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
+  if (gateStatus !== "HALT") recordRunClosure(root, run, "run.node.complete");
   console.log(JSON.stringify(run, null, 2));
 }
 
@@ -397,6 +398,7 @@ function updateRunCarry(args, action) {
       })
     : carryEvent;
   updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
+  recordRunClosure(root, run, "run.carry");
   console.log(JSON.stringify({ run, carry }, null, 2));
 }
 

@@ -61,6 +61,19 @@
       }
     },
     "gate": { "$ref": "gate-result.schema.json" },
+    "closed_at": { "type": ["string", "null"] },
+    "closure_kind": { "type": ["string", "null"] },
+    "closure_event_id": { "type": ["string", "null"] },
+    "learning_proposal_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "learning_apply_job_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
     "created_at": { "type": "string" },
     "updated_at": { "type": "string" }
   },

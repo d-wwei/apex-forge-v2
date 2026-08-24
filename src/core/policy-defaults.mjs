@@ -1,3 +1,5 @@
+import { defaultModelRoutingPolicy } from "./model-routing.mjs";
+
 export function defaultGatePolicy(timestamp) {
   return {
     schema_version: "v0",
@@ -15,9 +17,9 @@ export function defaultRetryPolicy(timestamp) {
     auto_retry: {
       enabled: true,
       reset_sandbox: true,
-      retryable_failure_kinds: ["timeout", "execution_error", "contract_error", "agent_reported_failure"]
+      retryable_failure_kinds: ["timeout", "execution_error", "contract_error", "agent_reported_failure", "no_patch"]
     },
-    non_retryable_failure_kinds: ["scope_violation", "unsupported_change", "no_patch", "unknown"]
+    non_retryable_failure_kinds: ["scope_violation", "unsupported_change", "budget_exceeded", "unknown"]
   };
 }
 
@@ -38,6 +40,7 @@ export function defaultExecutionPolicy(timestamp) {
       factory_on_background: true,
       factory_on_parallel_execution: true
     },
+    model_routing: defaultModelRoutingPolicy(),
     cost_governor: {
       enabled: true,
       unknown_usage: "record",
@@ -53,7 +56,8 @@ export function defaultExecutionPolicy(timestamp) {
       max_changed_files_per_patch: 20,
       max_patch_bytes: 1000000,
       max_agent_duration_ms: 1200000,
-      max_agent_runs_per_tick: 3
+      max_agent_runs_per_tick: 3,
+      max_agent_cycles_per_tick: 12
     },
     permissions: {
       allowed_adapters: defaultAllowedExecutionAdapters(),

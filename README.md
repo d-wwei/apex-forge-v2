@@ -84,9 +84,9 @@ flowchart TD
 
 | Mode | 适用场景 | 执行位置 |
 |---|---|---|
-| Interactive Cognitive | context、risk、design、review、status | 当前 Host Agent |
+| Interactive Cognitive | design、高风险 review、status | 当前 Host Agent |
 | Interactive Patch | 普通低风险实现 | ActionWorkspace |
-| Factory | critical、隔离、并行、后台、可恢复执行 | Isolated sandbox/worktree |
+| Factory | context、risk、implementation、tests 等默认可委派节点 | Isolated sandbox/worktree |
 | Operator | reconcile、诊断、迁移、发布 | 显式 CLI |
 
 正常用户路径不要求输入原始 Kernel CLI。CLI 是 operator/debug surface，不是主要
@@ -104,6 +104,14 @@ flowchart TD
 - Repo/Branch/Component/PR typed model 与 checkout ownership；
 - context、risk、design、implementation、tests、verification、review、integrate、learn；
 - quick route 与 full route；
+- Governed 以 `delivery-plan -> delivery-candidate -> delivery-readiness`
+  三个 Barrier 组织七类研发职责，而不是七次全局串行等待；
+- Factory scheduler 按 `dispatch -> run -> collect -> unlock -> refill`
+  持续补位，并用 scheduler/worker lease 与 fencing 防止重复执行；
+- context、risk、tests 默认使用 cheap tier（Codex 映射为 Luna），implementation
+  默认 standard tier，关键风险才升级 strong tier；
+- Learning proposal 入队后即可关闭 delivery，知识写回由后台 job 和 receipt
+  独立完成；
 - partial pass、carry-forward、human acceptance 和 Risk Register；
 - project metrics、quality policy、notifications 和 adapter history。
 

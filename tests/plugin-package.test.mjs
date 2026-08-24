@@ -110,7 +110,8 @@ test("ship Skill requires durable run closure before claiming completion", () =>
     "utf8"
   );
 
-  assert.match(source, /--apply-learning/);
+  assert.match(source, /--learning-worker/);
+  assert.match(source, /durable proposal and apply job/);
   assert.match(source, /run\.status.*done/s);
   assert.match(source, /project\.active_runs/);
   assert.match(source, /reconcile is `CONSISTENT`/);
@@ -169,6 +170,7 @@ test("release verification exposes every mandatory gate in fixed order", () => {
     "dependency-audit",
     "plugin-build",
     "plugin-provenance",
+    "throughput-architecture-gate",
     "capability-gate",
     "product-gate"
   ]);

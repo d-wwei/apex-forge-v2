@@ -26,8 +26,9 @@ export function initProject(args) {
     join(root, "artifacts"),
     join(root, "derived"),
     join(root, "policies"),
-    join(root, "learning")
-    ,join(root, "approvals"),
+    join(root, "learning"),
+    join(root, "learning", "receipts"),
+    join(root, "approvals"),
     join(root, "metrics"),
     join(root, "adapters"),
     join(root, "adapters", "history"),
@@ -75,8 +76,13 @@ export function initProject(args) {
     writeJson(join(root, "policies", "notifications.json"), defaultNotificationPolicy(timestamp));
     writeJson(join(root, "approvals", "items.json"), []);
     writeJson(join(root, "learning", "proposals.json"), []);
+    writeJson(join(root, "learning", "jobs.json"), []);
     writeJson(join(root, "notifications", "outbox.json"), []);
   }
+  if (!existsSync(join(root, "learning", "jobs.json"))) {
+    writeJson(join(root, "learning", "jobs.json"), []);
+  }
+  ensureDir(join(root, "learning", "receipts"));
   if (!existsSync(join(root, "policies", "retry.json"))) {
     writeJson(join(root, "policies", "retry.json"), defaultRetryPolicy(timestamp));
   } else {
@@ -105,6 +111,11 @@ export function initProject(args) {
     }
     if (!executionPolicy.cost_governor) {
       executionPolicy.cost_governor = defaultExecutionPolicy(timestamp).cost_governor;
+      executionPolicy.updated_at = timestamp;
+    }
+    if (!executionPolicy.budgets.max_agent_cycles_per_tick) {
+      executionPolicy.budgets.max_agent_cycles_per_tick =
+        defaultExecutionPolicy(timestamp).budgets.max_agent_cycles_per_tick;
       executionPolicy.updated_at = timestamp;
     }
     if (!executionPolicy.permissions.adapter_fallback_order) {

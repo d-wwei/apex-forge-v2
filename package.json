@@ -19,6 +19,7 @@
     "benchmark:validate-tasks": "node scripts/validate-benchmark-tasks.mjs",
     "benchmark:control": "node scripts/product-benchmark-controller.mjs",
     "benchmark:capabilities": "node scripts/run-capability-benchmark.mjs",
+    "benchmark:throughput": "node --test tests/project-agent-scheduler.test.mjs tests/throughput-benchmark.test.mjs",
     "capability:lock": "node scripts/update-capability-lock.mjs",
     "release:candidate": "node scripts/freeze-release-candidate.mjs",
     "release:validate-candidate": "node scripts/validate-release-candidate.mjs",

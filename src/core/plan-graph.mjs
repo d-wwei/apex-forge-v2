@@ -230,7 +230,10 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
     );
   }
   const profile = methodPack.workflow === "quick" ? "quick" : "full";
-  const nodes = capabilityApplication.nodes;
+  const nodes = capabilityApplication.nodes.map((node) =>
+    withThroughputMetadata(node, methodPack.workflow)
+  );
+  const barriers = buildExecutionBarriers(methodPack.workflow, nodes);
   const parallelLanes = buildParallelLanes(methodPack.workflow);
   const mergeOrder = parallelLanes.map((lane) => lane.id);
   const edges = nodes.flatMap((node) =>
@@ -248,6 +251,8 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
     affected_area: intake.affected_area,
     generated_at: timestamp,
     profile,
+    execution_model: "barrier-v1",
+    barriers,
     method_pack: {
       id: methodPack.id,
       version: methodPack.version,
@@ -448,6 +453,110 @@ function resolveCapabilityTarget(targetNodeId, nodes) {
   return nodes[0]?.id || null;
 }
 
+function buildExecutionBarriers(workflow, nodes) {
+  const groups = workflow === "quick"
+    ? [
+        ["delivery-candidate", []],
+        ["delivery-readiness", ["delivery-candidate"]]
+      ]
+    : [
+        ["delivery-plan", []],
+        ["delivery-candidate", ["delivery-plan"]],
+        ["delivery-readiness", ["delivery-candidate"]]
+      ];
+  return groups.map(([id, dependencies]) => ({
+    id,
+    dependencies,
+    node_ids: nodes
+      .filter((node) => node.barrier_id === id)
+      .map((node) => node.id)
+  })).filter((barrier) => barrier.node_ids.length > 0);
+}
+
+function withThroughputMetadata(node, workflow) {
+  const barrierId = barrierForNode(node.id);
+  const modelTier = modelTierForNode(node, workflow);
+  const mainAgentRequired = node.id === "delivery-design"
+    || (node.id === "delivery-review" && modelTier === "strong");
+  const delegatedByDefault = delegationDefaultForNode(node, workflow)
+    && !mainAgentRequired;
+  return {
+    ...node,
+    barrier_id: barrierId,
+    dispatch_kind: node.execution_class === "deterministic_check"
+      ? "kernel"
+      : delegatedByDefault
+        ? "subagent"
+        : "coordinator",
+    model_tier: modelTier,
+    fallback_model_tier: fallbackModelTier(modelTier),
+    delegation: {
+      eligible: ["cognitive", "workspace_patch"].includes(node.execution_class),
+      default: delegatedByDefault,
+      parallel: delegatedByDefault
+        && ["delivery-plan", "delivery-candidate"].includes(barrierId),
+      main_agent_required: mainAgentRequired
+    }
+  };
+}
+
+function barrierForNode(nodeId) {
+  if (["delivery-context", "delivery-risk", "delivery-design"].includes(nodeId)) {
+    return "delivery-plan";
+  }
+  if (
+    [
+      "delivery-implementation",
+      "delivery-tests",
+      "delivery-verification"
+    ].includes(nodeId)
+  ) {
+    return "delivery-candidate";
+  }
+  return "delivery-readiness";
+}
+
+function modelTierForNode(node, workflow) {
+  if (node.execution_class === "deterministic_check") return "deterministic";
+  const strongCapabilities = new Set([
+    "security-audit",
+    "migration-safety",
+    "high-risk-review",
+    "deploy-release"
+  ]);
+  if (
+    node.risk === "critical"
+    || (node.capability_bindings || []).some((binding) =>
+      strongCapabilities.has(binding.capability_id)
+    )
+    || (workflow === "governed" && node.id === "delivery-review")
+  ) {
+    return "strong";
+  }
+  if (["delivery-context", "delivery-risk", "delivery-tests"].includes(node.id)) {
+    return "cheap";
+  }
+  if (node.id === "delivery-review") return "cheap";
+  return "standard";
+}
+
+function delegationDefaultForNode(node, workflow) {
+  if (workflow === "quick") return false;
+  return [
+    "delivery-context",
+    "delivery-risk",
+    "delivery-implementation",
+    "delivery-tests",
+    "delivery-review"
+  ].includes(node.id);
+}
+
+function fallbackModelTier(modelTier) {
+  if (modelTier === "cheap") return "standard";
+  if (modelTier === "standard") return "strong";
+  return null;
+}
+
 function buildParallelLanes(workflow) {
   if (workflow === "quick") {
     return [
@@ -551,6 +660,11 @@ export function validatePlanGraph(plan) {
   const ids = new Set();
   const lanes = new Map((plan.parallel_lanes || []).map((lane) => [lane.id, lane]));
   const laneMembership = new Map();
+  const barriers = new Map((plan.barriers || []).map((barrier) => [
+    barrier.id,
+    barrier
+  ]));
+  const barrierMembership = new Map();
 
   const minimumNodes = {
     quick: 2,
@@ -582,6 +696,13 @@ export function validatePlanGraph(plan) {
     }
     if (plan.method_pack && node.method_pack_id !== plan.method_pack.id) {
       errors.push(`${node.id} 的 method_pack_id 与 plan 不一致`);
+    }
+    if (plan.execution_model === "barrier-v1") {
+      if (!node.barrier_id || !barriers.has(node.barrier_id)) {
+        errors.push(`${node.id} 的 barrier_id 无效：${node.barrier_id || "(空)"}`);
+      }
+      if (!node.model_tier) errors.push(`${node.id} 缺少 model_tier`);
+      if (!node.delegation) errors.push(`${node.id} 缺少 delegation`);
     }
     const capabilityIds = new Set();
     for (const capability of node.capability_bindings || []) {
@@ -639,6 +760,41 @@ export function validatePlanGraph(plan) {
   for (const node of plan.nodes) {
     const membership = laneMembership.get(node.id) || 0;
     if (membership !== 1) errors.push(`${node.id} 必须且只能属于一个 parallel lane，当前 ${membership}`);
+  }
+
+  if (plan.execution_model === "barrier-v1") {
+    for (const barrier of plan.barriers || []) {
+      for (const dependency of barrier.dependencies || []) {
+        if (!barriers.has(dependency)) {
+          errors.push(`barrier ${barrier.id} 依赖不存在：${dependency}`);
+        }
+        if (dependency === barrier.id) {
+          errors.push(`barrier ${barrier.id} 不能依赖自身`);
+        }
+      }
+      for (const nodeId of barrier.node_ids || []) {
+        if (!ids.has(nodeId)) {
+          errors.push(`barrier ${barrier.id} 引用不存在节点：${nodeId}`);
+          continue;
+        }
+        barrierMembership.set(
+          nodeId,
+          (barrierMembership.get(nodeId) || 0) + 1
+        );
+      }
+    }
+    for (const node of plan.nodes) {
+      const membership = barrierMembership.get(node.id) || 0;
+      if (membership !== 1) {
+        errors.push(`${node.id} 必须且只能属于一个 barrier，当前 ${membership}`);
+      }
+      if (
+        node.barrier_id
+        && !barriers.get(node.barrier_id)?.node_ids.includes(node.id)
+      ) {
+        errors.push(`${node.id} 未登记在 barrier ${node.barrier_id}`);
+      }
+    }
   }
 
   errors.push(...findDependencyCycles(plan.nodes));

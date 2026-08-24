@@ -149,6 +149,10 @@ export function replayProjectStateFromEvents(events) {
       openCarryIdsByRun.delete(event.payload.run_id);
       learnedRuns.delete(event.payload.run_id);
     }
+    if (event.type === "run.closed" && event.payload?.run_id) {
+      activeRuns.delete(event.payload.run_id);
+      learnedRuns.add(event.payload.run_id);
+    }
     if (event.type === "run.node.completed" && event.payload?.run_id) {
       if (event.payload.gate === "PARTIAL_PASS") {
         partialRuns.add(event.payload.run_id);

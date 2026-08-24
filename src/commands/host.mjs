@@ -18,7 +18,9 @@ import {
   markActionWorkspaceSubmitted
 } from "../core/action-workspace.mjs";
 import { buildCandidateSet } from "../core/candidate.mjs";
-import { assertCognitiveEvidenceSemantics } from "../core/cognitive-evidence.mjs";
+import {
+  validateWorkerSemanticEvidence
+} from "../core/semantic-evidence.mjs";
 import {
   assertCapabilityContextBudget,
   readCapabilityProtocol
@@ -305,7 +307,11 @@ function submitHostResultTransaction(root, workerId, hostId, input) {
   if (worker.execution_class === "workspace_patch") {
     patch = buildHostPatch(root, worker, input.summary, timestamp);
   } else {
-    const semanticEvidence = validateSemanticEvidence(root, worker, input.semanticEvidence);
+    const semanticEvidence = validateWorkerSemanticEvidence(
+      root,
+      worker,
+      input.semanticEvidence
+    );
     semanticEvidenceRef = `${worker.namespace}/cognitive-evidence.json`;
     writeJson(join(dir, "cognitive-evidence.json"), semanticEvidence);
   }
@@ -534,52 +540,6 @@ function parseCapabilityEvidence(args) {
     throw new Error("capability evidence JSON 必须是数组");
   }
   return value;
-}
-
-function validateSemanticEvidence(root, worker, evidence) {
-  if (!evidence) {
-    throw new Error(`cognitive action 必须提交 typed semantic evidence：${worker.plan_node_id}`);
-  }
-  const expectedType = cognitiveEvidenceType(worker.plan_node_id);
-  if (evidence.evidence_type !== expectedType) {
-    throw new Error(`cognitive evidence 类型不匹配：${evidence.evidence_type} != ${expectedType}`);
-  }
-  if (evidence.objective !== worker.objective) {
-    throw new Error("cognitive evidence objective 必须与 Host action 一致");
-  }
-  if (expectedType === "review") {
-    const run = loadRun(root, worker.run_id);
-    const queue = readJson(join(root, "runs", worker.run_id, "merge-queue.json"), {
-      schema_version: SCHEMA_VERSION,
-      run_id: worker.run_id,
-      updated_at: now(),
-      items: [],
-      conflicts: [],
-      resolutions: []
-    });
-    const current = buildCandidateSet(root, run, queue, resolve(root, ".."));
-    if (evidence.candidate_digest !== current.candidate_digest) {
-      throw new Error("review evidence 未绑定当前 candidate_digest");
-    }
-  }
-  const validation = validateContract(
-    "cognitive-evidence.schema.json",
-    evidence,
-    `${worker.namespace}/cognitive-evidence.json`
-  );
-  if (!validation.valid) {
-    throw new Error(`cognitive evidence contract 无效：${JSON.stringify(validation.errors)}`);
-  }
-  assertCognitiveEvidenceSemantics(evidence);
-  return evidence;
-}
-
-function cognitiveEvidenceType(planNodeId) {
-  if (planNodeId.endsWith("context")) return "context";
-  if (planNodeId.endsWith("risk")) return "risk";
-  if (planNodeId.endsWith("design")) return "design";
-  if (planNodeId.endsWith("review")) return "review";
-  throw new Error(`未知 cognitive evidence 类型：${planNodeId}`);
 }
 
 function assertActiveClaim(worker, action, claimToken) {

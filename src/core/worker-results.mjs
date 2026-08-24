@@ -22,9 +22,18 @@ export function buildWorkerSummary(root, worker, record = false) {
     final_status: worker.status,
     verdict: ["patch_submitted", "queued", "merged", "evidence_submitted", "decision_submitted"].includes(worker.status) ? "pass" : worker.status === "blocked" ? "fail" : "partial",
     adapters: Array.from(new Set(results.map((result) => result.adapter))),
+    initial_model_tier: worker.initial_model_tier || null,
+    final_model_tier: worker.model_tier || results.at(-1)?.model_tier || null,
+    final_model_id: worker.model_id || results.at(-1)?.requested_model || null,
+    models: Array.from(new Set(results
+      .map((result) => result.reported_model || result.requested_model)
+      .filter(Boolean))),
     attempts: results.map((result) => ({
       result_id: result.result_id,
       adapter: result.adapter,
+      model_tier: result.model_tier || null,
+      requested_model: result.requested_model || null,
+      reported_model: result.reported_model || null,
       status: result.status,
       failure_kind: result.failure_kind || null,
       exit_code: result.exit_code ?? null,

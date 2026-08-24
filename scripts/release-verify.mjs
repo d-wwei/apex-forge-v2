@@ -73,6 +73,9 @@ const steps = [
   commandStep("plugin-provenance", "npm", [
     "run", "release:validate-candidate", "--", "--bundle-only"
   ]),
+  commandStep("throughput-architecture-gate", "npm", [
+    "run", "benchmark:throughput"
+  ]),
   commandStep("capability-gate", "npm", ["run", "benchmark:capabilities"]),
   commandStep("product-gate", "npm", ["run", "benchmark:plugin"])
 ];

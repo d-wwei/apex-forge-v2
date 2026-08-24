@@ -491,7 +491,10 @@ function execWorkerAgent(args) {
     adapter,
     model: args.model ? String(args.model) : undefined,
     profile: args.profile ? String(args.profile) : undefined,
-    timeoutMs
+    timeoutMs,
+    executionClaimToken: args["execution-claim-token"]
+      ? String(args["execution-claim-token"])
+      : null
   });
   console.log(JSON.stringify({
     result: result.adapterResult,
@@ -644,6 +647,9 @@ export function fallbackWorkerInternal(root, worker, via) {
   worker.adapter = next;
   worker.executor_id = next;
   worker.status = "active";
+  worker.execution_claim_token = null;
+  worker.execution_claimed_at = null;
+  worker.execution_claim_expires_at = null;
   worker.updated_at = now();
   writeJson(join(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
   const event = appendEvent(root, "worker.adapter.fallback", "apex-v2", {
@@ -675,6 +681,9 @@ export function retryWorkerInternal(root, worker, via) {
   }
   if (policy.auto_retry.reset_sandbox) resetWorkerSandbox(root, worker);
   worker.status = "active";
+  worker.execution_claim_token = null;
+  worker.execution_claimed_at = null;
+  worker.execution_claim_expires_at = null;
   worker.updated_at = now();
   writeJson(join(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
   const event = appendEvent(root, "worker.retry.requested", "apex-v2", {

@@ -17,6 +17,7 @@ import {
 } from "../lib/common.mjs";
 import { routeExecution } from "./execution-router.mjs";
 import { withProjectTransaction } from "./project-transaction.mjs";
+import { withProjectLock } from "./project-lock.mjs";
 import { appendEvent, SCHEMA_VERSION, updateProject } from "./store.mjs";
 import { createArtifact } from "./artifacts.mjs";
 import { assertContract } from "./contracts.mjs";
@@ -25,6 +26,7 @@ import {
   assertCapabilityProviderAvailability
 } from "./capability-registry.mjs";
 import { assertCapabilityEvidence } from "./capability-evidence.mjs";
+import { resolveModelSelection } from "./model-routing.mjs";
 
 export function createWorkerForPlanNode(root, run, planNode, options = {}) {
   const generation = getWorkers(root, run.run_id)
@@ -43,6 +45,12 @@ function createWorkerForPlanNodeTransaction(root, run, planNode, options) {
   const executionPolicy = readJson(join(root, "policies", "execution.json"));
   const route = routeExecution(planNode, executionPolicy, options);
   const assignment = resolveWorkerAssignment(planNode, executionPolicy, route);
+  const modelSelection = resolveModelSelection({
+    planNode,
+    executionPolicy,
+    adapter: assignment.adapter
+  });
+  Object.assign(route, modelSelection);
   const worker = {
     schema_version: SCHEMA_VERSION,
     worker_id: workerId,
@@ -56,6 +64,10 @@ function createWorkerForPlanNodeTransaction(root, run, planNode, options) {
       status: "missing"
     },
     ...assignment,
+    initial_model_tier: modelSelection.initial_model_tier,
+    model_tier: modelSelection.model_tier,
+    model_id: modelSelection.model_id,
+    model_reason: modelSelection.model_reason,
     output_contract: planNode.output_contract || "evidence",
     objective: planNode.objective,
     deliverables: planNode.deliverables,
@@ -71,6 +83,10 @@ function createWorkerForPlanNodeTransaction(root, run, planNode, options) {
     claim_token: null,
     claim_expires_at: null,
     fencing_token: 0,
+    execution_claim_token: null,
+    execution_claimed_at: null,
+    execution_claim_expires_at: null,
+    execution_fencing_token: 0,
     route_id: null,
     created_at: timestamp,
     updated_at: timestamp
@@ -197,6 +213,119 @@ export function getWorkers(root, runId) {
     .filter((entry) => entry.isDirectory())
     .map((entry) => readJson(join(dir, entry.name, "worker.json"), null))
     .filter(Boolean);
+}
+
+export function claimWorkerExecution(root, workerId, leaseMs, via = "project.tick") {
+  const claimToken = shortId("exec-claim");
+  return withProjectLock(resolve(root, ".."), () => {
+    const worker = findWorker(root, workerId);
+    const currentExpiry = Date.parse(worker.execution_claim_expires_at || "");
+    if (
+      worker.status === "running"
+      && Number.isFinite(currentExpiry)
+      && currentExpiry > Date.now()
+    ) {
+      return {
+        claimed: false,
+        reason: "already-running",
+        worker
+      };
+    }
+    if (worker.status === "running") {
+      worker.status = "active";
+    }
+    if (worker.status !== "active") {
+      return {
+        claimed: false,
+        reason: `worker-status=${worker.status}`,
+        worker
+      };
+    }
+
+    const timestamp = now();
+    worker.status = "running";
+    worker.execution_claim_token = claimToken;
+    worker.execution_claimed_at = timestamp;
+    worker.execution_claim_expires_at = new Date(
+      Date.now() + Math.max(1000, Number(leaseMs || 0))
+    ).toISOString();
+    worker.execution_fencing_token = Number(
+      worker.execution_fencing_token || 0
+    ) + 1;
+    worker.updated_at = timestamp;
+    writeJson(join(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
+    const event = appendEvent(root, "worker.execution.claimed", "apex-v2", {
+      run_id: worker.run_id,
+      worker_id: worker.worker_id,
+      claim_token: claimToken,
+      fencing_token: worker.execution_fencing_token,
+      lease_expires_at: worker.execution_claim_expires_at,
+      via
+    });
+    updateProject(root, {
+      last_event_id: event.event_id,
+      updated_at: event.timestamp
+    });
+    return {
+      claimed: true,
+      claim_token: claimToken,
+      worker
+    };
+  });
+}
+
+export function recoverExpiredWorkerExecutions(root, runIds, via = "project.tick") {
+  const recovered = [];
+  for (const runId of runIds) {
+    for (const worker of getWorkers(root, runId)) {
+      if (worker.status !== "running") continue;
+      const expiresAt = Date.parse(worker.execution_claim_expires_at || "");
+      if (Number.isFinite(expiresAt) && expiresAt > Date.now()) continue;
+      const result = withProjectLock(resolve(root, ".."), () => {
+        const current = findWorker(root, worker.worker_id);
+        const currentExpiry = Date.parse(
+          current.execution_claim_expires_at || ""
+        );
+        if (
+          current.status !== "running"
+          || (Number.isFinite(currentExpiry) && currentExpiry > Date.now())
+        ) {
+          return null;
+        }
+        current.status = "active";
+        current.execution_claim_token = null;
+        current.execution_claimed_at = null;
+        current.execution_claim_expires_at = null;
+        current.updated_at = now();
+        writeJson(
+          join(workerDir(root, current.run_id, current.worker_id), "worker.json"),
+          current
+        );
+        const event = appendEvent(
+          root,
+          "worker.execution.recovered",
+          "apex-v2",
+          {
+            run_id: current.run_id,
+            worker_id: current.worker_id,
+            fencing_token: current.execution_fencing_token || 0,
+            via
+          }
+        );
+        updateProject(root, {
+          last_event_id: event.event_id,
+          updated_at: event.timestamp
+        });
+        return {
+          run_id: current.run_id,
+          worker_id: current.worker_id,
+          status: "RECOVERED"
+        };
+      });
+      if (result) recovered.push(result);
+    }
+  }
+  return recovered;
 }
 
 export function workerDir(root, runId, workerId) {
@@ -450,6 +579,9 @@ export function executeWorkerShell(
     run_id: worker.run_id,
     plan_node_id: worker.plan_node_id,
     adapter: "shell",
+    model_tier: "deterministic",
+    requested_model: null,
+    reported_model: null,
     status: commandPassed && capabilityPassed ? "PASS" : "FAIL",
     failure_kind: !commandPassed
       ? "execution_error"

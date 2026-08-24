@@ -11,9 +11,11 @@ import {
   symlinkSync,
   writeFileSync
 } from "node:fs";
+import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { parseArgs } from "./cli/args.mjs";
 import { printHelp } from "./cli/help.mjs";
 import {
@@ -29,6 +31,7 @@ import {
   createRunNode,
   getRunNode,
   loadRun,
+  recordRunClosure,
   requirePassedNode,
   runHandoffTemplate,
   writeRun
@@ -50,6 +53,7 @@ import {
 } from "./core/intake-roadmap.mjs";
 import {
   applyPatchOperations,
+  claimWorkerExecution,
   createWorkerForPlanNode,
   ensureWorkerSandboxReady,
   executeWorkerShell,
@@ -59,6 +63,7 @@ import {
   findWorker,
   getWorkers,
   isFileAllowedByScope,
+  recoverExpiredWorkerExecutions,
   workerDir
 } from "./core/worker.mjs";
 import {
@@ -174,6 +179,8 @@ import {
 import { buildAuditSummary as collectAuditSummary } from "./audit/project-audit-summary.mjs";
 import { buildWorkerSummary } from "./core/worker-results.mjs";
 import { runAdapterSmoke } from "./core/adapter-smoke.mjs";
+import { runWorkerJobs } from "./core/worker-supervisor.mjs";
+import { acquireSchedulerLock } from "./core/scheduler-lock.mjs";
 import {
   buildAdapterTrend,
   recordAdapterObservation,
@@ -207,7 +214,7 @@ import {
 
 registerJsonWriteValidator(validatePersistedValue);
 
-function main() {
+async function main() {
   const [command, subcommand, ...rest] = process.argv.slice(2);
 
   try {
@@ -292,7 +299,7 @@ function main() {
     }
 
     if (command === "project") {
-      handleProject(subcommand, parseArgs(rest));
+      await handleProject(subcommand, parseArgs(rest));
       return;
     }
 
@@ -384,41 +391,77 @@ function proposeLearningInternal(root, run) {
   ];
 
   const proposalsPath = join(root, "learning", "proposals.json");
+  const jobsPath = join(root, "learning", "jobs.json");
   const proposals = readJson(proposalsPath, []);
+  const jobs = readJson(jobsPath, []);
   const created = [];
+  const queuedJobs = [];
   for (const candidate of candidates) {
-    const existing = proposals.find((proposal) =>
-      proposal.source_run_id === run.run_id &&
-      proposal.target_file === candidate.target_file &&
-      proposal.proposed_change === candidate.proposed_change
+    let proposal = proposals.find((item) =>
+      item.source_run_id === run.run_id &&
+      item.target_file === candidate.target_file &&
+      item.proposed_change === candidate.proposed_change
     );
-    if (existing) {
-      created.push(existing);
-      continue;
+    if (!proposal) {
+      proposal = {
+        schema_version: SCHEMA_VERSION,
+        id: shortId("learning"),
+        source_run_id: run.run_id,
+        target_file: candidate.target_file,
+        proposed_change: candidate.proposed_change,
+        evidence_refs: candidate.evidence_refs,
+        confidence: candidate.confidence,
+        status: "proposed",
+        apply_job_id: null,
+        apply_receipt_id: null,
+        applied_at: null,
+        created_at: timestamp,
+        updated_at: timestamp
+      };
+      proposals.push(proposal);
     }
-    const proposal = {
-      schema_version: SCHEMA_VERSION,
-      id: shortId("learning"),
-      source_run_id: run.run_id,
-      target_file: candidate.target_file,
-      proposed_change: candidate.proposed_change,
-      evidence_refs: candidate.evidence_refs,
-      confidence: candidate.confidence,
-      status: "proposed",
-      created_at: timestamp,
-      updated_at: timestamp
-    };
-    proposals.push(proposal);
+    let job = jobs.find((item) => item.proposal_id === proposal.id);
+    if (!job) {
+      job = {
+        schema_version: SCHEMA_VERSION,
+        job_id: shortId("learning-job"),
+        run_id: run.run_id,
+        proposal_id: proposal.id,
+        status: proposal.status === "approved"
+          ? "queued"
+          : proposal.status === "applied"
+            ? "applied"
+            : "waiting_approval",
+        attempt: 0,
+        idempotency_key: `learning-apply-job-v1:${proposal.id}`,
+        requested_at: timestamp,
+        started_at: null,
+        completed_at: null,
+        receipt_id: proposal.apply_receipt_id || null,
+        error: null,
+        updated_at: timestamp
+      };
+      jobs.push(job);
+    }
+    proposal.apply_job_id = job.job_id;
+    proposal.updated_at = timestamp;
     created.push(proposal);
+    queuedJobs.push(job);
   }
   writeJson(proposalsPath, proposals);
-  writeJson(join(root, "runs", run.run_id, "learning-report.json"), {
+  writeJson(jobsPath, jobs);
+  const reportPath = join(root, "runs", run.run_id, "learning-report.json");
+  const report = {
     schema_version: SCHEMA_VERSION,
     report_id: shortId("learning-report"),
     run_id: run.run_id,
     created_at: timestamp,
-    proposal_ids: created.map((proposal) => proposal.id)
-  });
+    proposal_ids: created.map((proposal) => proposal.id),
+    queue_job_ids: queuedJobs.map((job) => job.job_id),
+    completion_kind: "proposal_queued",
+    proposal_artifact_id: null
+  };
+  writeJson(reportPath, report);
   const artifact = createArtifact(root, run, "learn", {
     type: "decision",
     title: "Learning：已生成治理提案",
@@ -429,13 +472,19 @@ function proposeLearningInternal(root, run) {
     ],
     timestamp
   });
+  report.proposal_artifact_id = artifact.artifact_id;
+  writeJson(reportPath, report);
   const event = appendEvent(root, "learning.proposed", "apex-v2", {
     run_id: run.run_id,
     proposal_ids: created.map((proposal) => proposal.id),
     artifact_id: artifact.artifact_id
   });
   updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
-  return { proposals: created, artifact_id: artifact.artifact_id };
+  return {
+    proposals: created,
+    jobs: queuedJobs,
+    artifact_id: artifact.artifact_id
+  };
 }
 
 function listLearning(args) {
@@ -457,6 +506,7 @@ function approveLearning(args) {
       item.status = "approved";
       item.updated_at = now();
     });
+    queueApprovedLearningJob(root, approved);
     const event = appendEvent(root, "learning.approved", "apex-v2", { proposal_id: approved.id });
     updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
     return approved;
@@ -467,35 +517,32 @@ function approveLearning(args) {
 function applyLearning(args) {
   const root = requireStore(projectRoot(args));
   const id = required(args, "id");
-  const proposal = withProjectTransaction(resolve(root, ".."), {
-    kind: "learning-apply",
-    idempotencyKey: `learning-apply:${id}`
-  }, () => {
-    const applied = updateLearningProposal(root, id, (item) => {
-      if (item.status !== "approved") throw new Error(`只有 approved proposal 可以 apply，当前状态：${item.status}`);
-      appendLearningToKnowledge(root, item);
-      item.status = "applied";
-      item.updated_at = now();
-    });
-    const knowledgeVersion = bumpKnowledgeVersion(root);
-    const event = appendEvent(root, "learning.applied", "apex-v2", {
-      proposal_id: applied.id,
-      target_file: applied.target_file,
-      knowledge_version: knowledgeVersion
-    });
-    updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
-    return applied;
-  }).result;
-  console.log(JSON.stringify(proposal, null, 2));
+  const proposal = getLearningProposal(root, id);
+  if (proposal.status !== "approved" && proposal.status !== "applied") {
+    throw new Error(`只有 approved proposal 可以 apply，当前状态：${proposal.status}`);
+  }
+  if (proposal.status === "applied" && proposal.apply_receipt_id) {
+    console.log(JSON.stringify(proposal, null, 2));
+    return;
+  }
+  const job = queueApprovedLearningJob(root, proposal);
+  const [result] = processLearningJobs(root, {
+    limit: 1,
+    jobId: job.job_id
+  });
+  if (!result || result.status !== "APPLIED") {
+    throw new Error(result?.error || `learning job 未应用：${job.job_id}`);
+  }
+  console.log(JSON.stringify(getLearningProposal(root, id), null, 2));
 }
 
-function handleProject(subcommand, args) {
+async function handleProject(subcommand, args) {
   if (subcommand === "git") {
     handleGitDeliveryCommand(args._[0], args);
     return;
   }
   if (subcommand === "tick") {
-    projectTick(args);
+    await projectTick(args);
     return;
   }
   if (subcommand === "heartbeat") {
@@ -666,7 +713,7 @@ function reconcileProject(args) {
   console.log(JSON.stringify(report, null, 2));
 }
 
-function projectTick(args) {
+async function projectTick(args) {
   const root = requireStore(projectRoot(args));
   const timestamp = now();
   const intakePath = join(root, "intake", "items.json");
@@ -689,6 +736,8 @@ function projectTick(args) {
   let reviewedRuns = [];
   let integratedRuns = [];
   let learnedRuns = [];
+  let learningJobs = [];
+  let agentScheduler = null;
   let adapterSmokeRefresh = {
     attempted: false,
     reason: "no-ready-nodes",
@@ -754,44 +803,55 @@ function projectTick(args) {
     }
   }
 
-  if (args.dispatch) {
-    const refreshedProject = readJson(projectPath);
-    dispatchedWorkers = dispatchReadyWorkers(root, refreshedProject.active_runs, {
-      mode: args["execution-mode"] ? String(args["execution-mode"]) : null
-    });
-  }
-
-  if (args["retry-workers"]) {
-    const refreshedProject = readJson(projectPath);
-    const limit = Math.max(1, Number(args["retry-limit"] || 1));
-    retriedWorkers = retryBlockedWorkers(root, refreshedProject.active_runs, limit);
-  }
-  if (args["fallback-agents"]) {
-    const refreshedProject = readJson(projectPath);
-    const limit = Math.max(1, Number(args["fallback-limit"] || 1));
-    fallbackWorkers = fallbackBlockedAgents(root, refreshedProject.active_runs, limit);
-  }
-
-  if (args["run-workers"]) {
-    const refreshedProject = readJson(projectPath);
-    const limit = Math.max(1, Number(args["worker-limit"] || 1));
-    workerRuns = runReadyWorkerAdapters(root, refreshedProject.active_runs, limit);
-  }
-
   if (args["run-agents"]) {
-    const refreshedProject = readJson(projectPath);
     const limit = effectiveAgentLimit(root, Math.max(1, Number(args["agent-limit"] || 1)));
-    agentRuns = runReadyCodingAgents(root, refreshedProject.active_runs, limit, args);
-  }
+    const releaseScheduler = acquireSchedulerLock(resolve(root, ".."));
+    try {
+      agentScheduler = await runProjectAgentScheduler(root, limit, args);
+    } finally {
+      releaseScheduler();
+    }
+    dispatchedWorkers = agentScheduler.dispatched_workers;
+    retriedWorkers = agentScheduler.retried_workers;
+    fallbackWorkers = agentScheduler.fallback_workers;
+    workerRuns = agentScheduler.worker_runs;
+    agentRuns = agentScheduler.agent_runs;
+    collectedResults = agentScheduler.collected_results;
+    completedExecuteRuns = agentScheduler.completed_execute_runs;
+  } else {
+    if (args.dispatch) {
+      const refreshedProject = readJson(projectPath);
+      dispatchedWorkers = dispatchReadyWorkers(root, refreshedProject.active_runs, {
+        mode: args["execution-mode"] ? String(args["execution-mode"]) : null
+      });
+    }
 
-  if (args["collect-results"]) {
-    const refreshedProject = readJson(projectPath);
-    collectedResults = collectWorkerResults(root, refreshedProject.active_runs);
-  }
+    if (args["retry-workers"]) {
+      const refreshedProject = readJson(projectPath);
+      const limit = Math.max(1, Number(args["retry-limit"] || 1));
+      retriedWorkers = retryBlockedWorkers(root, refreshedProject.active_runs, limit);
+    }
+    if (args["fallback-agents"]) {
+      const refreshedProject = readJson(projectPath);
+      const limit = Math.max(1, Number(args["fallback-limit"] || 1));
+      fallbackWorkers = fallbackBlockedAgents(root, refreshedProject.active_runs, limit);
+    }
 
-  if (args["complete-execute"]) {
-    const refreshedProject = readJson(projectPath);
-    completedExecuteRuns = completeReadyExecuteNodes(root, refreshedProject.active_runs);
+    if (args["run-workers"]) {
+      const refreshedProject = readJson(projectPath);
+      const limit = Math.max(1, Number(args["worker-limit"] || 1));
+      workerRuns = runReadyWorkerAdapters(root, refreshedProject.active_runs, limit);
+    }
+
+    if (args["collect-results"]) {
+      const refreshedProject = readJson(projectPath);
+      collectedResults = collectWorkerResults(root, refreshedProject.active_runs);
+    }
+
+    if (args["complete-execute"]) {
+      const refreshedProject = readJson(projectPath);
+      completedExecuteRuns = completeReadyExecuteNodes(root, refreshedProject.active_runs);
+    }
   }
 
   if (args.verify) {
@@ -811,7 +871,16 @@ function projectTick(args) {
 
   if (args.learn) {
     const refreshedProject = readJson(projectPath);
-    learnedRuns = learnReadyRuns(root, refreshedProject.active_runs, Boolean(args["apply-learning"]));
+    learnedRuns = learnReadyRuns(root, refreshedProject.active_runs);
+  }
+
+  if (args["apply-learning"]) {
+    approveLearningForRuns(root, learnedRuns);
+  }
+  if (args["learning-worker"] || args["apply-learning"]) {
+    learningJobs = processLearningJobs(root, {
+      limit: Math.max(1, Number(args["learning-limit"] || 3))
+    });
   }
 
   const event = appendEvent(root, "project.tick", "apex-v2", {
@@ -829,6 +898,8 @@ function projectTick(args) {
     reviewed_runs: reviewedRuns,
     integrated_runs: integratedRuns,
     learned_runs: learnedRuns,
+    learning_jobs: learningJobs,
+    agent_scheduler: agentScheduler,
     adapter_smoke_refresh: adapterSmokeRefresh
   });
   updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
@@ -848,6 +919,8 @@ function projectTick(args) {
     reviewed_runs: reviewedRuns,
     integrated_runs: integratedRuns,
     learned_runs: learnedRuns,
+    learning_jobs: learningJobs,
+    agent_scheduler: agentScheduler,
     adapter_smoke_refresh: adapterSmokeRefresh,
     remaining_ready: readJson(roadmapPath).nodes.filter((node) => node.status === "ready").length,
     active_runs: readJson(projectPath).active_runs
@@ -997,7 +1070,7 @@ function integrateReadyRuns(root, runIds) {
   return out;
 }
 
-function learnReadyRuns(root, runIds, applyLearning) {
+function learnReadyRuns(root, runIds) {
   const out = [];
   for (const runId of runIds) {
     const run = loadRun(root, runId);
@@ -1005,48 +1078,152 @@ function learnReadyRuns(root, runIds, applyLearning) {
     if (getRunNode(run, "learn").status !== "pending") continue;
     const transition = withProjectTransaction(resolve(root, ".."), {
       kind: "learning-governance",
-      idempotencyKey: `learning-governance:${run.run_id}:${applyLearning ? "apply" : "propose"}`
-    }, () => learnReadyRunTransaction(root, run, applyLearning)).result;
+      idempotencyKey: `learning-governance-v2:${run.run_id}:proposal-queued`
+    }, () => learnReadyRunTransaction(root, run)).result;
     out.push(transition);
   }
   return out;
 }
 
-function learnReadyRunTransaction(root, run, applyLearning) {
+function learnReadyRunTransaction(root, run) {
   const result = proposeLearningInternal(root, run);
   const proposalIds = result.proposals.map((proposal) => proposal.id);
-  const applied = [];
-  if (applyLearning) {
-    for (const proposalId of proposalIds) {
-      const proposal = getLearningProposal(root, proposalId);
-      if (proposal.status === "proposed") {
-        updateLearningProposal(root, proposalId, (item) => {
-          item.status = "approved";
-          item.updated_at = now();
-        });
-      }
-      const updated = getLearningProposal(root, proposalId);
-      if (updated.status === "approved") {
-        updateLearningProposal(root, proposalId, (item) => {
-          appendLearningToKnowledge(root, item);
-          item.status = "applied";
-          item.updated_at = now();
-        });
-        applied.push(proposalId);
-      }
-    }
-    if (applied.length > 0) {
-      const knowledgeVersion = bumpKnowledgeVersion(root);
-      appendEvent(root, "learning.applied", "apex-v2", {
-        run_id: run.run_id,
-        proposal_ids: applied,
-        knowledge_version: knowledgeVersion,
-        via: "project.tick"
-      });
-    }
-    passNode(root, run.run_id, "learn", result.artifact_id, "project tick 自动完成 learning governance。");
+  const jobIds = result.jobs.map((job) => job.job_id);
+  const current = loadRun(root, run.run_id);
+  current.learning_proposal_ids = proposalIds;
+  current.learning_apply_job_ids = jobIds;
+  writeRun(root, current);
+  passNode(
+    root,
+    run.run_id,
+    "learn",
+    result.artifact_id,
+    "learning proposal 已进入 durable queue；apply 在交付关闭后异步执行。"
+  );
+  return {
+    run_id: run.run_id,
+    proposal_ids: proposalIds,
+    queue_job_ids: jobIds,
+    applied: [],
+    artifact_id: result.artifact_id
+  };
+}
+
+async function runProjectAgentScheduler(root, limit, args) {
+  const policy = readJson(join(root, "policies", "execution.json"));
+  const configuredCycles = Number(
+    args["agent-cycles"]
+    || policy.budgets?.max_agent_cycles_per_tick
+    || 12
+  );
+  if (!Number.isInteger(configuredCycles) || configuredCycles <= 0) {
+    throw new Error("--agent-cycles 必须是正整数");
   }
-  return { run_id: run.run_id, proposal_ids: proposalIds, applied, artifact_id: result.artifact_id };
+  const aggregate = {
+    max_cycles: configuredCycles,
+    max_agent_runs: Number(policy.budgets?.max_agent_runs_per_tick || limit),
+    cycles: [],
+    stop_reason: "max-cycles",
+    dispatched_workers: [],
+    retried_workers: [],
+    fallback_workers: [],
+    worker_runs: [],
+    agent_runs: [],
+    collected_results: [],
+    completed_execute_runs: [],
+    recovered_workers: []
+  };
+  let remainingAgentRuns = aggregate.max_agent_runs;
+
+  for (let cycle = 1; cycle <= configuredCycles; cycle += 1) {
+    const runIds = readJson(join(root, "project.json")).active_runs;
+    if (runIds.length === 0) {
+      aggregate.stop_reason = "no-active-runs";
+      break;
+    }
+
+    const recovered = recoverExpiredWorkerExecutions(root, runIds);
+    const fallback = fallbackBlockedAgents(root, runIds, limit);
+    const retry = retryBlockedWorkers(root, runIds, limit);
+    const dispatched = dispatchReadyWorkers(root, runIds, {
+      mode: args["execution-mode"] ? String(args["execution-mode"]) : null,
+      limit
+    });
+    const deterministic = runReadyWorkerAdapters(root, runIds, limit);
+    const batchLimit = Math.min(limit, remainingAgentRuns);
+    const agents = batchLimit > 0
+      ? await runReadyCodingAgents(root, runIds, batchLimit, args)
+      : [];
+    remainingAgentRuns -= agents.filter((item) => item.status !== "STALE").length;
+    const collected = collectWorkerResults(root, runIds);
+    const completed = completeReadyExecuteNodes(root, runIds);
+    const progressCount = [
+      ...fallback.filter((item) => item.status === "FALLBACK_READY"),
+      ...recovered,
+      ...retry.filter((item) => item.status === "RETRY_READY"),
+      ...dispatched,
+      ...deterministic,
+      ...agents.filter((item) => item.status !== "STALE"),
+      ...collected,
+      ...completed
+    ].length;
+
+    aggregate.fallback_workers.push(...fallback);
+    aggregate.recovered_workers.push(...recovered);
+    aggregate.retried_workers.push(...retry);
+    aggregate.dispatched_workers.push(...dispatched);
+    aggregate.worker_runs.push(...deterministic);
+    aggregate.agent_runs.push(...agents);
+    aggregate.collected_results.push(...collected);
+    aggregate.completed_execute_runs.push(...completed);
+    aggregate.cycles.push({
+      cycle,
+      progress_count: progressCount,
+      recovered_workers: recovered.map((item) => item.worker_id),
+      dispatched_workers: dispatched.map((item) => item.worker_id),
+      fallback_workers: fallback
+        .filter((item) => item.status === "FALLBACK_READY")
+        .map((item) => item.worker_id),
+      retried_workers: retry
+        .filter((item) => item.status === "RETRY_READY")
+        .map((item) => item.worker_id),
+      deterministic_workers: deterministic.map((item) => item.worker_id),
+      agent_workers: agents.map((item) => item.worker_id),
+      collected_workers: collected.map((item) => item.worker_id),
+      completed_runs: completed.map((item) => item.run_id)
+    });
+
+    if (remainingAgentRuns <= 0) {
+      aggregate.stop_reason = "agent-run-budget";
+      break;
+    }
+    if (progressCount === 0) {
+      aggregate.stop_reason = schedulerStopReason(root, runIds);
+      break;
+    }
+    if (cycle === configuredCycles) {
+      aggregate.stop_reason = "max-cycles";
+    }
+  }
+
+  return aggregate;
+}
+
+function schedulerStopReason(root, runIds) {
+  const workers = runIds.flatMap((runId) => getWorkers(root, runId));
+  if (workers.some((worker) =>
+    worker.adapter === "host"
+    && ["active", "claimed"].includes(worker.status)
+  )) {
+    return "waiting-for-coordinator";
+  }
+  if (workers.some((worker) => worker.status === "blocked")) {
+    return "blocked";
+  }
+  if (workers.some((worker) => worker.status === "running")) {
+    return "worker-running";
+  }
+  return "drained";
 }
 
 function runReadyWorkerAdapters(root, runIds, limit) {
@@ -1122,7 +1299,7 @@ function fallbackBlockedAgents(root, runIds, limit) {
   return out;
 }
 
-function runReadyCodingAgents(root, runIds, limit, args) {
+async function runReadyCodingAgents(root, runIds, limit, args) {
   const out = [];
   const executorIds = new Set(inspectWorkerExecutors().map((item) => item.executor_id));
   const requestedSandbox = normalizeEnum(args["agent-sandbox"] || "worktree", ["scratch", "worktree"], "agent-sandbox");
@@ -1131,55 +1308,318 @@ function runReadyCodingAgents(root, runIds, limit, args) {
     throw new Error("--agent-timeout-ms 必须是正整数");
   }
 
+  const selected = [];
   for (const runId of runIds) {
-    if (out.length >= limit) break;
+    if (selected.length >= limit) break;
     const run = loadRun(root, runId);
     const plan = loadPlanGraph(root, runId);
     for (const worker of getWorkers(root, runId)) {
-      if (out.length >= limit) break;
+      if (selected.length >= limit) break;
       const executorId = worker.executor_id || worker.adapter;
       if (worker.status !== "active" || !executorIds.has(executorId)) continue;
+      let selection = {
+        run,
+        worker,
+        planNode: null,
+        executorId,
+        claimToken: null,
+        job: null
+      };
       try {
         assertAdapterAllowed(root, executorId);
-        initializeWorkerSandbox(root, worker, requestedSandbox);
         const planNode = getPlanNode(plan, worker.plan_node_id);
-        const result = executeWorkerExecutor(root, worker, planNode, {
-          command: args["agent-command"] ? String(args["agent-command"]) : undefined,
-          adapter: executorId,
-          model: args["agent-model"] ? String(args["agent-model"]) : undefined,
-          profile: args["agent-profile"] ? String(args["agent-profile"]) : undefined,
-          timeoutMs,
-          requiredCapabilities: worker.required_capabilities || []
-        });
-        let queueStatus = null;
-        if (result.patch) {
-          const queue = enqueuePatchInternal(root, run, result.patch);
-          queueStatus = queue.conflicts.length > 0 ? "blocked_conflict" : "queued";
-        }
-        out.push({
-          run_id: runId,
-          worker_id: worker.worker_id,
-          plan_node_id: worker.plan_node_id,
-          status: result.adapterResult.status,
-          patch_id: result.patch?.patch_id || null,
-          queue_status: queueStatus,
-          artifact_id: result.artifact.artifact_id
-        });
+        const claim = claimWorkerExecution(
+          root,
+          worker.worker_id,
+          timeoutMs + 30000,
+          "project.tick"
+        );
+        if (!claim.claimed) continue;
+        selection = {
+          ...selection,
+          worker: claim.worker,
+          planNode,
+          claimToken: claim.claim_token
+        };
+        const initialized = initializeWorkerSandbox(
+          root,
+          claim.worker,
+          requestedSandbox
+        ).worker;
+        selection = {
+          ...selection,
+          worker: initialized,
+          planNode,
+          executorId,
+          claimToken: claim.claim_token,
+          job: {
+            id: initialized.worker_id,
+            command: process.execPath,
+            args: workerAgentChildArgs({
+              projectDir: resolve(root, ".."),
+              worker: initialized,
+              executorId,
+              timeoutMs,
+              executionClaimToken: claim.claim_token,
+              agentCommand: args["agent-command"],
+              agentModel: args["agent-model"],
+              agentProfile: args["agent-profile"]
+            }),
+            cwd: resolve(root, ".."),
+            timeoutMs: timeoutMs + 15000,
+            maxOutputBytes: 16 * 1024 * 1024
+          }
+        };
+        selected.push(selection);
       } catch (error) {
-        worker.status = "blocked";
-        worker.updated_at = now();
-        writeJson(join(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
-        out.push({
-          run_id: runId,
-          worker_id: worker.worker_id,
-          plan_node_id: worker.plan_node_id,
-          status: "FAIL",
-          error: error.message
-        });
+        out.push(recordSupervisorFailure(root, selection, {
+          status: "failed",
+          command: process.execPath,
+          args: [],
+          stderr: error.message,
+          stdout: "",
+          exit_code: 1,
+          duration_ms: 0,
+          timed_out: false
+        }));
       }
     }
   }
+  const supervisorResults = await runWorkerJobs(
+    selected.map((item) => item.job),
+    {
+      maxConcurrency: Math.max(1, Math.min(limit, selected.length || 1)),
+      defaultTimeoutMs: timeoutMs + 15000
+    }
+  );
+  for (const [index, supervised] of supervisorResults.entries()) {
+    const selection = selected[index];
+    if (supervised.status !== "succeeded") {
+      out.push(recordSupervisorFailure(root, selection, supervised));
+      continue;
+    }
+    let result;
+    try {
+      result = JSON.parse(supervised.stdout);
+    } catch {
+      out.push(recordSupervisorFailure(root, selection, {
+        ...supervised,
+        status: "failed",
+        stderr: [
+          supervised.stderr,
+          "worker child returned invalid JSON"
+        ].filter(Boolean).join("\n")
+      }));
+      continue;
+    }
+    let queueStatus = null;
+    let queueError = null;
+    if (result.patch) {
+      try {
+        const currentRun = loadRun(root, selection.run.run_id);
+        const queue = enqueuePatchInternal(root, currentRun, result.patch);
+        queueStatus = queue.conflicts.length > 0 ? "blocked_conflict" : "queued";
+      } catch (error) {
+        queueStatus = "enqueue_failed";
+        queueError = error.message;
+        const event = appendEvent(root, "worker.patch.enqueue.failed", "apex-v2", {
+          run_id: selection.run.run_id,
+          worker_id: selection.worker.worker_id,
+          patch_id: result.patch.patch_id,
+          error: error.message
+        });
+        updateProject(root, {
+          last_event_id: event.event_id,
+          updated_at: event.timestamp
+        });
+      }
+    }
+    out.push({
+      run_id: selection.run.run_id,
+      worker_id: selection.worker.worker_id,
+      plan_node_id: selection.worker.plan_node_id,
+      status: result.result?.status || "FAIL",
+      patch_id: result.patch?.patch_id || null,
+      queue_status: queueStatus,
+      queue_error: queueError,
+      artifact_id: result.artifact_id || null,
+      supervisor_status: supervised.status,
+      duration_ms: supervised.duration_ms
+    });
+  }
   return out;
+}
+
+function workerAgentChildArgs({
+  projectDir,
+  worker,
+  executorId,
+  timeoutMs,
+  executionClaimToken,
+  agentCommand,
+  agentModel,
+  agentProfile
+}) {
+  const values = [
+    fileURLToPath(import.meta.url),
+    "worker",
+    "exec-agent",
+    "--project",
+    projectDir,
+    "--worker-id",
+    worker.worker_id,
+    "--adapter",
+    executorId,
+    "--timeout-ms",
+    String(timeoutMs),
+    "--execution-claim-token",
+    executionClaimToken
+  ];
+  if (agentCommand) values.push("--command", String(agentCommand));
+  if (agentModel) values.push("--model", String(agentModel));
+  if (agentProfile) values.push("--profile", String(agentProfile));
+  return values;
+}
+
+function recordSupervisorFailure(root, selection, supervised) {
+  return withProjectTransaction(resolve(root, ".."), {
+    kind: "worker-supervisor-failure",
+    idempotencyKey: [
+      "worker-supervisor-failure",
+      selection.worker.worker_id,
+      selection.claimToken || "unclaimed",
+      shortId("failure")
+    ].join(":")
+  }, () => recordSupervisorFailureTransaction(
+    root,
+    selection,
+    supervised
+  )).result;
+}
+
+function recordSupervisorFailureTransaction(root, selection, supervised) {
+  const worker = findWorker(root, selection.worker.worker_id);
+  if (
+    (
+      selection.claimToken
+      && (
+        worker.status !== "running"
+        || worker.execution_claim_token !== selection.claimToken
+      )
+    )
+    || (
+      !selection.claimToken
+      && (
+        worker.status !== "active"
+        || worker.updated_at !== selection.worker.updated_at
+      )
+    )
+  ) {
+    const event = appendEvent(root, "worker.supervisor.stale", "apex-v2", {
+      run_id: worker.run_id,
+      worker_id: worker.worker_id,
+      expected_claim_token: selection.claimToken,
+      current_status: worker.status,
+      supervisor_status: supervised.status
+    });
+    updateProject(root, {
+      last_event_id: event.event_id,
+      updated_at: event.timestamp
+    });
+    return {
+      run_id: worker.run_id,
+      worker_id: worker.worker_id,
+      plan_node_id: worker.plan_node_id,
+      status: "STALE",
+      error: supervised.stderr || supervised.status,
+      supervisor_status: supervised.status
+    };
+  }
+  const failureKind = supervised.timed_out ? "timeout" : "execution_error";
+  const timestamp = now();
+  const result = {
+    schema_version: SCHEMA_VERSION,
+    result_id: shortId("adapter"),
+    worker_id: worker.worker_id,
+    run_id: worker.run_id,
+    plan_node_id: worker.plan_node_id,
+    adapter: selection.executorId,
+    executor_id: selection.executorId,
+    model_tier: worker.model_tier || "standard",
+    requested_model: worker.model_id || null,
+    reported_model: null,
+    status: "FAIL",
+    failure_kind: failureKind,
+    command: [supervised.command, ...(supervised.args || [])].join(" "),
+    summary: supervised.stderr || `worker supervisor ${supervised.status}`,
+    adapter_version: "",
+    session_id: null,
+    executable: supervised.command,
+    exit_code: supervised.exit_code ?? 1,
+    duration_ms: supervised.duration_ms || 0,
+    stdout_tail: tail(supervised.stdout),
+    stderr_tail: tail(supervised.stderr),
+    changed_files: [],
+    out_of_scope_files: [],
+    unsupported_files: [],
+    usage: {
+      input_tokens: null,
+      output_tokens: null,
+      tool_calls: null,
+      agent_turns: null
+    },
+    cost_evaluation: {
+      status: "NOT_CONFIGURED",
+      exceeded: [],
+      unknown: []
+    },
+    capability_evidence_status: {
+      enforcement: worker.capability_enforcement || "shadow",
+      submitted: [],
+      missing: (worker.capability_bindings || [])
+        .filter((binding) => binding.required)
+        .map((binding) => binding.capability_id),
+      error: supervised.stderr || supervised.status
+    },
+    semantic_evidence_status: {
+      required: worker.execution_class === "cognitive",
+      valid: false,
+      error: supervised.stderr || supervised.status
+    },
+    refs: [],
+    created_at: timestamp
+  };
+  writeJson(
+    join(
+      workerDir(root, worker.run_id, worker.worker_id),
+      `adapter-result-${result.result_id}.json`
+    ),
+    result
+  );
+  worker.status = "blocked";
+  worker.last_adapter = selection.executorId;
+  worker.attempt = Number(worker.attempt || 0) + 1;
+  worker.execution_claim_token = null;
+  worker.execution_claimed_at = null;
+  worker.execution_claim_expires_at = null;
+  worker.updated_at = timestamp;
+  writeJson(join(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
+  const event = appendEvent(root, "worker.supervisor.failed", "apex-v2", {
+    run_id: worker.run_id,
+    worker_id: worker.worker_id,
+    result_id: result.result_id,
+    failure_kind: failureKind,
+    supervisor_status: supervised.status
+  });
+  updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
+  return {
+    run_id: worker.run_id,
+    worker_id: worker.worker_id,
+    plan_node_id: worker.plan_node_id,
+    status: "FAIL",
+    error: result.summary,
+    supervisor_status: supervised.status
+  };
 }
 
 function chooseWorkerCommand(worker) {
@@ -1308,7 +1748,13 @@ function findAdapterResultsForWorker(root, worker) {
 function dispatchReadyWorkers(root, runIds, options = {}) {
   const project = readJson(join(root, "project.json"));
   const dispatched = [];
-  let available = Math.max(0, project.wip_limits.parallel_workers - countOpenWorkers(root));
+  const requestedLimit = Number.isInteger(Number(options.limit))
+    ? Math.max(0, Number(options.limit))
+    : Number.POSITIVE_INFINITY;
+  let available = Math.min(
+    requestedLimit,
+    Math.max(0, project.wip_limits.parallel_workers - countOpenWorkers(root))
+  );
   if (available <= 0) return dispatched;
 
   for (const runId of runIds) {
@@ -1350,7 +1796,7 @@ function countOpenWorkers(root) {
   for (const runEntry of readdirSync(runsDir, { withFileTypes: true })) {
     if (!runEntry.isDirectory()) continue;
     for (const worker of getWorkers(root, runEntry.name)) {
-      if (["active", "claimed", "patch_submitted", "blocked"].includes(worker.status)) count += 1;
+      if (["active", "running", "claimed"].includes(worker.status)) count += 1;
     }
   }
   return count;
@@ -1425,6 +1871,7 @@ function passNode(root, runId, nodeId, artifactIds, reason) {
     via: "project.tick"
   });
   updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
+  recordRunClosure(root, run, "project.tick");
 }
 
 function renderAutoMandate(root, run) {
@@ -1461,6 +1908,219 @@ function getLearningProposal(root, id) {
   return proposal;
 }
 
+function approveLearningForRuns(root, transitions) {
+  for (const proposalId of transitions.flatMap((item) => item.proposal_ids || [])) {
+    const proposal = getLearningProposal(root, proposalId);
+    if (proposal.status !== "proposed") continue;
+    withProjectTransaction(resolve(root, ".."), {
+      kind: "learning-auto-approve",
+      idempotencyKey: `learning-auto-approve:${proposalId}`
+    }, () => {
+      const approved = updateLearningProposal(root, proposalId, (item) => {
+        item.status = "approved";
+        item.updated_at = now();
+      });
+      queueApprovedLearningJob(root, approved);
+      const event = appendEvent(root, "learning.approved", "apex-v2", {
+        proposal_id: proposalId,
+        via: "project.tick"
+      });
+      updateProject(root, {
+        last_event_id: event.event_id,
+        updated_at: event.timestamp
+      });
+      return approved;
+    });
+  }
+}
+
+function queueApprovedLearningJob(root, proposal) {
+  const path = join(root, "learning", "jobs.json");
+  const jobs = readJson(path, []);
+  let job = jobs.find((item) =>
+    item.job_id === proposal.apply_job_id
+    || item.proposal_id === proposal.id
+  );
+  const timestamp = now();
+  if (!job) {
+    job = {
+      schema_version: SCHEMA_VERSION,
+      job_id: shortId("learning-job"),
+      run_id: proposal.source_run_id,
+      proposal_id: proposal.id,
+      status: "queued",
+      attempt: 0,
+      idempotency_key: `learning-apply-job-v1:${proposal.id}`,
+      requested_at: timestamp,
+      started_at: null,
+      completed_at: null,
+      receipt_id: proposal.apply_receipt_id || null,
+      error: null,
+      updated_at: timestamp
+    };
+    jobs.push(job);
+  } else if (job.status !== "applied") {
+    job.status = "queued";
+    job.error = null;
+    job.updated_at = timestamp;
+  }
+  writeJson(path, jobs);
+  if (proposal.apply_job_id !== job.job_id) {
+    updateLearningProposal(root, proposal.id, (item) => {
+      item.apply_job_id = job.job_id;
+      item.updated_at = timestamp;
+    });
+  }
+  return job;
+}
+
+function processLearningJobs(root, options = {}) {
+  const limit = Math.max(1, Number(options.limit || 1));
+  const snapshot = readJson(join(root, "learning", "jobs.json"), []);
+  const selected = snapshot.filter((job) =>
+    (!options.jobId || job.job_id === options.jobId)
+    && (
+      job.status === "queued"
+      || (job.status === "failed" && Number(job.attempt || 0) < 3)
+    )
+  ).slice(0, limit);
+  const results = [];
+
+  for (const selectedJob of selected) {
+    try {
+      const result = withProjectTransaction(resolve(root, ".."), {
+        kind: "learning-apply-job",
+        idempotencyKey: selectedJob.idempotency_key
+      }, () => applyLearningJobTransaction(root, selectedJob.job_id)).result;
+      results.push(result);
+    } catch (error) {
+      const failed = withProjectTransaction(resolve(root, ".."), {
+        kind: "learning-apply-job-failed",
+        idempotencyKey: `learning-apply-job-failed:${selectedJob.job_id}:${shortId("attempt")}`
+      }, () => {
+        const path = join(root, "learning", "jobs.json");
+        const jobs = readJson(path, []);
+        const job = jobs.find((item) => item.job_id === selectedJob.job_id);
+        if (!job || job.status === "applied") return job;
+        job.status = "failed";
+        job.attempt = Number(job.attempt || 0) + 1;
+        job.error = error.message;
+        job.completed_at = now();
+        job.updated_at = job.completed_at;
+        writeJson(path, jobs);
+        const event = appendEvent(root, "learning.apply.failed", "apex-v2", {
+          run_id: job.run_id,
+          job_id: job.job_id,
+          proposal_id: job.proposal_id,
+          attempt: job.attempt,
+          error: error.message
+        });
+        updateProject(root, {
+          last_event_id: event.event_id,
+          updated_at: event.timestamp
+        });
+        return job;
+      }).result;
+      results.push({
+        job_id: selectedJob.job_id,
+        proposal_id: selectedJob.proposal_id,
+        status: "FAILED",
+        attempt: failed?.attempt || selectedJob.attempt,
+        error: error.message
+      });
+    }
+  }
+  return results;
+}
+
+function applyLearningJobTransaction(root, jobId) {
+  const jobsPath = join(root, "learning", "jobs.json");
+  const jobs = readJson(jobsPath, []);
+  const job = jobs.find((item) => item.job_id === jobId);
+  if (!job) throw new Error(`找不到 learning apply job：${jobId}`);
+  if (job.status === "applied" && job.receipt_id) {
+    return {
+      job_id: job.job_id,
+      proposal_id: job.proposal_id,
+      receipt_id: job.receipt_id,
+      status: "APPLIED",
+      replayed: true
+    };
+  }
+
+  const proposal = getLearningProposal(root, job.proposal_id);
+  if (proposal.status !== "approved") {
+    throw new Error(
+      `learning apply job 等待 approval：${proposal.id}=${proposal.status}`
+    );
+  }
+  const timestamp = now();
+  job.status = "running";
+  job.started_at = timestamp;
+  job.completed_at = null;
+  job.error = null;
+  job.updated_at = timestamp;
+  writeJson(jobsPath, jobs);
+
+  const project = readJson(join(root, "project.json"));
+  const knowledgeVersionBefore = Number(project.knowledge_version || 0);
+  const appliedFile = appendLearningToKnowledge(root, proposal);
+  const knowledgeVersionAfter = bumpKnowledgeVersion(root);
+  const receipt = {
+    schema_version: SCHEMA_VERSION,
+    receipt_id: shortId("learning-receipt"),
+    job_id: job.job_id,
+    run_id: job.run_id,
+    proposal_id: proposal.id,
+    knowledge_version_before: knowledgeVersionBefore,
+    knowledge_version_after: knowledgeVersionAfter,
+    target_file: appliedFile.target_file,
+    applied_content: appliedFile.applied_content,
+    content_sha256: appliedFile.content_sha256,
+    evidence_refs: proposal.evidence_refs,
+    applied_at: now()
+  };
+  ensureDir(join(root, "learning", "receipts"));
+  writeJson(
+    join(root, "learning", "receipts", `receipt-${receipt.receipt_id}.json`),
+    receipt
+  );
+  updateLearningProposal(root, proposal.id, (item) => {
+    item.status = "applied";
+    item.apply_job_id = job.job_id;
+    item.apply_receipt_id = receipt.receipt_id;
+    item.applied_at = receipt.applied_at;
+    item.updated_at = receipt.applied_at;
+  });
+
+  job.status = "applied";
+  job.attempt = Number(job.attempt || 0) + 1;
+  job.completed_at = receipt.applied_at;
+  job.receipt_id = receipt.receipt_id;
+  job.updated_at = receipt.applied_at;
+  writeJson(jobsPath, jobs);
+  const event = appendEvent(root, "learning.applied", "apex-v2", {
+    run_id: job.run_id,
+    job_id: job.job_id,
+    proposal_id: proposal.id,
+    receipt_id: receipt.receipt_id,
+    target_file: proposal.target_file,
+    knowledge_version: knowledgeVersionAfter
+  });
+  updateProject(root, {
+    last_event_id: event.event_id,
+    updated_at: event.timestamp
+  });
+  return {
+    job_id: job.job_id,
+    proposal_id: proposal.id,
+    receipt_id: receipt.receipt_id,
+    status: "APPLIED",
+    knowledge_version: knowledgeVersionAfter,
+    replayed: false
+  };
+}
+
 function appendLearningToKnowledge(root, proposal) {
   const target = join(root, proposal.target_file);
   if (!target.startsWith(join(root, "knowledge"))) {
@@ -1471,6 +2131,13 @@ function appendLearningToKnowledge(root, proposal) {
   if (!existing.includes(`learning_id: ${proposal.id}`)) {
     writeFileSync(target, `${existing.trimEnd()}\n\n${section}\n`);
   }
+  return {
+    target_file: proposal.target_file,
+    content_sha256: createHash("sha256")
+      .update(section)
+      .digest("hex"),
+    applied_content: section
+  };
 }
 
 function renderAppliedLearningSection(proposal) {
@@ -1562,4 +2229,4 @@ function findFilesByName(root, predicate) {
   return out;
 }
 
-main();
+await main();

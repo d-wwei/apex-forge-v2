@@ -51,7 +51,15 @@ project. Submit the first action, then claim the next action.
 ## Factory Mode
 
 Use `project tick --run-agents` only when the user or routing policy explicitly
-selects Factory Mode for parallel, durable, or background work.
+selects Factory Mode for parallel, durable, or background work. One tick drains
+bounded scheduler waves:
+
+```text
+dispatch -> parallel run -> collect -> unlock -> refill
+```
+
+The scheduler stops when it reaches a coordinator-owned action, a durable
+blocker, no further progress, or `--agent-cycles`.
 
 ## Hard Stops
 

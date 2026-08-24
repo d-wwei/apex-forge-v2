@@ -9,7 +9,13 @@
     "report_id": { "type": "string" },
     "run_id": { "type": "string" },
     "created_at": { "type": "string" },
-    "proposal_ids": { "type": "array", "items": { "type": "string" } }
+    "proposal_ids": { "type": "array", "items": { "type": "string" } },
+    "queue_job_ids": { "type": "array", "items": { "type": "string" } },
+    "completion_kind": {
+      "type": "string",
+      "enum": ["proposal_queued", "applied_inline"]
+    },
+    "proposal_artifact_id": { "type": ["string", "null"] }
   },
   "additionalProperties": false
 }

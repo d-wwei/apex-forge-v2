@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { now, readJson, writeJson } from "../lib/common.mjs";
-import { updateProject } from "./store.mjs";
+import { appendEvent, updateProject } from "./store.mjs";
 
 export function loadRun(root, runId) {
   const path = join(root, "runs", runId, "run.json");
@@ -93,6 +93,8 @@ export function closeRunIfComplete(root, run) {
   }
 
   run.status = "done";
+  run.closed_at = run.closed_at || now();
+  run.closure_kind = run.closure_kind || "all_nodes_passed";
   run.gate = {
     status: "PASS",
     reason: "所有节点已通过。",
@@ -115,6 +117,27 @@ export function closeRunIfComplete(root, run) {
     roadmap.updated_at = roadmapNode.updated_at;
     writeJson(roadmapPath, roadmap);
   }
+}
+
+export function recordRunClosure(root, run, via = "apex-v2") {
+  if (run.status !== "done" || run.closure_event_id) return null;
+  const event = appendEvent(root, "run.closed", "apex-v2", {
+    run_id: run.run_id,
+    roadmap_node_id: run.roadmap_node_id,
+    closure_kind: run.closure_kind || "all_nodes_passed",
+    closed_at: run.closed_at || now(),
+    learning_proposal_ids: run.learning_proposal_ids || [],
+    learning_apply_job_ids: run.learning_apply_job_ids || [],
+    via
+  });
+  run.closure_event_id = event.event_id;
+  run.closed_at = run.closed_at || event.timestamp;
+  writeRun(root, run);
+  updateProject(root, {
+    last_event_id: event.event_id,
+    updated_at: event.timestamp
+  });
+  return event;
 }
 
 export function haltRun(root, run, timestamp = now()) {

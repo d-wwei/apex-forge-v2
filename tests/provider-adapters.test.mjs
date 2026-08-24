@@ -47,6 +47,31 @@ test("OpenAI-compatible provider keeps DeepSeek behind a ModelProvider boundary"
   assert.match(result.choices[0].message.content, /provider result/);
 });
 
+test("OpenAI-compatible provider accepts a per-call model override", () => {
+  const requests = [];
+  const provider = createOpenAICompatibleProvider({
+    id: "deepseek",
+    baseUrl: "https://api.deepseek.com",
+    apiKey: "fixture-key",
+    model: "deepseek-chat",
+    transport: (request) => {
+      requests.push(request);
+      return {
+        model: request.body.model,
+        choices: [{ message: { content: "{}" } }]
+      };
+    }
+  });
+
+  provider.complete({
+    model: "deepseek-reasoner",
+    messages: [{ role: "user", content: "return JSON" }]
+  });
+
+  assert.equal(requests[0].body.model, "deepseek-reasoner");
+  assert.equal(provider.inspect().model, "deepseek-chat");
+});
+
 test("DeepSeek provider defaults stay outside Kernel contracts", () => {
   const provider = createDeepSeekProvider({
     apiKey: "fixture",
@@ -107,4 +132,48 @@ test("generic Agent runner turns a ModelProvider response into executor output",
     executor.inspect().capabilities,
     ["structured_output", "process_tree_cancel", "usage_reporting"]
   );
+});
+
+test("generic Agent runner forwards and reports the selected model", () => {
+  const project = mkdtempSync(join(tmpdir(), "apex-generic-model-"));
+  const outputPath = join(project, "agent-result.json");
+  const calls = [];
+  const executor = createGenericAgentRunner({
+    id: "deepseek-runner",
+    provider: {
+      inspect: () => ({
+        available: true,
+        provider_id: "deepseek",
+        model: "deepseek-chat"
+      }),
+      complete: (input) => {
+        calls.push(input);
+        return {
+          model: input.model,
+          choices: [{
+            message: {
+              content: JSON.stringify({
+                verdict: "pass",
+                summary: "override",
+                tests: [],
+                risks: [],
+                evidence_refs: []
+              })
+            }
+          }],
+          usage: {}
+        };
+      }
+    }
+  });
+
+  const execution = executor.execute({
+    prompt: "analyze risk",
+    outputPath,
+    model: "deepseek-reasoner",
+    timeoutMs: 10000
+  });
+
+  assert.equal(calls[0].model, "deepseek-reasoner");
+  assert.equal(execution.reported_model, "deepseek-reasoner");
 });

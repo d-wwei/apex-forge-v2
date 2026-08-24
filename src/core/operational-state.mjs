@@ -1,4 +1,5 @@
-import { existsSync, readdirSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { readJson } from "../lib/common.mjs";
 import { stableHash } from "./candidate.mjs";
@@ -178,6 +179,55 @@ export function inspectOperationalIntegrity(root) {
       ));
     }
   }
+  const receiptsById = new Map(
+    state.learning.receipts.map((receipt) => [receipt.receipt_id, receipt])
+  );
+  const jobsById = new Map(
+    state.learning.jobs.map((job) => [job.job_id, job])
+  );
+  for (const proposal of state.learning.proposals) {
+    if (proposal.status !== "applied") continue;
+    if (!proposal.apply_job_id && !proposal.apply_receipt_id) {
+      warnings.push({
+        kind: "legacy-applied-learning-without-receipt",
+        path: ".apex-v2/learning/proposals.json",
+        detail: proposal.id
+      });
+      continue;
+    }
+    const receipt = receiptsById.get(proposal.apply_receipt_id);
+    if (!receipt) {
+      issues.push(issue(
+        "applied-learning-missing-receipt",
+        ".apex-v2/learning/proposals.json",
+        proposal.id
+      ));
+      continue;
+    }
+    const job = jobsById.get(proposal.apply_job_id);
+    if (!job || job.status !== "applied" || job.receipt_id !== receipt.receipt_id) {
+      issues.push(issue(
+        "learning-job-receipt-mismatch",
+        ".apex-v2/learning/jobs.json",
+        proposal.id
+      ));
+    }
+    const target = join(root, proposal.target_file);
+    const content = existsSync(target) ? readFileSync(target, "utf8") : "";
+    const actualHash = createHash("sha256")
+      .update(receipt.applied_content || "")
+      .digest("hex");
+    if (
+      !content.includes(receipt.applied_content || "")
+      || actualHash !== receipt.content_sha256
+    ) {
+      issues.push(issue(
+        "learning-receipt-content-mismatch",
+        `.apex-v2/learning/receipts/receipt-${receipt.receipt_id}.json`,
+        `${receipt.content_sha256} != ${actualHash || "missing"}`
+      ));
+    }
+  }
 
   return {
     state,
@@ -202,6 +252,41 @@ export function buildOperationalState(root) {
         action_hash: approval.action_hash
       }))
       .sort(byId),
+    learning: {
+      proposals: readJson(join(root, "learning", "proposals.json"), [])
+        .map((proposal) => ({
+          id: proposal.id,
+          source_run_id: proposal.source_run_id,
+          target_file: proposal.target_file,
+          status: proposal.status,
+          apply_job_id: proposal.apply_job_id || null,
+          apply_receipt_id: proposal.apply_receipt_id || null
+        }))
+        .sort(byId),
+      jobs: readJson(join(root, "learning", "jobs.json"), [])
+        .map((job) => ({
+          job_id: job.job_id,
+          run_id: job.run_id,
+          proposal_id: job.proposal_id,
+          status: job.status,
+          attempt: job.attempt,
+          receipt_id: job.receipt_id || null
+        }))
+        .sort((left, right) => left.job_id.localeCompare(right.job_id)),
+      receipts: readJsonFiles(join(root, "learning", "receipts"))
+        .map((receipt) => ({
+          receipt_id: receipt.receipt_id,
+          job_id: receipt.job_id,
+          proposal_id: receipt.proposal_id,
+          target_file: receipt.target_file,
+          applied_content: receipt.applied_content,
+          content_sha256: receipt.content_sha256,
+          knowledge_version_after: receipt.knowledge_version_after
+        }))
+        .sort((left, right) =>
+          left.receipt_id.localeCompare(right.receipt_id)
+        )
+    },
     transactions: readJsonFiles(join(root, "transactions"))
       .map((transaction) => ({
         transaction_id: transaction.transaction_id,

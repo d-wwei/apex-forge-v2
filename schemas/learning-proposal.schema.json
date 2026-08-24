@@ -24,6 +24,9 @@
     "evidence_refs": { "type": "array", "items": { "type": "string" } },
     "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
     "status": { "type": "string", "enum": ["proposed", "approved", "rejected", "applied"] },
+    "apply_job_id": { "type": ["string", "null"] },
+    "apply_receipt_id": { "type": ["string", "null"] },
+    "applied_at": { "type": ["string", "null"] },
     "created_at": { "type": "string" },
     "updated_at": { "type": "string" }
   },

@@ -22,6 +22,8 @@ export function printHelp() {
   apex-v2 review generate --project <dir> --run-id <id>
   apex-v2 learn propose|list|approve|apply --project <dir>
   apex-v2 project tick --project <dir>
+    --run-agents [--agent-limit <n>] [--agent-cycles <n>]
+    --learning-worker [--learning-limit <n>]
   apex-v2 project reconcile --project <dir>
   apex-v2 project metrics|quality|audit --project <dir>
   apex-v2 project git discover|guard|claim|release|claim-status --project <dir>

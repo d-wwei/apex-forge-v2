@@ -102,7 +102,7 @@ if (!prompt.includes("## Objective") || !prompt.includes("## Write Scope")) {
 }
 const target = join(workspace, ${JSON.stringify(target)});
 mkdirSync(dirname(target), { recursive: true });
-writeFileSync(target, ${JSON.stringify(content)});
+${options.noPatch ? "" : `writeFileSync(target, ${JSON.stringify(content)});`}
 writeFileSync(output, JSON.stringify(${JSON.stringify(resultValue)}));
 `);
   chmodSync(path, 0o755);
@@ -267,7 +267,7 @@ function submitEvidenceForRemainingPlanNodes(project, runId) {
 
   for (const node of plan.nodes) {
     if (existing.has(node.id)) continue;
-    const worker = JSON.parse(run([
+    const createArgs = [
       "worker",
       "create",
       "--project",
@@ -276,7 +276,11 @@ function submitEvidenceForRemainingPlanNodes(project, runId) {
       runId,
       "--plan-node-id",
       node.id
-    ]).stdout);
+    ];
+    if (node.execution_class !== "deterministic_check") {
+      createArgs.push("--mode", "interactive");
+    }
+    const worker = JSON.parse(run(createArgs).stdout);
     if (worker.execution_class === "cognitive") {
       completeHostWorker(project, worker, `${node.id} semantic evidence`);
     } else if (worker.execution_class === "workspace_patch") {
@@ -808,7 +812,7 @@ test("认知节点由当前 Host Agent claim 并提交语义 evidence", () => {
   const { deliveryRun } = createRunWithPlanGraph(project);
   const worker = JSON.parse(run([
     "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
-    "--plan-node-id", "delivery-context"
+    "--plan-node-id", "delivery-context", "--mode", "interactive"
   ]).stdout);
 
   assert.equal(worker.adapter, "host");
@@ -1031,7 +1035,7 @@ test("cognitive Host action 拒绝 summary-only、空 source refs 和复制 obje
   const { deliveryRun } = createRunWithPlanGraph(project);
   const worker = JSON.parse(run([
     "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
-    "--plan-node-id", "delivery-context"
+    "--plan-node-id", "delivery-context", "--mode", "interactive"
   ]).stdout);
   const claimed = JSON.parse(run([
     "host", "claim", "--project", project, "--host-id", "codex-host",
@@ -1071,7 +1075,7 @@ test("Host submit transaction failpoint 全量回滚并支持幂等重试", () =
   const { deliveryRun } = createRunWithPlanGraph(project);
   const worker = JSON.parse(run([
     "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
-    "--plan-node-id", "delivery-context"
+    "--plan-node-id", "delivery-context", "--mode", "interactive"
   ]).stdout);
   const claimed = JSON.parse(run([
     "host", "claim", "--project", project, "--host-id", "codex-host",
@@ -1113,7 +1117,7 @@ test("过期 Host claim 可被重新领取且旧 fencing token 失效", () => {
   const { deliveryRun } = createRunWithPlanGraph(project);
   const worker = JSON.parse(run([
     "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
-    "--plan-node-id", "delivery-context"
+    "--plan-node-id", "delivery-context", "--mode", "interactive"
   ]).stdout);
   const first = JSON.parse(run([
     "host", "claim", "--project", project, "--host-id", "codex-host",
@@ -1180,7 +1184,7 @@ test("Interactive Host Agent 在 ActionWorkspace 提交 merge queue", () => {
   const { deliveryRun } = createRunWithPlanGraph(project);
   const worker = JSON.parse(run([
     "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
-    "--plan-node-id", "delivery-implementation"
+    "--plan-node-id", "delivery-implementation", "--mode", "interactive"
   ]).stdout);
   assert.equal(worker.adapter, "codex");
   assert.equal(worker.preferred_mode, "interactive");
@@ -1232,7 +1236,7 @@ test("Interactive Host Agent 取消 action 时只删除 ActionWorkspace", () => 
   const original = readFileSync(join(project, "src", "apex-v2.mjs"), "utf8");
   const worker = JSON.parse(run([
     "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
-    "--plan-node-id", "delivery-implementation"
+    "--plan-node-id", "delivery-implementation", "--mode", "interactive"
   ]).stdout);
   const claimed = JSON.parse(run([
     "host", "claim", "--project", project, "--host-id", "codex-host",
@@ -1262,11 +1266,11 @@ test("Interactive workspace patch action 必须串行 claim", () => {
   enableInteractiveWorkspacePatch(project);
   const implementation = JSON.parse(run([
     "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
-    "--plan-node-id", "delivery-implementation"
+    "--plan-node-id", "delivery-implementation", "--mode", "interactive"
   ]).stdout);
   const testsWorker = JSON.parse(run([
     "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
-    "--plan-node-id", "delivery-tests"
+    "--plan-node-id", "delivery-tests", "--mode", "interactive"
   ]).stdout);
 
   const firstClaim = JSON.parse(run([
@@ -1419,7 +1423,9 @@ test("project tick --complete-execute 必须等待全部 PlanGraph 节点完成"
     "--run-id",
     deliveryRun.run_id,
     "--plan-node-id",
-    "delivery-implementation"
+    "delivery-implementation",
+    "--mode",
+    "interactive"
   ]).stdout);
   const decisionWorker = JSON.parse(run([
     "worker",
@@ -1429,7 +1435,9 @@ test("project tick --complete-execute 必须等待全部 PlanGraph 节点完成"
     "--run-id",
     deliveryRun.run_id,
     "--plan-node-id",
-    "delivery-context"
+    "delivery-context",
+    "--mode",
+    "interactive"
   ]).stdout);
 
   completeHostWorker(project, evidenceWorker, "implementation patch", true);
@@ -1538,7 +1546,7 @@ test("project tick --integrate 自动处理 evidence-only no-op integration", ()
   assert.equal(runState.nodes.find((node) => node.id === "integrate").status, "passed");
 });
 
-test("project tick --learn 默认只生成提案，--apply-learning 才写回并关闭 run", () => {
+test("project tick --learn 排队后立即关闭 run，learning worker 后台应用", () => {
   const project = tempProject();
   seedProjectFiles(project);
   const { deliveryRun } = createIntegratedRun(project);
@@ -1549,17 +1557,36 @@ test("project tick --learn 默认只生成提案，--apply-learning 才写回并
 
   const root = join(project, ".apex-v2");
   let runState = readJson(join(root, "runs", deliveryRun.run_id, "run.json"));
-  assert.equal(runState.nodes.find((node) => node.id === "learn").status, "pending");
-
-  const applied = JSON.parse(run(["project", "tick", "--project", project, "--learn", "--apply-learning"]).stdout);
-  assert.equal(applied.learned_runs.length, 1);
-  assert.ok(applied.learned_runs[0].applied.length > 0);
-
-  runState = readJson(join(root, "runs", deliveryRun.run_id, "run.json"));
   assert.equal(runState.status, "done");
   assert.equal(runState.nodes.find((node) => node.id === "learn").status, "passed");
+  assert.equal(readJson(join(root, "project.json")).active_runs.length, 0);
+  assert.match(runState.closure_event_id, /^event-/);
+  const jobs = readJson(join(root, "learning", "jobs.json"));
+  assert.equal(jobs.length, 3);
+  assert.ok(jobs.every((job) => job.status === "waiting_approval"));
   const reconciled = JSON.parse(run(["project", "reconcile", "--project", project]).stdout);
   assert.equal(reconciled.status, "CONSISTENT");
+
+  for (const proposalId of proposedOnly.learned_runs[0].proposal_ids) {
+    run(["learn", "approve", "--project", project, "--id", proposalId]);
+  }
+  const applied = JSON.parse(run([
+    "project", "tick", "--project", project,
+    "--learning-worker", "--learning-limit", "3"
+  ]).stdout);
+  assert.equal(applied.learning_jobs.length, 3);
+  assert.ok(applied.learning_jobs.every((job) => job.status === "APPLIED"));
+  runState = readJson(join(root, "runs", deliveryRun.run_id, "run.json"));
+  assert.equal(runState.status, "done");
+  assert.equal(
+    readdirSync(join(root, "learning", "receipts"))
+      .filter((name) => name.endsWith(".json")).length,
+    3
+  );
+  const appliedReconcile = JSON.parse(run([
+    "project", "reconcile", "--project", project
+  ]).stdout);
+  assert.equal(appliedReconcile.status, "CONSISTENT");
 });
 
 test("project tick --review 在有 patch 但未进入 merge queue 时仍 BLOCKED", () => {
@@ -2267,6 +2294,46 @@ test("显式 quick 在 capability 预算不足时自动升级 governed", () => {
   );
 });
 
+test("governed PlanGraph 用三个 barrier 编排七项职责和模型档位", () => {
+  const project = tempProject();
+  const { generated } = createRunWithPlanGraph(project);
+
+  assert.equal(generated.plan.execution_model, "barrier-v1");
+  assert.deepEqual(
+    generated.plan.barriers.map((barrier) => barrier.id),
+    ["delivery-plan", "delivery-candidate", "delivery-readiness"]
+  );
+  assert.deepEqual(
+    generated.plan.barriers.map((barrier) => barrier.dependencies),
+    [[], ["delivery-plan"], ["delivery-candidate"]]
+  );
+  const byId = new Map(generated.plan.nodes.map((node) => [node.id, node]));
+  for (const id of ["delivery-context", "delivery-risk", "delivery-design"]) {
+    assert.equal(byId.get(id).barrier_id, "delivery-plan");
+  }
+  for (const id of [
+    "delivery-implementation",
+    "delivery-tests",
+    "delivery-verification"
+  ]) {
+    assert.equal(byId.get(id).barrier_id, "delivery-candidate");
+  }
+  assert.equal(byId.get("delivery-review").barrier_id, "delivery-readiness");
+  assert.equal(byId.get("delivery-context").model_tier, "cheap");
+  assert.equal(byId.get("delivery-risk").model_tier, "cheap");
+  assert.equal(byId.get("delivery-design").model_tier, "standard");
+  assert.equal(byId.get("delivery-implementation").model_tier, "standard");
+  assert.equal(byId.get("delivery-tests").model_tier, "cheap");
+  assert.equal(byId.get("delivery-verification").model_tier, "deterministic");
+  assert.equal(byId.get("delivery-review").model_tier, "strong");
+  assert.equal(byId.get("delivery-context").delegation.default, true);
+  assert.equal(byId.get("delivery-risk").delegation.parallel, true);
+  assert.equal(byId.get("delivery-design").delegation.default, false);
+  assert.equal(byId.get("delivery-design").delegation.main_agent_required, true);
+  assert.equal(byId.get("delivery-review").delegation.default, false);
+  assert.equal(byId.get("delivery-review").delegation.main_agent_required, true);
+});
+
 test("显式 phase-context Method Pack 生成五节点阶段上下文路线", () => {
   const project = tempProject();
   seedProjectFiles(project);
@@ -2884,6 +2951,9 @@ test("worker exec-agent 在 scratch 副本执行 Codex 并自动生成 patch bun
     "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
     "--plan-node-id", "delivery-implementation"
   ]).stdout);
+  assert.equal(worker.initial_model_tier, "standard");
+  assert.equal(worker.model_tier, "standard");
+  assert.equal(worker.model_id, "gpt-5.6-terra");
   const initialized = JSON.parse(run([
     "worker", "sandbox", "init", "--project", project, "--worker-id", worker.worker_id,
     "--type", "scratch"
@@ -2898,6 +2968,8 @@ test("worker exec-agent 在 scratch 副本执行 Codex 并自动生成 patch bun
   ]).stdout);
   assert.equal(executed.result.status, "PASS");
   assert.equal(executed.result.adapter, "codex");
+  assert.equal(executed.result.model_tier, "standard");
+  assert.equal(executed.result.requested_model, "gpt-5.6-terra");
   assert.equal(executed.patch.changed_files.length, 1);
   assert.equal(executed.patch.changed_files[0], "src/apex-v2.mjs");
   assert.equal(executed.patch.operations[0].op, "replace_text");
@@ -2907,8 +2979,138 @@ test("worker exec-agent 在 scratch 副本执行 Codex 并自动生成 patch bun
   const workerState = readJson(join(root, "runs", deliveryRun.run_id, "workers", worker.worker_id, "worker.json"));
   assert.equal(workerState.status, "patch_submitted");
   assert.equal(workerState.last_adapter, "codex");
+  assert.equal(workerState.model_tier, "standard");
+  assert.equal(workerState.model_id, "gpt-5.6-terra");
+  const route = readJson(join(
+    root,
+    "runs",
+    deliveryRun.run_id,
+    "workers",
+    worker.worker_id,
+    "execution-route.json"
+  ));
+  assert.equal(route.model_tier, "standard");
+  assert.equal(route.model_id, "gpt-5.6-terra");
+  const summary = JSON.parse(run([
+    "worker", "results", "--project", project,
+    "--worker-id", worker.worker_id
+  ]).stdout);
+  assert.equal(summary.final_model_tier, "standard");
+  assert.equal(summary.final_model_id, "gpt-5.6-terra");
+  assert.deepEqual(summary.models, ["gpt-5.6-terra"]);
   assert.ok(existsSync(join(root, "runs", deliveryRun.run_id, "workers", worker.worker_id, "agent-prompt.md")));
   assert.ok(existsSync(join(root, "runs", deliveryRun.run_id, "workers", worker.worker_id, "agent-result.json")));
+});
+
+test("worker exec-agent 拒绝用 CLI model 降低节点最低档位", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithPlanGraph(project);
+  const fakeCodex = createFakeCodex(project);
+  const worker = JSON.parse(run([
+    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
+    "--plan-node-id", "delivery-implementation"
+  ]).stdout);
+  run([
+    "worker", "sandbox", "init", "--project", project,
+    "--worker-id", worker.worker_id, "--type", "scratch"
+  ]);
+
+  const rejected = run([
+    "worker", "exec-agent", "--project", project,
+    "--worker-id", worker.worker_id,
+    "--adapter", "codex",
+    "--command", fakeCodex,
+    "--model", "gpt-5.6-luna",
+    "--timeout-ms", "10000"
+  ], { expectFailure: true });
+
+  assert.match(rejected.stderr, /不能降低节点最低模型档位/);
+});
+
+test("worker contract_error 首次同档重试，第二次失败后晋级 strong", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithPlanGraph(project);
+  const invalid = createFakeCodex(project, { invalidResult: true });
+  const completed = createFakeCodex(project);
+  const worker = JSON.parse(run([
+    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
+    "--plan-node-id", "delivery-implementation"
+  ]).stdout);
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    run([
+      "worker", "sandbox", "init", "--project", project,
+      "--worker-id", worker.worker_id, "--type", "scratch"
+    ]);
+    const failed = JSON.parse(run([
+      "worker", "exec-agent", "--project", project,
+      "--worker-id", worker.worker_id,
+      "--adapter", "codex", "--command", invalid,
+      "--timeout-ms", "10000"
+    ]).stdout);
+    assert.equal(failed.result.failure_kind, "contract_error");
+    assert.equal(failed.result.model_tier, "standard");
+    run([
+      "worker", "retry", "--project", project,
+      "--worker-id", worker.worker_id
+    ]);
+  }
+
+  run([
+    "worker", "sandbox", "init", "--project", project,
+    "--worker-id", worker.worker_id, "--type", "scratch"
+  ]);
+  const succeeded = JSON.parse(run([
+    "worker", "exec-agent", "--project", project,
+    "--worker-id", worker.worker_id,
+    "--adapter", "codex", "--command", completed,
+    "--timeout-ms", "10000"
+  ]).stdout);
+
+  assert.equal(succeeded.result.status, "PASS");
+  assert.equal(succeeded.result.model_tier, "strong");
+  assert.equal(succeeded.result.requested_model, "gpt-5.6-sol");
+});
+
+test("worker no_patch 可重试并在下一次执行晋级一档", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithPlanGraph(project);
+  const noPatch = createFakeCodex(project, { noPatch: true });
+  const completed = createFakeCodex(project);
+  const worker = JSON.parse(run([
+    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
+    "--plan-node-id", "delivery-implementation"
+  ]).stdout);
+  run([
+    "worker", "sandbox", "init", "--project", project,
+    "--worker-id", worker.worker_id, "--type", "scratch"
+  ]);
+  const failed = JSON.parse(run([
+    "worker", "exec-agent", "--project", project,
+    "--worker-id", worker.worker_id,
+    "--adapter", "codex", "--command", noPatch,
+    "--timeout-ms", "10000"
+  ]).stdout);
+  assert.equal(failed.result.failure_kind, "no_patch");
+  assert.equal(failed.result.model_tier, "standard");
+
+  const retried = JSON.parse(run([
+    "worker", "retry", "--project", project,
+    "--worker-id", worker.worker_id
+  ]).stdout);
+  assert.equal(retried.worker.status, "active");
+  run([
+    "worker", "sandbox", "init", "--project", project,
+    "--worker-id", worker.worker_id, "--type", "scratch"
+  ]);
+  const succeeded = JSON.parse(run([
+    "worker", "exec-agent", "--project", project,
+    "--worker-id", worker.worker_id,
+    "--adapter", "codex", "--command", completed,
+    "--timeout-ms", "10000"
+  ]).stdout);
+  assert.equal(succeeded.result.model_tier, "strong");
+  assert.equal(succeeded.result.requested_model, "gpt-5.6-sol");
 });
 
 test("Worker capability shadow 模式注入 protocol 且缺失 evidence 可审计但不阻塞", () => {
@@ -3113,7 +3315,7 @@ test("project tick --run-agents 自动初始化 sandbox、运行 Codex 并把 pa
 
   const tick = JSON.parse(run([
     "project", "tick", "--project", project, "--run-agents",
-    "--agent-limit", "1", "--agent-sandbox", "scratch",
+    "--agent-limit", "1", "--agent-cycles", "1", "--agent-sandbox", "scratch",
     "--agent-command", fakeCodex, "--agent-timeout-ms", "10000"
   ]).stdout);
   assert.equal(tick.agent_runs.length, 1);
@@ -3224,6 +3426,7 @@ test("worker fallback 在 retryable adapter failure 后切换到下一个可用 
   const fakeClaude = createFakeClaudeWorker(project);
   const tick = JSON.parse(run([
     "project", "tick", "--project", project, "--run-agents",
+    "--agent-cycles", "1",
     "--agent-command", fakeClaude, "--agent-timeout-ms", "10000"
   ]).stdout);
   assert.equal(tick.agent_runs.length, 1);
@@ -4115,6 +4318,10 @@ test("learn propose/approve/apply 通过 governance gate 写回项目知识库�
   const beforeVersion = readJson(join(root, "project.json")).knowledge_version;
   const applied = JSON.parse(run(["learn", "apply", "--project", project, "--id", approved.id]).stdout);
   assert.equal(applied.status, "applied");
+  const replayed = JSON.parse(run([
+    "learn", "apply", "--project", project, "--id", approved.id
+  ]).stdout);
+  assert.equal(replayed.apply_receipt_id, applied.apply_receipt_id);
 
   const afterVersion = readJson(join(root, "project.json")).knowledge_version;
   assert.equal(afterVersion, beforeVersion + 1);

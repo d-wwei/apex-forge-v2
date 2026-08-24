@@ -22,6 +22,7 @@
     },
     "risks": { "type": "array", "items": { "type": "string" } },
     "evidence_refs": { "type": "array", "items": { "type": "string" } },
+    "semantic_evidence": { "$ref": "cognitive-evidence.schema.json" },
     "capability_evidence": {
       "type": "array",
       "items": { "$ref": "capability-evidence.schema.json" }
