@@ -8230,6 +8230,9 @@ function listJsonFiles(root) {
       if (dir === root && entry.isDirectory() && entry.name === "releases") {
         continue;
       }
+      if (entry.isDirectory() && entry.name === "action-workspace" && path.replaceAll("\\", "/").includes("/workers/")) {
+        continue;
+      }
       if (entry.isDirectory() && entry.name === "sandbox" && path.replaceAll("\\", "/").includes("/workers/")) {
         const manifest = join5(path, "sandbox.json");
         if (existsSync4(manifest)) files.push(manifest);
@@ -10706,7 +10709,8 @@ function buildTaskPlanGraph(root, run, timestamp, inventory) {
     defaultMethodPackRegistry(timestamp)
   );
   const methodPackResolution = resolveMethodPack(methodPackRegistry, intake, inventory);
-  const methodPack2 = methodPackResolution.pack;
+  let methodPack2 = methodPackResolution.pack;
+  let methodPackSelectionReason = methodPackResolution.reason;
   const routedCapabilities = routeCapabilities(capabilityRegistry(), intake);
   const planId = shortId("plan");
   const scopes = inferPlanScopes(intake, inventory);
@@ -10861,7 +10865,6 @@ function buildTaskPlanGraph(root, run, timestamp, inventory) {
       risk: normalizedRisk(intake.risk, "high")
     })
   ];
-  const profile = methodPack2.workflow === "quick" ? "quick" : "full";
   const quickNodes = buildQuickPlanNodes({
     roadmapNode,
     intake,
@@ -10870,19 +10873,43 @@ function buildTaskPlanGraph(root, run, timestamp, inventory) {
     contextRefs,
     runArtifactScope
   });
-  const selectedNodes = selectMethodPackNodes(methodPack2.workflow, {
+  const availableNodes = {
     quickNodes,
     fullNodes,
     roadmapNode,
     scopes
-  }).map((node) => ({
-    ...node,
-    method_pack_id: methodPack2.id
-  }));
-  const capabilityApplication = applyCapabilityBindings(
-    selectedNodes,
-    routedCapabilities
-  );
+  };
+  let capabilityApplication;
+  try {
+    capabilityApplication = bindMethodPackCapabilities(
+      methodPack2,
+      availableNodes,
+      routedCapabilities
+    );
+  } catch (error) {
+    if (methodPack2.workflow !== "quick" || !isCapabilityPlanEscalationError(error)) {
+      throw error;
+    }
+    const governed = methodPackRegistry.packs.find(
+      (pack) => pack.enabled !== false && pack.workflow === "governed"
+    );
+    if (!governed) {
+      throw new Error(
+        `${error.message}\uFF1BQuick \u81EA\u52A8\u5347\u7EA7\u5931\u8D25\uFF1AMethod Pack registry \u7F3A\u5C11 governed pack`
+      );
+    }
+    methodPack2 = governed;
+    methodPackSelectionReason = [
+      `auto_escalated_from=${methodPackResolution.pack.id}`,
+      error.message
+    ].join("; ");
+    capabilityApplication = bindMethodPackCapabilities(
+      methodPack2,
+      availableNodes,
+      routedCapabilities
+    );
+  }
+  const profile = methodPack2.workflow === "quick" ? "quick" : "full";
   const nodes = capabilityApplication.nodes;
   const parallelLanes = buildParallelLanes(methodPack2.workflow);
   const mergeOrder = parallelLanes.map((lane) => lane.id);
@@ -10904,7 +10931,7 @@ function buildTaskPlanGraph(root, run, timestamp, inventory) {
       id: methodPack2.id,
       version: methodPack2.version,
       workflow: methodPack2.workflow,
-      selection_reason: methodPackResolution.reason,
+      selection_reason: methodPackSelectionReason,
       quality_gates: methodPack2.quality_gates
     },
     capability_plan: capabilityApplication.capability_plan,
@@ -10954,6 +10981,19 @@ function buildTaskPlanGraph(root, run, timestamp, inventory) {
     project_knowledge_version: project.knowledge_version,
     project_name: project.project_name
   };
+}
+function bindMethodPackCapabilities(methodPack2, availableNodes, routedCapabilities) {
+  const selectedNodes = selectMethodPackNodes(
+    methodPack2.workflow,
+    availableNodes
+  ).map((node) => ({
+    ...node,
+    method_pack_id: methodPack2.id
+  }));
+  return applyCapabilityBindings(selectedNodes, routedCapabilities);
+}
+function isCapabilityPlanEscalationError(error) {
+  return /Capability (?:context budget exceeded|execution class unavailable)/i.test(String(error?.message || error));
 }
 function applyCapabilityBindings(nodes, routedCapabilities) {
   const nextNodes = nodes.map((node) => ({
@@ -11013,10 +11053,15 @@ function selectCapabilityNode(capability, nodes) {
     nodes
   );
   const targetIndex = nodes.findIndex((node) => node.id === targetId);
-  const candidates = [
-    nodes[targetIndex],
-    ...nodes.slice(targetIndex + 1)
+  const ordered = [
+    ...nodes.slice(targetIndex),
+    ...nodes.slice(0, targetIndex).reverse()
   ].filter(Boolean);
+  const preferredCandidates = capability.execution_class === "deterministic_check" ? ordered.filter((node) => node.execution_class === "deterministic_check") : capability.execution_class === "workspace_patch" ? ordered.filter((node) => node.execution_class === "workspace_patch") : ordered;
+  const candidates = preferredCandidates.length > 0 ? [
+    ...preferredCandidates,
+    ...ordered.filter((node) => !preferredCandidates.includes(node))
+  ] : ordered;
   for (const node of candidates) {
     try {
       assertCapabilityContextBudget([

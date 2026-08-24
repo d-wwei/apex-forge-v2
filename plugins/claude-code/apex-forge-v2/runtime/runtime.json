@@ -1,17 +1,17 @@
 {
   "schema_version": "v0",
-  "release_version": "0.2.0-rc.1+codex.20260821131551",
-  "source_commit": "c53cc308603e03bdab8275576e4e05336fa89c59",
-  "source_tree_hash": "977efe459275f25885de6dcae5aaf4176012d2330dbc0babfec3af021e0b3e66",
+  "release_version": "0.2.0-rc.1+codex.20260824111410",
+  "source_commit": "79df1086bec924350835b798b1816b6a5ef2b2ee",
+  "source_tree_hash": "25d2009d66824d1c5a668185d498e25a5989d55e82c5a2488c2572d756e235ba",
   "source_dirty": true,
-  "runtime_sha256": "b28de6431ff13fa1883e2c443c6f696d2669e7f9562e16696bee049107042b1e",
+  "runtime_sha256": "bbff74bd47087029b52ab89d904012dec6591b596141df92a4cff15fe7f961a7",
   "schemas_sha256": "d0c8715a612c5d97b194d1edd9d314fdc8081a3bba91cc1749f4c8ae927af2fb",
-  "capabilities_sha256": "bfd7ada8bc7b7bccfa6a699b547ca640693c86d84b85b263cf5bf0c7a73060bc",
+  "capabilities_sha256": "7822f7971fca510add8bbfc7b8aee39962e453a4378a8dc669a7d1c03ef9f0c9",
   "build_tool_versions": {
     "node": "v26.7.0",
     "esbuild": "0.25.9"
   },
-  "generated_at": "2026-08-21T13:16:04.649Z",
+  "generated_at": "2026-08-24T11:14:26.786Z",
   "entrypoint": "apex-v2.mjs",
   "schema_dir": "schemas",
   "capability_dir": "capabilities"
