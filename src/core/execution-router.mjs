@@ -12,7 +12,6 @@ export function routeExecution(planNode, executionPolicy, options = {}) {
     requires_parallel_execution: Boolean(planNode.execution_hints?.requires_parallel_execution)
   };
   const router = executionPolicy?.execution_router || {
-    factory_min_duration_minutes: 30,
     force_factory_risks: ["critical"],
     factory_on_isolation: true,
     factory_on_resume: true,
@@ -40,10 +39,6 @@ export function routeExecution(planNode, executionPolicy, options = {}) {
       mode = "factory";
       reasons.push(`risk=${planNode.risk}`);
     }
-    if (hints.estimated_duration_minutes >= router.factory_min_duration_minutes) {
-      mode = "factory";
-      reasons.push(`duration>=${router.factory_min_duration_minutes}`);
-    }
     for (const [enabled, required, reason] of [
       [router.factory_on_isolation, hints.requires_isolation, "requires_isolation"],
       [router.factory_on_resume, hints.requires_resume, "requires_resume"],
@@ -65,6 +60,7 @@ export function routeExecution(planNode, executionPolicy, options = {}) {
       (executionClass === "cognitive" && requestedMode !== "interactive")
       || (executionClass === "deterministic_check" && requestedMode !== "deterministic")
       || (executionClass === "human_decision" && requestedMode !== "human")
+      || (executionClass === "workspace_patch" && !["interactive", "factory"].includes(requestedMode))
     ) {
       throw new Error(`execution mode override 与 execution_class 不兼容：${executionClass} -> ${requestedMode}`);
     }
@@ -75,10 +71,38 @@ export function routeExecution(planNode, executionPolicy, options = {}) {
     ) {
       throw new Error("execution policy 禁止 Interactive workspace_patch override");
     }
+    const hardFactoryReasons = reasons.filter((reason) =>
+      reason.startsWith("risk=")
+      || ["requires_isolation", "requires_resume", "background", "parallel_execution"].includes(reason)
+    );
+    if (
+      executionClass === "workspace_patch"
+      && requestedMode === "interactive"
+      && hardFactoryReasons.length > 0
+    ) {
+      throw new Error(`execution mode override 不能绕过强制 Factory：${hardFactoryReasons.join(",")}`);
+    }
     mode = requestedMode;
     reasons.push(`user_override=${requestedMode}`);
   }
   if (reasons.length === 0) reasons.push(`preferred_mode=${mode}`);
+
+  const methodPackId = planNode.method_pack_id || "legacy";
+  const governor = executionPolicy?.cost_governor;
+  const costBudget = governor?.enabled === false
+    ? null
+    : governor?.method_pack_budgets?.[methodPackId] || governor?.default_budget || null;
+  const budgetStatus = costBudget ? "within_budget" : "not_configured";
+  if (
+    costBudget
+    && !["deterministic_check", "human_decision"].includes(executionClass)
+    && hints.estimated_duration_minutes > costBudget.max_wall_minutes
+    && options.allowBudgetOverride !== true
+  ) {
+    throw new Error(
+      `Cost Governor 拒绝预计超限 route：${hints.estimated_duration_minutes}/${costBudget.max_wall_minutes} minutes`
+    );
+  }
 
   return {
     mode,
@@ -86,7 +110,35 @@ export function routeExecution(planNode, executionPolicy, options = {}) {
     user_override: requestedMode,
     reasons: Array.from(new Set(reasons)),
     hints,
-    required_capabilities: normalizeExecutionCapabilities(planNode.required_capabilities || [])
+    required_capabilities: normalizeExecutionCapabilities(planNode.required_capabilities || []),
+    method_pack_id: methodPackId,
+    cost_budget: costBudget,
+    budget_status: budgetStatus,
+    usage_policy: governor?.unknown_usage || "record"
+  };
+}
+
+export function evaluateRouteUsage(route, execution) {
+  const budget = route?.cost_budget;
+  if (!budget) return { status: "NOT_CONFIGURED", exceeded: [], unknown: [] };
+  const usage = execution?.usage || {};
+  const measurements = [
+    ["wall_minutes", execution?.duration_ms == null ? null : execution.duration_ms / 60000, budget.max_wall_minutes],
+    ["agent_turns", usage.agent_turns, budget.max_agent_turns],
+    ["tool_calls", usage.tool_calls, budget.max_tool_calls],
+    ["input_tokens", usage.input_tokens, budget.max_input_tokens],
+    ["output_tokens", usage.output_tokens, budget.max_output_tokens]
+  ];
+  const exceeded = measurements
+    .filter(([, actual, limit]) => actual != null && actual > limit)
+    .map(([metric, actual, limit]) => ({ metric, actual, limit }));
+  const unknown = measurements
+    .filter(([, actual]) => actual == null)
+    .map(([metric]) => metric);
+  return {
+    status: exceeded.length > 0 ? "FAIL" : unknown.length > 0 ? "UNKNOWN" : "PASS",
+    exceeded,
+    unknown
   };
 }
 

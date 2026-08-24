@@ -30,6 +30,12 @@ import { loadExecutionPolicy } from "./governance.mjs";
 import { appendEvent, SCHEMA_VERSION, updateProject } from "./store.mjs";
 import { withProjectTransaction } from "./project-transaction.mjs";
 import { schemaPath } from "./schema-paths.mjs";
+import { evaluateRouteUsage } from "./execution-router.mjs";
+import {
+  assertCapabilityContextBudget,
+  readCapabilityProtocol
+} from "./capability-registry.mjs";
+import { assertCapabilityEvidence } from "./capability-evidence.mjs";
 import {
   findWorker,
   isFileAllowedByScope,
@@ -114,13 +120,56 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
   const protectedChanges = diffProtectedWorkspace(protectedBefore, snapshotProtectedWorkspace(workspaceDir));
   changes.changed_files = Array.from(new Set([...changes.changed_files, ...protectedChanges])).sort();
   changes.out_of_scope_files = Array.from(new Set([...changes.out_of_scope_files, ...protectedChanges])).sort();
+  const capabilityEvidence = structured.valid
+    ? structured.value.capability_evidence || []
+    : [];
+  let capabilityEvidenceValidation = {
+    valid: true,
+    required: [],
+    submitted: [],
+    missing: [],
+    error: ""
+  };
+  if (structured.valid) {
+    try {
+      capabilityEvidenceValidation = {
+        valid: true,
+        ...assertCapabilityEvidence(
+          worker.capability_bindings || [],
+          capabilityEvidence,
+          { requireAll: worker.capability_enforcement === "enforce" }
+        ),
+        error: ""
+      };
+    } catch (error) {
+      capabilityEvidenceValidation = {
+        valid: false,
+        required: [],
+        submitted: [],
+        missing: [],
+        error: error.message
+      };
+    }
+  }
+  const route = readJson(join(dir, "execution-route.json"), null);
+  const costEvaluation = evaluateRouteUsage(route, execution);
+  const budgetFailed = costEvaluation.status === "FAIL"
+    || (costEvaluation.status === "UNKNOWN" && route?.usage_policy === "fail");
   const success = execution.exit_code === 0
     && structured.valid
     && structured.value.verdict === "pass"
     && changes.out_of_scope_files.length === 0
     && changes.unsupported_files.length === 0
+    && !budgetFailed
+    && capabilityEvidenceValidation.valid
     && (worker.output_contract !== "patch" || changes.operations.length > 0);
-  const failureKind = success ? null : classifyFailure(execution, structured, changes, worker);
+  const failureKind = success
+    ? null
+    : budgetFailed
+      ? "budget_exceeded"
+      : !capabilityEvidenceValidation.valid
+        ? "contract_error"
+      : classifyFailure(execution, structured, changes, worker);
   const timestamp = now();
   const adapterResult = {
     schema_version: SCHEMA_VERSION,
@@ -148,6 +197,13 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
       input_tokens: null,
       output_tokens: null,
       tool_calls: null
+    },
+    cost_evaluation: costEvaluation,
+    capability_evidence_status: {
+      enforcement: worker.capability_enforcement || "shadow",
+      submitted: capabilityEvidenceValidation.submitted,
+      missing: capabilityEvidenceValidation.missing,
+      error: capabilityEvidenceValidation.error
     },
     refs: [
       `${worker.namespace}/agent-prompt.md`,
@@ -196,6 +252,7 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
     execution,
     resolved,
     rawAgentOutput,
+    capabilityEvidence,
     timestamp
   })).result;
 }
@@ -206,6 +263,15 @@ function commitWorkerExecution(root, input) {
     throw new Error(`worker execution commit 遇到并发状态变化：${worker.worker_id}`);
   }
   const dir = workerDir(root, worker.run_id, worker.worker_id);
+  const capabilityEvidenceRefs = persistCapabilityEvidence(
+    dir,
+    worker.namespace,
+    input.capabilityEvidence
+  );
+  input.adapterResult.refs = Array.from(new Set([
+    ...input.adapterResult.refs,
+    ...capabilityEvidenceRefs
+  ]));
   if (input.structured.valid) {
     writeFileSync(
       join(dir, "agent-result.json"),
@@ -232,6 +298,7 @@ function commitWorkerExecution(root, input) {
       refs: [
         patchBundleRef(worker, input.patch.patch_id),
         `${worker.namespace}/agent-result.json`,
+        ...capabilityEvidenceRefs,
         ...input.changes.changed_files
       ],
       timestamp: input.timestamp
@@ -271,6 +338,14 @@ function commitWorkerExecution(root, input) {
   });
   updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
   return { adapterResult: input.adapterResult, patch: input.patch, artifact };
+}
+
+function persistCapabilityEvidence(dir, namespace, evidenceItems = []) {
+  return evidenceItems.map((evidence) => {
+    const name = `capability-evidence-${evidence.capability_id}.json`;
+    writeJson(join(dir, name), evidence);
+    return `${namespace}/${name}`;
+  });
 }
 
 function customExecutorResolution(executorId, executable) {
@@ -345,6 +420,14 @@ ${lines(worker.write_scope)}
 
 ${lines(planNode.required_evidence)}
 
+## Internal Capability Protocols
+
+${capabilityProtocols(planNode.capability_bindings || [])}
+
+## Capability Invocation Refs
+
+${lines(worker.capability_invocation_refs || [])}
+
 ## Verification
 
 ${lines(worker.verification)}
@@ -360,6 +443,18 @@ ${lines(worker.verification)}
 7. If blocked, return verdict "fail" and explain the exact blocker.
 8. Your final response must satisfy the provided JSON output schema.
 `;
+}
+
+function capabilityProtocols(bindings) {
+  if (bindings.length === 0) return "None";
+  assertCapabilityContextBudget(bindings);
+  return bindings.map((binding) => `### ${binding.capability_id}@${binding.capability_version}
+
+Required output: ${binding.output_contract}
+Typed input: ${binding.input_contract}
+
+${readCapabilityProtocol(binding.protocol_ref).trim()}
+`).join("\n");
 }
 
 export function collectWorkspaceChanges(projectDir, workspaceDir, writeScope) {

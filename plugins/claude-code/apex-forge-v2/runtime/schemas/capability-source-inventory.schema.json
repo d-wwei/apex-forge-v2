@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/capability-source-inventory.schema.json",
+  "title": "Apex Forge V2 Capability Source Inventory",
+  "type": "object",
+  "required": ["schema_version", "generated_at", "sources"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "generated_at": { "type": "string" },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "capability_id",
+          "source_name",
+          "source_ref",
+          "source_sha256",
+          "license",
+          "absorption_policy",
+          "canonical_target"
+        ],
+        "properties": {
+          "capability_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "source_name": { "type": "string", "minLength": 1 },
+          "source_ref": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!/)(?![A-Za-z]:[\\\\/]).+"
+          },
+          "source_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "license": {
+            "type": "string",
+            "enum": ["MIT", "clean-room-no-copy", "design-reference-only"]
+          },
+          "absorption_policy": {
+            "type": "string",
+            "enum": ["OWNED", "MIT", "REWRITE_ONLY"]
+          },
+          "canonical_target": {
+            "type": "string",
+            "pattern": "^capabilities/"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

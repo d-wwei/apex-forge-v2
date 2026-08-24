@@ -1,0 +1,151 @@
+{
+  "task_id": "understand-codebase--parallel",
+  "task_digest": "231675abb1db30406df6c5f458855b1dffb4d235e08a35263cdb5f9d04cb1ebd",
+  "repository": "understand-codebase",
+  "scenario": "parallel",
+  "mode": "cli-kernel",
+  "candidate_digest": "6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 1316749,
+    "cost": 8405867,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 1,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "b5eb3607e982743adfdc28eb8929043ed3a2b478",
+    "runtime_hash": "528e8b02a687efafd5236ab0db47910b4b782885fd3facc93f7df7678ff12ea1",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "6f3f0653dea4b58d8d79b960e0a57b0dc7a4f84ca8f281d5fa5b5dcd73263a25",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--parallel--cli-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--parallel--cli-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--parallel--cli-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--parallel--cli-kernel/codex-home/sessions/2026/08/22/rollout-2026-08-22T01-52-12-01a02573-ab2b-7f80-8d7c-a6d4d1f46d6a.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--parallel--cli-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--parallel--cli-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--parallel--cli-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--parallel--cli-kernel/codex-home/sessions/2026/08/22/rollout-2026-08-22T01-52-12-01a02573-ab2b-7f80-8d7c-a6d4d1f46d6a.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--parallel--cli-kernel/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "3bc4d9fbdd1125fbcbede985978db956a6c0fd7c77047b22e456dfc68b489bf6",
+      "b79610aaad0c4d7c2b72cedbf72facaaa6780eee75ab251de587e4bc8aa67320",
+      "f317be29e913cc4d6336a2338b6fe7cf0497bbdb0be761b58ecb54f72433ab75",
+      "0185f6137832c2a2cfb18138259f1af5e237ebd4e922f673ed46a6c602969cdb",
+      "6a7abcd1329a9503a21d5fa085e85de8ae9890bbd481e6394716c5e887538f9b"
+    ]
+  },
+  "evidence": {
+    "task_digest": "231675abb1db30406df6c5f458855b1dffb4d235e08a35263cdb5f9d04cb1ebd",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a02573-ab2b-7f80-8d7c-a6d4d1f46d6a",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Added original query/path context to both prompt builders, extended tests, integrated changes, and closed run run-mt38y9f9-287fda5c.",
+      "tests": [
+        {
+          "command": "pnpm vitest run understand-codebase-plugin/src/__tests__/context-builder.test.ts understand-codebase-plugin/src/__tests__/explain-builder.test.ts",
+          "status": "pass",
+          "detail": "Kernel staged verification: 2 files, 23 tests passed."
+        },
+        {
+          "command": "pnpm vitest run --configLoader runner understand-codebase-plugin/src/__tests__/context-builder.test.ts understand-codebase-plugin/src/__tests__/explain-builder.test.ts",
+          "status": "pass",
+          "detail": "Integrated workspace: 2 files, 23 tests passed."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "artifact-mt39m1gs-8376a88f",
+        "artifact-mt39mpi9-ece6b4c4",
+        "artifact-mt39ni7d-f032da57",
+        "artifact-mt39p7bi-fc04e415"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "pnpm vitest run understand-codebase-plugin/src/__tests__/context-builder.test.ts understand-codebase-plugin/src/__tests__/explain-builder.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 876,
+        "stdout_tail": "\n RUN  v3.2.4 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--parallel--cli-kernel/workspace\n\n ✓ understand-codebase-plugin/src/__tests__/explain-builder.test.ts (8 tests) 2ms\n ✓ understand-codebase-plugin/src/__tests__/context-builder.test.ts (15 tests) 6ms\n\n Test Files  2 passed (2)\n      Tests  23 passed (23)\n   Start at  02:14:09\n   Duration  463ms (transform 184ms, setup 0ms, collect 325ms, tests 8ms, environment 0ms, prepare 80ms)\n\n",
+        "stderr_tail": ""
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "node --input-type=module -e \"import { formatContextForPrompt } from './understand-codebase-plugin/src/context-builder.ts'; import { formatExplainPrompt } from './understand-codebase-plugin/src/explain-builder.ts'; const q='original query'; const chat=formatContextForPrompt({projectName:'P',projectDescription:'D',languages:[],frameworks:[],relevantNodes:[],relevantEdges:[],relevantLayers:[],query:q}); const p='src/a.ts:fn'; const explain=formatExplainPrompt({projectName:'P',path:p,targetNode:{id:'1',name:'fn',type:'function',complexity:'simple',summary:'s',tags:[],filePath:'src/a.ts'},childNodes:[],connectedNodes:[],relevantEdges:[],layer:null}); if(!chat.includes('## User Query')||!chat.includes(q)||!explain.includes(p)) process.exit(1)\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 124,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      },
+      {
+        "command": "pnpm vitest run understand-codebase-plugin/src/__tests__",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 1207,
+        "stdout_tail": "\n RUN  v3.2.4 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--parallel--cli-kernel/workspace\n\n ✓ understand-codebase-plugin/src/__tests__/understand-codebase-human-map-builder.test.ts (1 test) 2ms\n ✓ understand-codebase-plugin/src/__tests__/understand-codebase-redaction-pipeline.test.ts (5 tests) 5ms\n ✓ understand-codebase-plugin/src/__tests__/understand-codebase-backend-selection.test.ts (7 tests) 4ms\n ✓ understand-codebase-plugin/src/__tests__/understand-codebase-codegraph-sqlite-adapter.test.ts (1 test) 4ms\n ✓ understand-codebase-plugin/src/__tests__/understand-codebase-artifact-store.test.ts (6 tests) 46ms\n ✓ understand-codebase-plugin/src/__tests__/understand-codebase-human-map-schema.test.ts (6 tests) 3ms\n ✓ understand-codebase-plugin/src/__tests__/understand-codebase-run-default.test.ts (2 tests) 95ms\n ✓ understand-codebase-plugin/src/__tests__/understand-codebase-human-map-qa.test.ts (3 tests) 2ms\n ✓ understand-codebase-plugin/src/__tests__/onboard-builder.test.ts (9 tests) 3ms\n ✓ understand-codebase-plugin/src/__tests__/diff-analyzer.test.ts (11 tests) 5ms\n ✓ understand-codebase-plugin/src/__tests__/understand-codebase-dashboard-manifest.test.ts (4 tests) 2ms\n ✓ understand-codebase-plugin/src/__tests__/merge-recover-imports.test.mjs (6 tests) 297ms\n ✓ understand-codebase-plugin/src/__tests__/worktree-redirect.test.mjs (5 tests) 368ms\n ✓ understand-codebase-plugin/src/__tests__/understand-codebase-codebase-graph-schema.test.ts (2 tests) 2ms\n ✓ understand-codebase-plugin/src/__tests__/explain-builder.test.ts (8 tests) 3ms\n ✓ understand-codebase-plugin/src/__tests__/extract-structure.test.mjs (10 tests) 1ms\n ✓ understand-codebase-plugin/src/__tests__/context-builder.test.ts (15 tests) 5ms\n\n Test Files  17 passed (17)\n      Tests  101 passed (101)\n   Start at  02:14:10\n   Duration  808ms (transform 707ms, setup 0ms, collect 1.53s, tests 848ms, environment 1ms, prepare 878ms)\n\n",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "understand-codebase-plugin/src/__tests__/context-builder.test.ts",
+        "understand-codebase-plugin/src/__tests__/explain-builder.test.ts",
+        "understand-codebase-plugin/src/context-builder.ts",
+        "understand-codebase-plugin/src/explain-builder.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": true,
+      "evidence_score": 1,
+      "run_ids": [
+        "run-mt38y9f9-287fda5c"
+      ],
+      "done_run_ids": [
+        "run-mt38y9f9-287fda5c"
+      ],
+      "fully_closed_run_ids": [
+        "run-mt38y9f9-287fda5c"
+      ],
+      "active_runs": [],
+      "candidate_chain_equal": true,
+      "verification_ref": ".apex-v2/runs/run-mt38y9f9-287fda5c/verification-report.json",
+      "review_ref": ".apex-v2/runs/run-mt38y9f9-287fda5c/review-report.json",
+      "integration_ref": ".apex-v2/runs/run-mt38y9f9-287fda5c/integration-report.json",
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "0197cd6521642c1ba9dc3de5cea90c64024199235c37f4d3335402057b8f0da7",
+        "replay_hash": "0197cd6521642c1ba9dc3de5cea90c64024199235c37f4d3335402057b8f0da7",
+        "hash_equal": true
+      }
+    }
+  }
+}

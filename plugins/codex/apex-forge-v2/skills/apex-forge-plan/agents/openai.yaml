@@ -1,4 +1,0 @@
-interface:
-  display_name: "Apex Forge Plan"
-  short_description: "Turn a request into durable context, risk, and design"
-  default_prompt: "Plan this requirement with Apex Forge."

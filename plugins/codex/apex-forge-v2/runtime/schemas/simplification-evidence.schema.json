@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/simplification-evidence.schema.json",
+  "title": "Simplification Evidence Output",
+  "type": "object",
+  "required": ["candidates", "consumer_evidence", "deletion_plan", "risk", "verification_plan", "estimated_savings", "actual_savings", "decision"],
+  "properties": {
+    "candidates": { "type": "array", "items": { "type": ["string", "object"] }, "minItems": 1 },
+    "consumer_evidence": { "type": "array", "items": { "type": ["string", "object"] }, "minItems": 1 },
+    "deletion_plan": { "type": "array", "items": { "type": ["string", "object"] }, "minItems": 1 },
+    "risk": { "type": ["string", "object"] },
+    "verification_plan": { "type": "array", "items": { "type": ["string", "object"] }, "minItems": 1 },
+    "estimated_savings": { "type": ["object", "number"] },
+    "actual_savings": { "type": ["object", "number", "null"] },
+    "decision": { "type": "string", "enum": ["delete", "retain", "defer"] }
+  },
+  "additionalProperties": true
+}

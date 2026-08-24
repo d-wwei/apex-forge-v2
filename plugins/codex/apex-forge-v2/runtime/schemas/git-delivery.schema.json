@@ -1,0 +1,238 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/git-delivery.schema.json",
+  "title": "Apex Forge V2 Git Delivery",
+  "oneOf": [
+    { "$ref": "#/$defs/gitDelivery" },
+    { "$ref": "#/$defs/checkoutClaim" }
+  ],
+  "$defs": {
+    "repository": {
+      "type": "object",
+      "required": [
+        "kind",
+        "repository_id",
+        "name",
+        "root_path",
+        "git_dir",
+        "common_dir",
+        "head_oid",
+        "bare"
+      ],
+      "properties": {
+        "kind": { "type": "string", "const": "repository" },
+        "repository_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "name": { "type": "string", "minLength": 1 },
+        "root_path": { "type": "string", "minLength": 1 },
+        "git_dir": { "type": "string", "minLength": 1 },
+        "common_dir": { "type": "string", "minLength": 1 },
+        "head_oid": {
+          "type": ["string", "null"],
+          "pattern": "^[a-f0-9]{40,64}$"
+        },
+        "bare": { "type": "boolean", "const": false }
+      },
+      "additionalProperties": false
+    },
+    "branch": {
+      "type": "object",
+      "required": [
+        "kind",
+        "name",
+        "ref",
+        "head_oid",
+        "detached",
+        "protected"
+      ],
+      "properties": {
+        "kind": { "type": "string", "const": "branch" },
+        "name": { "type": ["string", "null"] },
+        "ref": { "type": ["string", "null"] },
+        "head_oid": {
+          "type": ["string", "null"],
+          "pattern": "^[a-f0-9]{40,64}$"
+        },
+        "detached": { "type": "boolean" },
+        "protected": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "worktree": {
+      "type": "object",
+      "required": [
+        "kind",
+        "checkout_path",
+        "head_oid",
+        "branch",
+        "detached",
+        "bare",
+        "locked",
+        "prunable",
+        "is_current"
+      ],
+      "properties": {
+        "kind": { "type": "string", "const": "checkout" },
+        "checkout_path": { "type": "string", "minLength": 1 },
+        "head_oid": {
+          "type": ["string", "null"],
+          "pattern": "^[a-f0-9]{40,64}$"
+        },
+        "branch": { "type": ["string", "null"] },
+        "detached": { "type": "boolean" },
+        "bare": { "type": "boolean" },
+        "locked": { "type": "boolean" },
+        "prunable": { "type": "boolean" },
+        "is_current": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "component": {
+      "type": "object",
+      "required": ["kind", "component_id", "root_path"],
+      "properties": {
+        "kind": { "type": "string", "const": "component" },
+        "component_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+        },
+        "root_path": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "pullRequest": {
+      "type": "object",
+      "required": [
+        "kind",
+        "provider",
+        "pr_id",
+        "base_branch",
+        "head_branch",
+        "status"
+      ],
+      "properties": {
+        "kind": { "type": "string", "const": "pull_request" },
+        "provider": {
+          "type": "string",
+          "enum": [
+            "github",
+            "gitlab",
+            "bitbucket",
+            "azure_devops",
+            "gitea",
+            "other"
+          ]
+        },
+        "pr_id": { "type": "string", "minLength": 1 },
+        "base_branch": { "type": "string", "minLength": 1 },
+        "head_branch": { "type": "string", "minLength": 1 },
+        "status": {
+          "type": "string",
+          "enum": ["open", "draft", "closed", "merged", "unknown"]
+        },
+        "url": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "owner": {
+      "type": "object",
+      "required": ["owner_id"],
+      "properties": {
+        "owner_id": { "type": "string", "minLength": 1 },
+        "run_id": { "type": "string", "minLength": 1 },
+        "worker_id": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "gitDelivery": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "document_type",
+        "discovered_at",
+        "repository",
+        "current_branch",
+        "worktrees",
+        "components",
+        "pull_request",
+        "protected_branches",
+        "staged_files"
+      ],
+      "properties": {
+        "schema_version": { "type": "string", "const": "v0" },
+        "document_type": { "type": "string", "const": "git_delivery" },
+        "discovered_at": { "type": "string", "minLength": 1 },
+        "repository": { "$ref": "#/$defs/repository" },
+        "current_branch": { "$ref": "#/$defs/branch" },
+        "worktrees": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/worktree" }
+        },
+        "components": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/component" }
+        },
+        "pull_request": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/pullRequest" }
+          ]
+        },
+        "protected_branches": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "staged_files": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      },
+      "additionalProperties": false
+    },
+    "checkoutClaim": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "document_type",
+        "kind",
+        "claim_token",
+        "repository_id",
+        "checkout_path",
+        "owner",
+        "status",
+        "claimed_at",
+        "released_at"
+      ],
+      "properties": {
+        "schema_version": { "type": "string", "const": "v0" },
+        "document_type": { "type": "string", "const": "checkout_claim" },
+        "kind": { "type": "string", "const": "checkout_claim" },
+        "claim_token": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+        },
+        "repository_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "checkout_path": { "type": "string", "minLength": 1 },
+        "owner": { "$ref": "#/$defs/owner" },
+        "status": { "type": "string", "enum": ["active", "released"] },
+        "claimed_at": { "type": "string", "minLength": 1 },
+        "released_at": { "type": ["string", "null"] }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "status": { "const": "active" } },
+            "required": ["status"]
+          },
+          "then": {
+            "properties": { "released_at": { "type": "null" } }
+          },
+          "else": {
+            "properties": { "released_at": { "type": "string", "minLength": 1 } }
+          }
+        }
+      ],
+      "additionalProperties": false
+    }
+  }
+}

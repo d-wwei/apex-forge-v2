@@ -43,6 +43,52 @@
     "objective": { "type": "string" },
     "deliverables": { "type": "array", "items": { "type": "string" } },
     "required_evidence": { "type": "array", "items": { "type": "string" } },
+    "capability_bindings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "capability_id",
+          "capability_version",
+          "mode",
+          "required",
+          "required_host_capabilities",
+          "input_contract",
+          "output_contract",
+          "protocol_ref"
+        ],
+        "properties": {
+          "capability_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "capability_version": { "type": "string", "minLength": 1 },
+          "category": { "type": "string" },
+          "mode": { "type": "string", "enum": ["required", "optional", "advisory"] },
+          "required": { "type": "boolean" },
+          "priority": { "type": "integer", "minimum": 0 },
+          "target_node_id": { "type": "string" },
+          "execution_class": { "type": "string" },
+          "required_host_capabilities": {
+            "type": "array",
+            "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+            "uniqueItems": true
+          },
+          "input_contract": { "type": "string" },
+          "output_contract": { "type": "string" },
+          "protocol_ref": { "type": "string" },
+          "availability": { "type": "string" },
+          "certification": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "capability_enforcement": {
+      "type": "string",
+      "enum": ["shadow", "enforce"]
+    },
+    "capability_invocation_refs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
     "sandbox": {
       "type": "object",
       "required": ["type", "path", "status"],
@@ -51,6 +97,9 @@
         "path": { "type": "string" },
         "status": { "type": "string", "enum": ["missing", "ready"] },
         "fallback_reason": { "type": "string" }
+        ,
+        "checkout_owner_id": { "type": ["string", "null"] },
+        "checkout_claim_token": { "type": ["string", "null"] }
       },
       "additionalProperties": false
     },

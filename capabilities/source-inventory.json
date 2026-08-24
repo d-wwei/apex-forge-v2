@@ -1,0 +1,195 @@
+{
+  "schema_version": "v0",
+  "generated_at": "2026-08-21T00:00:00.000Z",
+  "sources": [
+    {
+      "capability_id": "engineering-spec",
+      "source_name": "dev-spec-lite",
+      "source_ref": "local-skill:dev-spec-lite/SKILL.md",
+      "source_sha256": "cd24dfb81a0ce2a8691ee1c94e6b76fcfddad1185057d8a335685beebebe5d94",
+      "license": "clean-room-no-copy",
+      "absorption_policy": "REWRITE_ONLY",
+      "canonical_target": "capabilities/core/engineering-spec/PROTOCOL.md"
+    },
+    {
+      "capability_id": "source-grounding",
+      "source_name": "dev-source-driven",
+      "source_ref": "local-skill:dev-source-driven/SKILL.md",
+      "source_sha256": "12c77f69d5e27a965387a5b0124e5b1a8f6cf07eb384111d985ee0edb38b5bb5",
+      "license": "clean-room-no-copy",
+      "absorption_policy": "REWRITE_ONLY",
+      "canonical_target": "capabilities/core/source-grounding/PROTOCOL.md"
+    },
+    {
+      "capability_id": "architecture-design",
+      "source_name": "Apex Forge V1 Design Consultation",
+      "source_ref": "apex-forge@3755583552540121bcb1287c5bdba3c8b2578726",
+      "source_sha256": "059d8e07cd13093383bbcffd39b5594e51f03b6d9507c4b0c72022ddad12f1ac",
+      "license": "MIT",
+      "absorption_policy": "MIT",
+      "canonical_target": "capabilities/core/architecture-design/PROTOCOL.md"
+    },
+    {
+      "capability_id": "systematic-debugging",
+      "source_name": "dev-debug",
+      "source_ref": "local-skill:dev-debug/SKILL.md",
+      "source_sha256": "01aa489a4c8e4699db24bea79a663f60d30d43ffcfc94b83f2f94a5d7e9342ad",
+      "license": "clean-room-no-copy",
+      "absorption_policy": "REWRITE_ONLY",
+      "canonical_target": "capabilities/core/systematic-debugging/PROTOCOL.md"
+    },
+    {
+      "capability_id": "tdd-negative-control",
+      "source_name": "dev-tdd",
+      "source_ref": "local-skill:dev-tdd/SKILL.md",
+      "source_sha256": "d0df1ec352b95fcc543f014fb5f79042f71a9692d894fd7fde10ee4ec8307126",
+      "license": "clean-room-no-copy",
+      "absorption_policy": "REWRITE_ONLY",
+      "canonical_target": "capabilities/core/tdd-negative-control/PROTOCOL.md"
+    },
+    {
+      "capability_id": "incremental-delivery",
+      "source_name": "dev-incremental",
+      "source_ref": "local-skill:dev-incremental/SKILL.md",
+      "source_sha256": "aaf68453632487e65f70e818787584a56636611cc1cac3f81029c4fad9b73b75",
+      "license": "clean-room-no-copy",
+      "absorption_policy": "REWRITE_ONLY",
+      "canonical_target": "capabilities/core/incremental-delivery/PROTOCOL.md"
+    },
+    {
+      "capability_id": "code-review",
+      "source_name": "dev-review",
+      "source_ref": "local-skill:dev-review/SKILL.md",
+      "source_sha256": "e47bda782958de17b8a79d5b879f3d70736821393c80b5d8313e7bbc44c5b028",
+      "license": "clean-room-no-copy",
+      "absorption_policy": "REWRITE_ONLY",
+      "canonical_target": "capabilities/core/code-review/PROTOCOL.md"
+    },
+    {
+      "capability_id": "security-audit",
+      "source_name": "Apex Forge V1 Security Audit",
+      "source_ref": "apex-forge@3755583552540121bcb1287c5bdba3c8b2578726",
+      "source_sha256": "442604e5d109ebb8f61b7062b774f98bd7fa81d80e0403a63e5e0260f1e90228",
+      "license": "MIT",
+      "absorption_policy": "MIT",
+      "canonical_target": "capabilities/core/security-audit/PROTOCOL.md"
+    },
+    {
+      "capability_id": "high-risk-review",
+      "source_name": "dev-doubt",
+      "source_ref": "local-skill:dev-doubt/SKILL.md",
+      "source_sha256": "5711043f2bc8b74498a95c8b5d8a3dd697e2ca3d08543d33c4e3c56737e3f640",
+      "license": "clean-room-no-copy",
+      "absorption_policy": "REWRITE_ONLY",
+      "canonical_target": "capabilities/core/high-risk-review/PROTOCOL.md"
+    },
+    {
+      "capability_id": "test-strategy",
+      "source_name": "Better Test",
+      "source_ref": "better-test@0e03f45c79bd85e8a717d6d39c8649e0664cf56a",
+      "source_sha256": "19ea139b641c2acf8dcd5a545e588bceb2767d4283f79a25d9c1b5567ac11697",
+      "license": "MIT",
+      "absorption_policy": "MIT",
+      "canonical_target": "capabilities/core/test-strategy/PROTOCOL.md"
+    },
+    {
+      "capability_id": "documentation-sync",
+      "source_name": "Apex Forge V1 Document Release",
+      "source_ref": "apex-forge@3755583552540121bcb1287c5bdba3c8b2578726",
+      "source_sha256": "5ee992ca0f4737a2c0c2f07545d91e3733ebc3b6ce12294e900cdd35b77980be",
+      "license": "MIT",
+      "absorption_policy": "MIT",
+      "canonical_target": "capabilities/core/documentation-sync/PROTOCOL.md"
+    },
+    {
+      "capability_id": "frontend-design",
+      "source_name": "Tasteful Frontend",
+      "source_ref": "local-skill:tasteful-frontend/SKILL.md",
+      "source_sha256": "2ca11212ea652632856d8b018ee23ba39a69f87685b56aefdbf4f07334bb6938",
+      "license": "clean-room-no-copy",
+      "absorption_policy": "REWRITE_ONLY",
+      "canonical_target": "capabilities/conditional/frontend-design/PROTOCOL.md"
+    },
+    {
+      "capability_id": "design-to-code",
+      "source_name": "Design-to-Code Runner",
+      "source_ref": "design-to-code-runner",
+      "source_sha256": "88cd972e8311f27c4ba7a7048e36b47d9d566b4b2ea58cad61093fc8e71c4a1e",
+      "license": "MIT",
+      "absorption_policy": "MIT",
+      "canonical_target": "capabilities/conditional/design-to-code/PROTOCOL.md"
+    },
+    {
+      "capability_id": "browser-qa",
+      "source_name": "Apex Forge V1 QA",
+      "source_ref": "apex-forge@3755583552540121bcb1287c5bdba3c8b2578726",
+      "source_sha256": "dee1d51e48801f3b0e036e3d7c183aad94b720bad4799a21f2ac3b99ffca4dfa",
+      "license": "MIT",
+      "absorption_policy": "MIT",
+      "canonical_target": "capabilities/conditional/browser-qa/PROTOCOL.md"
+    },
+    {
+      "capability_id": "mobile-qa",
+      "source_name": "Apex Forge V1 Mobile Test",
+      "source_ref": "apex-forge@3755583552540121bcb1287c5bdba3c8b2578726",
+      "source_sha256": "8500dc85d58e318bc97a79db64d886f3250bc663f8f944d4864945cc26460be6",
+      "license": "MIT",
+      "absorption_policy": "MIT",
+      "canonical_target": "capabilities/conditional/mobile-qa/PROTOCOL.md"
+    },
+    {
+      "capability_id": "performance-validation",
+      "source_name": "Apex Forge Atomic Capability Plan",
+      "source_ref": "planning/atomic-capability-absorption-plan.md",
+      "source_sha256": "8511f5f53d46de7cd30e69636669b41999beadf0bdcf264ccb996f48b3f5611a",
+      "license": "MIT",
+      "absorption_policy": "OWNED",
+      "canonical_target": "capabilities/conditional/performance-validation/PROTOCOL.md"
+    },
+    {
+      "capability_id": "migration-safety",
+      "source_name": "dev-doubt and Apex V2 transaction design",
+      "source_ref": "local-skill:dev-doubt/SKILL.md",
+      "source_sha256": "5711043f2bc8b74498a95c8b5d8a3dd697e2ca3d08543d33c4e3c56737e3f640",
+      "license": "clean-room-no-copy",
+      "absorption_policy": "REWRITE_ONLY",
+      "canonical_target": "capabilities/conditional/migration-safety/PROTOCOL.md"
+    },
+    {
+      "capability_id": "deploy-release",
+      "source_name": "Apex Forge V1 Land and Deploy",
+      "source_ref": "apex-forge@3755583552540121bcb1287c5bdba3c8b2578726",
+      "source_sha256": "f053ef28b15fcaf30559996fecbcf198ae2b8bbd66f068d1dea51354542a8fec",
+      "license": "MIT",
+      "absorption_policy": "MIT",
+      "canonical_target": "capabilities/conditional/deploy-release/PROTOCOL.md"
+    },
+    {
+      "capability_id": "project-audit",
+      "source_name": "Product Goal-Based Audit",
+      "source_ref": "product-goal-based-audit@d480c33e36bba2a407241853afc1168951e668bf",
+      "source_sha256": "fed198af79686aa47a2a26777e9aca1c76d08623248b228ddaa8565a4e9fb537",
+      "license": "MIT",
+      "absorption_policy": "MIT",
+      "canonical_target": "capabilities/evolution/project-audit/PROTOCOL.md"
+    },
+    {
+      "capability_id": "postmortem",
+      "source_name": "Apex Forge V1 Retro",
+      "source_ref": "apex-forge@3755583552540121bcb1287c5bdba3c8b2578726",
+      "source_sha256": "e0e34fcd82d267053d503c699fc9861d2f792a7b7537185ccdca41326c051387",
+      "license": "MIT",
+      "absorption_policy": "MIT",
+      "canonical_target": "capabilities/evolution/postmortem/PROTOCOL.md"
+    },
+    {
+      "capability_id": "simplification",
+      "source_name": "DeepSeek Harness static audit",
+      "source_ref": "references/audits/deepseek-harness_研发模式审计_2026-08-14.md",
+      "source_sha256": "5781c3ba63f237f63ed8894a1cfc77d4ddc4ef50ff5aebc0de2f05acef70670e",
+      "license": "design-reference-only",
+      "absorption_policy": "REWRITE_ONLY",
+      "canonical_target": "capabilities/evolution/simplification/PROTOCOL.md"
+    }
+  ]
+}

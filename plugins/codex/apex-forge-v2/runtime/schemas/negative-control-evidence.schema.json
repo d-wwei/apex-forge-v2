@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/negative-control-evidence.schema.json",
+  "title": "Negative Control Evidence Output",
+  "type": "object",
+  "required": ["test_entry", "fault_model", "red_command", "red_signature", "green_command", "green_result", "restoration_result"],
+  "properties": {
+    "test_entry": { "type": "string", "minLength": 1 },
+    "fault_model": { "type": ["string", "object"] },
+    "red_command": { "type": "string", "minLength": 1 },
+    "red_signature": { "type": "string", "minLength": 1 },
+    "green_command": { "type": "string", "minLength": 1 },
+    "green_result": { "type": ["string", "object"] },
+    "restoration_result": { "type": ["string", "object"] },
+    "candidate_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  },
+  "additionalProperties": true
+}

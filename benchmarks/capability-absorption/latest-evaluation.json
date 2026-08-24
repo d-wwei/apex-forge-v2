@@ -1,0 +1,151 @@
+{
+  "schema_version": "v0",
+  "benchmark_id": "capability-absorption-v1",
+  "generated_at": "2026-08-21T20:39:01.963Z",
+  "status": "PASS",
+  "registry_version": "1.0.0",
+  "enforcement_mode": "shadow",
+  "provenance": {
+    "release_candidate_digest": "6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd",
+    "capabilities_sha256": "bfd7ada8bc7b7bccfa6a699b547ca640693c86d84b85b263cf5bf0c7a73060bc",
+    "schemas_sha256": "d0c8715a612c5d97b194d1edd9d314fdc8081a3bba91cc1749f4c8ae927af2fb",
+    "registry_sha256": "550b3a73df60755383321e2bf66077c2ca7fd980676d37368fbcf74fde2c196c",
+    "capability_lock_sha256": "8fde83e6f95bbecbe7633eef88c337c4dce0a69b54208ea1a536eb1b1b363664",
+    "matrix_sha256": "7fa604a71a3dbc3f6a5085ac5df9efca612d102fb31e7d379e4de73f60509573",
+    "task_set_digest": "41e8e360751f0ec2160d03cb1861cf25e7f6821e4bc2bfec8a3de1f05bc88212",
+    "evaluator": "deterministic-capability-governance-v1",
+    "model": null,
+    "provider": null,
+    "environment_fingerprint": "1aa00b5ce19dfe6770149f47d20dadecb135ade0ee1c190b6bb01971f87de052"
+  },
+  "counts": {
+    "capabilities": 21,
+    "routing_cases": 105,
+    "evidence_cases": 168,
+    "hidden_semantic_cases": 147,
+    "domain_hidden_cases": 21
+  },
+  "ablation": {
+    "enabled_hidden_caught": 147,
+    "disabled_hidden_caught": 0,
+    "enabled_domain_hidden_caught": 21,
+    "valid_false_positives": 0
+  },
+  "context": {
+    "using_skill_words": 504,
+    "max_protocol_words": 84,
+    "protocol_words": [
+      {
+        "capability_id": "engineering-spec",
+        "words": 65
+      },
+      {
+        "capability_id": "source-grounding",
+        "words": 64
+      },
+      {
+        "capability_id": "architecture-design",
+        "words": 76
+      },
+      {
+        "capability_id": "systematic-debugging",
+        "words": 84
+      },
+      {
+        "capability_id": "tdd-negative-control",
+        "words": 70
+      },
+      {
+        "capability_id": "incremental-delivery",
+        "words": 62
+      },
+      {
+        "capability_id": "code-review",
+        "words": 67
+      },
+      {
+        "capability_id": "security-audit",
+        "words": 70
+      },
+      {
+        "capability_id": "high-risk-review",
+        "words": 62
+      },
+      {
+        "capability_id": "test-strategy",
+        "words": 82
+      },
+      {
+        "capability_id": "documentation-sync",
+        "words": 68
+      },
+      {
+        "capability_id": "frontend-design",
+        "words": 62
+      },
+      {
+        "capability_id": "design-to-code",
+        "words": 63
+      },
+      {
+        "capability_id": "browser-qa",
+        "words": 72
+      },
+      {
+        "capability_id": "mobile-qa",
+        "words": 74
+      },
+      {
+        "capability_id": "performance-validation",
+        "words": 71
+      },
+      {
+        "capability_id": "migration-safety",
+        "words": 66
+      },
+      {
+        "capability_id": "deploy-release",
+        "words": 68
+      },
+      {
+        "capability_id": "project-audit",
+        "words": 67
+      },
+      {
+        "capability_id": "postmortem",
+        "words": 74
+      },
+      {
+        "capability_id": "simplification",
+        "words": 65
+      }
+    ],
+    "public_skill_count": 1
+  },
+  "usage": {
+    "duration_ms": 143,
+    "input_tokens": null,
+    "output_tokens": null,
+    "tool_calls": null
+  },
+  "gates": {
+    "capability_count": true,
+    "routing_cases": true,
+    "evidence_cases": true,
+    "valid_acceptance": true,
+    "semantic_hidden_recall": true,
+    "domain_hidden_recall": true,
+    "ablation_signal": true,
+    "false_positive_rate": true,
+    "using_skill_words": true,
+    "protocol_words": true,
+    "public_skill_count": true,
+    "context_binding_budget": true,
+    "candidate_binding": true
+  },
+  "limitations": [
+    "This is a deterministic governance ablation, not a live model-quality benchmark.",
+    "The historical 90-run product benchmark is bound to an older candidate and cannot prove current token or wall-time savings.",
+    "Browser, mobile, performance, migration, and deploy live certification remains separate from bundled behavior validation."
+  ]
+}

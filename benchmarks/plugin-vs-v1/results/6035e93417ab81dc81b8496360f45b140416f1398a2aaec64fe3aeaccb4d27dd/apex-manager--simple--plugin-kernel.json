@@ -1,0 +1,180 @@
+{
+  "task_id": "apex-manager--simple",
+  "task_digest": "3db094d0da2232c24ecc47f8227433a438c72c6de499d3f6a9b9528d510cbab3",
+  "repository": "apex-manager",
+  "scenario": "simple",
+  "mode": "plugin-kernel",
+  "candidate_digest": "6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 78345,
+    "cost": 80586,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 1,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "2da4c45e9bc278590ff0a908bf7e6bbbc0966e12",
+    "runtime_hash": "528e8b02a687efafd5236ab0db47910b4b782885fd3facc93f7df7678ff12ea1",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "6caf5fd9c27e617037ffb967aa9ab17f539445ce8ec17069d6dc5d982e84fea7",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--simple--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--simple--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--simple--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--simple--plugin-kernel/codex-home/sessions/2026/08/21/rollout-2026-08-21T21-42-05-01a0248e-ae2e-7d30-bc73-bf5820e66ceb.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--simple--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--simple--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--simple--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--simple--plugin-kernel/codex-home/sessions/2026/08/21/rollout-2026-08-21T21-42-05-01a0248e-ae2e-7d30-bc73-bf5820e66ceb.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--simple--plugin-kernel/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "9df53b7e70ab771f0bb80c35126dc0a4d7d35ae63e66d7cf3e8f4ab3d3a19b0a",
+      "5384021e22f4710d09c914a974b37827c29cb3c63c4a2c47f939a028b73b94fa",
+      "26d5194ca1358684eeceaf3f739da6f03e90c0c6cc94e571720eca341bc66cc1",
+      "e5bc2b05d6beba82eef4597aef93835aeae73b854db9f181ea84ecb8c00aa17a",
+      "1e6af8a7ba0c008f0000ab7da7d35c064cad299f85433f7837c339718bc97aae"
+    ]
+  },
+  "evidence": {
+    "task_digest": "3db094d0da2232c24ecc47f8227433a438c72c6de499d3f6a9b9528d510cbab3",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a0248e-ae2e-7d30-bc73-bf5820e66ceb",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Cost reports now use `1 call` only for exactly one request and `N calls` otherwise.",
+      "tests": [
+        {
+          "command": "node --import tsx --test tests/worker/cost.test.ts",
+          "status": "pass",
+          "detail": "20 tests passed."
+        },
+        {
+          "command": "npm run typecheck",
+          "status": "pass",
+          "detail": "TypeScript compilation passed."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "src/worker/cost.ts",
+        "tests/worker/cost.test.ts"
+      ],
+      "review": {
+        "claims": [
+          "Exactly one request renders as `1 call`.",
+          "Zero and plural request counts render as `N calls`."
+        ],
+        "uncertainties": [],
+        "acceptance_mapping": [
+          {
+            "criterion": "Use singular wording for exactly one request",
+            "status": "supported"
+          },
+          {
+            "criterion": "Preserve plural wording for all other counts",
+            "status": "supported"
+          },
+          {
+            "criterion": "Add focused cost-report coverage",
+            "status": "supported"
+          }
+        ],
+        "findings": [
+          "No blocking findings."
+        ],
+        "residual_risks": [],
+        "merge_posture": "approve"
+      }
+    },
+    "acceptance": [
+      {
+        "command": "node --import tsx --test tests/worker/cost.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 266,
+        "stdout_tail": "(node:19983) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n▶ formatTokens\n  ✔ formats thousands with k suffix (1.78775ms)\n  ✔ formats fractional thousands (0.961833ms)\n  ✔ formats small counts without suffix (1.479208ms)\n  ✔ formats zero (1.103667ms)\n  ✔ formats exact thousand (0.855166ms)\n  ✔ rounds to one decimal (0.92675ms)\n✔ formatTokens (7.819333ms)\n▶ formatCostReport\n  ✔ formats basic cost report without budget (1.075875ms)\n  ✔ includes task titles from tasks.json when available (1.225125ms)\n  ✔ formats report with budget info (0.791333ms)\n  ✔ uses singular call wording only for exactly one request (1.25225ms)\n  ✔ handles empty summary (1.038167ms)\n✔ formatCostReport (5.552ms)\n▶ checkBudget\n  ✔ returns ok when no budget set (1.359042ms)\n  ✔ returns ok when under warning threshold (1.327459ms)\n  ✔ returns warn when usage exceeds warning threshold (1.081167ms)\n  ✔ returns exceeded when usage meets budget (1.098333ms)\n  ✔ respects custom warning threshold (1.087709ms)\n  ✔ exceeded takes priority over warn (1.61875ms)\n✔ checkBudget (7.752417ms)\n▶ formatRateLimitStatus\n  ✔ formats rate limit info (9.995292ms)\n  ✔ shows throttled warning (1.172625ms)\n  ✔ returns message when null (0.891042ms)\n✔ formatRateLimitStatus (12.168542ms)\nℹ tests 20\nℹ suites 4\nℹ pass 20\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 185.558667\n",
+        "stderr_tail": ""
+      },
+      {
+        "command": "npm run typecheck",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 891,
+        "stdout_tail": "\n> apex-manager@0.1.1 typecheck\n> tsc --noEmit\n\n",
+        "stderr_tail": ""
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "node --import tsx -e \"import {formatCostReport} from './src/worker/cost.ts'; const s={total_cost_usd:1,total_requests:1,by_task:{T1:{total_cost_usd:1,total_input_tokens:1,total_output_tokens:1,request_count:1}}}; const r=formatCostReport(s); if(!r.includes('1 call')||r.includes('1 calls')) process.exit(1)\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 312,
+        "stdout_tail": "",
+        "stderr_tail": "(node:20026) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      },
+      {
+        "command": "node --import tsx --test tests/worker/cost.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 243,
+        "stdout_tail": "(node:20053) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n▶ formatTokens\n  ✔ formats thousands with k suffix (4.545333ms)\n  ✔ formats fractional thousands (1.295458ms)\n  ✔ formats small counts without suffix (0.933583ms)\n  ✔ formats zero (1.225042ms)\n  ✔ formats exact thousand (1.035292ms)\n  ✔ rounds to one decimal (1.222584ms)\n✔ formatTokens (10.843459ms)\n▶ formatCostReport\n  ✔ formats basic cost report without budget (1.036667ms)\n  ✔ includes task titles from tasks.json when available (1.2695ms)\n  ✔ formats report with budget info (1.0805ms)\n  ✔ uses singular call wording only for exactly one request (0.833375ms)\n  ✔ handles empty summary (0.877125ms)\n✔ formatCostReport (5.244042ms)\n▶ checkBudget\n  ✔ returns ok when no budget set (0.923542ms)\n  ✔ returns ok when under warning threshold (1.443958ms)\n  ✔ returns warn when usage exceeds warning threshold (1.306167ms)\n  ✔ returns exceeded when usage meets budget (1.47925ms)\n  ✔ respects custom warning threshold (1.058167ms)\n  ✔ exceeded takes priority over warn (1.308125ms)\n✔ checkBudget (7.711292ms)\n▶ formatRateLimitStatus\n  ✔ formats rate limit info (9.457125ms)\n  ✔ shows throttled warning (1.202416ms)\n  ✔ returns message when null (0.769833ms)\n✔ formatRateLimitStatus (11.511084ms)\nℹ tests 20\nℹ suites 4\nℹ pass 20\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 162.73775\n",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/worker/cost.ts",
+        "tests/worker/cost.test.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": true,
+      "evidence_score": 1,
+      "run_ids": [
+        "run-mt300ld1-e1954ff7"
+      ],
+      "done_run_ids": [
+        "run-mt300ld1-e1954ff7"
+      ],
+      "fully_closed_run_ids": [
+        "run-mt300ld1-e1954ff7"
+      ],
+      "active_runs": [],
+      "candidate_chain_equal": true,
+      "verification_ref": ".apex-v2/runs/run-mt300ld1-e1954ff7/verification-report.json",
+      "review_ref": ".apex-v2/runs/run-mt300ld1-e1954ff7/review-report.json",
+      "integration_ref": ".apex-v2/runs/run-mt300ld1-e1954ff7/integration-report.json",
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "076265718b2a6c7330c623c01328dfd6656b2a552009455b9cdd85d23d0b5aa9",
+        "replay_hash": "076265718b2a6c7330c623c01328dfd6656b2a552009455b9cdd85d23d0b5aa9",
+        "hash_equal": true
+      }
+    }
+  }
+}

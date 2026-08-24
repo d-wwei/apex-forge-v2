@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/capability-binding.schema.json",
+  "title": "Apex Forge V2 Capability Binding",
+  "type": "object",
+  "required": [
+    "binding_id",
+    "capability_id",
+    "priority",
+    "mode",
+    "enabled",
+    "conditions",
+    "plan_insertion"
+  ],
+  "properties": {
+    "binding_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "capability_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "priority": { "type": "integer", "minimum": 0 },
+    "mode": {
+      "type": "string",
+      "enum": ["required", "optional", "advisory"]
+    },
+    "enabled": { "type": "boolean" },
+    "conditions": {
+      "type": "object",
+      "required": ["match"],
+      "properties": {
+        "match": { "type": "string", "enum": ["any", "all"] },
+        "intake_types": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "feature",
+              "bug",
+              "test_failure",
+              "review_feedback",
+              "tech_debt",
+              "risk",
+              "idea",
+              "other"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "risk_levels": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["low", "medium", "high", "critical"]
+          },
+          "uniqueItems": true
+        },
+        "title_patterns": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "description_patterns": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "affected_area_patterns": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      },
+      "additionalProperties": false
+    },
+    "plan_insertion": {
+      "type": "object",
+      "required": ["target_node_id", "required"],
+      "properties": {
+        "target_node_id": { "type": "string", "minLength": 1 },
+        "required": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

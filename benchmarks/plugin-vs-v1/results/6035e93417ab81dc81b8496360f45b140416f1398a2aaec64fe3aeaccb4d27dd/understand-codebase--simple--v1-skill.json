@@ -1,0 +1,125 @@
+{
+  "task_id": "understand-codebase--simple",
+  "task_digest": "e170ac6c8df925ab0bb6373c263c6c443dcc0385bf71f53a3f1d0f03bb697541",
+  "repository": "understand-codebase",
+  "scenario": "simple",
+  "mode": "v1-skill",
+  "candidate_digest": "6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 0.6666666666666666,
+    "wall_ms": 190517,
+    "cost": 332411,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 0,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "b5eb3607e982743adfdc28eb8929043ed3a2b478",
+    "runtime_hash": "528e8b02a687efafd5236ab0db47910b4b782885fd3facc93f7df7678ff12ea1",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "6fb3d914fb007202cdfd3cc23ad9aa08850ddfadb2dcbbc1cf6f4f612ef3788d",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--simple--v1-skill/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--simple--v1-skill/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--simple--v1-skill/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--simple--v1-skill/codex-home/sessions/2026/08/22/rollout-2026-08-22T00-04-15-01a02510-d5d7-7960-b42c-9b6d519668dc.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--simple--v1-skill/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--simple--v1-skill/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--simple--v1-skill/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--simple--v1-skill/codex-home/sessions/2026/08/22/rollout-2026-08-22T00-04-15-01a02510-d5d7-7960-b42c-9b6d519668dc.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--simple--v1-skill/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "4c19221c33ceca70f11bfb781b6e88019a3d3e66e8cf72bf6bcddc22002fe1ae",
+      "ed6728648e75f1f22ad528708d00594b3d5aa4a08d84eeb5352c885160a91ca9",
+      "4dcec6a719f096cad3581d32922c2bab725230f6e992bde67cc96011b176b11e",
+      "6d9315ebe7a7bef581f3e532e85c0bf7acc4d315b69cbdb478334ad6a0323254",
+      "ee5e6b6ad63bbba9586c4589853151d6caeecb575f0326edd7fac42e0bad0723"
+    ]
+  },
+  "evidence": {
+    "task_digest": "e170ac6c8df925ab0bb6373c263c6c443dcc0385bf71f53a3f1d0f03bb697541",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a02510-d5d7-7960-b42c-9b6d519668dc",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Added `*.webp` to default asset ignores and tests for exclusion plus user negation.",
+      "tests": [
+        {
+          "command": "pnpm --dir understand-codebase-plugin --filter @understand-codebase/core exec vitest run --configLoader runner src/__tests__/ignore-filter.test.ts",
+          "status": "pass",
+          "detail": "19 tests passed."
+        },
+        {
+          "command": "pnpm --dir understand-codebase-plugin --filter @understand-codebase/core test -- src/__tests__/ignore-filter.test.ts",
+          "status": "fail",
+          "detail": "Vite startup EPERM writing to linked node_modules/.vite-temp; tests were not collected."
+        }
+      ],
+      "risks": [
+        "Exact acceptance command is blocked by workspace dependency permissions, though the targeted suite passes with Vite's runner config loader."
+      ],
+      "evidence_refs": [
+        "understand-codebase-plugin/packages/core/src/ignore-filter.ts",
+        "understand-codebase-plugin/packages/core/src/__tests__/ignore-filter.test.ts"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "pnpm --dir understand-codebase-plugin --filter @understand-codebase/core test -- src/__tests__/ignore-filter.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 1925,
+        "stdout_tail": "\n> @understand-codebase/core@0.1.0 test /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--simple--v1-skill/workspace/understand-codebase-plugin/packages/core\n> vitest run -- src/__tests__/ignore-filter.test.ts\n\n\n RUN  v3.2.4 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--simple--v1-skill/workspace/understand-codebase-plugin/packages/core\n\n ✓ src/plugins/extractors/__tests__/rust-extractor.test.ts (30 tests) 47ms\n ✓ src/plugins/extractors/__tests__/go-extractor.test.ts (25 tests) 40ms\n ✓ src/plugins/extractors/__tests__/python-extractor.test.ts (31 tests) 50ms\n ✓ src/plugins/extractors/__tests__/ruby-extractor.test.ts (32 tests) 67ms\n ✓ src/plugins/extractors/__tests__/csharp-extractor.test.ts (27 tests) 94ms\n ✓ src/plugins/extractors/__tests__/cpp-extractor.test.ts (28 tests) 43ms\n ✓ src/__tests__/ignore-generator.test.ts (19 tests) 114ms\n ✓ src/__tests__/ignore-filter.test.ts (19 tests) 124ms\n ✓ src/plugins/tree-sitter-plugin.test.ts (14 tests) 49ms\n ✓ src/__tests__/embedding-search.test.ts (12 tests) 2ms\n ✓ src/plugins/extractors/__tests__/java-extractor.test.ts (25 tests) 21ms\n ✓ src/plugins/extractors/__tests__/php-extractor.test.ts (30 tests) 28ms\n ✓ src/__tests__/schema.test.ts (59 tests) 19ms\n ✓ src/persistence/persistence.test.ts (14 tests) 33ms\n ✓ src/__tests__/language-lesson.test.ts (10 tests) 7ms\n ✓ src/__tests__/normalize-graph.test.ts (36 tests) 15ms\n ✓ src/__tests__/domain-persistence.test.ts (3 tests) 7ms\n ✓ src/__tests__/search.test.ts (10 tests) 7ms\n ✓ src/__tests__/fingerprint.test.ts (23 tests) 4ms\n ✓ src/__tests__/language-registry.test.ts (18 tests) 5ms\n ✓ src/analyzer/graph-builder.test.ts (18 tests) 19ms\n ✓ src/__tests__/parsers.test.ts (61 tests) 15ms\n ✓ src/__tests__/plugin-registry.test.ts (19 tests) 17ms\n ✓ src/__tests__/staleness.test.ts (8 tests) 5ms\n ✓ src/__tests__/tour-generator.test.ts (16 tests) 3ms\n ✓ src/types.test.ts (10 tests) 4ms\n ✓ src/__tests__/domain-types.test.ts (7 tests) 17ms\n ✓ src/__tests__/change-classifier.test.ts (13 tests) 2ms\n ✓ src/analyzer/llm-analyzer.test.ts (16 tests) 3ms\n ✓ src/__tests__/layer-detector.test.ts (10 tests) 3ms\n ✓ src/__tests__/framework-registry.test.ts (14 tests) 4ms\n ✓ src/__tests__/domain-normalize.test.ts (5 tests) 2ms\n ✓ src/__tests__/plugin-discovery.test.ts (10 tests) 3ms\n\n Test Files  33 passed (33)\n      Tests  672 passed (672)\n   Start at  00:07:25\n   Duration  1.41s (transform 1.17s, setup 0ms, collect 3.73s, tests 873ms, environment 2ms, prepare 1.83s)\n\n",
+        "stderr_tail": "stderr | src/__tests__/parsers.test.ts > YAMLConfigParser > handles invalid YAML gracefully\n[yaml-parser] YAML parse failed, falling back to regex extraction: Nested mappings are not allowed in compact mappings at line 1, column 10:\n\ninvalid: yaml: content: [[[\n         ^\n\n\nstderr | src/__tests__/parsers.test.ts > JSONConfigParser > handles invalid JSON gracefully\n[json-parser] Failed to parse JSON: Unexpected token 'o', \"not json at all\" is not valid JSON\n\n"
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "pnpm --dir understand-codebase-plugin --filter @understand-codebase/core test -- src/__tests__/ignore-filter.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 1727,
+        "stdout_tail": "\n> @understand-codebase/core@0.1.0 test /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--simple--v1-skill/workspace/understand-codebase-plugin/packages/core\n> vitest run -- src/__tests__/ignore-filter.test.ts\n\n\n RUN  v3.2.4 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--simple--v1-skill/workspace/understand-codebase-plugin/packages/core\n\n ✓ src/plugins/extractors/__tests__/go-extractor.test.ts (25 tests) 44ms\n ✓ src/plugins/extractors/__tests__/python-extractor.test.ts (31 tests) 56ms\n ✓ src/plugins/extractors/__tests__/rust-extractor.test.ts (30 tests) 55ms\n ✓ src/plugins/extractors/__tests__/ruby-extractor.test.ts (32 tests) 60ms\n ✓ src/plugins/extractors/__tests__/cpp-extractor.test.ts (28 tests) 68ms\n ✓ src/plugins/extractors/__tests__/csharp-extractor.test.ts (27 tests) 89ms\n ✓ src/__tests__/ignore-generator.test.ts (19 tests) 117ms\n ✓ src/__tests__/ignore-filter.test.ts (19 tests) 127ms\n ✓ src/plugins/tree-sitter-plugin.test.ts (14 tests) 32ms\n ✓ src/plugins/extractors/__tests__/php-extractor.test.ts (30 tests) 26ms\n ✓ src/plugins/extractors/__tests__/java-extractor.test.ts (25 tests) 33ms\n ✓ src/__tests__/domain-types.test.ts (7 tests) 5ms\n ✓ src/__tests__/schema.test.ts (59 tests) 12ms\n ✓ src/persistence/persistence.test.ts (14 tests) 48ms\n ✓ src/__tests__/normalize-graph.test.ts (36 tests) 6ms\n ✓ src/__tests__/search.test.ts (10 tests) 7ms\n ✓ src/__tests__/language-lesson.test.ts (10 tests) 2ms\n ✓ src/__tests__/domain-persistence.test.ts (3 tests) 19ms\n ✓ src/__tests__/staleness.test.ts (8 tests) 2ms\n ✓ src/__tests__/fingerprint.test.ts (23 tests) 4ms\n ✓ src/types.test.ts (10 tests) 5ms\n ✓ src/__tests__/language-registry.test.ts (18 tests) 8ms\n ✓ src/analyzer/graph-builder.test.ts (18 tests) 23ms\n ✓ src/__tests__/parsers.test.ts (61 tests) 26ms\n ✓ src/__tests__/tour-generator.test.ts (16 tests) 5ms\n ✓ src/__tests__/plugin-registry.test.ts (19 tests) 23ms\n ✓ src/__tests__/layer-detector.test.ts (10 tests) 4ms\n ✓ src/__tests__/framework-registry.test.ts (14 tests) 3ms\n ✓ src/__tests__/domain-normalize.test.ts (5 tests) 1ms\n ✓ src/__tests__/change-classifier.test.ts (13 tests) 3ms\n ✓ src/__tests__/plugin-discovery.test.ts (10 tests) 5ms\n ✓ src/analyzer/llm-analyzer.test.ts (16 tests) 6ms\n ✓ src/__tests__/embedding-search.test.ts (12 tests) 6ms\n\n Test Files  33 passed (33)\n      Tests  672 passed (672)\n   Start at  00:07:27\n   Duration  1.30s (transform 1.21s, setup 0ms, collect 3.40s, tests 930ms, environment 3ms, prepare 1.77s)\n\n",
+        "stderr_tail": "stderr | src/__tests__/parsers.test.ts > YAMLConfigParser > handles invalid YAML gracefully\n[yaml-parser] YAML parse failed, falling back to regex extraction: Nested mappings are not allowed in compact mappings at line 1, column 10:\n\ninvalid: yaml: content: [[[\n         ^\n\n\nstderr | src/__tests__/parsers.test.ts > JSONConfigParser > handles invalid JSON gracefully\n[json-parser] Failed to parse JSON: Unexpected token 'o', \"not json at all\" is not valid JSON\n\n"
+      },
+      {
+        "command": "test -n \"$(git diff --name-only -- understand-codebase-plugin/packages/core/src/ignore-filter.ts)\" && test -n \"$(git diff --name-only -- understand-codebase-plugin/packages/core/src/__tests__/ignore-filter.test.ts)\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 37,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "understand-codebase-plugin/packages/core/src/__tests__/ignore-filter.test.ts",
+        "understand-codebase-plugin/packages/core/src/ignore-filter.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": false,
+      "evidence_score": 0.6666666666666666,
+      "reason": "no .apex-v2 durable state"
+    }
+  }
+}

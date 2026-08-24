@@ -31,12 +31,22 @@
     "priority": { "type": "string", "enum": ["P0", "P1", "P2", "P3"] },
     "risk": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
     "affected_area": { "type": "string" },
+    "method_pack_id": {
+      "type": ["string", "null"],
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
     "acceptance_commands": {
       "type": "array",
       "items": { "type": "string", "minLength": 1 },
       "uniqueItems": true
     },
     "evidence_refs": { "type": "array", "items": { "type": "string" } },
+    "source_spec": {
+      "anyOf": [
+        { "$ref": "spec-source.schema.json" },
+        { "type": "null" }
+      ]
+    },
     "triage": {
       "type": "object",
       "required": ["status", "decision", "target_milestone", "reason"],

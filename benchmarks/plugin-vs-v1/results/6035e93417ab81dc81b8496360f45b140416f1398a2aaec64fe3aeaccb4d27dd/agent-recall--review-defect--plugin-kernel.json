@@ -1,0 +1,158 @@
+{
+  "task_id": "agent-recall--review-defect",
+  "task_digest": "91ae2a61d3909db18c160cee28318f9f563ae74bc8ee3b7db4ae625a5cf56b10",
+  "repository": "agent-recall",
+  "scenario": "review-defect",
+  "mode": "plugin-kernel",
+  "candidate_digest": "6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 2236045,
+    "cost": 6544959,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 1,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "362bd78657a4f346af7218a571ab2698303ffb2a",
+    "runtime_hash": "528e8b02a687efafd5236ab0db47910b4b782885fd3facc93f7df7678ff12ea1",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "d00d8aca26505e91e5fb87e8f2a97cfffe4e24aaae5b9242a39b1015f12d87fd",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--review-defect--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--review-defect--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--review-defect--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--review-defect--plugin-kernel/codex-home/sessions/2026/08/21/rollout-2026-08-21T23-07-34-01a024dc-f166-7f30-854f-a2e986054122.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--review-defect--plugin-kernel/execution-2.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--review-defect--plugin-kernel/process-2.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--review-defect--plugin-kernel/process-2.stderr.log"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--review-defect--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--review-defect--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--review-defect--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--review-defect--plugin-kernel/codex-home/sessions/2026/08/21/rollout-2026-08-21T23-07-34-01a024dc-f166-7f30-854f-a2e986054122.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--review-defect--plugin-kernel/execution-2.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--review-defect--plugin-kernel/process-2.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--review-defect--plugin-kernel/process-2.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--review-defect--plugin-kernel/agent-output-2.json"
+    ],
+    "artifact_hashes": [
+      "a44cfd3bc521462ea3b1df96d2c7f60b831499f4ff1977bd837588eb36144f54",
+      "f6b70dcf879f07ee4429294f9c77eeeb5da856ac32092ef329f84314fb18f8d2",
+      "7ecfea93f144b3c7981cf96b1c843cc0edf8ec348fa547cd8485f6fc2d115170",
+      "028493083972b7699dcc6c7c06a81829eeafd527f509cd0fa64e9182e74c7754",
+      "235d4b359c5ae86fad42ae742f45c5f5811e8d28a4de698c8e3a58e898d351b3",
+      "0a50d51c508b92dc0b3c1bcfbeb58c04c7c7d3a519312a4af1c9f31c8fd5e08c",
+      "cf9c777b60b5fa723af9997352774e14e00e453e9fab7de75af4f942d9a51513",
+      "539ab2c16366c6e25ab8e0393de4261a166d1469236e4395dd67e93fbbf44de0"
+    ]
+  },
+  "evidence": {
+    "task_digest": "91ae2a61d3909db18c160cee28318f9f563ae74bc8ee3b7db4ae625a5cf56b10",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a024dc-f166-7f30-854f-a2e986054122",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Exact-denied CLAUDE_CODE_SESSION, preserved OAuth token and SDK entrypoint, and strengthened regression coverage. Durable run completed and reconciled consistently.",
+      "tests": [
+        {
+          "command": "bun test tests/supervisor/env-sanitizer.test.ts",
+          "status": "fail",
+          "detail": "Initial RED: 6 passed, 2 failed due to leaked session values."
+        },
+        {
+          "command": "bun test tests/supervisor/env-sanitizer.test.ts",
+          "status": "pass",
+          "detail": "Final integrated workspace: 8 passed, 0 failed, 30 assertions."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "verification-mt3de077-977fab29",
+        "review-mt3devy8-4e24a440",
+        "integration-mt3dfb36-39b12aa0",
+        "reconcile-mt3dhqe7-be4e4992"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "bun test tests/supervisor/env-sanitizer.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 38,
+        "stdout_tail": "bun test v1.3.11 (af24e281)\n",
+        "stderr_tail": "\ntests/supervisor/env-sanitizer.test.ts:\n(pass) sanitizeEnv > strips variables with CLAUDECODE_ prefix\n(pass) sanitizeEnv > strips variables with CLAUDE_CODE_ prefix (except allowlisted) [0.31ms]\n(pass) sanitizeEnv > exact-denies nested sessions while preserving SDK authentication variables [0.01ms]\n(pass) sanitizeEnv > preserves allowed variables like PATH, HOME, NODE_PATH [0.02ms]\n(pass) sanitizeEnv > returns a new object and does not mutate the original [0.02ms]\n(pass) sanitizeEnv > handles empty env gracefully [0.02ms]\n(pass) sanitizeEnv > skips entries with undefined values [0.02ms]\n(pass) sanitizeEnv > combines prefix and exact match removal in a single pass [0.02ms]\n\n 8 pass\n 0 fail\n 30 expect() calls\nRan 8 tests across 1 file. [11.00ms]\n"
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "bun -e \"import { sanitizeEnv } from './src/supervisor/env-sanitizer.ts'; const out=sanitizeEnv({CLAUDE_CODE_SESSION:'secret',CLAUDE_CODE_OAUTH_TOKEN:'token',CLAUDE_CODE_ENTRYPOINT:'sdk-ts'}); if(out.CLAUDE_CODE_SESSION!==undefined||out.CLAUDE_CODE_OAUTH_TOKEN!=='token'||out.CLAUDE_CODE_ENTRYPOINT!=='sdk-ts') process.exit(1);\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 29,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      },
+      {
+        "command": "bun test tests/supervisor/env-sanitizer.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 32,
+        "stdout_tail": "bun test v1.3.11 (af24e281)\n",
+        "stderr_tail": "\ntests/supervisor/env-sanitizer.test.ts:\n(pass) sanitizeEnv > strips variables with CLAUDECODE_ prefix\n(pass) sanitizeEnv > strips variables with CLAUDE_CODE_ prefix (except allowlisted) [0.29ms]\n(pass) sanitizeEnv > exact-denies nested sessions while preserving SDK authentication variables [0.03ms]\n(pass) sanitizeEnv > preserves allowed variables like PATH, HOME, NODE_PATH [0.02ms]\n(pass) sanitizeEnv > returns a new object and does not mutate the original [0.03ms]\n(pass) sanitizeEnv > handles empty env gracefully\n(pass) sanitizeEnv > skips entries with undefined values\n(pass) sanitizeEnv > combines prefix and exact match removal in a single pass\n\n 8 pass\n 0 fail\n 30 expect() calls\nRan 8 tests across 1 file. [7.00ms]\n"
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/supervisor/env-sanitizer.ts",
+        "tests/supervisor/env-sanitizer.test.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": true,
+      "evidence_score": 1,
+      "run_ids": [
+        "run-mt332jae-a71356f7"
+      ],
+      "done_run_ids": [
+        "run-mt332jae-a71356f7"
+      ],
+      "fully_closed_run_ids": [
+        "run-mt332jae-a71356f7"
+      ],
+      "active_runs": [],
+      "candidate_chain_equal": true,
+      "verification_ref": ".apex-v2/runs/run-mt332jae-a71356f7/verification-report.json",
+      "review_ref": ".apex-v2/runs/run-mt332jae-a71356f7/review-report.json",
+      "integration_ref": ".apex-v2/runs/run-mt332jae-a71356f7/integration-report.json",
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "f8f280b45bf6a596ab88b1a9da520ed22933f6368565a58916c56401b6d29fca",
+        "replay_hash": "f8f280b45bf6a596ab88b1a9da520ed22933f6368565a58916c56401b6d29fca",
+        "hash_equal": true
+      }
+    }
+  }
+}

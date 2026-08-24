@@ -21,6 +21,10 @@ test("release source selection includes implementation and benchmark definitions
 });
 
 test("release source exclusions remove generated evidence and plugin output", () => {
+  assert.equal(isExcludedSourcePath("node_modules"), true);
+  assert.equal(isExcludedSourcePath("node_modules/ajv/package.json"), true);
+  assert.equal(isExcludedSourcePath("benchmarks/plugin-vs-v1/workspaces"), true);
+  assert.equal(isExcludedSourcePath("benchmarks/plugin-vs-v1/workspaces/base/repo"), true);
   assert.equal(isExcludedSourcePath("benchmarks/plugin-vs-v1/evidence/run.json"), true);
   assert.equal(isExcludedSourcePath("planning/plugin-upgrade-execution-status.md"), true);
   assert.equal(isExcludedSourcePath("plugins/codex/apex-forge-v2/runtime/apex-v2.mjs"), true);
@@ -39,7 +43,8 @@ test("candidate content changes when the task set changes", () => {
       source_commit: "a".repeat(40),
       source_tree_hash: "b".repeat(64),
       runtime_sha256: "c".repeat(64),
-      schemas_sha256: "d".repeat(64)
+      schemas_sha256: "d".repeat(64),
+      capabilities_sha256: "9".repeat(64)
     }
   };
   const first = candidateContent({

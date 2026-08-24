@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/capability-evidence.schema.json",
+  "title": "Apex Forge V2 Capability Evidence",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "capability_id",
+    "capability_version",
+    "invocation_id",
+    "objective",
+    "source_refs",
+    "claims",
+    "uncertainties",
+    "verification_refs",
+    "output_contract",
+    "output",
+    "created_at"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "capability_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "capability_version": { "type": "string", "minLength": 1 },
+    "invocation_id": { "type": "string", "minLength": 1 },
+    "objective": { "type": "string", "minLength": 1 },
+    "source_refs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "claims": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1
+    },
+    "uncertainties": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "verification_refs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "output_contract": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "output": { "type": "object" },
+    "created_at": { "type": "string" }
+  },
+  "additionalProperties": false
+}

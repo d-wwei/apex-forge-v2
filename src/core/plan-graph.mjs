@@ -1,5 +1,11 @@
 import { join } from "node:path";
 import { bullet, readJson, shortId } from "../lib/common.mjs";
+import {
+  assertCapabilityContextBudget,
+  capabilityRegistry,
+  routeCapabilities
+} from "./capability-registry.mjs";
+import { defaultMethodPackRegistry, resolveMethodPack } from "./method-packs.mjs";
 import { SCHEMA_VERSION } from "./store.mjs";
 
 export function buildTaskPlanGraph(root, run, timestamp, inventory) {
@@ -11,6 +17,13 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
   const intakeItems = readJson(join(root, "intake", "items.json"), []);
   const intake = intakeItems.find((item) => item.id === roadmapNode.source_intake_id);
   if (!intake) throw new Error(`找不到 roadmap 对应的 intake：${roadmapNode.source_intake_id}`);
+  const methodPackRegistry = readJson(
+    join(root, "policies", "method-packs.json"),
+    defaultMethodPackRegistry(timestamp)
+  );
+  const methodPackResolution = resolveMethodPack(methodPackRegistry, intake, inventory);
+  const methodPack = methodPackResolution.pack;
+  const routedCapabilities = routeCapabilities(capabilityRegistry(), intake);
 
   const planId = shortId("plan");
   const scopes = inferPlanScopes(intake, inventory);
@@ -168,32 +181,31 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
     })
   ];
 
-  const profile = shouldUseQuickPlan(intake, inventory) ? "quick" : "full";
-  const nodes = profile === "quick"
-    ? buildQuickPlanNodes({
+  const profile = methodPack.workflow === "quick" ? "quick" : "full";
+  const quickNodes = buildQuickPlanNodes({
         roadmapNode,
         intake,
         scopes,
         verificationCommands: taskVerificationCommands,
         contextRefs,
         runArtifactScope
-      })
-    : fullNodes;
-  const parallelLanes = profile === "quick"
-    ? [
-        { id: "build", purpose: "单一 ActionWorkspace 同时完成实现与测试，减少简单任务往返。", node_ids: ["delivery-implementation"] },
-        { id: "readiness", purpose: "复核需求符合性与 merge posture。", node_ids: ["delivery-review"] }
-      ]
-    : [
-        { id: "discovery", purpose: "并行核对上下文与风险，避免单一路径自证。", node_ids: ["delivery-context", "delivery-risk"] },
-        { id: "planning", purpose: "汇总证据并形成任务级实施切片。", node_ids: ["delivery-design"] },
-        { id: "build", purpose: "主实现与测试在写入范围互斥时并行。", node_ids: ["delivery-implementation", "delivery-tests"] },
-        { id: "verification", purpose: "独立执行真实项目验证并固化证据。", node_ids: ["delivery-verification"] },
-        { id: "readiness", purpose: "复核需求符合性并只修复明确阻塞项。", node_ids: ["delivery-review"] }
-      ];
-  const mergeOrder = profile === "quick"
-    ? ["build", "readiness"]
-    : ["discovery", "planning", "build", "verification", "readiness"];
+      });
+  const selectedNodes = selectMethodPackNodes(methodPack.workflow, {
+    quickNodes,
+    fullNodes,
+    roadmapNode,
+    scopes
+  }).map((node) => ({
+    ...node,
+    method_pack_id: methodPack.id
+  }));
+  const capabilityApplication = applyCapabilityBindings(
+    selectedNodes,
+    routedCapabilities
+  );
+  const nodes = capabilityApplication.nodes;
+  const parallelLanes = buildParallelLanes(methodPack.workflow);
+  const mergeOrder = parallelLanes.map((lane) => lane.id);
   const edges = nodes.flatMap((node) =>
     node.dependencies.map((dependency) => edge(dependency, node.id, node.id === "delivery-verification" ? "verifies" : "blocks"))
   );
@@ -209,12 +221,20 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
     affected_area: intake.affected_area,
     generated_at: timestamp,
     profile,
-    strategy: profile === "quick"
-      ? `针对“${roadmapNode.title}”使用低开销 quick route：单一隔离 patch 同时完成实现与测试，再独立验证和语义评审。`
-      : strategyForIntake(intake, roadmapNode.title),
+    method_pack: {
+      id: methodPack.id,
+      version: methodPack.version,
+      workflow: methodPack.workflow,
+      selection_reason: methodPackResolution.reason,
+      quality_gates: methodPack.quality_gates
+    },
+    capability_plan: capabilityApplication.capability_plan,
+    strategy: strategyForMethodPack(methodPack, intake, roadmapNode.title),
     planning_basis: [
       `.apex-v2/intake/items.json#${intake.id}`,
       `.apex-v2/roadmap/graph.json#${roadmapNode.id}`,
+      `.apex-v2/policies/method-packs.json#${methodPack.id}`,
+      `capabilities/registry.json@${routedCapabilities.registry_version}`,
       `.apex-v2/knowledge/manifest.json@${run.context_snapshot.knowledge_version}`,
       ...intake.evidence_refs
     ],
@@ -223,6 +243,8 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
       "同一 parallel_group 的 write_scope 必须互斥；重叠时禁止并行。",
       "所有 PASS 必须引用当前 run 的 artifact evidence。",
       "实现保持最小切片，禁止把无关重构混入交付。",
+      "Method Pack 可以减少机械节点，但不能移除 verification、review 或 candidate binding。",
+      "Required Capability 必须产出对应 typed evidence，不能以普通 summary 替代。",
       "只有全部 PlanGraph 节点完成后，execute 才能 PASS。"
     ],
     nodes,
@@ -243,7 +265,7 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
     verification_policy: {
       required_commands: taskVerificationCommands,
       schema_check: declaredVerificationCommands.length === 0
-        && profile === "full"
+        && methodPack.workflow !== "quick"
         && inventory.schemaFiles.length > 0
         ? "node src/apex-v2.mjs contracts validate --project ."
         : null,
@@ -259,13 +281,229 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
   };
 }
 
+export function applyCapabilityBindings(nodes, routedCapabilities) {
+  const nextNodes = nodes.map((node) => ({
+    ...node,
+    required_evidence: [...(node.required_evidence || [])],
+    capability_bindings: [],
+    capability_enforcement: routedCapabilities.enforcement_mode
+  }));
+  const selected = [
+    ...(routedCapabilities.required || []),
+    ...(routedCapabilities.optional || []),
+    ...(routedCapabilities.advisory || [])
+  ];
+  for (const capability of selected) {
+    const node = selectCapabilityNode(capability, nextNodes);
+    if (!node) {
+      throw new Error(
+        `Capability 无可用 PlanGraph 节点：${capability.capability_id} -> ${capability.target_node_id}`
+      );
+    }
+    node.capability_bindings.push(persistedCapabilityBinding({
+      ...capability,
+      target_node_id: node.id
+    }));
+    node.required_capabilities = unique([
+      ...(node.required_capabilities || []),
+      ...(capability.required_host_capabilities || [])
+    ]);
+    if (capability.required) {
+      node.required_evidence.push(
+        `capability:${capability.capability_id}:${capability.output_contract}`
+      );
+    }
+  }
+  for (const node of nextNodes) {
+    node.capability_bindings.sort((left, right) =>
+      right.priority - left.priority
+      || left.capability_id.localeCompare(right.capability_id)
+    );
+    assertCapabilityContextBudget(node.capability_bindings);
+    node.required_evidence = unique(node.required_evidence);
+  }
+  return {
+    nodes: nextNodes,
+    capability_plan: {
+      registry_version: routedCapabilities.registry_version,
+      enforcement_mode: routedCapabilities.enforcement_mode,
+      router_mode: routedCapabilities.router_mode || "enabled",
+      required: (routedCapabilities.required || []).map(persistedCapabilityBinding),
+      optional: (routedCapabilities.optional || []).map(persistedCapabilityBinding),
+      advisory: (routedCapabilities.advisory || []).map(persistedCapabilityBinding)
+    }
+  };
+}
+
+function selectCapabilityNode(capability, nodes) {
+  const targetId = resolveCapabilityTarget(
+    capability.target_node_id,
+    nodes
+  );
+  const targetIndex = nodes.findIndex((node) => node.id === targetId);
+  const candidates = [
+    nodes[targetIndex],
+    ...nodes.slice(targetIndex + 1)
+  ].filter(Boolean);
+  for (const node of candidates) {
+    try {
+      assertCapabilityContextBudget([
+        ...(node.capability_bindings || []),
+        capability
+      ]);
+      return node;
+    } catch {}
+  }
+  throw new Error(
+    `Capability context budget exceeded：${capability.capability_id} `
+    + `无法在 ${candidates.map((node) => node.id).join(",")} 中拆分；必须 replan`
+  );
+}
+
+function persistedCapabilityBinding(capability) {
+  return {
+    capability_id: capability.capability_id,
+    capability_version: capability.capability_version,
+    category: capability.category,
+    mode: capability.mode,
+    required: capability.required,
+    priority: capability.priority,
+    target_node_id: capability.target_node_id,
+    execution_class: capability.execution_class,
+    required_host_capabilities: capability.required_host_capabilities,
+    input_contract: capability.input_contract,
+    output_contract: capability.output_contract,
+    protocol_ref: capability.protocol_ref,
+    availability: capability.availability,
+    certification: capability.certification
+  };
+}
+
+function resolveCapabilityTarget(targetNodeId, nodes) {
+  if (nodes.some((node) => node.id === targetNodeId)) return targetNodeId;
+  if (
+    ["delivery-context", "delivery-risk", "delivery-design", "delivery-verification"]
+      .includes(targetNodeId)
+    && nodes.some((node) => node.id === "delivery-implementation")
+  ) {
+    return "delivery-implementation";
+  }
+  if (nodes.some((node) => node.id === "delivery-review")) {
+    return "delivery-review";
+  }
+  return nodes[0]?.id || null;
+}
+
+function buildParallelLanes(workflow) {
+  if (workflow === "quick") {
+    return [
+      { id: "build", purpose: "单一 ActionWorkspace 同时完成实现与测试，减少简单任务往返。", node_ids: ["delivery-implementation"] },
+      { id: "readiness", purpose: "复核需求符合性与 merge posture。", node_ids: ["delivery-review"] }
+    ];
+  }
+  if (workflow === "disciplined") {
+    return [
+      { id: "planning", purpose: "在一个设计节点内汇总上下文、风险和测试切片。", node_ids: ["delivery-design"] },
+      { id: "build", purpose: "单一 ActionWorkspace 按 TDD 完成实现与测试。", node_ids: ["delivery-implementation"] },
+      { id: "verification", purpose: "独立执行真实项目验证并固化证据。", node_ids: ["delivery-verification"] },
+      { id: "readiness", purpose: "复核需求符合性与 merge posture。", node_ids: ["delivery-review"] }
+    ];
+  }
+  if (workflow === "phase_context") {
+    return [
+      { id: "discovery", purpose: "为当前 phase 固化最小上下文和验收边界。", node_ids: ["delivery-context"] },
+      { id: "planning", purpose: "基于 phase context 形成实施与回滚切片。", node_ids: ["delivery-design"] },
+      { id: "build", purpose: "单一 ActionWorkspace 按计划完成实现与测试。", node_ids: ["delivery-implementation"] },
+      { id: "verification", purpose: "独立执行真实项目验证并固化证据。", node_ids: ["delivery-verification"] },
+      { id: "readiness", purpose: "复核需求符合性与 merge posture。", node_ids: ["delivery-review"] }
+    ];
+  }
+  return [
+        { id: "discovery", purpose: "并行核对上下文与风险，避免单一路径自证。", node_ids: ["delivery-context", "delivery-risk"] },
+        { id: "planning", purpose: "汇总证据并形成任务级实施切片。", node_ids: ["delivery-design"] },
+        { id: "build", purpose: "主实现与测试在写入范围互斥时并行。", node_ids: ["delivery-implementation", "delivery-tests"] },
+        { id: "verification", purpose: "独立执行真实项目验证并固化证据。", node_ids: ["delivery-verification"] },
+        { id: "readiness", purpose: "复核需求符合性并只修复明确阻塞项。", node_ids: ["delivery-review"] }
+  ];
+}
+
+function selectMethodPackNodes(workflow, input) {
+  if (workflow === "quick") return input.quickNodes;
+  if (workflow === "governed") return input.fullNodes;
+  const context = clonePlanNode(input.fullNodes, "delivery-context");
+  const design = clonePlanNode(input.fullNodes, "delivery-design");
+  const implementation = clonePlanNode(input.fullNodes, "delivery-implementation");
+  const verification = clonePlanNode(input.fullNodes, "delivery-verification");
+  const review = clonePlanNode(input.fullNodes, "delivery-review");
+
+  design.dependencies = workflow === "phase_context" ? ["delivery-context"] : [];
+  design.objective = workflow === "phase_context"
+    ? `基于当前 phase context，为“${input.roadmapNode.title}”形成最小可交付切片、测试策略和回滚方案。`
+    : `在单一设计节点内核对“${input.roadmapNode.title}”的上下文、风险、最小切片、测试策略和回滚方案。`;
+  implementation.title = "测试先行的实现切片";
+  implementation.dependencies = ["delivery-design"];
+  implementation.write_scope = unique([
+    ...input.scopes.implementation,
+    ...input.scopes.tests
+  ]);
+  implementation.deliverables = [
+    "实现与测试 patch bundle",
+    "失败路径与公开验收结果",
+    "残余风险"
+  ];
+  implementation.required_evidence = [
+    "changed_files",
+    "patch artifact",
+    "测试命令输出"
+  ];
+  implementation.objective = `在一个隔离 ActionWorkspace 内按测试先行方式完成“${input.roadmapNode.title}”的最小实现与回归测试。`;
+  verification.dependencies = ["delivery-implementation"];
+  review.dependencies = ["delivery-verification"];
+  return workflow === "phase_context"
+    ? [context, design, implementation, verification, review]
+    : [design, implementation, verification, review];
+}
+
+function clonePlanNode(nodes, id) {
+  const node = nodes.find((candidate) => candidate.id === id);
+  return {
+    ...node,
+    dependencies: [...node.dependencies],
+    read_scope: [...node.read_scope],
+    write_scope: [...node.write_scope],
+    deliverables: [...node.deliverables],
+    required_evidence: [...node.required_evidence],
+    verification: [...node.verification],
+    required_capabilities: [...node.required_capabilities],
+    execution_hints: { ...node.execution_hints }
+  };
+}
+
+function strategyForMethodPack(pack, intake, title) {
+  if (pack.workflow === "quick") {
+    return `针对“${title}”使用 quick Method Pack：单一隔离 patch 同时完成实现与测试，再做独立语义评审。`;
+  }
+  if (pack.workflow === "disciplined") {
+    return `针对“${title}”使用 disciplined-tdd Method Pack：合并重复上下文往返，保留设计、测试先行实现、独立验证和评审。`;
+  }
+  if (pack.workflow === "phase_context") {
+    return `针对“${title}”使用 phase-context Method Pack：只加载当前阶段上下文，再完成设计、实现、验证和评审。`;
+  }
+  return strategyForIntake(intake, title);
+}
+
 export function validatePlanGraph(plan) {
   const errors = [];
   const ids = new Set();
   const lanes = new Map((plan.parallel_lanes || []).map((lane) => [lane.id, lane]));
   const laneMembership = new Map();
 
-  const minimumNodes = plan.profile === "quick" ? 2 : 5;
+  const minimumNodes = {
+    quick: 2,
+    disciplined: 4,
+    phase_context: 5,
+    governed: 7
+  }[plan.method_pack?.workflow] || (plan.profile === "quick" ? 2 : 5);
   if (!Array.isArray(plan.nodes) || plan.nodes.length < minimumNodes) {
     errors.push(`plan graph 至少需要 ${minimumNodes} 个节点`);
     return validationResult(plan, errors);
@@ -287,6 +525,24 @@ export function validatePlanGraph(plan) {
     }
     if (node.required_capabilities != null && !Array.isArray(node.required_capabilities)) {
       errors.push(`${node.id} 的 required_capabilities 必须是数组`);
+    }
+    if (plan.method_pack && node.method_pack_id !== plan.method_pack.id) {
+      errors.push(`${node.id} 的 method_pack_id 与 plan 不一致`);
+    }
+    const capabilityIds = new Set();
+    for (const capability of node.capability_bindings || []) {
+      if (capabilityIds.has(capability.capability_id)) {
+        errors.push(`${node.id} 的 capability 重复：${capability.capability_id}`);
+      }
+      capabilityIds.add(capability.capability_id);
+      if (
+        capability.required
+        && !node.required_evidence.includes(
+          `capability:${capability.capability_id}:${capability.output_contract}`
+        )
+      ) {
+        errors.push(`${node.id} 缺少 required capability evidence：${capability.capability_id}`);
+      }
     }
     if (node.output_contract != null && !["evidence", "patch", "decision"].includes(node.output_contract)) errors.push(`${node.id} 的 output_contract 无效：${node.output_contract}`);
     if (!lanes.has(node.parallel_group)) errors.push(`${node.id} 的 parallel_group 未在 parallel_lanes 中声明：${node.parallel_group}`);
@@ -387,17 +643,6 @@ function buildQuickPlanNodes({
   ];
 }
 
-function shouldUseQuickPlan(intake, inventory) {
-  if (!["low", "medium"].includes(normalizedRisk(intake.risk, "medium"))) return false;
-  const explicit = parseAffectedArea(intake.affected_area, inventory.files)
-    .filter((scope) => !scope.startsWith(".apex-v2/"));
-  if (explicit.length === 0 || explicit.length > 4) return false;
-  if (intake.triage?.status !== "accepted") return false;
-  const description = `${intake.title}\n${intake.description}`.toLowerCase();
-  return !/(parallel|interrupted|resume|recovery|review[- ]defect|security defect|two independent|并行|中断|恢复|安全缺陷)/i
-    .test(description);
-}
-
 export function inferQuickVerificationCommands(intake, fallbackCommands) {
   const selected = extractDeclaredVerificationCommands(intake);
   return selected.length > 0 ? selected.slice(0, 5) : fallbackCommands;
@@ -434,6 +679,7 @@ run_id: ${plan.run_id}
 roadmap_node_id: ${plan.roadmap_node_id}
 source_intake_id: ${plan.source_intake_id || "unknown"}
 source_title: ${plan.source_title || "unknown"}
+method_pack: ${plan.method_pack?.id || "legacy"}
 generated_at: ${plan.generated_at}
 
 ## 策略
@@ -470,6 +716,8 @@ ${plan.nodes.map((node) => `### ${node.id}：${node.title}
 - required_evidence: ${node.required_evidence.join(", ")}
 - verification: ${node.verification.join(" && ")}
 - adapter: ${node.adapter || "policy-selected"}
+- method_pack_id: ${node.method_pack_id || "legacy"}
+- capability_bindings: ${(node.capability_bindings || []).map((item) => `${item.capability_id}@${item.capability_version}`).join(", ") || "无"}
 - execution_class: ${node.execution_class || "legacy"}
 - preferred_mode: ${node.preferred_mode || "legacy"}
 - execution_hints: ${JSON.stringify(node.execution_hints || {})}

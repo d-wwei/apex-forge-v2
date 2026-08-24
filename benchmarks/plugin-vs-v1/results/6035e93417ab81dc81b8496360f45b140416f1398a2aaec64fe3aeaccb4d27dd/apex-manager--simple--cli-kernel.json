@@ -1,0 +1,166 @@
+{
+  "task_id": "apex-manager--simple",
+  "task_digest": "3db094d0da2232c24ecc47f8227433a438c72c6de499d3f6a9b9528d510cbab3",
+  "repository": "apex-manager",
+  "scenario": "simple",
+  "mode": "cli-kernel",
+  "candidate_digest": "6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 0.25,
+    "wall_ms": 1220557,
+    "cost": 3474262,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 0,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "2da4c45e9bc278590ff0a908bf7e6bbbc0966e12",
+    "runtime_hash": "528e8b02a687efafd5236ab0db47910b4b782885fd3facc93f7df7678ff12ea1",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "2e35f4ea2ddd3708d58171a9e443f7a9cb3cfcdfcf9acd9a828bd873cda835bf",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--simple--cli-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--simple--cli-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--simple--cli-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--simple--cli-kernel/codex-home/sessions/2026/08/21/rollout-2026-08-21T21-21-39-01a0247b-f6b0-71d0-b242-1c8bcbf849d0.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--simple--cli-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--simple--cli-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--simple--cli-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--simple--cli-kernel/codex-home/sessions/2026/08/21/rollout-2026-08-21T21-21-39-01a0247b-f6b0-71d0-b242-1c8bcbf849d0.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--simple--cli-kernel/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "f190feb112ce3b59179ec21918e9c3b0207a873ff6f66d5276370d6b9728952a",
+      "70b056c677e7afb49fe3e4c56a1c505b10aecdc9b9d324334787c89de9e763d8",
+      "a5a5f64c359f536df95b7d22ab55976258c68337d23799adbfd8c8203025b207",
+      "849fc7d4c4df086c6fdba1a55fe6fb1e315fa1d3266dc36d909ed3f2ce6fb5fb",
+      "ed3ca900aaf6e70610cd443950ac125f8b7e01ded07a99c50a7e203fc137caf8"
+    ]
+  },
+  "evidence": {
+    "task_digest": "3db094d0da2232c24ecc47f8227433a438c72c6de499d3f6a9b9528d510cbab3",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a0247b-f6b0-71d0-b242-1c8bcbf849d0",
+    "agent_output": {
+      "verdict": "blocked",
+      "summary": "Implemented singular `1 call` wording with focused coverage. Public checks pass, but the Apex run could not close because kernel review remained blocked by an earlier non-materializable patch bundle.",
+      "tests": [
+        {
+          "command": "node --import tsx --test tests/worker/cost.test.ts",
+          "status": "pass",
+          "detail": "20 tests passed."
+        },
+        {
+          "command": "npm run typecheck",
+          "status": "pass",
+          "detail": "No type errors."
+        },
+        {
+          "command": "git diff --check",
+          "status": "pass",
+          "detail": "No whitespace errors."
+        },
+        {
+          "command": "materialize merge queue patches",
+          "status": "fail",
+          "detail": "Earlier patch bundle contained no operations."
+        }
+      ],
+      "risks": [
+        "Run run-mt2zabem-67d955d9 remains open; PASS is not claimed."
+      ],
+      "evidence_refs": [
+        "artifact-mt2zz5dp-b237d24a",
+        "review-mt2zzlin-1ce56fb9",
+        "verification-mt2zewxa-55c20af3"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "node --import tsx --test tests/worker/cost.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 299,
+        "stdout_tail": "(node:19014) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n▶ formatTokens\n  ✔ formats thousands with k suffix (1.628ms)\n  ✔ formats fractional thousands (0.963333ms)\n  ✔ formats small counts without suffix (1.188666ms)\n  ✔ formats zero (0.996667ms)\n  ✔ formats exact thousand (0.922583ms)\n  ✔ rounds to one decimal (0.991333ms)\n✔ formatTokens (7.198666ms)\n▶ formatCostReport\n  ✔ formats basic cost report without budget (1.388084ms)\n  ✔ uses singular call wording only for exactly one request (1.009958ms)\n  ✔ includes task titles from tasks.json when available (1.322333ms)\n  ✔ formats report with budget info (0.707875ms)\n  ✔ handles empty summary (0.888334ms)\n✔ formatCostReport (5.592208ms)\n▶ checkBudget\n  ✔ returns ok when no budget set (1.176334ms)\n  ✔ returns ok when under warning threshold (1.329583ms)\n  ✔ returns warn when usage exceeds warning threshold (1.220708ms)\n  ✔ returns exceeded when usage meets budget (1.294ms)\n  ✔ respects custom warning threshold (1.116583ms)\n  ✔ exceeded takes priority over warn (0.914333ms)\n✔ checkBudget (7.231917ms)\n▶ formatRateLimitStatus\n  ✔ formats rate limit info (9.548292ms)\n  ✔ shows throttled warning (1.094584ms)\n  ✔ returns message when null (0.9265ms)\n✔ formatRateLimitStatus (11.667125ms)\nℹ tests 20\nℹ suites 4\nℹ pass 20\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 222.120584\n",
+        "stderr_tail": ""
+      },
+      {
+        "command": "npm run typecheck",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 929,
+        "stdout_tail": "\n> apex-manager@0.1.1 typecheck\n> tsc --noEmit\n\n",
+        "stderr_tail": ""
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "node --import tsx -e \"import {formatCostReport} from './src/worker/cost.ts'; const s={total_cost_usd:1,total_requests:1,by_task:{T1:{total_cost_usd:1,total_input_tokens:1,total_output_tokens:1,request_count:1}}}; const r=formatCostReport(s); if(!r.includes('1 call')||r.includes('1 calls')) process.exit(1)\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 159,
+        "stdout_tail": "",
+        "stderr_tail": "(node:19051) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      },
+      {
+        "command": "node --import tsx --test tests/worker/cost.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 242,
+        "stdout_tail": "(node:19078) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n▶ formatTokens\n  ✔ formats thousands with k suffix (3.990375ms)\n  ✔ formats fractional thousands (0.940542ms)\n  ✔ formats small counts without suffix (1.118042ms)\n  ✔ formats zero (1.117292ms)\n  ✔ formats exact thousand (1.13725ms)\n  ✔ rounds to one decimal (0.910125ms)\n✔ formatTokens (9.803208ms)\n▶ formatCostReport\n  ✔ formats basic cost report without budget (0.922167ms)\n  ✔ uses singular call wording only for exactly one request (1.199958ms)\n  ✔ includes task titles from tasks.json when available (1.550542ms)\n  ✔ formats report with budget info (0.941166ms)\n  ✔ handles empty summary (1.036375ms)\n✔ formatCostReport (5.88875ms)\n▶ checkBudget\n  ✔ returns ok when no budget set (1.174542ms)\n  ✔ returns ok when under warning threshold (1.359834ms)\n  ✔ returns warn when usage exceeds warning threshold (1.221375ms)\n  ✔ returns exceeded when usage meets budget (1.31675ms)\n  ✔ respects custom warning threshold (1.065459ms)\n  ✔ exceeded takes priority over warn (0.99075ms)\n✔ checkBudget (7.397833ms)\n▶ formatRateLimitStatus\n  ✔ formats rate limit info (10.47525ms)\n  ✔ shows throttled warning (1.257917ms)\n  ✔ returns message when null (0.93775ms)\n✔ formatRateLimitStatus (12.834875ms)\nℹ tests 20\nℹ suites 4\nℹ pass 20\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 168.646083\n",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/worker/cost.ts",
+        "tests/worker/cost.test.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": false,
+      "evidence_score": 0.25,
+      "run_ids": [
+        "run-mt2zabem-67d955d9"
+      ],
+      "done_run_ids": [],
+      "fully_closed_run_ids": [],
+      "active_runs": [
+        "run-mt2zabem-67d955d9"
+      ],
+      "candidate_chain_equal": false,
+      "verification_ref": null,
+      "review_ref": null,
+      "integration_ref": null,
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "99ff28074db31f59e5a0cdeeca20d64b58376cb998a18bd1a7a010771cf33ac3",
+        "replay_hash": "99ff28074db31f59e5a0cdeeca20d64b58376cb998a18bd1a7a010771cf33ac3",
+        "hash_equal": true
+      }
+    }
+  }
+}

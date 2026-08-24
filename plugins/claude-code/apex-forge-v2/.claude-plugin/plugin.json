@@ -1,6 +1,6 @@
 {
   "name": "apex-forge-v2",
-  "version": "0.2.0-rc.1+codex.20260819173000",
+  "version": "0.2.0-rc.1+codex.20260821131551",
   "description": "Natural-language, Kernel-backed software delivery workflows for Claude Code.",
   "author": {
     "name": "d-wwei",
@@ -9,5 +9,11 @@
   "homepage": "https://github.com/d-wwei/apex-forge-v2",
   "repository": "https://github.com/d-wwei/apex-forge-v2",
   "license": "MIT",
-  "keywords": ["coding-agent", "planning", "review", "durable-workflow", "multi-agent"]
+  "keywords": [
+    "coding-agent",
+    "planning",
+    "review",
+    "durable-workflow",
+    "multi-agent"
+  ]
 }

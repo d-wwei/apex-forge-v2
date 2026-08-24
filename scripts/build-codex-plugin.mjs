@@ -18,10 +18,15 @@ const pluginRoot = join(repoRoot, "plugins", "codex", "apex-forge-v2");
 const claudePluginRoot = join(repoRoot, "plugins", "claude-code", "apex-forge-v2");
 const runtimeRoot = join(pluginRoot, "runtime");
 const workflowRoot = join(repoRoot, "workflows", "skills");
+const compatibilityAliasRoot = join(repoRoot, "workflows", "compatibility-aliases");
+const includeCompatibilityAliases = ["1", "true"].includes(
+  String(process.env.APEX_PLUGIN_COMPAT_ALIASES || "").toLowerCase()
+);
 const packageValue = JSON.parse(readFileSync(join(repoRoot, "package.json"), "utf8"));
 const codexManifest = JSON.parse(
   readFileSync(join(pluginRoot, ".codex-plugin", "plugin.json"), "utf8")
 );
+synchronizeClaudeVersion(codexManifest.version);
 const sourceCommit = gitValue(["rev-parse", "HEAD"]);
 const sourceDirty = gitValue(["status", "--porcelain"]).trim() !== "";
 const sourceTreeHash = selectedSourceHash();
@@ -46,8 +51,12 @@ cpSync(
 );
 
 cpSync(join(repoRoot, "schemas"), join(runtimeRoot, "schemas"), { recursive: true });
+cpSync(join(repoRoot, "capabilities"), join(runtimeRoot, "capabilities"), {
+  recursive: true
+});
 const runtimeHash = fileHash(join(runtimeRoot, "apex-v2.mjs"));
 const schemasHash = treeHash(join(runtimeRoot, "schemas"));
+const capabilitiesHash = treeHash(join(runtimeRoot, "capabilities"));
 writeFileSync(join(runtimeRoot, "runtime.json"), `${JSON.stringify({
   schema_version: "v0",
   release_version: codexManifest.version,
@@ -56,20 +65,23 @@ writeFileSync(join(runtimeRoot, "runtime.json"), `${JSON.stringify({
   source_dirty: sourceDirty,
   runtime_sha256: runtimeHash,
   schemas_sha256: schemasHash,
+  capabilities_sha256: capabilitiesHash,
   build_tool_versions: {
     node: process.version,
     esbuild: JSON.parse(readFileSync(join(repoRoot, "node_modules", "esbuild", "package.json"), "utf8")).version
   },
   generated_at: generatedAt,
   entrypoint: "apex-v2.mjs",
-  schema_dir: "schemas"
+  schema_dir: "schemas",
+  capability_dir: "capabilities"
 }, null, 2)}\n`);
 writeReleaseArtifacts(pluginRoot, {
   releaseVersion: codexManifest.version,
   sourceCommit,
   sourceTreeHash,
   runtimeHash,
-  schemasHash
+  schemasHash,
+  capabilitiesHash
 });
 
 renderSkills(pluginRoot, {
@@ -95,11 +107,36 @@ writeReleaseArtifacts(claudePluginRoot, {
   sourceCommit,
   sourceTreeHash,
   runtimeHash,
-  schemasHash
+  schemasHash,
+  capabilitiesHash
 });
 
 console.log(`Built Codex plugin runtime: ${runtimeRoot}`);
 console.log(`Synchronized Claude Code plugin: ${claudePluginRoot}`);
+console.log(
+  `Skill surface: ${includeCompatibilityAliases ? "compatibility aliases (6)" : "single entry (1)"}`
+);
+
+function synchronizeClaudeVersion(version) {
+  const manifestPath = join(claudePluginRoot, ".claude-plugin", "plugin.json");
+  const marketplacePath = join(repoRoot, "plugins", "claude-code", ".claude-plugin", "marketplace.json");
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+  const marketplace = JSON.parse(readFileSync(marketplacePath, "utf8"));
+  let changed = false;
+  if (manifest.version !== version) {
+    manifest.version = version;
+    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+    changed = true;
+  }
+  for (const plugin of marketplace.plugins || []) {
+    if (plugin.name !== codexManifest.name || plugin.version === version) continue;
+    plugin.version = version;
+    changed = true;
+  }
+  if (changed) {
+    writeFileSync(marketplacePath, `${JSON.stringify(marketplace, null, 2)}\n`);
+  }
+}
 
 function renderSkills(targetRoot, variables, preserveAgents) {
   const targetSkills = join(targetRoot, "skills");
@@ -121,20 +158,50 @@ function renderSkills(targetRoot, variables, preserveAgents) {
 
   rmSync(targetSkills, { recursive: true, force: true });
   mkdirSync(targetSkills, { recursive: true });
-  for (const skill of readdirSync(workflowRoot, { withFileTypes: true }).filter((entry) => entry.isDirectory())) {
-    const source = join(workflowRoot, skill.name, "SKILL.md");
-    const target = join(targetSkills, skill.name, "SKILL.md");
-    mkdirSync(dirname(target), { recursive: true });
-    let content = readFileSync(source, "utf8");
-    for (const [name, value] of Object.entries(variables)) {
-      content = content.replaceAll(`{{${name}}}`, value);
+  copyRenderedDirectory(
+    join(workflowRoot, "using-apex-forge"),
+    join(targetSkills, "using-apex-forge"),
+    variables
+  );
+  if (includeCompatibilityAliases) {
+    for (const skill of readdirSync(compatibilityAliasRoot, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())) {
+      copyRenderedDirectory(
+        join(compatibilityAliasRoot, skill.name),
+        join(targetSkills, skill.name),
+        variables
+      );
     }
-    writeFileSync(target, content);
+  }
+  for (const skill of readdirSync(targetSkills, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())) {
     if (preserveAgents && stagedAgents.has(skill.name)) {
-      cpSync(stagedAgents.get(skill.name), join(targetSkills, skill.name, "agents"), { recursive: true });
+      cpSync(
+        stagedAgents.get(skill.name),
+        join(targetSkills, skill.name, "agents"),
+        { recursive: true }
+      );
     }
   }
   rmSync(join(repoRoot, ".plugin-build-agents"), { recursive: true, force: true });
+}
+
+function copyRenderedDirectory(source, target, variables) {
+  mkdirSync(target, { recursive: true });
+  for (const entry of readdirSync(source, { withFileTypes: true })) {
+    const sourcePath = join(source, entry.name);
+    const targetPath = join(target, entry.name);
+    if (entry.isDirectory()) {
+      copyRenderedDirectory(sourcePath, targetPath, variables);
+      continue;
+    }
+    if (!entry.isFile()) continue;
+    let content = readFileSync(sourcePath, "utf8");
+    for (const [name, value] of Object.entries(variables)) {
+      content = content.replaceAll(`{{${name}}}`, value);
+    }
+    writeFileSync(targetPath, content);
+  }
 }
 
 function writeReleaseArtifacts(targetRoot, values) {
@@ -166,11 +233,13 @@ function writeReleaseArtifacts(targetRoot, values) {
     source_commit: values.sourceCommit,
     source_tree_hash: values.sourceTreeHash,
     runtime_sha256: values.runtimeHash,
-    schemas_sha256: values.schemasHash
+    schemas_sha256: values.schemasHash,
+    capabilities_sha256: values.capabilitiesHash
   }, null, 2)}\n`);
   writeFileSync(join(targetRoot, "CHECKSUMS.sha256"), [
     `${values.runtimeHash}  runtime/apex-v2.mjs`,
     `${values.schemasHash}  runtime/schemas`,
+    `${values.capabilitiesHash}  runtime/capabilities`,
     `${values.sourceTreeHash}  source-tree`
   ].join("\n") + "\n");
 }
@@ -186,7 +255,7 @@ function component(name, version, license) {
 
 function selectedSourceHash() {
   const hash = createHash("sha256");
-  for (const root of ["src", "schemas", "workflows", "scripts"]) {
+  for (const root of ["src", "schemas", "workflows", "scripts", "capabilities"]) {
     const directory = join(repoRoot, root);
     for (const file of listFiles(directory)) {
       hash.update(relative(repoRoot, file));

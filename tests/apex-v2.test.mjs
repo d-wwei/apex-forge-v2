@@ -23,6 +23,7 @@ import { executeClaudeAdapter } from "../src/adapters/claude.mjs";
 import { executeGeminiAdapter } from "../src/adapters/gemini.mjs";
 import { syncAdapterSmokeRisk } from "../src/core/risks.mjs";
 import { buildCandidateSet } from "../src/core/candidate.mjs";
+import { readCheckoutClaim } from "../src/core/git-delivery.mjs";
 
 const CLI = new URL("../src/apex-v2.mjs", import.meta.url).pathname;
 
@@ -196,9 +197,11 @@ function seedProjectFiles(project) {
   writeProjectFile(project, "research/source-inventory.md", "# 资料盘点\n");
 }
 
-function createAcceptedRun(project) {
+function createAcceptedRun(project, options = {}) {
   run(["init", "--project", project, "--name", "Factory"]);
-  const intake = JSON.parse(run(["intake", "add", "--project", project, "--title", "交付节点状态机"]).stdout);
+  const intakeArgs = ["intake", "add", "--project", project, "--title", "交付节点状态机"];
+  if (options.methodPack) intakeArgs.push("--method-pack", options.methodPack);
+  const intake = JSON.parse(run(intakeArgs).stdout);
   run(["intake", "triage", "--project", project, "--id", intake.id, "--decision", "accepted"]);
   const roadmapNode = JSON.parse(run(["roadmap", "promote", "--project", project, "--intake-id", intake.id]).stdout);
   const deliveryRun = JSON.parse(run(["run", "create", "--project", project, "--roadmap-id", roadmapNode.id]).stdout);
@@ -243,7 +246,7 @@ function passNode(project, runId, nodeId, title = `${nodeId} evidence`) {
 
 function createRunWithPlanGraph(project) {
   seedProjectFiles(project);
-  const { deliveryRun } = createAcceptedRun(project);
+  const { deliveryRun } = createAcceptedRun(project, { methodPack: "governed" });
   passNode(project, deliveryRun.run_id, "mandate", "目标已明确");
   run(["knowledge", "refresh", "--project", project]);
   passNode(project, deliveryRun.run_id, "context", "Context Fabric 已刷新");
@@ -379,6 +382,116 @@ function semanticEvidenceForWorker(project, worker) {
     };
   }
   throw new Error(`unsupported cognitive evidence type: ${evidenceType}`);
+}
+
+function setPlanCapabilityEnforcement(project, runId, mode) {
+  const path = join(project, ".apex-v2", "runs", runId, "plan-graph.json");
+  const plan = readJson(path);
+  plan.capability_plan.enforcement_mode = mode;
+  for (const node of plan.nodes) {
+    node.capability_enforcement = mode;
+  }
+  writeFileSync(path, `${JSON.stringify(plan, null, 2)}\n`);
+}
+
+function capabilityEvidenceForWorker(worker, capabilityId) {
+  const binding = worker.capability_bindings.find((item) =>
+    item.capability_id === capabilityId
+  );
+  assert.ok(binding, `worker 缺少 capability binding：${capabilityId}`);
+  const common = {
+    schema_version: "v0",
+    capability_id: binding.capability_id,
+    capability_version: binding.capability_version,
+    invocation_id: `capinv-${worker.worker_id}-${capabilityId}`,
+    objective: worker.objective,
+    source_refs: ["src/apex-v2.mjs", "tests/apex-v2.test.mjs"],
+    claims: [`${capabilityId} produced typed integration evidence`],
+    uncertainties: [],
+    verification_refs: ["node --test tests/apex-v2.test.mjs"],
+    output_contract: binding.output_contract,
+    created_at: "2026-08-21T00:00:00.000Z"
+  };
+  if (capabilityId === "engineering-spec") {
+    return {
+      ...common,
+      output: {
+        objective: worker.objective,
+        in_scope: ["src/apex-v2.mjs"],
+        out_of_scope: ["plugin packaging"],
+        acceptance: ["Host action persists typed capability evidence"],
+        assumptions: ["PlanGraph binding is authoritative"],
+        open_questions: [],
+        verification_plan: ["run Host integration test"]
+      }
+    };
+  }
+  if (capabilityId === "tdd-negative-control") {
+    return {
+      ...common,
+      output: {
+        test_entry: "tests/apex-v2.test.mjs",
+        fault_model: "required capability evidence is omitted",
+        red_command: "node --test tests/apex-v2.test.mjs",
+        red_signature: "missing required capability evidence",
+        green_command: "node --test tests/apex-v2.test.mjs",
+        green_result: "capability evidence accepted",
+        restoration_result: "fixture restored after negative control"
+      }
+    };
+  }
+  if (capabilityId === "test-strategy") {
+    return {
+      ...common,
+      output: {
+        test_mode: "targeted",
+        affected_surfaces: ["parser"],
+        selected_test_groups: ["parser-regression"],
+        excluded_groups: ["browser"],
+        selection_rationale: "The fixture changes only parser behavior.",
+        stop_conditions: ["targeted regression failure"]
+      }
+    };
+  }
+  throw new Error(`unsupported capability fixture: ${capabilityId}`);
+}
+
+function createCapabilityFakeCodex(project, options = {}) {
+  const evidence = options.evidence || [];
+  const path = join(project, `fake-capability-codex-${Math.random().toString(36).slice(2)}.mjs`);
+  writeFileSync(path, `#!/usr/bin/env node
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+
+if (process.argv.includes("--version")) {
+  console.log("fake-capability-codex 1.0.0");
+  process.exit(0);
+}
+
+const args = process.argv.slice(2);
+const workspace = args[args.indexOf("-C") + 1];
+const output = args[args.indexOf("-o") + 1];
+const prompt = readFileSync(0, "utf8");
+for (const expected of ${JSON.stringify(options.expectedPrompt || [])}) {
+  if (!prompt.includes(expected)) {
+    console.error(\`missing capability prompt content: \${expected}\`);
+    process.exit(2);
+  }
+}
+const target = join(workspace, "src/apex-v2.mjs");
+mkdirSync(dirname(target), { recursive: true });
+writeFileSync(target, "console.log('capability integration fixture');\\n");
+writeFileSync(output, JSON.stringify({
+  verdict: "pass",
+  summary: "fake capability worker completed scoped change",
+  tests: [{ command: "node --check", status: "pass", detail: "fixture" }],
+  risks: [],
+  evidence_refs: [],
+  capability_evidence: ${JSON.stringify(evidence)}
+}));
+`);
+  chmodSync(path, 0o755);
+  return path;
 }
 
 function createRunWithQueuedPatches(project) {
@@ -682,7 +795,7 @@ test("project tick --advance --dispatch 自动为 ready plan nodes 创建 worker
   const workers = JSON.parse(run(["worker", "list", "--project", project, "--run-id", runId]).stdout);
   assert.equal(workers.length, 1);
   assert.equal(workers[0].status, "active");
-  assert.ok(["delivery-context", "delivery-risk"].includes(workers[0].plan_node_id));
+  assert.equal(workers[0].plan_node_id, "delivery-design");
 
   const secondTick = JSON.parse(run(["project", "tick", "--project", project, "--advance", "--dispatch"]).stdout);
   assert.equal(secondTick.dispatched_workers.length, 0);
@@ -747,6 +860,170 @@ test("认知节点由当前 Host Agent claim 并提交语义 evidence", () => {
   ));
   assert.equal(persisted.host_id, "codex-host");
   assert.match(persisted.semantic_evidence_ref, /cognitive-evidence\.json$/);
+});
+
+test("Host capability shadow 模式注入 binding/protocol 且缺失 evidence 可审计但不阻塞", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithPlanGraph(project);
+  const worker = JSON.parse(run([
+    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
+    "--plan-node-id", "delivery-design"
+  ]).stdout);
+  const binding = worker.capability_bindings.find((item) =>
+    item.capability_id === "engineering-spec"
+  );
+  assert.ok(binding);
+  assert.equal(binding.input_contract, "engineering-spec-request");
+  assert.equal(worker.capability_enforcement, "shadow");
+  assert.ok(worker.capability_invocation_refs.length > 0);
+  const invocationRef = worker.capability_invocation_refs.find((item) =>
+    item.endsWith("capability-invocation-engineering-spec.json")
+  );
+  assert.ok(invocationRef);
+  const invocationPath = join(project, invocationRef);
+  const invocation = readJson(invocationPath);
+  assert.equal(invocation.input_contract, "engineering-spec-request");
+  assert.equal(invocation.input.capability_id, "engineering-spec");
+  assert.equal(invocation.output_contract, "engineering-spec-evidence");
+  assert.equal(validatePersistedValue(invocationPath, invocation), 1);
+
+  const listed = JSON.parse(run([
+    "host", "actions", "--project", project, "--host-id", "codex-host"
+  ]).stdout);
+  const listedAction = listed.find((item) => item.worker_id === worker.worker_id);
+  assert.deepEqual(listedAction.capability_bindings, worker.capability_bindings);
+  assert.deepEqual(
+    listedAction.capability_invocation_refs,
+    worker.capability_invocation_refs
+  );
+  assert.equal(listedAction.capability_enforcement, "shadow");
+  assert.match(
+    listedAction.capability_protocols.find((item) =>
+      item.capability_id === "engineering-spec"
+    ).protocol,
+    /# Engineering Spec/
+  );
+
+  const claimed = JSON.parse(run([
+    "host", "claim", "--project", project, "--host-id", "codex-host",
+    "--worker-id", worker.worker_id
+  ]).stdout);
+  assert.deepEqual(claimed.action.payload.capability_bindings, worker.capability_bindings);
+  assert.deepEqual(
+    claimed.action.payload.capability_invocation_refs,
+    worker.capability_invocation_refs
+  );
+  assert.equal(claimed.action.payload.capability_enforcement, "shadow");
+  assert.match(
+    claimed.action.payload.capability_protocols.find((item) =>
+      item.capability_id === "engineering-spec"
+    ).protocol,
+    /Produce `engineering-spec-evidence`/
+  );
+
+  const submitted = JSON.parse(run([
+    "host", "submit", "--project", project, "--host-id", "codex-host",
+    "--worker-id", worker.worker_id,
+    "--claim-token", claimed.action.claim_token,
+    "--evidence-json", JSON.stringify(semanticEvidenceForWorker(project, worker)),
+    "--summary", "shadow mode records missing capability evidence"
+  ]).stdout);
+  assert.equal(submitted.result.status, "completed");
+  assert.deepEqual(submitted.result.capability_evidence_status, {
+    enforcement: "shadow",
+    submitted: [],
+    missing: ["engineering-spec"]
+  });
+  assert.deepEqual(submitted.result.capability_evidence_refs, []);
+  assert.equal(submitted.worker.status, "evidence_submitted");
+
+  const dir = join(
+    project,
+    ".apex-v2",
+    "runs",
+    deliveryRun.run_id,
+    "workers",
+    worker.worker_id
+  );
+  assert.deepEqual(
+    readJson(join(dir, "host-result.json")).capability_evidence_status,
+    submitted.result.capability_evidence_status
+  );
+  assert.equal(
+    existsSync(join(dir, "capability-evidence-engineering-spec.json")),
+    false
+  );
+});
+
+test("Host capability enforce 模式缺失 evidence fail closed，完整 evidence 可持久化通过", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithPlanGraph(project);
+  setPlanCapabilityEnforcement(project, deliveryRun.run_id, "enforce");
+  const worker = JSON.parse(run([
+    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
+    "--plan-node-id", "delivery-design"
+  ]).stdout);
+  assert.equal(worker.capability_enforcement, "enforce");
+  const claimed = JSON.parse(run([
+    "host", "claim", "--project", project, "--host-id", "codex-host",
+    "--worker-id", worker.worker_id
+  ]).stdout);
+
+  const missing = run([
+    "host", "submit", "--project", project, "--host-id", "codex-host",
+    "--worker-id", worker.worker_id,
+    "--claim-token", claimed.action.claim_token,
+    "--evidence-json", JSON.stringify(semanticEvidenceForWorker(project, worker)),
+    "--summary", "enforce mode must reject missing capability evidence"
+  ], { expectFailure: true });
+  assert.match(missing.stderr, /缺少 required capability evidence：engineering-spec/);
+
+  const dir = join(
+    project,
+    ".apex-v2",
+    "runs",
+    deliveryRun.run_id,
+    "workers",
+    worker.worker_id
+  );
+  assert.equal(readJson(join(dir, "worker.json")).status, "claimed");
+  assert.equal(existsSync(join(dir, "host-result.json")), false);
+  assert.equal(existsSync(join(dir, "cognitive-evidence.json")), false);
+  assert.equal(
+    existsSync(join(dir, "capability-evidence-engineering-spec.json")),
+    false
+  );
+
+  const capabilityEvidence = capabilityEvidenceForWorker(
+    worker,
+    "engineering-spec"
+  );
+  const submitted = JSON.parse(run([
+    "host", "submit", "--project", project, "--host-id", "codex-host",
+    "--worker-id", worker.worker_id,
+    "--claim-token", claimed.action.claim_token,
+    "--evidence-json", JSON.stringify(semanticEvidenceForWorker(project, worker)),
+    "--capability-evidence-json", JSON.stringify([capabilityEvidence]),
+    "--summary", "enforce mode accepts complete capability evidence"
+  ]).stdout);
+  assert.equal(submitted.result.status, "completed");
+  assert.deepEqual(submitted.result.capability_evidence_status, {
+    enforcement: "enforce",
+    submitted: ["engineering-spec"],
+    missing: []
+  });
+  assert.deepEqual(submitted.result.capability_evidence_refs, [
+    `${worker.namespace}/capability-evidence-engineering-spec.json`
+  ]);
+  assert.deepEqual(
+    readJson(join(dir, "capability-evidence-engineering-spec.json")),
+    capabilityEvidence
+  );
+  assert.ok(
+    submitted.result.artifact_refs.includes(
+      `${worker.namespace}/capability-evidence-engineering-spec.json`
+    )
+  );
 });
 
 test("cognitive Host action 拒绝 summary-only、空 source refs 和复制 objective", () => {
@@ -1067,6 +1344,65 @@ test("project tick --run-workers 遇到失败命令会阻塞 worker", () => {
 
   const workers = JSON.parse(run(["worker", "list", "--project", project, "--run-id", deliveryRun.run_id]).stdout);
   assert.equal(workers.find((item) => item.worker_id === worker.worker_id).status, "blocked");
+});
+
+test("shell worker 在 enforce 模式必须提交 typed capability evidence", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithPlanGraph(project);
+  setPlanCapabilityEnforcement(project, deliveryRun.run_id, "enforce");
+  const worker = JSON.parse(run([
+    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
+    "--plan-node-id", "delivery-verification"
+  ]).stdout);
+  const binding = worker.capability_bindings.find((item) =>
+    item.capability_id === "test-strategy"
+  );
+  assert.ok(binding);
+
+  const missing = JSON.parse(run([
+    "worker", "exec-shell", "--project", project,
+    "--worker-id", worker.worker_id,
+    "--cmd", "node --version"
+  ]).stdout);
+  assert.equal(missing.result.status, "FAIL");
+  assert.equal(missing.result.failure_kind, "contract_error");
+  assert.match(
+    missing.result.capability_evidence_status.error,
+    /缺少 required capability evidence：test-strategy/
+  );
+
+  run([
+    "worker", "retry", "--project", project, "--worker-id", worker.worker_id
+  ]);
+  const retried = JSON.parse(run([
+    "worker", "list", "--project", project, "--run-id", deliveryRun.run_id
+  ]).stdout).find((item) => item.worker_id === worker.worker_id);
+  const evidence = capabilityEvidenceForWorker(retried, "test-strategy");
+  const completed = JSON.parse(run([
+    "worker", "exec-shell", "--project", project,
+    "--worker-id", worker.worker_id,
+    "--cmd", "node --version",
+    "--capability-evidence-json", JSON.stringify([evidence])
+  ]).stdout);
+  assert.equal(completed.result.status, "PASS");
+  assert.deepEqual(completed.result.capability_evidence_status, {
+    enforcement: "enforce",
+    submitted: ["test-strategy"],
+    missing: [],
+    error: ""
+  });
+  const dir = join(
+    project,
+    ".apex-v2",
+    "runs",
+    deliveryRun.run_id,
+    "workers",
+    worker.worker_id
+  );
+  assert.equal(
+    existsSync(join(dir, "capability-evidence-test-strategy.json")),
+    true
+  );
 });
 
 test("project tick --complete-execute 必须等待全部 PlanGraph 节点完成", () => {
@@ -1693,7 +2029,9 @@ test("plan graph 必须在 mandate/context 通过后生成，并产出可校验 
   const generated = JSON.parse(run(["run", "plan", "generate", "--project", project, "--run-id", deliveryRun.run_id]).stdout);
   assert.equal(generated.validation.status, "PASS");
   assert.equal(generated.validation.errors.length, 0);
-  assert.ok(generated.plan.nodes.length >= 5);
+  assert.equal(generated.plan.method_pack.id, "disciplined-tdd");
+  assert.equal(generated.plan.method_pack.workflow, "disciplined");
+  assert.equal(generated.plan.nodes.length, 4);
   assert.ok(generated.plan.parallel_lanes.length >= 3);
   assert.match(generated.artifact_id, /^artifact-/);
 
@@ -1830,6 +2168,69 @@ test("明确低风险少文件任务使用 quick PlanGraph 单 patch 路由", ()
   );
   assert.equal(implementation.execution_hints.estimated_duration_minutes, 8);
   assert.deepEqual(generated.plan.nodes[1].dependencies, ["delivery-implementation"]);
+  passNodeWithEvidence(
+    project,
+    deliveryRun.run_id,
+    "plan_graph",
+    generated.artifact_id
+  );
+
+  const worker = JSON.parse(run([
+    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
+    "--plan-node-id", "delivery-implementation"
+  ]).stdout);
+  const route = readJson(join(
+    project,
+    ".apex-v2",
+    "runs",
+    deliveryRun.run_id,
+    "workers",
+    worker.worker_id,
+    "execution-route.json"
+  ));
+  assert.equal(route.method_pack_id, "quick");
+  assert.equal(route.budget_status, "within_budget");
+  assert.equal(route.cost_budget.max_wall_minutes, 12);
+});
+
+test("显式 phase-context Method Pack 生成五节点阶段上下文路线", () => {
+  const project = tempProject();
+  seedProjectFiles(project);
+  run(["init", "--project", project, "--name", "Phase Context Plan"]);
+  const intake = JSON.parse(run([
+    "intake",
+    "add",
+    "--project",
+    project,
+    "--title",
+    "Implement milestone phase",
+    "--area",
+    "src/apex-v2.mjs,tests/apex-v2.test.mjs",
+    "--method-pack",
+    "phase-context"
+  ]).stdout);
+  run(["intake", "triage", "--project", project, "--id", intake.id, "--decision", "accepted"]);
+  const roadmap = JSON.parse(run([
+    "roadmap", "promote", "--project", project, "--intake-id", intake.id
+  ]).stdout);
+  const deliveryRun = JSON.parse(run([
+    "run", "create", "--project", project, "--roadmap-id", roadmap.id
+  ]).stdout);
+  passNode(project, deliveryRun.run_id, "mandate");
+  passNode(project, deliveryRun.run_id, "context");
+
+  const generated = JSON.parse(run([
+    "run", "plan", "generate", "--project", project, "--run-id", deliveryRun.run_id
+  ]).stdout);
+  assert.equal(generated.plan.method_pack.id, "phase-context");
+  assert.equal(generated.plan.method_pack.workflow, "phase_context");
+  assert.deepEqual(generated.plan.nodes.map((node) => node.id), [
+    "delivery-context",
+    "delivery-design",
+    "delivery-implementation",
+    "delivery-verification",
+    "delivery-review"
+  ]);
 });
 
 test("worker 只能按 plan node 的 write_scope 提交 patch bundle", () => {
@@ -2001,10 +2402,15 @@ test("worker sandbox init --type worktree 在 git 项目中创建真实 worktree
   assert.equal(initialized.worker.sandbox.type, "worktree");
   assert.equal(initialized.worker.sandbox.status, "ready");
   assert.equal(initialized.worker.sandbox.fallback_reason, "");
+  assert.match(initialized.worker.sandbox.checkout_claim_token, /^[a-f0-9-]{36}$/);
 
   const sandboxAbs = join(project, initialized.worker.sandbox.path);
   assert.ok(existsSync(join(sandboxAbs, ".git")));
   assert.ok(existsSync(join(sandboxAbs, "package.json")));
+  assert.equal(
+    readCheckoutClaim(sandboxAbs).owner.worker_id,
+    initialized.worker.worker_id
+  );
 
   const worktreeList = runGit(project, ["worktree", "list"]);
   assert.match(worktreeList.stdout, new RegExp(initialized.worker.worker_id));
@@ -2429,6 +2835,158 @@ test("worker exec-agent 在 scratch 副本执行 Codex 并自动生成 patch bun
   assert.equal(workerState.last_adapter, "codex");
   assert.ok(existsSync(join(root, "runs", deliveryRun.run_id, "workers", worker.worker_id, "agent-prompt.md")));
   assert.ok(existsSync(join(root, "runs", deliveryRun.run_id, "workers", worker.worker_id, "agent-result.json")));
+});
+
+test("Worker capability shadow 模式注入 protocol 且缺失 evidence 可审计但不阻塞", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithPlanGraph(project);
+  const worker = JSON.parse(run([
+    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
+    "--plan-node-id", "delivery-implementation"
+  ]).stdout);
+  assert.equal(worker.capability_enforcement, "shadow");
+  assert.ok(
+    worker.capability_bindings.some((item) =>
+      item.capability_id === "tdd-negative-control"
+    )
+  );
+  const fakeCodex = createCapabilityFakeCodex(project, {
+    expectedPrompt: [
+      "## Internal Capability Protocols",
+      "### tdd-negative-control@1.0.0",
+      "# TDD And Negative Control",
+      "Required output: negative-control-evidence",
+      "Typed input: negative-control-request",
+      "## Capability Invocation Refs"
+    ]
+  });
+  run([
+    "worker", "sandbox", "init", "--project", project,
+    "--worker-id", worker.worker_id, "--type", "scratch"
+  ]);
+
+  const executed = JSON.parse(run([
+    "worker", "exec-agent", "--project", project, "--worker-id", worker.worker_id,
+    "--adapter", "codex", "--command", fakeCodex, "--timeout-ms", "10000"
+  ]).stdout);
+  assert.equal(executed.result.status, "PASS");
+  assert.deepEqual(executed.result.capability_evidence_status, {
+    enforcement: "shadow",
+    submitted: [],
+    missing: ["tdd-negative-control"],
+    error: ""
+  });
+  assert.ok(executed.patch);
+
+  const dir = join(
+    project,
+    ".apex-v2",
+    "runs",
+    deliveryRun.run_id,
+    "workers",
+    worker.worker_id
+  );
+  assert.match(
+    readFileSync(join(dir, "agent-prompt.md"), "utf8"),
+    /# TDD And Negative Control/
+  );
+  assert.equal(readJson(join(dir, "worker.json")).status, "patch_submitted");
+  assert.equal(
+    existsSync(join(dir, "capability-evidence-tdd-negative-control.json")),
+    false
+  );
+  const adapterResult = readJson(join(
+    dir,
+    readdirSync(dir).find((file) => file.startsWith("adapter-result-"))
+  ));
+  assert.deepEqual(
+    adapterResult.capability_evidence_status,
+    executed.result.capability_evidence_status
+  );
+});
+
+test("Worker capability enforce 模式缺失 evidence fail closed，重试提交完整 evidence 可通过", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithPlanGraph(project);
+  setPlanCapabilityEnforcement(project, deliveryRun.run_id, "enforce");
+  const worker = JSON.parse(run([
+    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
+    "--plan-node-id", "delivery-implementation"
+  ]).stdout);
+  assert.equal(worker.capability_enforcement, "enforce");
+  const missingFake = createCapabilityFakeCodex(project, {
+    expectedPrompt: ["### tdd-negative-control@1.0.0"]
+  });
+  const capabilityEvidence = capabilityEvidenceForWorker(
+    worker,
+    "tdd-negative-control"
+  );
+  const completeFake = createCapabilityFakeCodex(project, {
+    evidence: [capabilityEvidence],
+    expectedPrompt: [
+      "### tdd-negative-control@1.0.0",
+      "Required output: negative-control-evidence"
+    ]
+  });
+  run([
+    "worker", "sandbox", "init", "--project", project,
+    "--worker-id", worker.worker_id, "--type", "scratch"
+  ]);
+  const missing = JSON.parse(run([
+    "worker", "exec-agent", "--project", project, "--worker-id", worker.worker_id,
+    "--adapter", "codex", "--command", missingFake, "--timeout-ms", "10000"
+  ]).stdout);
+  assert.equal(missing.result.status, "FAIL");
+  assert.equal(missing.result.failure_kind, "contract_error");
+  assert.equal(missing.patch, null);
+  assert.equal(missing.result.capability_evidence_status.enforcement, "enforce");
+  assert.match(
+    missing.result.capability_evidence_status.error,
+    /缺少 required capability evidence：tdd-negative-control/
+  );
+
+  const dir = join(
+    project,
+    ".apex-v2",
+    "runs",
+    deliveryRun.run_id,
+    "workers",
+    worker.worker_id
+  );
+  assert.equal(readJson(join(dir, "worker.json")).status, "blocked");
+  assert.equal(
+    existsSync(join(dir, "capability-evidence-tdd-negative-control.json")),
+    false
+  );
+
+  const retried = JSON.parse(run([
+    "worker", "retry", "--project", project, "--worker-id", worker.worker_id
+  ]).stdout);
+  assert.equal(retried.worker.status, "active");
+  run([
+    "worker", "sandbox", "init", "--project", project,
+    "--worker-id", worker.worker_id, "--type", "scratch"
+  ]);
+  const completed = JSON.parse(run([
+    "worker", "exec-agent", "--project", project,
+    "--worker-id", worker.worker_id,
+    "--adapter", "codex", "--command", completeFake, "--timeout-ms", "10000"
+  ]).stdout);
+  assert.equal(completed.result.status, "PASS");
+  assert.deepEqual(completed.result.capability_evidence_status, {
+    enforcement: "enforce",
+    submitted: ["tdd-negative-control"],
+    missing: [],
+    error: ""
+  });
+  assert.ok(completed.patch);
+  const evidenceRef = `${worker.namespace}/capability-evidence-tdd-negative-control.json`;
+  assert.ok(completed.result.refs.includes(evidenceRef));
+  assert.deepEqual(
+    readJson(join(dir, "capability-evidence-tdd-negative-control.json")),
+    capabilityEvidence
+  );
+  assert.equal(readJson(join(dir, "worker.json")).status, "patch_submitted");
 });
 
 test("worker execution commit failpoint 回滚 authority 并可重试", () => {

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/documentation-sync-evidence.schema.json",
+  "title": "Documentation Sync Evidence Output",
+  "type": "object",
+  "required": ["changed_behavior", "affected_docs", "updated_docs", "intentionally_unchanged", "stale_refs", "verification"],
+  "properties": {
+    "changed_behavior": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 },
+    "affected_docs": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 },
+    "updated_docs": { "type": "array", "items": { "type": "string" } },
+    "intentionally_unchanged": { "type": "array", "items": { "type": "string" } },
+    "stale_refs": { "type": "array", "items": { "type": ["string", "object"] } },
+    "verification": { "type": ["array", "object", "string"] }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/simplification-request.schema.json",
+  "title": "Simplification Request",
+  "allOf": [
+    { "$ref": "https://apex-forge.local/v2/schemas/capability-request-base.schema.json" },
+    { "type": "object", "properties": { "capability_id": { "const": "simplification" } } }
+  ]
+}

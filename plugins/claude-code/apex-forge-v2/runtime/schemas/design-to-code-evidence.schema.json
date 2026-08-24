@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/design-to-code-evidence.schema.json",
+  "title": "Design To Code Evidence Output",
+  "type": "object",
+  "required": ["design_artifact_ref", "implementation_spec", "component_map", "changed_files", "acceptance_checklist", "fidelity_findings"],
+  "properties": {
+    "design_artifact_ref": { "type": "string", "minLength": 1 },
+    "implementation_spec": { "type": ["object", "string"] },
+    "component_map": { "type": "object" },
+    "changed_files": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1, "uniqueItems": true },
+    "acceptance_checklist": { "type": "array", "items": { "type": ["string", "object"] }, "minItems": 1 },
+    "fidelity_findings": { "type": "array", "items": { "type": ["string", "object"] } }
+  },
+  "additionalProperties": true
+}

@@ -32,12 +32,22 @@ export function defaultExecutionPolicy(timestamp) {
       lease_seconds: 1800
     },
     execution_router: {
-      factory_min_duration_minutes: 30,
       force_factory_risks: ["critical"],
       factory_on_isolation: true,
       factory_on_resume: true,
       factory_on_background: true,
       factory_on_parallel_execution: true
+    },
+    cost_governor: {
+      enabled: true,
+      unknown_usage: "record",
+      default_budget: routeBudget(30, 12, 80, 160000, 30000),
+      method_pack_budgets: {
+        quick: routeBudget(12, 6, 30, 60000, 12000),
+        "disciplined-tdd": routeBudget(30, 12, 80, 160000, 30000),
+        "phase-context": routeBudget(30, 12, 80, 160000, 30000),
+        governed: routeBudget(60, 24, 180, 360000, 70000)
+      }
     },
     budgets: {
       max_changed_files_per_patch: 20,
@@ -56,6 +66,16 @@ export function defaultExecutionPolicy(timestamp) {
       ttl_minutes: 60,
       required_capabilities: { merge: "merge_apply", adapter_baseline: "adapter_baseline_update" }
     }
+  };
+}
+
+function routeBudget(wallMinutes, agentTurns, toolCalls, inputTokens, outputTokens) {
+  return {
+    max_wall_minutes: wallMinutes,
+    max_agent_turns: agentTurns,
+    max_tool_calls: toolCalls,
+    max_input_tokens: inputTokens,
+    max_output_tokens: outputTokens
   };
 }
 

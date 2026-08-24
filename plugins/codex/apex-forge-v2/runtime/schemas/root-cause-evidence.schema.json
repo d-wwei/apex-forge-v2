@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/root-cause-evidence.schema.json",
+  "title": "Root Cause Evidence Output",
+  "type": "object",
+  "required": ["reproduction", "observed_failure", "failure_signature", "data_flow", "hypotheses", "experiments", "confirmed_root_cause", "affected_scope", "fix_constraints", "regression_target"],
+  "properties": {
+    "reproduction": { "type": "string", "minLength": 1 },
+    "observed_failure": { "type": "string", "minLength": 1 },
+    "failure_signature": { "type": "string", "minLength": 1 },
+    "data_flow": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 },
+    "hypotheses": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 3 },
+    "experiments": { "type": "array", "items": { "type": ["string", "object"] }, "minItems": 1 },
+    "confirmed_root_cause": { "type": "string", "minLength": 12 },
+    "affected_scope": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 },
+    "fix_constraints": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "regression_target": { "type": "string", "minLength": 1 }
+  },
+  "additionalProperties": true
+}

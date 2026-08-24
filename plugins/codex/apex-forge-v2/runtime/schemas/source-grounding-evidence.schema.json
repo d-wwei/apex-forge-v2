@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/source-grounding-evidence.schema.json",
+  "title": "Source Grounding Evidence Output",
+  "type": "object",
+  "required": ["detected_version", "authoritative_sources", "verified_claims", "conflicts", "unverified_assumptions"],
+  "properties": {
+    "detected_version": { "type": "string", "minLength": 1 },
+    "authoritative_sources": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1, "uniqueItems": true },
+    "verified_claims": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 },
+    "conflicts": { "type": "array", "items": { "type": ["string", "object"] } },
+    "unverified_assumptions": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/benchmark-task-plan.schema.json",
+  "title": "Apex Forge Product Benchmark Task Plan",
+  "type": "object",
+  "required": ["repository_id", "tasks"],
+  "properties": {
+    "repository_id": { "type": "string", "minLength": 1 },
+    "tasks": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "required": [
+          "scenario",
+          "title",
+          "instructions",
+          "affected_files",
+          "acceptance_commands",
+          "setup_operations",
+          "hidden_checks"
+        ],
+        "properties": {
+          "scenario": {
+            "type": "string",
+            "enum": ["simple", "multi-step", "bug-fix", "interrupted", "review-defect", "parallel"]
+          },
+          "title": { "type": "string", "minLength": 1 },
+          "instructions": { "type": "string", "minLength": 20 },
+          "affected_files": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 6,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "acceptance_commands": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "setup_operations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["op", "path", "content", "old_text", "new_text"],
+              "properties": {
+                "op": { "type": "string", "enum": ["write_text", "replace_text"] },
+                "path": { "type": "string", "minLength": 1 },
+                "content": { "type": "string" },
+                "old_text": { "type": "string" },
+                "new_text": { "type": "string" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "hidden_checks": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["kind", "description", "command"],
+              "properties": {
+                "kind": { "type": "string", "enum": ["behavior", "regression", "security", "closure", "evidence"] },
+                "description": { "type": "string", "minLength": 1 },
+                "command": { "type": "string", "minLength": 1 }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

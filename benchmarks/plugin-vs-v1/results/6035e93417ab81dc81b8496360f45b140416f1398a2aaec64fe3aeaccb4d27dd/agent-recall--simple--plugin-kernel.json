@@ -1,0 +1,174 @@
+{
+  "task_id": "agent-recall--simple",
+  "task_digest": "0b89490b1725ae856a4a74956d2d760770a67bc9708638b1f5cac757462e5375",
+  "repository": "agent-recall",
+  "scenario": "simple",
+  "mode": "plugin-kernel",
+  "candidate_digest": "6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 90883,
+    "cost": 104663,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 1,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "362bd78657a4f346af7218a571ab2698303ffb2a",
+    "runtime_hash": "528e8b02a687efafd5236ab0db47910b4b782885fd3facc93f7df7678ff12ea1",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "d00d8aca26505e91e5fb87e8f2a97cfffe4e24aaae5b9242a39b1015f12d87fd",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--simple--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--simple--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--simple--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--simple--plugin-kernel/codex-home/sessions/2026/08/21/rollout-2026-08-21T21-33-10-01a02486-83f7-7bb3-b9c6-452fd726f937.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--simple--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--simple--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--simple--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--simple--plugin-kernel/codex-home/sessions/2026/08/21/rollout-2026-08-21T21-33-10-01a02486-83f7-7bb3-b9c6-452fd726f937.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--simple--plugin-kernel/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "1b1162cf993a13162325aac1ffaa08e26c91b1be9c376350d3f0e7c636842a60",
+      "e5659d65da27d7b9be1d3cbf7001a37cdbe6ed00159c9193ce1321a77b8a539e",
+      "60acf7721c528eb27e18128b7d2b096640a3cdbaac2da21b31b297288608c467",
+      "201ed5ef960e4f7798495bb0f66dc180eb22d326ed9e0d1ec6499478caa83d69",
+      "2c85ed707d786b1b2360202e57d1210a480661418886e8977854a1c631e15450"
+    ]
+  },
+  "evidence": {
+    "task_digest": "0b89490b1725ae856a4a74956d2d760770a67bc9708638b1f5cac757462e5375",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a02486-83f7-7bb3-b9c6-452fd726f937",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Corrected discovery group headings to `Discoveries` in slide and weekly-report output, with updated tests.",
+      "tests": [
+        {
+          "command": "bun test tests/services/output-formatter.test.ts",
+          "status": "pass",
+          "detail": "30 passed, 0 failed."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "src/services/worker/search/OutputFormatter.ts",
+        "tests/services/output-formatter.test.ts"
+      ],
+      "review": {
+        "claims": [
+          "Slide discovery groups render as `Discoveries`.",
+          "Weekly-report discovery sections render as `Discoveries`.",
+          "Focused formatter tests pass."
+        ],
+        "uncertainties": [],
+        "acceptance_mapping": [
+          {
+            "criterion": "Correct discovery plural in slide output",
+            "status": "supported"
+          },
+          {
+            "criterion": "Correct discovery plural in weekly-report output",
+            "status": "supported"
+          },
+          {
+            "criterion": "Update existing formatter tests",
+            "status": "supported"
+          },
+          {
+            "criterion": "Run focused public test",
+            "status": "supported"
+          }
+        ],
+        "findings": [
+          "No blocking findings."
+        ],
+        "residual_risks": [
+          "Other future irregular observation types would require explicit pluralization rules."
+        ],
+        "merge_posture": "approve"
+      }
+    },
+    "acceptance": [
+      {
+        "command": "bun test tests/services/output-formatter.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 56,
+        "stdout_tail": "bun test v1.3.11 (af24e281)\n",
+        "stderr_tail": "\ntests/services/output-formatter.test.ts:\n(pass) OutputFormatter.formatAsSlides > contains Marp front-matter header [0.12ms]\n(pass) OutputFormatter.formatAsSlides > opens with YAML front-matter delimiters [0.03ms]\n(pass) OutputFormatter.formatAsSlides > includes project name in title slide\n(pass) OutputFormatter.formatAsSlides > produces minimal output for empty observations\n(pass) OutputFormatter.formatAsSlides > creates a slide per observation type group [0.07ms]\n(pass) OutputFormatter.formatAsSlides > lists observation titles as bullet points with first fact [0.10ms]\n(pass) OutputFormatter.formatAsSlides > handles observations with no facts gracefully [0.01ms]\n(pass) OutputFormatter.formatAsSlides > handles facts stored as a JSON array string\n(pass) OutputFormatter.formatAsSlides > groups multiple observations of the same type under one slide [0.08ms]\n(pass) OutputFormatter.formatAsTimeline > wraps output in <div class=\"timeline\"> [0.09ms]\n(pass) OutputFormatter.formatAsTimeline > produces minimal HTML for empty observations [0.01ms]\n(pass) OutputFormatter.formatAsTimeline > includes entry div for each observation [0.01ms]\n(pass) OutputFormatter.formatAsTimeline > includes date span with correct format [0.06ms]\n(pass) OutputFormatter.formatAsTimeline > includes type badge with correct class and text [0.01ms]\n(pass) OutputFormatter.formatAsTimeline > includes title span\n(pass) OutputFormatter.formatAsTimeline > includes first fact in a <p> tag\n(pass) OutputFormatter.formatAsTimeline > omits <p> tag when no facts are present [0.02ms]\n(pass) OutputFormatter.formatAsTimeline > sorts entries newest first [0.01ms]\n(pass) OutputFormatter.formatAsWeeklyReport > includes correct report title with project name [0.22ms]\n(pass) OutputFormatter.formatAsWeeklyReport > includes period line [0.21ms]\n(pass) OutputFormatter.formatAsWeeklyReport > includes Summary section\n(pass) OutputFormatter.formatAsWeeklyReport > includes Decisions section [0.02ms]\n(pass) OutputFormatter.formatAsWeeklyReport > includes Discoveries section [0.01ms]\n(pass) OutputFormatter.formatAsWeeklyReport > includes Changes section\n(pass) OutputFormatter.formatAsWeeklyReport > includes Next Steps section\n(pass) OutputFormatter.formatAsWeeklyReport > produces \"No observations this week.\" for empty input [0.01ms]\n(pass) OutputFormatter.formatAsWeeklyReport > excludes observations older than 7 days [0.03ms]\n(pass) OutputFormatter.formatAsWeeklyReport > includes observations within the last 7 days [0.04ms]\n(pass) OutputFormatter.formatAsWeeklyReport > shows correct observation count in summary\n(pass) OutputFormatter.formatAsWeeklyReport > groups items under their type section [0.05ms]\n\n 30 pass\n 0 fail\n 41 expect() calls\nRan 30 tests across 1 file. [20.00ms]\n"
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "bun test tests/services/output-formatter.test.ts --test-name-pattern 'Discoveries'",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 43,
+        "stdout_tail": "bun test v1.3.11 (af24e281)\n",
+        "stderr_tail": "\ntests/services/output-formatter.test.ts:\n(pass) OutputFormatter.formatAsWeeklyReport > includes Discoveries section [0.27ms]\n\n 1 pass\n 29 filtered out\n 0 fail\n 1 expect() calls\nRan 1 test across 1 file. [10.00ms]\n"
+      },
+      {
+        "command": "! rg -n 'Discoverys' src/services/worker/search/OutputFormatter.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 37,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/services/worker/search/OutputFormatter.ts",
+        "tests/services/output-formatter.test.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": true,
+      "evidence_score": 1,
+      "run_ids": [
+        "run-mt2zp421-98ef2484"
+      ],
+      "done_run_ids": [
+        "run-mt2zp421-98ef2484"
+      ],
+      "fully_closed_run_ids": [
+        "run-mt2zp421-98ef2484"
+      ],
+      "active_runs": [],
+      "candidate_chain_equal": true,
+      "verification_ref": ".apex-v2/runs/run-mt2zp421-98ef2484/verification-report.json",
+      "review_ref": ".apex-v2/runs/run-mt2zp421-98ef2484/review-report.json",
+      "integration_ref": ".apex-v2/runs/run-mt2zp421-98ef2484/integration-report.json",
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "105d03b121d31478ee5e17039818a8104ff0d5c1a2a6732049d87465e11b5719",
+        "replay_hash": "105d03b121d31478ee5e17039818a8104ff0d5c1a2a6732049d87465e11b5719",
+        "hash_equal": true
+      }
+    }
+  }
+}

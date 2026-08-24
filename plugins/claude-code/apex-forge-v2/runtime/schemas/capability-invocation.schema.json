@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/capability-invocation.schema.json",
+  "title": "Apex Forge V2 Capability Invocation",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "invocation_id",
+    "run_id",
+    "plan_node_id",
+    "worker_id",
+    "capability_id",
+    "capability_version",
+    "input_contract",
+    "input_artifact_refs",
+    "input",
+    "output_contract",
+    "required",
+    "created_at"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "invocation_id": { "type": "string", "minLength": 1 },
+    "run_id": { "type": "string", "minLength": 1 },
+    "plan_node_id": { "type": "string", "minLength": 1 },
+    "worker_id": { "type": ["string", "null"] },
+    "capability_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "capability_version": { "type": "string", "minLength": 1 },
+    "input_contract": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "input_artifact_refs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "input": { "type": "object" },
+    "output_contract": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "required": { "type": "boolean" },
+    "created_at": { "type": "string" }
+  },
+  "additionalProperties": false
+}

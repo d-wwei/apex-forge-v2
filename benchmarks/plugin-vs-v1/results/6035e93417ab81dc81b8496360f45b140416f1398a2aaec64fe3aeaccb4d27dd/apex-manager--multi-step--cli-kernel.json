@@ -1,0 +1,158 @@
+{
+  "task_id": "apex-manager--multi-step",
+  "task_digest": "db31bcf40f8e645dda2a662b68cbff3d741c1a1322fecd4e7a4a859a4cc1e89c",
+  "repository": "apex-manager",
+  "scenario": "multi-step",
+  "mode": "cli-kernel",
+  "candidate_digest": "6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 0.25,
+    "wall_ms": 730501,
+    "cost": 1977132,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 0,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "2da4c45e9bc278590ff0a908bf7e6bbbc0966e12",
+    "runtime_hash": "528e8b02a687efafd5236ab0db47910b4b782885fd3facc93f7df7678ff12ea1",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "2e35f4ea2ddd3708d58171a9e443f7a9cb3cfcdfcf9acd9a828bd873cda835bf",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--multi-step--cli-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--multi-step--cli-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--multi-step--cli-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--multi-step--cli-kernel/codex-home/sessions/2026/08/21/rollout-2026-08-21T21-53-15-01a02498-e887-7831-868b-79ea33a5ac4f.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--multi-step--cli-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--multi-step--cli-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--multi-step--cli-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--multi-step--cli-kernel/codex-home/sessions/2026/08/21/rollout-2026-08-21T21-53-15-01a02498-e887-7831-868b-79ea33a5ac4f.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--multi-step--cli-kernel/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "90d4139af450f9c583977c7090840e06778c3fab450617c48c4c01d933a71f37",
+      "a6e12f67612b24ddf4993939fe30a462842a3d1bee162c41214af02791b1af79",
+      "9bafb2f67f8620e6b0ddf5ffe6b1ceca00c5311625fa4a556c62ad0b645d80ab",
+      "f2fc9480967ebc443fc63dcac1174d0b0e074baeefe9baeb467d31fc4d5e6d47",
+      "073bdc515a9b1e8940802c48f6e53a98cca16a1f26bf295223069fbfe4ebffb1"
+    ]
+  },
+  "evidence": {
+    "task_digest": "db31bcf40f8e645dda2a662b68cbff3d741c1a1322fecd4e7a4a859a4cc1e89c",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a02498-e887-7831-868b-79ea33a5ac4f",
+    "agent_output": {
+      "verdict": "blocked",
+      "summary": "Implemented the YAML comment-marker fix and tests, but cannot claim PASS because the Apex run remains active with execute/verify/review/integrate pending after its delivery-design worker was cancelled.",
+      "tests": [
+        {
+          "command": "node --import tsx --test tests/commands/init.test.ts",
+          "status": "pass",
+          "detail": "5 tests passed."
+        },
+        {
+          "command": "npm run typecheck",
+          "status": "pass",
+          "detail": "TypeScript check passed."
+        }
+      ],
+      "risks": [
+        "Governed run run-mt30ez5y-ed8011e3 is not closed."
+      ],
+      "evidence_refs": [
+        "src/utils/config.ts",
+        "tests/commands/init.test.ts",
+        "artifact-mt30ez7u-c9982c2f",
+        "artifact-mt30ez8w-5f481a23",
+        "artifact-mt30ezay-03a8440c"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "node --import tsx --test tests/commands/init.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 234,
+        "stdout_tail": "Initialized .apex-manager project state\nInitialized .apex-manager project state\nInitialized .apex-manager project state\n(node:28958) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n▶ parseSimpleYaml\n  ✔ preserves comment markers inside quoted values (0.592958ms)\n  ✔ removes inline comments from unquoted values (0.074416ms)\n  ✔ parses ordinary values (0.066958ms)\n✔ parseSimpleYaml (1.176834ms)\n▶ cmdInit\n  ✔ creates the default .apex-manager layout (13.276208ms)\n  ✔ is idempotent and does not overwrite existing stores (5.763125ms)\n✔ cmdInit (19.144ms)\nℹ tests 5\nℹ suites 2\nℹ pass 5\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 167.572625\n",
+        "stderr_tail": ""
+      },
+      {
+        "command": "npm run typecheck",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 958,
+        "stdout_tail": "\n> apex-manager@0.1.1 typecheck\n> tsc --noEmit\n\n",
+        "stderr_tail": ""
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "node --import tsx -e \"import {parseSimpleYaml} from './src/utils/config.ts'; const r=parseSimpleYaml('label: \\\"alpha # beta\\\"\\nmode: fast # local'); if(r.label!=='alpha # beta'||r.mode!=='fast') process.exit(1)\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 142,
+        "stdout_tail": "",
+        "stderr_tail": "(node:28997) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      },
+      {
+        "command": "node --import tsx --test tests/commands/init.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 200,
+        "stdout_tail": "Initialized .apex-manager project state\nInitialized .apex-manager project state\nInitialized .apex-manager project state\n(node:29024) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n▶ parseSimpleYaml\n  ✔ preserves comment markers inside quoted values (0.618666ms)\n  ✔ removes inline comments from unquoted values (0.11775ms)\n  ✔ parses ordinary values (0.085375ms)\n✔ parseSimpleYaml (1.297959ms)\n▶ cmdInit\n  ✔ creates the default .apex-manager layout (7.846583ms)\n  ✔ is idempotent and does not overwrite existing stores (5.908541ms)\n✔ cmdInit (13.982583ms)\nℹ tests 5\nℹ suites 2\nℹ pass 5\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 129.992875\n",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/utils/config.ts",
+        "tests/commands/init.test.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": false,
+      "evidence_score": 0.25,
+      "run_ids": [
+        "run-mt30ez5y-ed8011e3"
+      ],
+      "done_run_ids": [],
+      "fully_closed_run_ids": [],
+      "active_runs": [
+        "run-mt30ez5y-ed8011e3"
+      ],
+      "candidate_chain_equal": false,
+      "verification_ref": null,
+      "review_ref": null,
+      "integration_ref": null,
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "6f8cf1ee3db500f956f5950a88d754af084807663e4008d06aaa1e6cb838048b",
+        "replay_hash": "6f8cf1ee3db500f956f5950a88d754af084807663e4008d06aaa1e6cb838048b",
+        "hash_equal": true
+      }
+    }
+  }
+}

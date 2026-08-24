@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/performance-evidence.schema.json",
+  "title": "Performance Evidence Output",
+  "type": "object",
+  "required": ["metric", "baseline", "candidate", "environment_fingerprint", "sample_count", "distribution", "threshold", "verdict"],
+  "properties": {
+    "metric": { "type": "string", "minLength": 1 },
+    "baseline": { "type": ["object", "number"] },
+    "candidate": { "type": ["object", "number"] },
+    "environment_fingerprint": { "type": "string", "minLength": 1 },
+    "sample_count": { "type": "integer", "minimum": 3 },
+    "distribution": { "type": "array", "items": { "type": "number" }, "minItems": 3 },
+    "threshold": { "type": ["object", "number"] },
+    "regression_percentage": { "type": "number" },
+    "verdict": { "type": "string", "enum": ["PASS", "FAIL", "BLOCKED"] }
+  },
+  "additionalProperties": true
+}

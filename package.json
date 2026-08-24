@@ -18,6 +18,8 @@
     "benchmark:preflight": "node scripts/preflight-benchmark-tasks.mjs",
     "benchmark:validate-tasks": "node scripts/validate-benchmark-tasks.mjs",
     "benchmark:control": "node scripts/product-benchmark-controller.mjs",
+    "benchmark:capabilities": "node scripts/run-capability-benchmark.mjs",
+    "capability:lock": "node scripts/update-capability-lock.mjs",
     "release:candidate": "node scripts/freeze-release-candidate.mjs",
     "release:validate-candidate": "node scripts/validate-release-candidate.mjs",
     "release:verify": "node scripts/release-verify.mjs"

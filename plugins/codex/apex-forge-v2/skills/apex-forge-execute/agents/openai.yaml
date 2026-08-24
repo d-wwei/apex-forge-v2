@@ -1,4 +1,0 @@
-interface:
-  display_name: "Apex Forge Execute"
-  short_description: "Execute governed patches with the current Codex Agent"
-  default_prompt: "Continue the ready Apex Forge implementation actions."

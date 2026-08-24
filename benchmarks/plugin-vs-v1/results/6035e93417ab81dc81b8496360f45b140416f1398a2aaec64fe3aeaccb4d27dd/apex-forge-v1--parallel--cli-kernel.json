@@ -1,0 +1,174 @@
+{
+  "task_id": "apex-forge-v1--parallel",
+  "task_digest": "17558161f3e6e98ec8ef42156362d6e9032f040181ff1fc4533ad8860eb88265",
+  "repository": "apex-forge-v1",
+  "scenario": "parallel",
+  "mode": "cli-kernel",
+  "candidate_digest": "6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 1555448,
+    "cost": 6774358,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 1,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "3755583552540121bcb1287c5bdba3c8b2578726",
+    "runtime_hash": "528e8b02a687efafd5236ab0db47910b4b782885fd3facc93f7df7678ff12ea1",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "65d39186c1bd3c9b65e4fb401e29d0d37d8dc0ec3c9913ca6494049ef1f6627c",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--parallel--cli-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--parallel--cli-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--parallel--cli-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--parallel--cli-kernel/codex-home/sessions/2026/08/21/rollout-2026-08-21T23-48-34-01a02502-79cd-7110-afc8-82474136a807.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--parallel--cli-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--parallel--cli-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--parallel--cli-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--parallel--cli-kernel/codex-home/sessions/2026/08/21/rollout-2026-08-21T23-48-34-01a02502-79cd-7110-afc8-82474136a807.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--parallel--cli-kernel/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "cc02290c7989966623419c9c55b09261f08438b22ae500bdc4c81db4bbc264a1",
+      "65dc0dd43cc79fdb504a0c8a4b1ac4d4ffa29e41c3408645d69e3669666d01e1",
+      "06179ff26677ec32ecf83a82d54ab97909c6f891e36ef0021cc22b7881dbbf04",
+      "919f102e0ecc47b02f3307a2389c11a0be53786cead750f2a9bfd317cb080e1a",
+      "ad84106ed8c379274de9aafbf671c03826301b354fe594a248dbc8c2e0588975"
+    ]
+  },
+  "evidence": {
+    "task_digest": "17558161f3e6e98ec8ef42156362d6e9032f040181ff1fc4533ad8860eb88265",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a02502-79cd-7110-afc8-82474136a807",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Strict verdict validation and attempt-floor backoff implemented, reviewed, integrated, and run run-mt34j9dh-e14c8779 closed.",
+      "tests": [
+        {
+          "command": "bun test src/__tests__/orchestrator-v2.test.ts --test-name-pattern 'ResultValidator|Retry'",
+          "status": "fail",
+          "detail": "RED: 8 passed, 2 expected failures."
+        },
+        {
+          "command": "bun test src/__tests__/orchestrator-v2.test.ts --test-name-pattern 'ResultValidator|Retry'",
+          "status": "pass",
+          "detail": "ActionWorkspace GREEN: 10 passed."
+        },
+        {
+          "command": "bun test src/__tests__/orchestrator-v2.test.ts --test-name-pattern 'ResultValidator|Retry'",
+          "status": "pass",
+          "detail": "Base workspace pre-integration: 8 passed."
+        },
+        {
+          "command": "bun test src/__tests__/orchestrator-v2.test.ts --test-name-pattern 'ResultValidator|Retry'",
+          "status": "pass",
+          "detail": "Governed candidate: 10 passed."
+        },
+        {
+          "command": "bun test src/__tests__/orchestrator-v2.test.ts --test-name-pattern 'ResultValidator|Retry'",
+          "status": "pass",
+          "detail": "Integrated workspace: 10 passed."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "patch-mt3550ph-904a4c58",
+        "verification-mt35cnyv-987db5a9",
+        "artifact-mt35dm0y-25199529",
+        "artifact-mt35dy6s-cd9bbff9",
+        "artifact-mt35fq7q-a3cbbc4c"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "bun test src/__tests__/orchestrator-v2.test.ts --test-name-pattern 'ResultValidator|Retry'",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 63,
+        "stdout_tail": "bun test v1.3.11 (af24e281)\n",
+        "stderr_tail": "\nsrc/__tests__/orchestrator-v2.test.ts:\n(pass) ResultValidator > validates well-formed result.json as success [2.10ms]\n(pass) ResultValidator > exit code 0 but missing result.json yields partial [0.80ms]\n(pass) ResultValidator > exit code 0 but malformed result.json yields partial [0.85ms]\n(pass) ResultValidator > exit code 0 but result.json missing verdict yields partial [1.00ms]\n(pass) ResultValidator > rejects non-string and whitespace-only verdicts [1.40ms]\n(pass) ResultValidator > non-zero exit code yields failure [0.58ms]\n(pass) Retry > shouldRetry returns true when attempts < max [0.47ms]\n(pass) Retry > shouldRetry returns false for exit code 0 [0.02ms]\n(pass) Retry > backoffMs increases exponentially [0.03ms]\n(pass) Retry > backoffMs treats attempts below 1 as attempt 1 [0.05ms]\n\n 10 pass\n 25 filtered out\n 0 fail\n 31 expect() calls\nRan 10 tests across 1 file. [35.00ms]\n"
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "tmp=$(mktemp -d); mkdir -p \"$tmp/output\"; printf '%s\\n' '{\"verdict\":[]}' > \"$tmp/output/result.json\"; bun -e 'import { validateResult } from \"./src/orchestrator/result-validator.ts\"; if (validateResult(\"'$tmp'\",0).valid) process.exit(1)'; rc=$?; rm -rf \"$tmp\"; exit $rc",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 42,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      },
+      {
+        "command": "tmp=$(mktemp -d); mkdir -p \"$tmp/output\"; printf '%s\\n' '{\"verdict\":\"pass\"}' > \"$tmp/output/result.json\"; bun -e 'import { validateResult } from \"./src/orchestrator/result-validator.ts\"; const r=validateResult(\"'$tmp'\",0); if (!r.valid || r.verdict !== \"pass\") process.exit(1)'; rc=$?; rm -rf \"$tmp\"; exit $rc",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 39,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      },
+      {
+        "command": "bun -e 'import { backoffMs } from \"./src/orchestrator/retry.ts\"; for (let i=0;i<50;i++){const n=backoffMs(0,1000); if(n<800 || n>1200) process.exit(1)}'",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 29,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/__tests__/orchestrator-v2.test.ts",
+        "src/orchestrator/result-validator.ts",
+        "src/orchestrator/retry.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": true,
+      "evidence_score": 1,
+      "run_ids": [
+        "run-mt34j9dh-e14c8779"
+      ],
+      "done_run_ids": [
+        "run-mt34j9dh-e14c8779"
+      ],
+      "fully_closed_run_ids": [
+        "run-mt34j9dh-e14c8779"
+      ],
+      "active_runs": [],
+      "candidate_chain_equal": true,
+      "verification_ref": ".apex-v2/runs/run-mt34j9dh-e14c8779/verification-report.json",
+      "review_ref": ".apex-v2/runs/run-mt34j9dh-e14c8779/review-report.json",
+      "integration_ref": ".apex-v2/runs/run-mt34j9dh-e14c8779/integration-report.json",
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "20d46d5b624c95e8122db815df5b49b276fe8472a921ebb9a1fa3103b9b94f75",
+        "replay_hash": "20d46d5b624c95e8122db815df5b49b276fe8472a921ebb9a1fa3103b9b94f75",
+        "hash_equal": true
+      }
+    }
+  }
+}

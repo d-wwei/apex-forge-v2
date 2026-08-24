@@ -1,0 +1,179 @@
+{
+  "task_id": "apex-forge-v1--interrupted",
+  "task_digest": "a17310b08172656638d4adbd96e963823bb3650b7e005a126aabbb614a1f629a",
+  "repository": "apex-forge-v1",
+  "scenario": "interrupted",
+  "mode": "cli-kernel",
+  "candidate_digest": "6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 730544,
+    "cost": 3405392,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 1,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "3755583552540121bcb1287c5bdba3c8b2578726",
+    "runtime_hash": "528e8b02a687efafd5236ab0db47910b4b782885fd3facc93f7df7678ff12ea1",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "65d39186c1bd3c9b65e4fb401e29d0d37d8dc0ec3c9913ca6494049ef1f6627c",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--interrupted--cli-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--interrupted--cli-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--interrupted--cli-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--interrupted--cli-kernel/codex-home/sessions/2026/08/21/rollout-2026-08-21T22-36-16-01a024c0-4a95-7ef0-9c34-0ab862e3ae2f.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--interrupted--cli-kernel/execution-2.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--interrupted--cli-kernel/process-2.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--interrupted--cli-kernel/process-2.stderr.log"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--interrupted--cli-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--interrupted--cli-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--interrupted--cli-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--interrupted--cli-kernel/codex-home/sessions/2026/08/21/rollout-2026-08-21T22-36-16-01a024c0-4a95-7ef0-9c34-0ab862e3ae2f.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--interrupted--cli-kernel/execution-2.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--interrupted--cli-kernel/process-2.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--interrupted--cli-kernel/process-2.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--interrupted--cli-kernel/agent-output-2.json"
+    ],
+    "artifact_hashes": [
+      "b1d2bfcd955b923fa2ce79b8357cd1a9f186086b755f4f1aec77597c732e95f2",
+      "dc907b8bb1106b20ad1080fe3f8dbeba3acd9fd27411d99c286c7bc869211e3a",
+      "ccc493104ff8bbb54f0947a12309136d3513704f832228726b9d5ae47f7b9ab1",
+      "b6d0161f978f9ecc49dd06ef3af20e1f3ba4506993570e809e4a73cc0c8e055d",
+      "2abbf82e032595f99f85c4523af511791b3a265bf6d50641d906bf64fc0036b0",
+      "3a5b5bc4c76646105bb70b7744cc269770f0e3a936e206fbd4cf0c1e0f031bed",
+      "0a9121b67a40c73284acda39145877c1ad8d9e9353d4fb19ba2d89e7b802877d",
+      "ba37175d20bf75eeb010dd02ef1dd3309494feea5f80626c9376ea4435b6b9bd"
+    ]
+  },
+  "evidence": {
+    "task_digest": "a17310b08172656638d4adbd96e963823bb3650b7e005a126aabbb614a1f629a",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a024c0-4a95-7ef0-9c34-0ab862e3ae2f",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Implemented stale atomic-write temp cleanup and deterministic coverage. Run run-mt31yaiq-6fba89e4 is closed with all nodes passed.",
+      "tests": [
+        {
+          "command": "bun test src/__tests__/session-isolation.test.ts",
+          "status": "fail",
+          "detail": "Negative control confirmed stale temp cleanup was missing; unrelated T37 also encountered HOME permissions."
+        },
+        {
+          "command": "HOME=\"$PWD/.test-home\" bun test src/__tests__/session-isolation.test.ts",
+          "status": "pass",
+          "detail": "15 passed, 0 failed."
+        },
+        {
+          "command": "bun -e 'import { recoverState } from \"./src/state/recovery.ts\"; const issues=await recoverState(); if (!Array.isArray(issues)) process.exit(1)'",
+          "status": "pass",
+          "detail": "Public acceptance command passed."
+        },
+        {
+          "command": "bunx biome check src/state/recovery.ts src/__tests__/session-isolation.test.ts",
+          "status": "pass",
+          "detail": "No diagnostics."
+        },
+        {
+          "command": "git diff --check",
+          "status": "pass",
+          "detail": "No whitespace errors."
+        },
+        {
+          "command": "apex-v2 verify run --project \"$PWD\" --run-id run-mt31yaiq-6fba89e4",
+          "status": "pass",
+          "detail": "Governed verification passed."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "artifact-mt3ch59t-e98e8a1d",
+        "artifact-mt3cie86-3b67e258",
+        "artifact-mt3cj4uw-0acca292",
+        "artifact-mt3cjlpp-76d14830",
+        "artifact-mt3ckaj8-ce5bf561"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "bun -e 'import { recoverState } from \"./src/state/recovery.ts\"; const issues=await recoverState(); if (!Array.isArray(issues)) process.exit(1)'",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 40,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "root=$PWD; tmp=$(mktemp -d); mkdir -p \"$tmp/.apex\"; touch \"$tmp/.apex/tasks.json.tmp.123\"; touch -t 202001010000 \"$tmp/.apex/tasks.json.tmp.123\"; (cd \"$tmp\" && bun -e \"import { recoverState } from '$root/src/state/recovery.ts'; const issues=await recoverState(); if (await Bun.file('.apex/tasks.json.tmp.123').exists() || !issues.some(x=>x.includes('tasks.json.tmp.123'))) process.exit(1)\"); rc=$?; rm -rf \"$tmp\"; exit $rc",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 52,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      },
+      {
+        "command": "root=$PWD; tmp=$(mktemp -d); mkdir -p \"$tmp/.apex\"; touch \"$tmp/.apex/keep.tmp.123\"; touch -t 202001010000 \"$tmp/.apex/keep.tmp.123\"; (cd \"$tmp\" && bun -e \"import { recoverState } from '$root/src/state/recovery.ts'; await recoverState(); if (!(await Bun.file('.apex/keep.tmp.123').exists())) process.exit(1)\"); rc=$?; rm -rf \"$tmp\"; exit $rc",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 49,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/__tests__/session-isolation.test.ts",
+        "src/state/recovery.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": true,
+      "evidence_score": 1,
+      "run_ids": [
+        "run-mt31yaiq-6fba89e4"
+      ],
+      "done_run_ids": [
+        "run-mt31yaiq-6fba89e4"
+      ],
+      "fully_closed_run_ids": [
+        "run-mt31yaiq-6fba89e4"
+      ],
+      "active_runs": [],
+      "candidate_chain_equal": true,
+      "verification_ref": ".apex-v2/runs/run-mt31yaiq-6fba89e4/verification-report.json",
+      "review_ref": ".apex-v2/runs/run-mt31yaiq-6fba89e4/review-report.json",
+      "integration_ref": ".apex-v2/runs/run-mt31yaiq-6fba89e4/integration-report.json",
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "a7403f60046655d099f7c3c02b47c2018e301771a7d2f1d5f2f4dfa6b1334aee",
+        "replay_hash": "a7403f60046655d099f7c3c02b47c2018e301771a7d2f1d5f2f4dfa6b1334aee",
+        "hash_equal": true
+      }
+    }
+  }
+}

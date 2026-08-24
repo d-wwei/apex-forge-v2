@@ -32,6 +32,7 @@
         "contract_error",
         "agent_reported_failure",
         "no_patch",
+        "budget_exceeded",
         "unknown",
         null
       ]
@@ -54,7 +55,58 @@
       "properties": {
         "input_tokens": { "type": ["integer", "null"], "minimum": 0 },
         "output_tokens": { "type": ["integer", "null"], "minimum": 0 },
-        "tool_calls": { "type": ["integer", "null"], "minimum": 0 }
+        "tool_calls": { "type": ["integer", "null"], "minimum": 0 },
+        "agent_turns": { "type": ["integer", "null"], "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "cost_evaluation": {
+      "type": "object",
+      "required": ["status", "exceeded", "unknown"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["PASS", "FAIL", "UNKNOWN", "NOT_CONFIGURED"]
+        },
+        "exceeded": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["metric", "actual", "limit"],
+            "properties": {
+              "metric": { "type": "string" },
+              "actual": { "type": "number" },
+              "limit": { "type": "number" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "unknown": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "capability_evidence_status": {
+      "type": "object",
+      "required": ["enforcement", "submitted", "missing", "error"],
+      "properties": {
+        "enforcement": {
+          "type": "string",
+          "enum": ["shadow", "enforce"]
+        },
+        "submitted": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "uniqueItems": true
+        },
+        "missing": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "uniqueItems": true
+        },
+        "error": { "type": "string" }
       },
       "additionalProperties": false
     },

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/architecture-design-evidence.schema.json",
+  "title": "Architecture Design Evidence Output",
+  "type": "object",
+  "required": ["problem", "constraints", "alternatives", "selected_design", "state_ownership", "failure_modes", "rollback", "verification"],
+  "properties": {
+    "problem": { "type": "string", "minLength": 1 },
+    "constraints": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "alternatives": { "type": "array", "items": { "type": ["string", "object"] }, "minItems": 2 },
+    "selected_design": { "type": ["string", "object"] },
+    "state_ownership": { "type": "object", "minProperties": 1 },
+    "failure_modes": { "type": "array", "items": { "type": ["string", "object"] }, "minItems": 1 },
+    "rollback": { "type": ["array", "object", "string"] },
+    "verification": { "type": ["array", "object", "string"] }
+  },
+  "additionalProperties": true
+}

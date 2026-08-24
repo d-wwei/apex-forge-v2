@@ -1,0 +1,123 @@
+{
+  "task_id": "agent-recall--review-defect",
+  "task_digest": "91ae2a61d3909db18c160cee28318f9f563ae74bc8ee3b7db4ae625a5cf56b10",
+  "repository": "agent-recall",
+  "scenario": "review-defect",
+  "mode": "v1-skill",
+  "candidate_digest": "6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 0.6666666666666666,
+    "wall_ms": 97294,
+    "cost": 192130,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 0,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "362bd78657a4f346af7218a571ab2698303ffb2a",
+    "runtime_hash": "528e8b02a687efafd5236ab0db47910b4b782885fd3facc93f7df7678ff12ea1",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "2d292f39b827c6e8ffdee09a43613735f61f3e87b831cbfa469f4c42d3574cd9",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--review-defect--v1-skill/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--review-defect--v1-skill/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--review-defect--v1-skill/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--review-defect--v1-skill/codex-home/sessions/2026/08/21/rollout-2026-08-21T22-42-55-01a024c6-5dcf-7ba2-a447-b6cff50beb3b.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--review-defect--v1-skill/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--review-defect--v1-skill/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--review-defect--v1-skill/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--review-defect--v1-skill/codex-home/sessions/2026/08/21/rollout-2026-08-21T22-42-55-01a024c6-5dcf-7ba2-a447-b6cff50beb3b.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--review-defect--v1-skill/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "8fc9d063d2ab7d0b314bb5db2e4b8e99c367dea3b05ee47f35cdcee3485a523f",
+      "09293890cd00099e67c84b91c34b56377a22ec7b1fb083c2f40e11f2d7116ea7",
+      "66949a69f186c194d42808c3cb45e074dcb73721329505c3d37f28cf41868bde",
+      "0f4de63d3506491f9656ba6a14d9bbfb4ae745bf8fe5c865549693a946e817ca",
+      "32c072a9553b675e50d9a5065f9e02a7cc9c34f45a04674b8347bfbc96f6a743"
+    ]
+  },
+  "evidence": {
+    "task_digest": "91ae2a61d3909db18c160cee28318f9f563ae74bc8ee3b7db4ae625a5cf56b10",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a024c6-5dcf-7ba2-a447-b6cff50beb3b",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Removed CLAUDE_CODE_SESSION unconditionally while preserving OAuth and SDK entrypoint variables. Strengthened the regression test with an exact output assertion.",
+      "tests": [
+        {
+          "command": "bun test tests/supervisor/env-sanitizer.test.ts",
+          "status": "fail",
+          "detail": "RED: 6 passed, 2 failed due to the session leak."
+        },
+        {
+          "command": "bun test tests/supervisor/env-sanitizer.test.ts",
+          "status": "pass",
+          "detail": "GREEN: 8 passed, 0 failed, 25 assertions."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "src/supervisor/env-sanitizer.ts",
+        "tests/supervisor/env-sanitizer.test.ts"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "bun test tests/supervisor/env-sanitizer.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 54,
+        "stdout_tail": "bun test v1.3.11 (af24e281)\n",
+        "stderr_tail": "\ntests/supervisor/env-sanitizer.test.ts:\n(pass) sanitizeEnv > strips variables with CLAUDECODE_ prefix [0.06ms]\n(pass) sanitizeEnv > strips variables with CLAUDE_CODE_ prefix (except allowlisted) [0.02ms]\n(pass) sanitizeEnv > strips exact-match variables (CLAUDECODE, CLAUDE_CODE_SESSION, MCP_SESSION_ID) but preserves allowlisted CLAUDE_CODE_ENTRYPOINT [0.02ms]\n(pass) sanitizeEnv > preserves allowed variables like PATH, HOME, NODE_PATH [0.04ms]\n(pass) sanitizeEnv > returns a new object and does not mutate the original [0.10ms]\n(pass) sanitizeEnv > handles empty env gracefully [0.01ms]\n(pass) sanitizeEnv > skips entries with undefined values [0.03ms]\n(pass) sanitizeEnv > only preserves the OAuth token and SDK entrypoint from CLAUDE_CODE_ variables [0.07ms]\n\n 8 pass\n 0 fail\n 25 expect() calls\nRan 8 tests across 1 file. [16.00ms]\n"
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "bun -e \"import { sanitizeEnv } from './src/supervisor/env-sanitizer.ts'; const out=sanitizeEnv({CLAUDE_CODE_SESSION:'secret',CLAUDE_CODE_OAUTH_TOKEN:'token',CLAUDE_CODE_ENTRYPOINT:'sdk-ts'}); if(out.CLAUDE_CODE_SESSION!==undefined||out.CLAUDE_CODE_OAUTH_TOKEN!=='token'||out.CLAUDE_CODE_ENTRYPOINT!=='sdk-ts') process.exit(1);\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 47,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      },
+      {
+        "command": "bun test tests/supervisor/env-sanitizer.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 50,
+        "stdout_tail": "bun test v1.3.11 (af24e281)\n",
+        "stderr_tail": "\ntests/supervisor/env-sanitizer.test.ts:\n(pass) sanitizeEnv > strips variables with CLAUDECODE_ prefix\n(pass) sanitizeEnv > strips variables with CLAUDE_CODE_ prefix (except allowlisted) [0.23ms]\n(pass) sanitizeEnv > strips exact-match variables (CLAUDECODE, CLAUDE_CODE_SESSION, MCP_SESSION_ID) but preserves allowlisted CLAUDE_CODE_ENTRYPOINT [0.03ms]\n(pass) sanitizeEnv > preserves allowed variables like PATH, HOME, NODE_PATH [0.02ms]\n(pass) sanitizeEnv > returns a new object and does not mutate the original\n(pass) sanitizeEnv > handles empty env gracefully [0.02ms]\n(pass) sanitizeEnv > skips entries with undefined values\n(pass) sanitizeEnv > only preserves the OAuth token and SDK entrypoint from CLAUDE_CODE_ variables [0.06ms]\n\n 8 pass\n 0 fail\n 25 expect() calls\nRan 8 tests across 1 file. [11.00ms]\n"
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/supervisor/env-sanitizer.ts",
+        "tests/supervisor/env-sanitizer.test.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": false,
+      "evidence_score": 0.6666666666666666,
+      "reason": "no .apex-v2 durable state"
+    }
+  }
+}

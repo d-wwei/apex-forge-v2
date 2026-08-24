@@ -1,17 +1,36 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { routeExecution } from "../src/core/execution-router.mjs";
+import { evaluateRouteUsage, routeExecution } from "../src/core/execution-router.mjs";
 import { inferQuickVerificationCommands } from "../src/core/plan-graph.mjs";
 
 const policy = {
   interactive_workspace_patch: { enabled: true },
   execution_router: {
-    factory_min_duration_minutes: 30,
     force_factory_risks: ["critical"],
     factory_on_isolation: true,
     factory_on_resume: true,
     factory_on_background: true,
     factory_on_parallel_execution: true
+  },
+  cost_governor: {
+    enabled: true,
+    unknown_usage: "record",
+    default_budget: {
+      max_wall_minutes: 30,
+      max_agent_turns: 12,
+      max_tool_calls: 80,
+      max_input_tokens: 160000,
+      max_output_tokens: 30000
+    },
+    method_pack_budgets: {
+      quick: {
+        max_wall_minutes: 12,
+        max_agent_turns: 6,
+        max_tool_calls: 30,
+        max_input_tokens: 60000,
+        max_output_tokens: 12000
+      }
+    }
   }
 };
 
@@ -53,10 +72,9 @@ test("short low-risk workspace patch stays Interactive when enabled", () => {
   assert.equal(route.mode, "interactive");
 });
 
-test("risk, duration, isolation, resume, background, and parallel hints route to Factory", () => {
+test("risk, isolation, resume, background, and parallel hints route to Factory", () => {
   for (const node of [
     { risk: "critical" },
-    { execution_hints: { estimated_duration_minutes: 30 } },
     { execution_hints: { requires_isolation: true } },
     { execution_hints: { requires_resume: true } },
     { execution_hints: { background: true } },
@@ -68,6 +86,60 @@ test("risk, duration, isolation, resume, background, and parallel hints route to
       ...node
     }, policy).mode, "factory");
   }
+});
+
+test("duration alone never upgrades to Factory and route carries method budget", () => {
+  const route = routeExecution({
+    execution_class: "workspace_patch",
+    preferred_mode: "interactive",
+    method_pack_id: "quick",
+    risk: "medium",
+    execution_hints: { estimated_duration_minutes: 12 }
+  }, policy);
+  assert.equal(route.mode, "interactive");
+  assert.equal(route.method_pack_id, "quick");
+  assert.equal(route.budget_status, "within_budget");
+  assert.equal(route.cost_budget.max_wall_minutes, 12);
+});
+
+test("estimated route over budget fails closed instead of silently buying Factory", () => {
+  assert.throws(() => routeExecution({
+    execution_class: "workspace_patch",
+    preferred_mode: "interactive",
+    method_pack_id: "quick",
+    risk: "medium",
+    execution_hints: { estimated_duration_minutes: 13 }
+  }, policy), /Cost Governor/);
+});
+
+test("actual token, tool, turn, and wall usage is evaluated against the route budget", () => {
+  const route = routeExecution({
+    execution_class: "workspace_patch",
+    preferred_mode: "interactive",
+    method_pack_id: "quick",
+    risk: "medium",
+    execution_hints: { estimated_duration_minutes: 10 }
+  }, policy);
+  assert.equal(evaluateRouteUsage(route, {
+    duration_ms: 5 * 60 * 1000,
+    usage: {
+      agent_turns: 4,
+      tool_calls: 20,
+      input_tokens: 50000,
+      output_tokens: 10000
+    }
+  }).status, "PASS");
+  const exceeded = evaluateRouteUsage(route, {
+    duration_ms: 5 * 60 * 1000,
+    usage: {
+      agent_turns: 4,
+      tool_calls: 20,
+      input_tokens: 60001,
+      output_tokens: 10000
+    }
+  });
+  assert.equal(exceeded.status, "FAIL");
+  assert.deepEqual(exceeded.exceeded.map((item) => item.metric), ["input_tokens"]);
 });
 
 test("user override is persisted but cannot bypass execution class or policy", () => {
@@ -88,6 +160,17 @@ test("user override is persisted but cannot bypass execution class or policy", (
     ...policy,
     interactive_workspace_patch: { enabled: false }
   }, { mode: "interactive" }), /禁止 Interactive/);
+  assert.throws(() => routeExecution({
+    execution_class: "workspace_patch",
+    risk: "critical"
+  }, policy, { mode: "interactive" }), /不能绕过强制 Factory/);
+  assert.throws(() => routeExecution({
+    execution_class: "workspace_patch",
+    execution_hints: { requires_isolation: true }
+  }, policy, { mode: "interactive" }), /不能绕过强制 Factory/);
+  assert.throws(() => routeExecution({
+    execution_class: "workspace_patch"
+  }, policy, { mode: "deterministic" }), /不兼容/);
 });
 
 test("quick route uses declared public acceptance commands only", () => {

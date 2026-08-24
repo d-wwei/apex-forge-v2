@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/high-risk-evidence.schema.json",
+  "title": "High Risk Evidence Output",
+  "type": "object",
+  "required": ["safety_claim", "assumptions", "adversarial_cases", "blast_radius", "rollback", "residual_risks"],
+  "properties": {
+    "safety_claim": { "type": "string", "minLength": 1 },
+    "assumptions": { "type": "array", "items": { "type": "string" } },
+    "adversarial_cases": { "type": "array", "items": { "type": ["string", "object"] }, "minItems": 1 },
+    "blast_radius": { "type": ["array", "object", "string"] },
+    "rollback": { "type": ["array", "object", "string"] },
+    "approval_need": { "type": ["boolean", "string", "object"] },
+    "residual_risks": { "type": "array", "items": { "type": ["string", "object"] } }
+  },
+  "additionalProperties": true
+}

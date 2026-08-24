@@ -242,6 +242,36 @@ function migrateLegacyContractsInternal(projectDir, apply) {
       value.route_id = null;
       fields.push("route_id");
     }
+    if (name === "execution-route.json") {
+      if (!("method_pack_id" in value)) {
+        value.method_pack_id = "legacy";
+        fields.push("method_pack_id");
+      }
+      if (!("cost_budget" in value)) {
+        value.cost_budget = null;
+        fields.push("cost_budget");
+      }
+      if (!("budget_status" in value)) {
+        value.budget_status = "not_configured";
+        fields.push("budget_status");
+      }
+      if (!("usage_policy" in value)) {
+        value.usage_policy = "record";
+        fields.push("usage_policy");
+      }
+    }
+    if (name === "items.json" && normalizedPathIncludes(path, "/intake/")) {
+      for (const item of value) {
+        if (!("method_pack_id" in item)) {
+          item.method_pack_id = null;
+          fields.push(`intake.${item.id}.method_pack_id`);
+        }
+        if (!("source_spec" in item)) {
+          item.source_spec = null;
+          fields.push(`intake.${item.id}.source_spec`);
+        }
+      }
+    }
     if (
       name === "retry.json"
       && normalizedPathIncludes(path, "/policies/")
@@ -276,7 +306,6 @@ function migrateLegacyContractsInternal(projectDir, apply) {
       }
       if (!value.execution_router) {
         value.execution_router = {
-          factory_min_duration_minutes: 30,
           force_factory_risks: ["critical"],
           factory_on_isolation: true,
           factory_on_resume: true,
@@ -284,6 +313,50 @@ function migrateLegacyContractsInternal(projectDir, apply) {
           factory_on_parallel_execution: true
         };
         fields.push("execution_router");
+      }
+      if (!value.cost_governor) {
+        value.cost_governor = {
+          enabled: true,
+          unknown_usage: "record",
+          default_budget: {
+            max_wall_minutes: 30,
+            max_agent_turns: 12,
+            max_tool_calls: 80,
+            max_input_tokens: 160000,
+            max_output_tokens: 30000
+          },
+          method_pack_budgets: {
+            quick: {
+              max_wall_minutes: 12,
+              max_agent_turns: 6,
+              max_tool_calls: 30,
+              max_input_tokens: 60000,
+              max_output_tokens: 12000
+            },
+            "disciplined-tdd": {
+              max_wall_minutes: 30,
+              max_agent_turns: 12,
+              max_tool_calls: 80,
+              max_input_tokens: 160000,
+              max_output_tokens: 30000
+            },
+            "phase-context": {
+              max_wall_minutes: 30,
+              max_agent_turns: 12,
+              max_tool_calls: 80,
+              max_input_tokens: 160000,
+              max_output_tokens: 30000
+            },
+            governed: {
+              max_wall_minutes: 60,
+              max_agent_turns: 24,
+              max_tool_calls: 180,
+              max_input_tokens: 360000,
+              max_output_tokens: 70000
+            }
+          }
+        };
+        fields.push("cost_governor");
       }
       const missing = defaultAllowedExecutionAdapters()
         .filter((adapter) => !value.permissions?.allowed_adapters?.includes(adapter));
@@ -357,6 +430,8 @@ function contractTargets(path, value) {
   else if (name === "learning-report.json") push("learning-report.schema.json");
   else if (name === "retry.json" && normalized.includes("/policies/")) push("retry-policy.schema.json");
   else if (name === "execution.json" && normalized.includes("/policies/")) push("execution-policy.schema.json");
+  else if (name === "method-packs.json" && normalized.includes("/policies/")) push("method-pack-registry.schema.json");
+  else if (name === "git.json" && normalized.includes("/delivery/")) push("git-delivery.schema.json");
   else if (name === "quality.json" && normalized.includes("/policies/")) push("quality-policy.schema.json");
   else if (name === "notifications.json" && normalized.includes("/policies/")) push("notification-policy.schema.json");
   else if (name === "gates.json" && normalized.includes("/policies/")) push("gate-policy.schema.json");
@@ -367,6 +442,8 @@ function contractTargets(path, value) {
   else if (name === "host-result.json") push("host-result.schema.json");
   else if (name === "action-workspace.json") push("action-workspace.schema.json");
   else if (name === "cognitive-evidence.json") push("cognitive-evidence.schema.json");
+  else if (name.startsWith("capability-invocation-")) push("capability-invocation.schema.json");
+  else if (name.startsWith("capability-evidence-")) push("capability-evidence.schema.json");
   else if (name === "execution-route.json") push("execution-route.schema.json");
   else if (name.startsWith("candidate-") && normalized.includes("/candidates/")) push("candidate-set.schema.json");
   else if (name.startsWith("transaction-") && normalized.includes("/transactions/")) push("transaction-journal.schema.json");

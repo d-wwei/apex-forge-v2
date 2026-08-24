@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/frontend-design-evidence.schema.json",
+  "title": "Frontend Design Evidence Output",
+  "type": "object",
+  "required": ["brief", "information_architecture", "selected_direction", "design_tokens", "layout_spec", "responsive_rules", "interaction_states", "acceptance"],
+  "properties": {
+    "brief": { "type": ["object", "string"] },
+    "information_architecture": { "type": ["array", "object"] },
+    "selected_direction": { "type": ["string", "object"] },
+    "design_tokens": { "type": "object", "minProperties": 1 },
+    "layout_spec": { "type": "object", "minProperties": 1 },
+    "responsive_rules": { "type": "array", "items": { "type": ["string", "object"] }, "minItems": 1 },
+    "interaction_states": { "type": "array", "items": { "type": ["string", "object"] }, "minItems": 1 },
+    "acceptance": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 }
+  },
+  "additionalProperties": true
+}

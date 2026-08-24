@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/project-audit-evidence.schema.json",
+  "title": "Project Audit Evidence Output",
+  "type": "object",
+  "required": ["objective", "commitments", "checks", "findings", "coverage", "confidence", "unverified_items", "release_posture"],
+  "properties": {
+    "objective": { "type": "string", "minLength": 1 },
+    "commitments": { "type": "array", "items": { "type": ["string", "object"] }, "minItems": 1 },
+    "checks": { "type": "array", "items": { "type": "object" }, "minItems": 1 },
+    "findings": { "type": "array", "items": { "type": "object" } },
+    "coverage": { "type": "number", "minimum": 0, "maximum": 1 },
+    "confidence": { "type": ["string", "number"] },
+    "unverified_items": { "type": "array", "items": { "type": ["string", "object"] } },
+    "score": { "type": "number" },
+    "release_posture": { "type": "string", "enum": ["PASS", "FAIL", "BLOCKED", "GO", "NO_GO"] }
+  },
+  "additionalProperties": true
+}

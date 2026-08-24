@@ -1,0 +1,117 @@
+{
+  "task_id": "chorus--bug-fix",
+  "task_digest": "e9c5e9c11d14f64553fa1410300d2e4f97f75ad67d731561d4fe77a0027ffc8c",
+  "repository": "chorus",
+  "scenario": "bug-fix",
+  "mode": "v1-skill",
+  "candidate_digest": "6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 0.6666666666666666,
+    "wall_ms": 63878,
+    "cost": 112276,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 0,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "0713b8ddd34fe9c9b368e6d1cb0a96fa4ab69a92",
+    "runtime_hash": "528e8b02a687efafd5236ab0db47910b4b782885fd3facc93f7df7678ff12ea1",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "2671712cf24f60edb7f964a4a99c3f060dc1f3a12171d2d6cf32d61d7e489e2a",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--bug-fix--v1-skill/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--bug-fix--v1-skill/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--bug-fix--v1-skill/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--bug-fix--v1-skill/codex-home/sessions/2026/08/22/rollout-2026-08-22T01-17-54-01a02554-43fc-7a11-968f-7f5b3a8d8112.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--bug-fix--v1-skill/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--bug-fix--v1-skill/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--bug-fix--v1-skill/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--bug-fix--v1-skill/codex-home/sessions/2026/08/22/rollout-2026-08-22T01-17-54-01a02554-43fc-7a11-968f-7f5b3a8d8112.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--bug-fix--v1-skill/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "928d5d73bdcf2c77b72a62becc0ae7762d6bd1fbde088a05aa5c64d8541929f7",
+      "8910d0033a85679698188ea01d20ca2bf75f3abc467a6466cd678af24b708f7e",
+      "474a73561a1b47f819a981e3bb19f58730c26984ab258bb7e7eb68cd978bd916",
+      "02efc65ef71da9be7061550b0199d7ca2d56524ae23c6f2f82787ee7001cea44",
+      "eb7627ae8fe28eb05d063c76200a013ae39b667fedd12859a65b8bc5440fb829"
+    ]
+  },
+  "evidence": {
+    "task_digest": "e9c5e9c11d14f64553fa1410300d2e4f97f75ad67d731561d4fe77a0027ffc8c",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a02554-43fc-7a11-968f-7f5b3a8d8112",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Restored secure cookies only for production when COOKIE_SECURE is not explicitly false. Existing cookie attributes remain unchanged.",
+      "tests": [
+        {
+          "command": "pnpm exec vitest run src/lib/__tests__/cookie-utils.test.ts",
+          "status": "pass",
+          "detail": "1 test file passed; 5 tests passed."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "src/lib/cookie-utils.ts",
+        "src/lib/__tests__/cookie-utils.test.ts"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "pnpm exec vitest run src/lib/__tests__/cookie-utils.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 504,
+        "stdout_tail": "\n RUN  v4.1.0 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--bug-fix--v1-skill/workspace\n\n ✓ src/lib/__tests__/cookie-utils.test.ts (5 tests) 2ms\n\n Test Files  1 passed (1)\n      Tests  5 passed (5)\n   Start at  01:18:58\n   Duration  87ms (transform 10ms, setup 0ms, import 15ms, tests 2ms, environment 0ms)\n\n",
+        "stderr_tail": "(node:25249) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "pnpm exec vitest run src/lib/__tests__/cookie-utils.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 485,
+        "stdout_tail": "\n RUN  v4.1.0 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--bug-fix--v1-skill/workspace\n\n ✓ src/lib/__tests__/cookie-utils.test.ts (5 tests) 2ms\n\n Test Files  1 passed (1)\n      Tests  5 passed (5)\n   Start at  01:18:58\n   Duration  89ms (transform 14ms, setup 0ms, import 18ms, tests 2ms, environment 0ms)\n\n",
+        "stderr_tail": "(node:25269) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      },
+      {
+        "command": "! rg -q 'NODE_ENV === \"production\" \\|\\| !forceInsecure' src/lib/cookie-utils.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 84,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/lib/cookie-utils.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": false,
+      "evidence_score": 0.6666666666666666,
+      "reason": "no .apex-v2 durable state"
+    }
+  }
+}

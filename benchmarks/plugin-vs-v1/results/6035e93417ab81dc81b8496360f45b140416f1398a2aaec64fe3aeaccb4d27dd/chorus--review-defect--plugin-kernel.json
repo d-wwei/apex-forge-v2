@@ -1,0 +1,174 @@
+{
+  "task_id": "chorus--review-defect",
+  "task_digest": "6c09f79bdfe841fb768e7eeeb83ff9d1d70a0f66f66cb98187ac732cacd56b1e",
+  "repository": "chorus",
+  "scenario": "review-defect",
+  "mode": "plugin-kernel",
+  "candidate_digest": "6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 1322422,
+    "cost": 7522417,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 1,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "0713b8ddd34fe9c9b368e6d1cb0a96fa4ab69a92",
+    "runtime_hash": "528e8b02a687efafd5236ab0db47910b4b782885fd3facc93f7df7678ff12ea1",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "7b28f0a1400c6b6dedda29f0065ffa18657075921466268094833a9a5506d787",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--review-defect--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--review-defect--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--review-defect--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--review-defect--plugin-kernel/codex-home/sessions/2026/08/22/rollout-2026-08-22T02-12-02-01a02585-d1e7-7623-ba3a-a29b8bd73513.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--review-defect--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--review-defect--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--review-defect--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--review-defect--plugin-kernel/codex-home/sessions/2026/08/22/rollout-2026-08-22T02-12-02-01a02585-d1e7-7623-ba3a-a29b8bd73513.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--review-defect--plugin-kernel/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "927339fa12e49dfa05c4eff8c34e6cdc9cf32190337013a4fcf4f91f024659ca",
+      "18a302454dc41f31ff02693aa68422f704e19243e483635fa1ae28014f728cf8",
+      "55dce4bea767b05c65cc8cbabe68cd662f64640c69a74c88c36bbbbb71dc6f5c",
+      "681609c1f3e95a13d14c012bbc74df698388257dc972eb7eabe72e75c3227c90",
+      "389c7fd00347ae7a5759245e96c84b2530f388860c04731311c2663408b6ca25"
+    ]
+  },
+  "evidence": {
+    "task_digest": "6c09f79bdfe841fb768e7eeeb83ff9d1d70a0f66f66cb98187ac732cacd56b1e",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a02585-d1e7-7623-ba3a-a29b8bd73513",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Restored `httpOnly: true` and added a dedicated HttpOnly assertion. Kernel run completed, merged, and reconciled consistently; no commit or push performed.",
+      "tests": [
+        {
+          "command": "pnpm exec vitest run src/lib/__tests__/cookie-utils.test.ts",
+          "status": "fail",
+          "detail": "RED control: 4 failed, 1 passed."
+        },
+        {
+          "command": "pnpm exec vitest run src/lib/__tests__/cookie-utils.test.ts",
+          "status": "pass",
+          "detail": "Implementation workspace: 5 passed."
+        },
+        {
+          "command": "pnpm exec vitest run src/lib/__tests__/cookie-utils.test.ts",
+          "status": "fail",
+          "detail": "Isolated test patch: 5 failed, 1 passed without source patch."
+        },
+        {
+          "command": "pnpm exec vitest run src/lib/__tests__/cookie-utils.test.ts",
+          "status": "fail",
+          "detail": "Initial untouched-root verification: 4 failed, 1 passed."
+        },
+        {
+          "command": "cd <implementation-workspace> && pnpm exec vitest run src/lib/__tests__/cookie-utils.test.ts",
+          "status": "pass",
+          "detail": "Executed twice; 5 passed each time."
+        },
+        {
+          "command": "pnpm exec vitest run src/lib/__tests__/cookie-utils.test.ts",
+          "status": "pass",
+          "detail": "Candidate-bound staged verification: 6 passed."
+        },
+        {
+          "command": "pnpm exec vitest run src/lib/__tests__/cookie-utils.test.ts",
+          "status": "pass",
+          "detail": "Final integrated workspace: 6 passed."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "artifact-mt3adjaq-18d79982",
+        "artifact-mt3adurw-56c6c6e2",
+        "artifact-mt3ae4eo-3fb84116",
+        "reconcile-mt3aezet-50661b6c"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "pnpm exec vitest run src/lib/__tests__/cookie-utils.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 602,
+        "stdout_tail": "\n RUN  v4.1.0 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--review-defect--plugin-kernel/workspace\n\n ✓ src/lib/__tests__/cookie-utils.test.ts (6 tests) 2ms\n\n Test Files  1 passed (1)\n      Tests  6 passed (6)\n   Start at  02:34:04\n   Duration  96ms (transform 14ms, setup 0ms, import 19ms, tests 2ms, environment 0ms)\n\n",
+        "stderr_tail": "(node:53023) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "pnpm exec vitest run src/lib/__tests__/cookie-utils.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 480,
+        "stdout_tail": "\n RUN  v4.1.0 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--review-defect--plugin-kernel/workspace\n\n ✓ src/lib/__tests__/cookie-utils.test.ts (6 tests) 2ms\n\n Test Files  1 passed (1)\n      Tests  6 passed (6)\n   Start at  02:34:05\n   Duration  88ms (transform 11ms, setup 0ms, import 16ms, tests 2ms, environment 0ms)\n\n",
+        "stderr_tail": "(node:53048) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      },
+      {
+        "command": "node --input-type=module -e \"import {getCookieOptions} from './src/lib/cookie-utils.ts'; for(const env of ['production','development']){process.env.NODE_ENV=env; if(getCookieOptions(1).httpOnly!==true) process.exit(1)}\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 65,
+        "stdout_tail": "",
+        "stderr_tail": "(node:53055) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--review-defect--plugin-kernel/workspace/src/lib/cookie-utils.ts is not specified and it doesn't parse as CommonJS.\nReparsing as ES module because module syntax was detected. This incurs a performance overhead.\nTo eliminate this warning, add \"type\": \"module\" to /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--review-defect--plugin-kernel/workspace/package.json.\n(Use `node --trace-warnings ...` to show where the warning was created)\n"
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/lib/__tests__/cookie-utils.test.ts",
+        "src/lib/cookie-utils.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": true,
+      "evidence_score": 1,
+      "run_ids": [
+        "run-mt39nr3q-e13e77ef"
+      ],
+      "done_run_ids": [
+        "run-mt39nr3q-e13e77ef"
+      ],
+      "fully_closed_run_ids": [
+        "run-mt39nr3q-e13e77ef"
+      ],
+      "active_runs": [],
+      "candidate_chain_equal": true,
+      "verification_ref": ".apex-v2/runs/run-mt39nr3q-e13e77ef/verification-report.json",
+      "review_ref": ".apex-v2/runs/run-mt39nr3q-e13e77ef/review-report.json",
+      "integration_ref": ".apex-v2/runs/run-mt39nr3q-e13e77ef/integration-report.json",
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "98dd2a9d31308f57c177a238270d03053d164255ca1c2df503ef09e12bf38cc5",
+        "replay_hash": "98dd2a9d31308f57c177a238270d03053d164255ca1c2df503ef09e12bf38cc5",
+        "hash_equal": true
+      }
+    }
+  }
+}

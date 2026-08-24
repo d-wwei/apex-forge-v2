@@ -20,9 +20,12 @@ export function assertPatchWithinBudget(root, patch) {
   return { changed_files: changedFiles.length, patch_bytes: bytes };
 }
 
-export function effectiveAgentTimeout(root, requestedMs) {
+export function effectiveAgentTimeout(root, requestedMs, routeBudget = null) {
   const policy = loadExecutionPolicy(root);
-  return Math.min(requestedMs, policy.budgets.max_agent_duration_ms);
+  const routeLimit = routeBudget?.max_wall_minutes
+    ? routeBudget.max_wall_minutes * 60000
+    : Number.POSITIVE_INFINITY;
+  return Math.min(requestedMs, policy.budgets.max_agent_duration_ms, routeLimit);
 }
 
 export function effectiveAgentLimit(root, requested) {

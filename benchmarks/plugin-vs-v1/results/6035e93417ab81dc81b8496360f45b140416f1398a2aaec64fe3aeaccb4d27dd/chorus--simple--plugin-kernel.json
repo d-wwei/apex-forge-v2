@@ -1,0 +1,167 @@
+{
+  "task_id": "chorus--simple",
+  "task_digest": "7f305da54c12f38083a3ec96eb1e244d4c431120259cb356703cfb4a71764b58",
+  "repository": "chorus",
+  "scenario": "simple",
+  "mode": "plugin-kernel",
+  "candidate_digest": "6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 80760,
+    "cost": 106043,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 1,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "0713b8ddd34fe9c9b368e6d1cb0a96fa4ab69a92",
+    "runtime_hash": "528e8b02a687efafd5236ab0db47910b4b782885fd3facc93f7df7678ff12ea1",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "7b28f0a1400c6b6dedda29f0065ffa18657075921466268094833a9a5506d787",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--simple--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--simple--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--simple--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--simple--plugin-kernel/codex-home/sessions/2026/08/22/rollout-2026-08-22T00-36-20-01a0252e-33ad-7473-9cf3-bc7d559d7b6f.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--simple--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--simple--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--simple--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--simple--plugin-kernel/codex-home/sessions/2026/08/22/rollout-2026-08-22T00-36-20-01a0252e-33ad-7473-9cf3-bc7d559d7b6f.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--simple--plugin-kernel/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "26fcc65d7619574d88d3ed298b075af30a26160c388230f6862023e653e6c861",
+      "c86f44c0783a1600b7321c1ab91ddc79e3b5f67c97c66edf0b8da3196938399c",
+      "3f8b0c9b4224ec41d7015dfe2eac197f0a0ded3c48cf7d18944f5ff423ad91f2",
+      "6c8a7f7a37c34a2c23231bf26fbece0cff68b1f94bcf5d0950b635c827330b69",
+      "800336c1d13185d3ba92423755182651a3aeca949945f9bd99ebe4a3f767ce42"
+    ]
+  },
+  "evidence": {
+    "task_digest": "7f305da54c12f38083a3ec96eb1e244d4c431120259cb356703cfb4a71764b58",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a0252e-33ad-7473-9cf3-bc7d559d7b6f",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Whitespace-only option IDs and labels are now rejected, with focused regression coverage.",
+      "tests": [
+        {
+          "command": "pnpm exec vitest run src/services/__tests__/elaboration.service.pure.test.ts",
+          "status": "pass",
+          "detail": "1 file passed; 20 tests passed."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "src/services/elaboration.service.ts",
+        "src/services/__tests__/elaboration.service.pure.test.ts"
+      ],
+      "review": {
+        "claims": [
+          "Option validation trims IDs and labels before checking emptiness.",
+          "Focused tests cover whitespace-only option IDs and labels."
+        ],
+        "uncertainties": [],
+        "acceptance_mapping": [
+          {
+            "criterion": "Reject whitespace-only option IDs",
+            "status": "supported"
+          },
+          {
+            "criterion": "Reject whitespace-only option labels",
+            "status": "supported"
+          },
+          {
+            "criterion": "Public acceptance test passes",
+            "status": "supported"
+          }
+        ],
+        "findings": [],
+        "residual_risks": [
+          "Only the requested focused test suite was executed."
+        ],
+        "merge_posture": "approve"
+      }
+    },
+    "acceptance": [
+      {
+        "command": "pnpm exec vitest run src/services/__tests__/elaboration.service.pure.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 612,
+        "stdout_tail": "\n RUN  v4.1.0 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--simple--plugin-kernel/workspace\n\n ✓ src/services/__tests__/elaboration.service.pure.test.ts (20 tests) 3ms\n\n Test Files  1 passed (1)\n      Tests  20 passed (20)\n   Start at  00:37:40\n   Duration  210ms (transform 79ms, setup 0ms, import 138ms, tests 3ms, environment 0ms)\n\n",
+        "stderr_tail": "(node:6370) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "tmp=src/services/__tests__/benchmark-hidden-whitespace.test.ts; printf '%s\\n' 'import { it, expect, vi } from \"vitest\";' 'vi.mock(\"@/lib/prisma\", () => ({ prisma: {} }));' 'vi.mock(\"@/lib/event-bus\", () => ({ eventBus: { emitChange: vi.fn() } }));' 'vi.mock(\"@/services/activity.service\", () => ({ createActivity: vi.fn() }));' 'vi.mock(\"@/lib/uuid-resolver\", () => ({}));' 'import { validateQuestionsFormat } from \"@/services/elaboration.service\";' 'it(\"rejects whitespace-only option ids and labels\", () => {' '  const base={id:\"q\",text:\"Question?\",category:\"scope\",options:[{id:\"o1\",label:\"Valid\"},{id:\"o2\",label:\"Also valid\"}]};' '  expect(() => validateQuestionsFormat([{...base,options:[{id:\"   \",label:\"Valid\"},base.options[1]]}])).toThrow();' '  expect(() => validateQuestionsFormat([{...base,options:[{id:\"o1\",label:\"   \"},base.options[1]]}])).toThrow();' '});' > \"$tmp\"; pnpm exec vitest run \"$tmp\"; rc=$?; rm -f \"$tmp\"; exit $rc",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 599,
+        "stdout_tail": "\n RUN  v4.1.0 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/chorus--simple--plugin-kernel/workspace\n\n ✓ src/services/__tests__/benchmark-hidden-whitespace.test.ts (1 test) 1ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  00:37:41\n   Duration  201ms (transform 74ms, setup 0ms, import 130ms, tests 1ms, environment 0ms)\n\n",
+        "stderr_tail": "(node:6392) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      },
+      {
+        "command": "pnpm exec tsc --noEmit",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 4232,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/services/__tests__/elaboration.service.pure.test.ts",
+        "src/services/elaboration.service.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": true,
+      "evidence_score": 1,
+      "run_ids": [
+        "run-mt368nzx-659779ab"
+      ],
+      "done_run_ids": [
+        "run-mt368nzx-659779ab"
+      ],
+      "fully_closed_run_ids": [
+        "run-mt368nzx-659779ab"
+      ],
+      "active_runs": [],
+      "candidate_chain_equal": true,
+      "verification_ref": ".apex-v2/runs/run-mt368nzx-659779ab/verification-report.json",
+      "review_ref": ".apex-v2/runs/run-mt368nzx-659779ab/review-report.json",
+      "integration_ref": ".apex-v2/runs/run-mt368nzx-659779ab/integration-report.json",
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "1216334b8154802171f89e8cb48e2f4cdc0e38359dd303c6ee9040d0faa41187",
+        "replay_hash": "1216334b8154802171f89e8cb48e2f4cdc0e38359dd303c6ee9040d0faa41187",
+        "hash_equal": true
+      }
+    }
+  }
+}

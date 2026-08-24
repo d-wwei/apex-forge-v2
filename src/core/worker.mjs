@@ -19,7 +19,12 @@ import { routeExecution } from "./execution-router.mjs";
 import { withProjectTransaction } from "./project-transaction.mjs";
 import { appendEvent, SCHEMA_VERSION, updateProject } from "./store.mjs";
 import { createArtifact } from "./artifacts.mjs";
+import { assertContract } from "./contracts.mjs";
 import { loadRun } from "./run-state.mjs";
+import {
+  assertCapabilityProviderAvailability
+} from "./capability-registry.mjs";
+import { assertCapabilityEvidence } from "./capability-evidence.mjs";
 
 export function createWorkerForPlanNode(root, run, planNode, options = {}) {
   const generation = getWorkers(root, run.run_id)
@@ -32,6 +37,7 @@ export function createWorkerForPlanNode(root, run, planNode, options = {}) {
 
 function createWorkerForPlanNodeTransaction(root, run, planNode, options) {
   const timestamp = now();
+  assertCapabilityProviderAvailability(planNode.capability_bindings || []);
   const workerId = shortId("worker");
   const namespace = `.apex-v2/runs/${run.run_id}/workers/${workerId}`;
   const executionPolicy = readJson(join(root, "policies", "execution.json"));
@@ -54,6 +60,9 @@ function createWorkerForPlanNodeTransaction(root, run, planNode, options) {
     objective: planNode.objective,
     deliverables: planNode.deliverables,
     required_evidence: planNode.required_evidence,
+    capability_bindings: planNode.capability_bindings || [],
+    capability_enforcement: planNode.capability_enforcement || "shadow",
+    capability_invocation_refs: [],
     read_scope: planNode.read_scope,
     write_scope: planNode.write_scope,
     verification: planNode.verification,
@@ -69,6 +78,11 @@ function createWorkerForPlanNodeTransaction(root, run, planNode, options) {
 
   const dir = workerDir(root, run.run_id, workerId);
   ensureDir(dir);
+  worker.capability_invocation_refs = persistCapabilityInvocations(
+    dir,
+    worker,
+    timestamp
+  );
   const routeRecord = {
     schema_version: SCHEMA_VERSION,
     route_id: shortId("route"),
@@ -89,6 +103,58 @@ function createWorkerForPlanNodeTransaction(root, run, planNode, options) {
   });
   updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
   return worker;
+}
+
+function persistCapabilityInvocations(dir, worker, timestamp) {
+  return (worker.capability_bindings || []).map((binding) => {
+    const input = {
+      schema_version: SCHEMA_VERSION,
+      capability_id: binding.capability_id,
+      objective: worker.objective,
+      context_refs: uniqueStrings(worker.read_scope),
+      constraints: uniqueStrings([
+        ...(worker.write_scope || []).map((scope) => `write_scope:${scope}`),
+        `execution_class:${worker.execution_class}`
+      ]),
+      acceptance_refs: uniqueStrings(worker.required_evidence),
+      verification: uniqueStrings(worker.verification),
+      candidate_digest: null,
+      environment: null,
+      created_at: timestamp
+    };
+    assertContract(
+      `${binding.input_contract}.schema.json`,
+      input,
+      `capability input:${worker.worker_id}:${binding.capability_id}`
+    );
+    const invocation = {
+      schema_version: SCHEMA_VERSION,
+      invocation_id: `capinv-${worker.worker_id}-${binding.capability_id}`,
+      run_id: worker.run_id,
+      plan_node_id: worker.plan_node_id,
+      worker_id: worker.worker_id,
+      capability_id: binding.capability_id,
+      capability_version: binding.capability_version,
+      input_contract: binding.input_contract,
+      input_artifact_refs: uniqueStrings(worker.read_scope),
+      input,
+      output_contract: binding.output_contract,
+      required: binding.required,
+      created_at: timestamp
+    };
+    assertContract(
+      "capability-invocation.schema.json",
+      invocation,
+      `capability invocation:${worker.worker_id}:${binding.capability_id}`
+    );
+    const name = `capability-invocation-${binding.capability_id}.json`;
+    writeJson(join(dir, name), invocation);
+    return `${worker.namespace}/${name}`;
+  });
+}
+
+function uniqueStrings(values = []) {
+  return [...new Set((values || []).map(String).filter(Boolean))];
 }
 
 export function resolveWorkerAssignment(planNode, executionPolicy, route = routeExecution(planNode, executionPolicy)) {
@@ -202,6 +268,18 @@ ${bullet(worker.write_scope)}
 ## Required Evidence
 
 ${bullet(planNode.required_evidence)}
+
+## Internal Capabilities
+
+${bullet((worker.capability_bindings || []).map((item) =>
+    `${item.capability_id}@${item.capability_version}: ${item.input_contract} -> ${item.output_contract}`
+  ))}
+
+Enforcement: ${worker.capability_enforcement || "shadow"}
+
+Invocation refs:
+
+${bullet(worker.capability_invocation_refs || [])}
 
 ## Verification
 
@@ -326,7 +404,13 @@ export function findGitRoot(projectDir) {
   return result.stdout.trim() || null;
 }
 
-export function executeWorkerShell(root, worker, command, via) {
+export function executeWorkerShell(
+  root,
+  worker,
+  command,
+  via,
+  capabilityEvidence = []
+) {
   if (worker.execution_class && worker.execution_class !== "deterministic_check") {
     throw new Error(`shell adapter 只允许 deterministic_check worker：${worker.execution_class}`);
   }
@@ -337,6 +421,28 @@ export function executeWorkerShell(root, worker, command, via) {
     encoding: "utf8",
     shell: true
   });
+  let capabilityStatus;
+  let capabilityError = "";
+  try {
+    capabilityStatus = assertCapabilityEvidence(
+      worker.capability_bindings || [],
+      capabilityEvidence,
+      { requireAll: worker.capability_enforcement === "enforce" }
+    );
+  } catch (error) {
+    capabilityError = error.message;
+    capabilityStatus = {
+      required: (worker.capability_bindings || [])
+        .filter((binding) => binding.required)
+        .map((binding) => binding.capability_id),
+      submitted: [],
+      missing: (worker.capability_bindings || [])
+        .filter((binding) => binding.required)
+        .map((binding) => binding.capability_id)
+    };
+  }
+  const commandPassed = result.status === 0;
+  const capabilityPassed = capabilityError === "";
   const adapterResult = {
     schema_version: SCHEMA_VERSION,
     result_id: shortId("adapter"),
@@ -344,13 +450,27 @@ export function executeWorkerShell(root, worker, command, via) {
     run_id: worker.run_id,
     plan_node_id: worker.plan_node_id,
     adapter: "shell",
-    status: result.status === 0 ? "PASS" : "FAIL",
-    failure_kind: result.status === 0 ? null : "execution_error",
+    status: commandPassed && capabilityPassed ? "PASS" : "FAIL",
+    failure_kind: !commandPassed
+      ? "execution_error"
+      : !capabilityPassed
+        ? "contract_error"
+        : null,
     command,
-    summary: result.status === 0 ? "shell command passed" : "shell command failed",
+    summary: commandPassed && capabilityPassed
+      ? "shell command passed"
+      : !commandPassed
+        ? "shell command failed"
+        : "shell capability evidence invalid",
     exit_code: result.status ?? 1,
     stdout_tail: tail(result.stdout),
     stderr_tail: tail(result.stderr),
+    capability_evidence_status: {
+      enforcement: worker.capability_enforcement || "shadow",
+      submitted: capabilityStatus.submitted,
+      missing: capabilityStatus.missing,
+      error: capabilityError
+    },
     refs: [],
     created_at: timestamp
   };
@@ -369,28 +489,44 @@ export function executeWorkerShell(root, worker, command, via) {
     expectedWorkerUpdatedAt,
     adapterResult,
     timestamp,
-    via
+    via,
+    capabilityEvidence
   )).result;
 }
 
-function commitWorkerShell(root, workerId, expectedWorkerUpdatedAt, adapterResult, timestamp, via) {
+function commitWorkerShell(
+  root,
+  workerId,
+  expectedWorkerUpdatedAt,
+  adapterResult,
+  timestamp,
+  via,
+  capabilityEvidence
+) {
   const worker = findWorker(root, workerId);
   if (worker.status !== "active" || worker.updated_at !== expectedWorkerUpdatedAt) {
     throw new Error(`shell worker commit 遇到并发状态变化：${worker.worker_id}`);
   }
+  const dir = workerDir(root, worker.run_id, worker.worker_id);
+  const capabilityEvidenceRefs = persistShellCapabilityEvidence(
+    dir,
+    worker.namespace,
+    capabilityEvidence
+  );
+  adapterResult.refs = capabilityEvidenceRefs;
   const file = `adapter-result-${adapterResult.result_id}.json`;
-  writeJson(join(workerDir(root, worker.run_id, worker.worker_id), file), adapterResult);
+  writeJson(join(dir, file), adapterResult);
   worker.status = adapterResult.status === "PASS" ? "evidence_submitted" : "blocked";
   worker.last_adapter = "shell";
   worker.attempt = Number(worker.attempt || 0) + 1;
   worker.updated_at = timestamp;
-  writeJson(join(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
+  writeJson(join(dir, "worker.json"), worker);
   const run = loadRun(root, worker.run_id);
   const artifact = createArtifact(root, run, "execute", {
     type: "evidence",
     title: `ShellAdapter：${adapterResult.status}`,
     body: `worker=${worker.worker_id}\ncommand=${adapterResult.command}\nexit_code=${adapterResult.exit_code}`,
-    refs: [`${worker.namespace}/${file}`],
+    refs: [`${worker.namespace}/${file}`, ...capabilityEvidenceRefs],
     timestamp
   });
   const event = appendEvent(root, "worker.adapter.shell", "apex-v2", {
@@ -404,4 +540,12 @@ function commitWorkerShell(root, workerId, expectedWorkerUpdatedAt, adapterResul
   });
   updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
   return { adapterResult, artifact };
+}
+
+function persistShellCapabilityEvidence(dir, namespace, evidenceItems = []) {
+  return (evidenceItems || []).map((evidence) => {
+    const name = `capability-evidence-${evidence.capability_id}.json`;
+    writeJson(join(dir, name), evidence);
+    return `${namespace}/${name}`;
+  });
 }

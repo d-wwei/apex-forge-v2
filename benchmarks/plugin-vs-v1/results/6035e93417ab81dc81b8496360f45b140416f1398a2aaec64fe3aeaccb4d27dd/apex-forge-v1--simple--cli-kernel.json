@@ -1,0 +1,171 @@
+{
+  "task_id": "apex-forge-v1--simple",
+  "task_digest": "f04609003cd0dd18c5140718b357f46b7301c801291c3fa89d96ca7c1c9d697f",
+  "repository": "apex-forge-v1",
+  "scenario": "simple",
+  "mode": "cli-kernel",
+  "candidate_digest": "6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 490487,
+    "cost": 1981795,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 1,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "3755583552540121bcb1287c5bdba3c8b2578726",
+    "runtime_hash": "528e8b02a687efafd5236ab0db47910b4b782885fd3facc93f7df7678ff12ea1",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "65d39186c1bd3c9b65e4fb401e29d0d37d8dc0ec3c9913ca6494049ef1f6627c",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--simple--cli-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--simple--cli-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--simple--cli-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--simple--cli-kernel/codex-home/sessions/2026/08/21/rollout-2026-08-21T21-22-19-01a0247c-94a2-76f0-9024-e6a959be167a.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--simple--cli-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--simple--cli-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--simple--cli-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--simple--cli-kernel/codex-home/sessions/2026/08/21/rollout-2026-08-21T21-22-19-01a0247c-94a2-76f0-9024-e6a959be167a.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--simple--cli-kernel/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "7e5f8d0c8f4a48985ca4a2dcf04e32fba876980f286f6fa07d2e96bcbd38f394",
+      "ae967edfa1d66358a20372f9935bde73dbd8948210b3255016d1229210a54c7c",
+      "51a6f651999d996c775b3de21a9e2435f57113cc0da3fb1be5cb8531dbebc5a1",
+      "07438337d690f483b57119bc0a6726e0bbe69f2ee7c9dc0e2ec799d917abf565",
+      "dc325157e40478c2ea1a9a99692f39d35b72ab4e1cb14fd4f16443322d505e1e"
+    ]
+  },
+  "evidence": {
+    "task_digest": "f04609003cd0dd18c5140718b357f46b7301c801291c3fa89d96ca7c1c9d697f",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a0247c-94a2-76f0-9024-e6a959be167a",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Added <=X.Y.Z support, strict malformed-constraint rejection, documentation, and focused tests. Kernel run completed all gates and closed successfully.",
+      "tests": [
+        {
+          "command": "bun test src/__tests__/orchestrator-v2.test.ts --filter \"SemVer satisfies\"",
+          "status": "fail",
+          "detail": "Negative control: <= was unsupported before implementation."
+        },
+        {
+          "command": "bun test src/__tests__/orchestrator-v2.test.ts",
+          "status": "pass",
+          "detail": "35 passed, 0 failed after integration."
+        },
+        {
+          "command": "bun -e 'import { satisfies } from \"./src/utils/semver.ts\"; if (!satisfies(\"1.2.3\", \">=1.0.0\") || satisfies(\"1.2.3\", \">2.0.0\")) process.exit(1)'",
+          "status": "pass",
+          "detail": "Public acceptance command passed."
+        },
+        {
+          "command": "git diff --check",
+          "status": "pass",
+          "detail": "No whitespace errors."
+        },
+        {
+          "command": "apex-v2 verify run --project . --run-id run-mt2zb6ou-e05dccf8",
+          "status": "pass",
+          "detail": "Staged candidate verification passed."
+        },
+        {
+          "command": "apex-v2 review generate --project . --run-id run-mt2zb6ou-e05dccf8",
+          "status": "pass",
+          "detail": "No review findings."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "artifact-mt2zewii-bc6f261f",
+        "artifact-mt2zhjts-539af22d",
+        "artifact-mt2zik48-1c087301",
+        "artifact-mt2zj5i0-1f585eb5",
+        "artifact-mt2zkt6e-df593f2e",
+        "patch-mt2zewhi-0d7d07ef"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "bun -e 'import { satisfies } from \"./src/utils/semver.ts\"; if (!satisfies(\"1.2.3\", \">=1.0.0\") || satisfies(\"1.2.3\", \">2.0.0\")) process.exit(1)'",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 47,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "bun -e 'import { satisfies } from \"./src/utils/semver.ts\"; if (!satisfies(\"1.2.3\", \"<=1.2.3\") || !satisfies(\"1.2.2\", \"<=1.2.3\") || satisfies(\"1.2.4\", \"<=1.2.3\")) process.exit(1)'",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 40,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      },
+      {
+        "command": "bun -e 'import { satisfies } from \"./src/utils/semver.ts\"; if (!satisfies(\"1.2.3\", \">=1.0.0\") || satisfies(\"1.2.3\", \">2.0.0\")) process.exit(1)'",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 39,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/__tests__/orchestrator-v2.test.ts",
+        "src/utils/semver.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": true,
+      "evidence_score": 1,
+      "run_ids": [
+        "run-mt2zb6ou-e05dccf8"
+      ],
+      "done_run_ids": [
+        "run-mt2zb6ou-e05dccf8"
+      ],
+      "fully_closed_run_ids": [
+        "run-mt2zb6ou-e05dccf8"
+      ],
+      "active_runs": [],
+      "candidate_chain_equal": true,
+      "verification_ref": ".apex-v2/runs/run-mt2zb6ou-e05dccf8/verification-report.json",
+      "review_ref": ".apex-v2/runs/run-mt2zb6ou-e05dccf8/review-report.json",
+      "integration_ref": ".apex-v2/runs/run-mt2zb6ou-e05dccf8/integration-report.json",
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "2cbb1b3d5e0678c6a057ca3a98c1abf85dce7975a706411139a4e182c9fbe6ae",
+        "replay_hash": "2cbb1b3d5e0678c6a057ca3a98c1abf85dce7975a706411139a4e182c9fbe6ae",
+        "hash_equal": true
+      }
+    }
+  }
+}

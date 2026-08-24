@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/code-review-evidence.schema.json",
+  "title": "Code Review Evidence Output",
+  "type": "object",
+  "required": ["candidate_digest", "findings", "residual_risks", "merge_posture"],
+  "properties": {
+    "candidate_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "findings": { "type": "array", "items": { "type": "object" } },
+    "test_gaps": { "type": "array", "items": { "type": ["string", "object"] } },
+    "residual_risks": { "type": "array", "items": { "type": ["string", "object"] } },
+    "merge_posture": { "type": "string", "enum": ["approve", "request_changes", "block"] }
+  },
+  "additionalProperties": true
+}

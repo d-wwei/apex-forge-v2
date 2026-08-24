@@ -1,0 +1,167 @@
+{
+  "task_id": "agent-recall--bug-fix",
+  "task_digest": "5703822a836d28d95b994a9585f4132b9096d947e57a288e4b0e7d4276d2a470",
+  "repository": "agent-recall",
+  "scenario": "bug-fix",
+  "mode": "plugin-kernel",
+  "candidate_digest": "6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 64354,
+    "cost": 79000,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 1,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "362bd78657a4f346af7218a571ab2698303ffb2a",
+    "runtime_hash": "528e8b02a687efafd5236ab0db47910b4b782885fd3facc93f7df7678ff12ea1",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "d00d8aca26505e91e5fb87e8f2a97cfffe4e24aaae5b9242a39b1015f12d87fd",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--bug-fix--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--bug-fix--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--bug-fix--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--bug-fix--plugin-kernel/codex-home/sessions/2026/08/21/rollout-2026-08-21T22-38-33-01a024c2-5fbc-72c3-9faa-0605bc3fbc87.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--bug-fix--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--bug-fix--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--bug-fix--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--bug-fix--plugin-kernel/codex-home/sessions/2026/08/21/rollout-2026-08-21T22-38-33-01a024c2-5fbc-72c3-9faa-0605bc3fbc87.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--bug-fix--plugin-kernel/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "74cd81489d24fc39ec1c4f015c7bf99702d4838cd45f3023389c14987c18135a",
+      "b17764505fc97c98c0bd2cc7de57cf08386b8a85b5118d5346c9a57acaf2cdf4",
+      "3b515f9f1055aada1cb38ae98672c13c93d078584f6e76e581612d7153456a45",
+      "3bdec17adb398441c5413b0754c11d38269fb0a7305f0a5077c3be7da58b6b15",
+      "f9b8dd08542455ed83281f24af0828ee64c6b50f7922402c1f1738c1ffda3ac9"
+    ]
+  },
+  "evidence": {
+    "task_digest": "5703822a836d28d95b994a9585f4132b9096d947e57a288e4b0e7d4276d2a470",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a024c2-5fbc-72c3-9faa-0605bc3fbc87",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Restored conservative upward token estimation and added coverage for fractional and exact boundaries.",
+      "tests": [
+        {
+          "command": "bun test tests/context/token-calculator.test.ts",
+          "status": "pass",
+          "detail": "20 tests passed, 0 failed, 33 assertions."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "src/services/context/TokenCalculator.ts",
+        "tests/context/token-calculator.test.ts"
+      ],
+      "review": {
+        "claims": [
+          "Observation token estimates now use Math.ceil.",
+          "Fractional estimates round upward while exact integer boundaries remain unchanged."
+        ],
+        "uncertainties": [],
+        "acceptance_mapping": [
+          {
+            "criterion": "Restore conservative upward rounding",
+            "status": "supported"
+          },
+          {
+            "criterion": "Prove fractional counts round up",
+            "status": "supported"
+          },
+          {
+            "criterion": "Preserve exact-boundary behavior",
+            "status": "supported"
+          }
+        ],
+        "findings": [
+          "No blocking findings."
+        ],
+        "residual_risks": [],
+        "merge_posture": "approve"
+      }
+    },
+    "acceptance": [
+      {
+        "command": "bun test tests/context/token-calculator.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 73,
+        "stdout_tail": "bun test v1.3.11 (af24e281)\n",
+        "stderr_tail": "\ntests/context/token-calculator.test.ts:\n(pass) TokenCalculator > CHARS_PER_TOKEN_ESTIMATE constant > should be 4 characters per token\n(pass) TokenCalculator > calculateObservationTokens > should return 0 for an observation with no content [0.08ms]\n(pass) TokenCalculator > calculateObservationTokens > should estimate tokens based on title length [0.04ms]\n(pass) TokenCalculator > calculateObservationTokens > should estimate tokens based on subtitle length\n(pass) TokenCalculator > calculateObservationTokens > should estimate tokens based on narrative length\n(pass) TokenCalculator > calculateObservationTokens > should estimate tokens based on facts JSON length\n(pass) TokenCalculator > calculateObservationTokens > should combine all fields for total token estimate\n(pass) TokenCalculator > calculateObservationTokens > should handle large observations correctly\n(pass) TokenCalculator > calculateObservationTokens > should round up fractional tokens without changing exact boundaries [0.01ms]\n(pass) TokenCalculator > calculateTokenEconomics > should return zeros for empty observations array [0.01ms]\n(pass) TokenCalculator > calculateTokenEconomics > should count total observations [0.05ms]\n(pass) TokenCalculator > calculateTokenEconomics > should sum read tokens from all observations [0.06ms]\n(pass) TokenCalculator > calculateTokenEconomics > should sum discovery tokens from all observations [0.04ms]\n(pass) TokenCalculator > calculateTokenEconomics > should handle null discovery_tokens as 0 [0.02ms]\n(pass) TokenCalculator > calculateTokenEconomics > should calculate savings as discovery minus read tokens [0.02ms]\n(pass) TokenCalculator > calculateTokenEconomics > should calculate savings percent correctly\n(pass) TokenCalculator > calculateTokenEconomics > should return 0% savings when discovery tokens is 0 [0.01ms]\n(pass) TokenCalculator > calculateTokenEconomics > should handle negative savings correctly [0.01ms]\n(pass) TokenCalculator > calculateTokenEconomics > should round savings percent to nearest integer [0.01ms]\n(pass) TokenCalculator > calculateTokenEconomics > should aggregate correctly with multiple observations [0.01ms]\n\n 20 pass\n 0 fail\n 33 expect() calls\nRan 20 tests across 1 file. [34.00ms]\n"
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "bun -e 'import { calculateObservationTokens } from \"./src/services/context/TokenCalculator.ts\"; const fractional=calculateObservationTokens({title:\"abc\",facts:[]}); const exact=calculateObservationTokens({title:\"ab\",facts:[]}); if(fractional!==2||exact!==1) process.exit(1)'",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 49,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      },
+      {
+        "command": "bun test tests/context/token-calculator.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 60,
+        "stdout_tail": "bun test v1.3.11 (af24e281)\n",
+        "stderr_tail": "\ntests/context/token-calculator.test.ts:\n(pass) TokenCalculator > CHARS_PER_TOKEN_ESTIMATE constant > should be 4 characters per token\n(pass) TokenCalculator > calculateObservationTokens > should return 0 for an observation with no content [0.27ms]\n(pass) TokenCalculator > calculateObservationTokens > should estimate tokens based on title length [0.01ms]\n(pass) TokenCalculator > calculateObservationTokens > should estimate tokens based on subtitle length\n(pass) TokenCalculator > calculateObservationTokens > should estimate tokens based on narrative length\n(pass) TokenCalculator > calculateObservationTokens > should estimate tokens based on facts JSON length [0.01ms]\n(pass) TokenCalculator > calculateObservationTokens > should combine all fields for total token estimate [0.03ms]\n(pass) TokenCalculator > calculateObservationTokens > should handle large observations correctly [0.02ms]\n(pass) TokenCalculator > calculateObservationTokens > should round up fractional tokens without changing exact boundaries [0.05ms]\n(pass) TokenCalculator > calculateTokenEconomics > should return zeros for empty observations array [0.05ms]\n(pass) TokenCalculator > calculateTokenEconomics > should count total observations [0.09ms]\n(pass) TokenCalculator > calculateTokenEconomics > should sum read tokens from all observations [0.01ms]\n(pass) TokenCalculator > calculateTokenEconomics > should sum discovery tokens from all observations [0.02ms]\n(pass) TokenCalculator > calculateTokenEconomics > should handle null discovery_tokens as 0 [0.01ms]\n(pass) TokenCalculator > calculateTokenEconomics > should calculate savings as discovery minus read tokens [0.06ms]\n(pass) TokenCalculator > calculateTokenEconomics > should calculate savings percent correctly [0.02ms]\n(pass) TokenCalculator > calculateTokenEconomics > should return 0% savings when discovery tokens is 0 [0.02ms]\n(pass) TokenCalculator > calculateTokenEconomics > should handle negative savings correctly [0.01ms]\n(pass) TokenCalculator > calculateTokenEconomics > should round savings percent to nearest integer [0.01ms]\n(pass) TokenCalculator > calculateTokenEconomics > should aggregate correctly with multiple observations [0.02ms]\n\n 20 pass\n 0 fail\n 33 expect() calls\nRan 20 tests across 1 file. [24.00ms]\n"
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/services/context/TokenCalculator.ts",
+        "tests/context/token-calculator.test.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": true,
+      "evidence_score": 1,
+      "run_ids": [
+        "run-mt3216p8-002fd5e0"
+      ],
+      "done_run_ids": [
+        "run-mt3216p8-002fd5e0"
+      ],
+      "fully_closed_run_ids": [
+        "run-mt3216p8-002fd5e0"
+      ],
+      "active_runs": [],
+      "candidate_chain_equal": true,
+      "verification_ref": ".apex-v2/runs/run-mt3216p8-002fd5e0/verification-report.json",
+      "review_ref": ".apex-v2/runs/run-mt3216p8-002fd5e0/review-report.json",
+      "integration_ref": ".apex-v2/runs/run-mt3216p8-002fd5e0/integration-report.json",
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "e1ecace27ed0d1ed40e82a96220211234248cf711e444b7b7a9f2399ad4d505c",
+        "replay_hash": "e1ecace27ed0d1ed40e82a96220211234248cf711e444b7b7a9f2399ad4d505c",
+        "hash_equal": true
+      }
+    }
+  }
+}

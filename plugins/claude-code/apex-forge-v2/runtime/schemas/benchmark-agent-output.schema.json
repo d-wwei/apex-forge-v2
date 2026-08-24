@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/benchmark-agent-output.schema.json",
+  "title": "Apex Forge Product Benchmark Agent Output",
+  "type": "object",
+  "required": ["verdict", "summary", "tests", "risks", "evidence_refs", "review"],
+  "properties": {
+    "verdict": {
+      "type": "string",
+      "enum": ["pass", "fail", "blocked"]
+    },
+    "summary": { "type": "string", "minLength": 1 },
+    "tests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["command", "status", "detail"],
+        "properties": {
+          "command": { "type": "string", "minLength": 1 },
+          "status": {
+            "type": "string",
+            "enum": ["pass", "fail", "skipped"]
+          },
+          "detail": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "risks": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "review": {
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "claims",
+            "uncertainties",
+            "acceptance_mapping",
+            "findings",
+            "residual_risks",
+            "merge_posture"
+          ],
+          "properties": {
+            "claims": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "uncertainties": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "acceptance_mapping": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": ["criterion", "status"],
+                "properties": {
+                  "criterion": { "type": "string", "minLength": 1 },
+                  "status": {
+                    "type": "string",
+                    "enum": ["supported", "partial", "unverified"]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "findings": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "residual_risks": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "merge_posture": {
+              "type": "string",
+              "enum": ["approve", "block", "conditional"]
+            }
+          },
+          "additionalProperties": false
+        },
+        { "type": "null" }
+      ]
+    }
+  },
+  "additionalProperties": false
+}

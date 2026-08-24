@@ -1,0 +1,20 @@
+{
+  "schema_version": "v0",
+  "benchmark_id": "capability-absorption-v1",
+  "capability_count": 21,
+  "gates": {
+    "routing_cases_min": 105,
+    "evidence_cases_min": 147,
+    "domain_hidden_cases_min": 21,
+    "hidden_defect_recall": 1,
+    "false_positive_rate": 0,
+    "using_skill_max_words": 2500,
+    "protocol_max_words": 1200,
+    "public_skill_count": 1
+  },
+  "notes": [
+    "The deterministic ablation measures the governance value of capability routing and evidence gates.",
+    "It does not replace same-provider/model live product benchmarking for wall-time or token claims.",
+    "Environment-dependent capabilities remain bundled until separate live certification evidence exists."
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/migration-safety-evidence.schema.json",
+  "title": "Migration Safety Evidence Output",
+  "type": "object",
+  "required": ["source_version", "target_version", "preconditions", "dry_run", "backup", "forward_steps", "rollback_steps", "idempotency", "replay_or_reconcile", "data_diff"],
+  "properties": {
+    "source_version": { "type": "string", "minLength": 1 },
+    "target_version": { "type": "string", "minLength": 1 },
+    "preconditions": { "type": "array", "items": { "type": ["string", "object"] } },
+    "dry_run": { "type": ["object", "string"] },
+    "backup": { "type": ["object", "string"] },
+    "forward_steps": { "type": "array", "items": { "type": ["string", "object"] }, "minItems": 1 },
+    "rollback_steps": { "type": "array", "items": { "type": ["string", "object"] }, "minItems": 1 },
+    "idempotency": { "type": ["object", "string"] },
+    "replay_or_reconcile": { "type": ["object", "string"] },
+    "data_diff": { "type": ["array", "object"] }
+  },
+  "additionalProperties": true
+}

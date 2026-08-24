@@ -1,0 +1,164 @@
+{
+  "task_id": "agent-recall--parallel",
+  "task_digest": "4135267038a8c12f82f94b4904bf6f85e3acd2b4fb26e545a0bd98ca5db79620",
+  "repository": "agent-recall",
+  "scenario": "parallel",
+  "mode": "plugin-kernel",
+  "candidate_digest": "6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 2110630,
+    "cost": 5714744,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 1,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "362bd78657a4f346af7218a571ab2698303ffb2a",
+    "runtime_hash": "528e8b02a687efafd5236ab0db47910b4b782885fd3facc93f7df7678ff12ea1",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "d00d8aca26505e91e5fb87e8f2a97cfffe4e24aaae5b9242a39b1015f12d87fd",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--parallel--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--parallel--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--parallel--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--parallel--plugin-kernel/codex-home/sessions/2026/08/21/rollout-2026-08-21T23-54-31-01a02507-ec7f-7661-8caf-5d16d60d4e69.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--parallel--plugin-kernel/execution-2.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--parallel--plugin-kernel/process-2.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--parallel--plugin-kernel/process-2.stderr.log"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--parallel--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--parallel--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--parallel--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--parallel--plugin-kernel/codex-home/sessions/2026/08/21/rollout-2026-08-21T23-54-31-01a02507-ec7f-7661-8caf-5d16d60d4e69.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--parallel--plugin-kernel/execution-2.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--parallel--plugin-kernel/process-2.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--parallel--plugin-kernel/process-2.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--parallel--plugin-kernel/agent-output-2.json"
+    ],
+    "artifact_hashes": [
+      "86f7dc1145db2c86bffb5a50c124588b45c8010a4131c2b095f5a44926f2da91",
+      "7e13c6ec3202fe3d3dff2f1b2f85b1d62f88fd337af06732c583f7789b26dfa3",
+      "0a62df13dea5d177936407147eb9b33871e16f44c32dc24eadd8dacbd3628398",
+      "eed18ab3f922196eca1e8f1cd90fd5349edfa7ef2742bfc7660917fd3b0ea9c8",
+      "db54866183571a18584aa28df0555ffe0dc84329a2548770b0902609773aeff7",
+      "7904d1f30d15b31ea6a17c70fd1503ebeb7df4f481e6f2c8beb697178fa4a2b7",
+      "0e50f5ec00e2e852c58948d036a6fdb630ee77d76fb88d9ae93ac9f8bb9131e2",
+      "2d3f619b1602e2c705b76f2d5422a1ccecf1319ffab775d42feeb5b94ac638e9"
+    ]
+  },
+  "evidence": {
+    "task_digest": "4135267038a8c12f82f94b4904bf6f85e3acd2b4fb26e545a0bd98ca5db79620",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a02507-ec7f-7661-8caf-5d16d60d4e69",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Implemented CRLF/horizontal-whitespace Mermaid fence support and PID 0 no-kill regression coverage. Kernel run completed and merged.",
+      "tests": [
+        {
+          "command": "bun test tests/services/compilation/response-parser.test.ts tests/supervisor/process-registry.test.ts",
+          "status": "pass",
+          "detail": "41 passed, 0 failed, 98 expectations against the integrated workspace."
+        }
+      ],
+      "risks": [
+        "Tests emit unrelated, non-fatal logger EPERM warnings."
+      ],
+      "evidence_refs": [
+        "artifact-mt3dmk52-5b41d818",
+        "artifact-mt3dmtg2-67cba554",
+        "artifact-mt3dn213-2603899d",
+        "reconcile-mt3do3py-228383f6"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "bun test tests/services/compilation/response-parser.test.ts tests/supervisor/process-registry.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 64,
+        "stdout_tail": "bun test v1.3.11 (af24e281)\n",
+        "stderr_tail": "e\n(pass) supervisor ProcessRegistry > isPidAlive > treats an impossibly high PID as dead [0.19ms]\n(pass) supervisor ProcessRegistry > isPidAlive > treats negative PID as dead\n(pass) supervisor ProcessRegistry > isPidAlive > rejects PID 0 without invoking process.kill\n(pass) supervisor ProcessRegistry > isPidAlive > treats non-integer PID as dead [0.02ms]\n(pass) supervisor ProcessRegistry > persistence > persists entries to disk and reloads them on initialize [1.31ms]\n(pass) supervisor ProcessRegistry > persistence > prunes dead processes on initialize [1.64ms]\n(pass) supervisor ProcessRegistry > persistence > handles corrupted registry file gracefully [0.94ms]\n(pass) supervisor ProcessRegistry > register and unregister > register adds an entry retrievable by getAll [0.79ms]\n(pass) supervisor ProcessRegistry > register and unregister > unregister removes an entry [0.90ms]\n(pass) supervisor ProcessRegistry > register and unregister > unregister is a no-op for unknown IDs [0.87ms]\n(pass) supervisor ProcessRegistry > getAll > returns records sorted by startedAt ascending [0.84ms]\n(pass) supervisor ProcessRegistry > getAll > returns empty array when no entries exist [0.54ms]\n(pass) supervisor ProcessRegistry > getBySession > filters records by session id [0.78ms]\n(pass) supervisor ProcessRegistry > getBySession > returns empty array when no processes match the session [0.45ms]\n(pass) supervisor ProcessRegistry > getBySession > matches string and numeric session IDs by string comparison [0.48ms]\n(pass) supervisor ProcessRegistry > pruneDeadEntries > removes entries with dead PIDs and preserves live ones [0.89ms]\n(pass) supervisor ProcessRegistry > pruneDeadEntries > returns 0 when all entries are alive [0.58ms]\n(pass) supervisor ProcessRegistry > pruneDeadEntries > persists changes to disk after pruning [0.71ms]\n(pass) supervisor ProcessRegistry > clear > removes all entries [0.81ms]\n(pass) supervisor ProcessRegistry > createProcessRegistry > creates an isolated instance with a custom path [1.00ms]\n(pass) supervisor ProcessRegistry > reapSession > unregisters dead processes for the given session [1.20ms]\n(pass) supervisor ProcessRegistry > reapSession > returns 0 when no processes match the session [0.54ms]\n\ntests/services/compilation/response-parser.test.ts:\n(pass) parseSynthesisResponse > extracts content with Conflicts and Superseded sections removed\n(pass) parseSynthesisResponse > extracts conflicts with correct oldId and newId [0.43ms]\n(pass) parseSynthesisResponse > extracts conflict descriptions containing both quoted values [0.02ms]\n(pass) parseSynthesisResponse > extracts superseded entries with correct oldId, newId and reason [0.01ms]\n(pass) parseSynthesisResponse > returns empty arrays when Conflicts section is absent [0.02ms]\n(pass) parseSynthesisResponse > returns empty arrays when Superseded section is absent [0.02ms]\n(pass) parseSynthesisResponse > returns empty arrays when both Conflicts and Superseded sections are absent [0.01ms]\n(pass) parseSynthesisResponse > treats completely plain text (no sections at all) as raw content with empty arrays\n(pass) parseSynthesisResponse > handles empty string gracefully\n(pass) parseSynthesisResponse > skips malformed conflict lines without throwing\n(pass) parseSynthesisResponse > skips malformed superseded lines without throwing [0.01ms]\n(pass) parseMermaidResponse > extracts a single mermaid code block [0.01ms]\n(pass) parseMermaidResponse > extracts multiple mermaid code blocks [0.04ms]\n(pass) parseMermaidResponse > extracts a mermaid code block with CRLF line endings [0.02ms]\n(pass) parseMermaidResponse > allows horizontal whitespace after the mermaid fence\n(pass) parseMermaidResponse > returns empty array when no mermaid blocks are found\n(pass) parseMermaidResponse > returns empty array for empty string\n(pass) parseMermaidResponse > strips the ```mermaid wrapper and returns only the inner code [0.01ms]\n\n 41 pass\n 0 fail\n 98 expect() calls\nRan 41 tests across 2 files. [34.00ms]\n"
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "bun -e 'import { parseMermaidResponse } from \"./src/services/compilation/ResponseParser.ts\"; const out=parseMermaidResponse(\"```mermaid\\r\\ngraph LR\\r\\nA-->B\\r\\n```\"); if(out.length!==1||out[0]!==\"graph LR\\r\\nA-->B\") process.exit(1);'",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 29,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      },
+      {
+        "command": "bun test tests/supervisor/process-registry.test.ts --test-name-pattern 'PID 0'",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 39,
+        "stdout_tail": "bun test v1.3.11 (af24e281)\n",
+        "stderr_tail": "\ntests/supervisor/process-registry.test.ts:\n(pass) supervisor ProcessRegistry > isPidAlive > rejects PID 0 without invoking process.kill\n\n 1 pass\n 22 filtered out\n 0 fail\n 2 expect() calls\nRan 1 test across 1 file. [14.00ms]\n"
+      },
+      {
+        "command": "bun test tests/services/compilation/response-parser.test.ts tests/supervisor/process-registry.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 57,
+        "stdout_tail": "bun test v1.3.11 (af24e281)\n",
+        "stderr_tail": "supervisor ProcessRegistry > isPidAlive > treats an impossibly high PID as dead [0.02ms]\n(pass) supervisor ProcessRegistry > isPidAlive > treats negative PID as dead [0.03ms]\n(pass) supervisor ProcessRegistry > isPidAlive > rejects PID 0 without invoking process.kill\n(pass) supervisor ProcessRegistry > isPidAlive > treats non-integer PID as dead [0.03ms]\n(pass) supervisor ProcessRegistry > persistence > persists entries to disk and reloads them on initialize [1.37ms]\n(pass) supervisor ProcessRegistry > persistence > prunes dead processes on initialize [1.57ms]\n(pass) supervisor ProcessRegistry > persistence > handles corrupted registry file gracefully [0.92ms]\n(pass) supervisor ProcessRegistry > register and unregister > register adds an entry retrievable by getAll [0.78ms]\n(pass) supervisor ProcessRegistry > register and unregister > unregister removes an entry [0.93ms]\n(pass) supervisor ProcessRegistry > register and unregister > unregister is a no-op for unknown IDs [0.85ms]\n(pass) supervisor ProcessRegistry > getAll > returns records sorted by startedAt ascending [0.97ms]\n(pass) supervisor ProcessRegistry > getAll > returns empty array when no entries exist [0.62ms]\n(pass) supervisor ProcessRegistry > getBySession > filters records by session id [0.87ms]\n(pass) supervisor ProcessRegistry > getBySession > returns empty array when no processes match the session [0.66ms]\n(pass) supervisor ProcessRegistry > getBySession > matches string and numeric session IDs by string comparison [0.67ms]\n(pass) supervisor ProcessRegistry > pruneDeadEntries > removes entries with dead PIDs and preserves live ones [0.91ms]\n(pass) supervisor ProcessRegistry > pruneDeadEntries > returns 0 when all entries are alive [0.66ms]\n(pass) supervisor ProcessRegistry > pruneDeadEntries > persists changes to disk after pruning [0.88ms]\n(pass) supervisor ProcessRegistry > clear > removes all entries [0.85ms]\n(pass) supervisor ProcessRegistry > createProcessRegistry > creates an isolated instance with a custom path [1.10ms]\n(pass) supervisor ProcessRegistry > reapSession > unregisters dead processes for the given session [1.27ms]\n(pass) supervisor ProcessRegistry > reapSession > returns 0 when no processes match the session [0.56ms]\n\ntests/services/compilation/response-parser.test.ts:\n(pass) parseSynthesisResponse > extracts content with Conflicts and Superseded sections removed [0.28ms]\n(pass) parseSynthesisResponse > extracts conflicts with correct oldId and newId [0.17ms]\n(pass) parseSynthesisResponse > extracts conflict descriptions containing both quoted values [0.02ms]\n(pass) parseSynthesisResponse > extracts superseded entries with correct oldId, newId and reason [0.01ms]\n(pass) parseSynthesisResponse > returns empty arrays when Conflicts section is absent [0.02ms]\n(pass) parseSynthesisResponse > returns empty arrays when Superseded section is absent [0.02ms]\n(pass) parseSynthesisResponse > returns empty arrays when both Conflicts and Superseded sections are absent\n(pass) parseSynthesisResponse > treats completely plain text (no sections at all) as raw content with empty arrays\n(pass) parseSynthesisResponse > handles empty string gracefully\n(pass) parseSynthesisResponse > skips malformed conflict lines without throwing\n(pass) parseSynthesisResponse > skips malformed superseded lines without throwing [0.01ms]\n(pass) parseMermaidResponse > extracts a single mermaid code block [0.01ms]\n(pass) parseMermaidResponse > extracts multiple mermaid code blocks [0.05ms]\n(pass) parseMermaidResponse > extracts a mermaid code block with CRLF line endings [0.02ms]\n(pass) parseMermaidResponse > allows horizontal whitespace after the mermaid fence\n(pass) parseMermaidResponse > returns empty array when no mermaid blocks are found [0.01ms]\n(pass) parseMermaidResponse > returns empty array for empty string\n(pass) parseMermaidResponse > strips the ```mermaid wrapper and returns only the inner code\n\n 41 pass\n 0 fail\n 98 expect() calls\nRan 41 tests across 2 files. [31.00ms]\n"
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/services/compilation/ResponseParser.ts",
+        "tests/services/compilation/response-parser.test.ts",
+        "tests/supervisor/process-registry.test.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": true,
+      "evidence_score": 1,
+      "run_ids": [
+        "run-mt34qwt5-c22915cc"
+      ],
+      "done_run_ids": [
+        "run-mt34qwt5-c22915cc"
+      ],
+      "fully_closed_run_ids": [
+        "run-mt34qwt5-c22915cc"
+      ],
+      "active_runs": [],
+      "candidate_chain_equal": true,
+      "verification_ref": ".apex-v2/runs/run-mt34qwt5-c22915cc/verification-report.json",
+      "review_ref": ".apex-v2/runs/run-mt34qwt5-c22915cc/review-report.json",
+      "integration_ref": ".apex-v2/runs/run-mt34qwt5-c22915cc/integration-report.json",
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "3f830fb6f175676881897759cd2da73322d2134b812e2c7e2fae8259c6e9d256",
+        "replay_hash": "3f830fb6f175676881897759cd2da73322d2134b812e2c7e2fae8259c6e9d256",
+        "hash_equal": true
+      }
+    }
+  }
+}

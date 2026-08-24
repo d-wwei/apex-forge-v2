@@ -1,0 +1,166 @@
+{
+  "task_id": "apex-manager--review-defect",
+  "task_digest": "6c85680592372fd6cd7fa3fe93f9440eb20e4d4bc2969bd59700f9a801a58c44",
+  "repository": "apex-manager",
+  "scenario": "review-defect",
+  "mode": "plugin-kernel",
+  "candidate_digest": "6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 1914896,
+    "cost": 7177540,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 1,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "2da4c45e9bc278590ff0a908bf7e6bbbc0966e12",
+    "runtime_hash": "528e8b02a687efafd5236ab0db47910b4b782885fd3facc93f7df7678ff12ea1",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "6caf5fd9c27e617037ffb967aa9ab17f539445ce8ec17069d6dc5d982e84fea7",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--review-defect--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--review-defect--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--review-defect--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--review-defect--plugin-kernel/codex-home/sessions/2026/08/21/rollout-2026-08-21T22-45-47-01a024c9-0026-7c20-884b-1a47c652a447.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--review-defect--plugin-kernel/execution-2.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--review-defect--plugin-kernel/process-2.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--review-defect--plugin-kernel/process-2.stderr.log"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--review-defect--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--review-defect--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--review-defect--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--review-defect--plugin-kernel/codex-home/sessions/2026/08/21/rollout-2026-08-21T22-45-47-01a024c9-0026-7c20-884b-1a47c652a447.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--review-defect--plugin-kernel/execution-2.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--review-defect--plugin-kernel/process-2.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--review-defect--plugin-kernel/process-2.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--review-defect--plugin-kernel/agent-output-2.json"
+    ],
+    "artifact_hashes": [
+      "07f8eec2907f305dcc7947a9c7520674550f204a4982c86d62c42571e3903e1a",
+      "ec59dd6b70b1860295088ae8cc6f5efab426837bfae88c07c9e3a81d118e2a41",
+      "c0b552343472ff83792f2c81c4f7a077bad4233ada1e939cd1483d7204140ce7",
+      "7f7c9bb695f1525f02a32786570cf35482ed2647d715da6a0e6709ccf4dab516",
+      "2b8397080f0724d847e6e0aee0523d2ac02fd831991c583e8442ce058c727aac",
+      "3ba65f69f5cb13e94e01912622955faa3a9affc0285510a3ef9f6becb1f7a54e",
+      "515ffc45a7a5c0ac3a3d00e533a86c36a9aaaf74218c93214588dd11e8a95c40",
+      "0fd6c0f3dbacf2be8445358f25a731f8ceadd755f5d4ff51fd139405cfe4eb87"
+    ]
+  },
+  "evidence": {
+    "task_digest": "6c85680592372fd6cd7fa3fe93f9440eb20e4d4bc2969bd59700f9a801a58c44",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a024c9-0026-7c20-884b-1a47c652a447",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Restored Authorization Bearer redaction for ':' and '=' separators while preserving prefixes and surrounding text. Kernel run completed and merged consistently.",
+      "tests": [
+        {
+          "command": "node --import tsx --test tests/daemon/notify.test.ts",
+          "status": "pass",
+          "detail": "7 tests passed."
+        },
+        {
+          "command": "npm run typecheck",
+          "status": "pass",
+          "detail": "TypeScript check passed."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "artifact-mt3db3sa-b87c4384",
+        "artifact-mt3db41v-08df4a88",
+        "artifact-mt3db4cs-40c02428",
+        "reconcile-mt3dbxgg-e5a72388"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "node --import tsx --test tests/daemon/notify.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 187,
+        "stdout_tail": "(node:86153) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n▶ notification queue\n  ✔ appendNotification creates file in .apex-manager/notifications/ (2.975792ms)\n  ✔ redacts secrets before persisting notifications (1.783959ms)\n  ✔ redacts Authorization Bearer values while preserving surrounding text (2.662875ms)\n  ✔ readPendingNotifications returns empty when no notifications (0.703834ms)\n  ✔ readPendingNotifications returns notifications in order (2.49275ms)\n  ✔ readPendingNotifications marks files as processed (1.838542ms)\n  ✔ readPendingNotifications does not return already-processed files (1.684959ms)\n✔ notification queue (14.614708ms)\nℹ tests 7\nℹ suites 1\nℹ pass 7\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 129.818042\n",
+        "stderr_tail": ""
+      },
+      {
+        "command": "npm run typecheck",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 599,
+        "stdout_tail": "\n> apex-manager@0.1.1 typecheck\n> tsc --noEmit\n\n",
+        "stderr_tail": ""
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "node --import tsx -e \"import {redactSecrets} from './src/utils/redact.ts'; for(const s of ['Authorization: Bearer secret.token-123','Authorization=Bearer abcDEF123+/=']){const r=redactSecrets(s); if(r.includes('secret.token-123')||r.includes('abcDEF123+/=')||!r.includes('[REDACTED]')) process.exit(1)}\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 102,
+        "stdout_tail": "",
+        "stderr_tail": "(node:86197) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      },
+      {
+        "command": "node --import tsx --test tests/daemon/notify.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 143,
+        "stdout_tail": "(node:86224) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n▶ notification queue\n  ✔ appendNotification creates file in .apex-manager/notifications/ (3.149ms)\n  ✔ redacts secrets before persisting notifications (1.826208ms)\n  ✔ redacts Authorization Bearer values while preserving surrounding text (2.820291ms)\n  ✔ readPendingNotifications returns empty when no notifications (0.820542ms)\n  ✔ readPendingNotifications returns notifications in order (2.91075ms)\n  ✔ readPendingNotifications marks files as processed (2.09675ms)\n  ✔ readPendingNotifications does not return already-processed files (1.916791ms)\n✔ notification queue (15.98975ms)\nℹ tests 7\nℹ suites 1\nℹ pass 7\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 94.2965\n",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/utils/redact.ts",
+        "tests/daemon/notify.test.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": true,
+      "evidence_score": 1,
+      "run_ids": [
+        "run-mt32aiu8-86c41fdd"
+      ],
+      "done_run_ids": [
+        "run-mt32aiu8-86c41fdd"
+      ],
+      "fully_closed_run_ids": [
+        "run-mt32aiu8-86c41fdd"
+      ],
+      "active_runs": [],
+      "candidate_chain_equal": true,
+      "verification_ref": ".apex-v2/runs/run-mt32aiu8-86c41fdd/verification-report.json",
+      "review_ref": ".apex-v2/runs/run-mt32aiu8-86c41fdd/review-report.json",
+      "integration_ref": ".apex-v2/runs/run-mt32aiu8-86c41fdd/integration-report.json",
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "c296e58c655a093d195eef69b7ee14fc0e22875ab309753d0c5610415e7f2af9",
+        "replay_hash": "c296e58c655a093d195eef69b7ee14fc0e22875ab309753d0c5610415e7f2af9",
+        "hash_equal": true
+      }
+    }
+  }
+}

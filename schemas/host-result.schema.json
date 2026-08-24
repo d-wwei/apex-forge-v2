@@ -15,6 +15,32 @@
     "summary": { "type": "string" },
     "artifact_refs": { "type": "array", "items": { "type": "string" } },
     "semantic_evidence_ref": { "type": ["string", "null"] },
+    "capability_evidence_refs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "capability_evidence_status": {
+      "type": "object",
+      "required": ["enforcement", "submitted", "missing"],
+      "properties": {
+        "enforcement": {
+          "type": "string",
+          "enum": ["shadow", "enforce"]
+        },
+        "submitted": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "uniqueItems": true
+        },
+        "missing": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
     "error": { "type": ["string", "null"] },
     "created_at": { "type": "string" }
   },

@@ -1,12 +1,13 @@
 # Apex Forge V2
 
 [![GitHub Release](https://img.shields.io/github/v/release/d-wwei/apex-forge-v2?include_prereleases&sort=semver)](https://github.com/d-wwei/apex-forge-v2/releases)
-[![Release Gate](https://img.shields.io/badge/release%20gate-16%2F16%20PASS-167d4d)](./planning/plugin-upgrade-execution-status.md)
-[![Product Benchmark](https://img.shields.io/badge/product%20benchmark-90%2F90%20PASS-167d4d)](./benchmarks/plugin-vs-v1/latest-evaluation.json)
-[![Tests](https://img.shields.io/badge/tests-263%2F263%20PASS-167d4d)](./planning/plugin-upgrade-execution-status.md)
+[![Product Benchmark](https://img.shields.io/badge/product%20benchmark-historical%2090%2F90-64748b)](./benchmarks/plugin-vs-v1/latest-evaluation.json)
 [![License](https://img.shields.io/badge/license-MIT-1f2937)](./LICENSE)
 
 **Agent Plugin 负责自然语言协作，Durable Kernel 负责状态、证据和交付真相。**
+
+> Agent 天生会遗忘、误判和过早宣布完成，所以研发系统必须把规则、事实、
+> 证据、权限和恢复机制做成不可绕过的工程结构。
 
 Apex Forge V2 是一个面向 coding Agent 的软件研发交付系统。它把需求、实现、
 验证、评审、审批、恢复和发布组织成可持久化、可审计、可恢复的项目级工作流，
@@ -16,8 +17,6 @@ Apex Forge V2 是一个面向 coding Agent 的软件研发交付系统。它把�
 platform-neutral Kernel、capability-based WorkerExecutor 和可选 Factory Mode。
 
 > Latest prerelease: [`v0.2.0-rc.1`](https://github.com/d-wwei/apex-forge-v2/releases/tag/v0.2.0-rc.1)
-> Verified Candidate:
-> `45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6`
 
 ## 为什么需要 Apex Forge
 
@@ -65,6 +64,8 @@ flowchart TD
     I --> B
 
     K --> D["ProjectState / PlanGraph / Risk / Audit / Usage"]
+    K --> MP["Method Pack + Cost Governor"]
+    K --> GD["Git Delivery + Checkout Owner"]
 ```
 
 ### 系统不变量
@@ -85,7 +86,7 @@ flowchart TD
 |---|---|---|
 | Interactive Cognitive | context、risk、design、review、status | 当前 Host Agent |
 | Interactive Patch | 普通低风险实现 | ActionWorkspace |
-| Factory | 长任务、并行、后台、可恢复执行 | Isolated sandbox/worktree |
+| Factory | critical、隔离、并行、后台、可恢复执行 | Isolated sandbox/worktree |
 | Operator | reconcile、诊断、迁移、发布 | 显式 CLI |
 
 正常用户路径不要求输入原始 Kernel CLI。CLI 是 operator/debug surface，不是主要
@@ -97,6 +98,10 @@ flowchart TD
 
 - `.apex-v2/` durable project state、events、artifacts、knowledge 和 risks；
 - intake、triage、roadmap、task-aware PlanGraph；
+- 可插拔 `quick`、`disciplined-tdd`、`phase-context`、`governed` Method Pack；
+- native/OpenSpec/Spec Kit 输入归一化，原 Spec checksum 可追溯；
+- per-route Cost Governor，预算超限不自动升级为更昂贵的 Factory；
+- Repo/Branch/Component/PR typed model 与 checkout ownership；
 - context、risk、design、implementation、tests、verification、review、integrate、learn；
 - quick route 与 full route；
 - partial pass、carry-forward、human acceptance 和 Risk Register；
@@ -125,6 +130,32 @@ flowchart TD
 - Codex、Claude、Gemini 和 generic OpenAI-compatible runner；
 - capability-based routing、retry、resume、fallback 和 cancellation；
 - session-bound usage、wall time、attempt 和 tool evidence。
+
+### 内部原子能力
+
+Plugin 默认只公开 `using-apex-forge`。Kernel 根据任务信号把 21 个原子能力绑定到
+现有 PlanGraph 节点，不为每个能力创建第二套状态机：
+
+- Core：engineering spec、source grounding、architecture、debug、TDD negative
+  control、incremental delivery、code review、security、high-risk review、test
+  strategy、documentation sync；
+- Conditional：frontend design、design-to-code、browser QA、mobile QA、
+  performance、migration safety、deploy/release；
+- Evolution：project audit、postmortem、simplification。
+
+每项能力都有版本、触发条件、typed input/output schema、持久化 invocation、
+protocol、预算、provenance、四重 lock 和 Capability Evidence。默认 rollout 是
+`shadow`，缺证据会被持久化但不阻塞；验证或迁移环境可设置
+`APEX_CAPABILITY_ENFORCEMENT_MODE=enforce`，required evidence 缺失时 fail closed。
+
+Browser、Mobile、Performance、Deploy 只声明为 `bundled`，默认不会创建执行 worker。
+提供方完成独立认证后，才可通过 `APEX_CAPABILITY_PROVIDERS` 显式启用，例如：
+
+```bash
+APEX_CAPABILITY_PROVIDERS=browser-qa,performance-validation
+```
+
+这不是 provider 安装命令，也不会把未验证平台升级成 `live_verified`。
 
 ### 资源保护
 
@@ -209,16 +240,24 @@ claude plugin install apex-forge-v2@apex-forge-local --scope user
 告诉我当前 Apex Forge 状态、阻塞项和待审批事项。
 ```
 
-Plugin 提供六个共享工作流：
+Plugin 默认只暴露一个 Skill：
 
 | Skill | 用途 |
 |---|---|
-| `using-apex-forge` | 入口和路由 |
-| `apex-forge-plan` | intake、风险、设计和 PlanGraph |
-| `apex-forge-execute` | Interactive/Factory 执行 |
-| `apex-forge-review` | Candidate-bound semantic review |
-| `apex-forge-ship` | approval、merge、learn 和 durable closeout |
-| `apex-forge-status` | 状态、恢复、风险和待办 |
+| `using-apex-forge` | 根据 durable state 路由 plan、execute、review、ship、status |
+
+五个生命周期工作流作为 package-private references 随插件打包，不进入默认 Skill
+discovery。迁移或回滚时可运行
+`APEX_PLUGIN_COMPAT_ALIASES=1 npm run build:plugin` 临时恢复旧六入口。
+
+## Capability 验证边界
+
+`npm run benchmark:capabilities` 当前执行 105 个 routing cases、168 个
+evidence/contract cases、21 个 domain hidden cases，并做 enabled/disabled
+deterministic ablation。它证明路由、证据 Gate 和隐藏缺陷拒绝逻辑有效，但不替代
+同 candidate、同模型、同 provider、同环境的真实 Agent token/wall-time benchmark。
+仓库中的历史 90/90 Product Benchmark 绑定旧 candidate，不能用于声称本次能力吸收
+降低了 token 或耗时。
 
 ## Operator CLI
 
@@ -229,9 +268,14 @@ CLI 用于管理、诊断和发布：
 node src/apex-v2.mjs init --project . --name "My Project"
 node src/apex-v2.mjs status --project .
 
+# 导入既有 Spec
+node src/apex-v2.mjs intake import-spec --project . --format openspec --path openspec/changes/example
+
 # 校验和 reconcile
 npm run validate
 npm run check:schemas
+node src/apex-v2.mjs capability verify
+npm run capability:lock
 node src/apex-v2.mjs project reconcile --project . --apply
 
 # 查看 Host actions
@@ -240,14 +284,16 @@ node src/apex-v2.mjs host actions --project . --host-id codex-host
 # 生成和验证 Release Candidate
 npm run release:candidate
 npm run release:validate-candidate
+npm run benchmark:capabilities
 
 # 执行完整发布 Gate
 npm run release:verify
 ```
 
-## 已验证的发布证据
+## 历史发布证据
 
-`v0.2.0-rc.1` 通过：
+下列数字属于已发布的历史 `v0.2.0-rc.1`，不代表当前工作树或尚未冻结的新
+candidate：
 
 | Gate | 结果 |
 |---|---:|

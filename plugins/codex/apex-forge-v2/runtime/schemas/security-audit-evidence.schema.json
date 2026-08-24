@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/security-audit-evidence.schema.json",
+  "title": "Security Audit Evidence Output",
+  "type": "object",
+  "required": ["scope", "threat_model", "findings", "residual_risks", "merge_posture"],
+  "properties": {
+    "scope": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 },
+    "threat_model": { "type": "array", "items": { "type": ["string", "object"] }, "minItems": 1 },
+    "findings": { "type": "array", "items": { "type": "object" } },
+    "scan_evidence": { "type": "array", "items": { "type": ["string", "object"] } },
+    "residual_risks": { "type": "array", "items": { "type": ["string", "object"] } },
+    "merge_posture": { "type": "string", "enum": ["approve", "request_changes", "block"] }
+  },
+  "additionalProperties": true
+}

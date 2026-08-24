@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/capability-definition.schema.json",
+  "title": "Apex Forge V2 Capability Definition",
+  "type": "object",
+  "required": [
+    "capability_id",
+    "version",
+    "category",
+    "title",
+    "description",
+    "protocol_ref",
+    "input_contract",
+    "output_contract",
+    "execution_class",
+    "required_host_capabilities",
+    "allowed_tools",
+    "forbidden_actions",
+    "default_budget",
+    "availability",
+    "certification",
+    "enabled",
+    "provenance"
+  ],
+  "properties": {
+    "capability_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?$"
+    },
+    "category": {
+      "type": "string",
+      "enum": ["core", "conditional", "evolution"]
+    },
+    "title": { "type": "string", "minLength": 1 },
+    "description": { "type": "string", "minLength": 1 },
+    "protocol_ref": { "type": "string", "minLength": 1 },
+    "protocol_path": { "type": "string", "minLength": 1 },
+    "input_contract": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "output_contract": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "execution_class": {
+      "type": "string",
+      "enum": ["cognitive", "workspace_patch", "deterministic_check", "human_decision"]
+    },
+    "required_host_capabilities": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+      "uniqueItems": true
+    },
+    "allowed_tools": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+      "uniqueItems": true
+    },
+    "forbidden_actions": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+      "uniqueItems": true
+    },
+    "default_budget": {
+      "type": "object",
+      "required": ["max_wall_minutes", "max_agent_turns", "max_tool_calls"],
+      "properties": {
+        "max_wall_minutes": { "type": "number", "exclusiveMinimum": 0 },
+        "max_agent_turns": { "type": "integer", "minimum": 1 },
+        "max_tool_calls": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "availability": {
+      "type": "string",
+      "enum": ["portable", "host_dependent", "environment_dependent"]
+    },
+    "certification": {
+      "type": "string",
+      "enum": ["planned", "bundled", "conformant", "live_verified", "portable_verified"]
+    },
+    "enabled": { "type": "boolean" },
+    "provenance": {
+      "type": "object",
+      "required": ["source_name", "source_sha256", "license", "absorption_policy"],
+      "properties": {
+        "source_name": { "type": "string", "minLength": 1 },
+        "source_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "license": {
+          "type": "string",
+          "enum": ["MIT", "clean-room-no-copy", "design-reference-only"]
+        },
+        "absorption_policy": {
+          "type": "string",
+          "enum": ["OWNED", "MIT", "REWRITE_ONLY"]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

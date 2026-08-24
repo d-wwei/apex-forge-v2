@@ -32,7 +32,8 @@ export function buildWorkerSummary(root, worker, record = false) {
       usage: result.usage || {
         input_tokens: null,
         output_tokens: null,
-        tool_calls: null
+        tool_calls: null,
+        agent_turns: null
       },
       summary: result.summary || ""
     })),
@@ -43,11 +44,13 @@ export function buildWorkerSummary(root, worker, record = false) {
       input_tokens: addNullable(total.input_tokens, result.usage?.input_tokens),
       output_tokens: addNullable(total.output_tokens, result.usage?.output_tokens),
       tool_calls: addNullable(total.tool_calls, result.usage?.tool_calls),
+      agent_turns: addNullable(total.agent_turns, result.usage?.agent_turns),
       duration_ms: total.duration_ms + (result.duration_ms || 0)
     }), {
       input_tokens: null,
       output_tokens: null,
       tool_calls: null,
+      agent_turns: null,
       duration_ms: 0
     })
   };

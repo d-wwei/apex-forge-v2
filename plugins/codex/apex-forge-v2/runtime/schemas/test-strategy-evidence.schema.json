@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/test-strategy-evidence.schema.json",
+  "title": "Test Strategy Evidence Output",
+  "type": "object",
+  "required": ["test_mode", "affected_surfaces", "selected_test_groups", "excluded_groups", "selection_rationale", "stop_conditions"],
+  "properties": {
+    "test_mode": { "type": "string", "enum": ["targeted", "blackbox", "whitebox", "hybrid", "full"] },
+    "affected_surfaces": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 },
+    "selected_test_groups": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 },
+    "excluded_groups": { "type": "array", "items": { "type": "string" } },
+    "selection_rationale": { "type": "string", "minLength": 1 },
+    "environment": { "type": ["object", "string"] },
+    "known_issues": { "type": "array", "items": { "type": ["string", "object"] } },
+    "stop_conditions": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 }
+  },
+  "additionalProperties": true
+}

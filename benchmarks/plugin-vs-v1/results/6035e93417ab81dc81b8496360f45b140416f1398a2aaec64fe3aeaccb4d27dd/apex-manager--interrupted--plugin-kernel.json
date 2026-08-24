@@ -1,0 +1,168 @@
+{
+  "task_id": "apex-manager--interrupted",
+  "task_digest": "068f41d86647f4ef59cdad2d646111baba728a3518945f29a6a6fa10c154febe",
+  "repository": "apex-manager",
+  "scenario": "interrupted",
+  "mode": "plugin-kernel",
+  "candidate_digest": "6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 1068570,
+    "cost": 8330131,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 1,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "2da4c45e9bc278590ff0a908bf7e6bbbc0966e12",
+    "runtime_hash": "528e8b02a687efafd5236ab0db47910b4b782885fd3facc93f7df7678ff12ea1",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "6caf5fd9c27e617037ffb967aa9ab17f539445ce8ec17069d6dc5d982e84fea7",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--interrupted--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--interrupted--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--interrupted--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--interrupted--plugin-kernel/codex-home/sessions/2026/08/21/rollout-2026-08-21T22-31-51-01a024bc-3d6d-7412-8a36-95687776837e.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--interrupted--plugin-kernel/execution-2.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--interrupted--plugin-kernel/process-2.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--interrupted--plugin-kernel/process-2.stderr.log"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--interrupted--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--interrupted--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--interrupted--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--interrupted--plugin-kernel/codex-home/sessions/2026/08/21/rollout-2026-08-21T22-31-51-01a024bc-3d6d-7412-8a36-95687776837e.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--interrupted--plugin-kernel/execution-2.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--interrupted--plugin-kernel/process-2.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--interrupted--plugin-kernel/process-2.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--interrupted--plugin-kernel/agent-output-2.json"
+    ],
+    "artifact_hashes": [
+      "0f30a8a47f6ba567f13d319f61401ca03c15d33ba21dbe384580a8c63a1c4703",
+      "0c3675c7fea8e2da062f4268bf90e9c5a7dddf5dafbd83caf9a3683efc6da2c9",
+      "c36fa60214e9051cd9234126beeb04a3ad0b278b0d2c76c8571ea13862b32ce3",
+      "9ebef411ac220161bd7160801c4147a05f86bdef25e0e854f78d7d532479678d",
+      "256e1b10a19be8cbfff0650e00d38025efdb346a2af0f0141582c960735b2b7a",
+      "0d3eb9e0f6e6eec76d676d1500ce0f81de5c38305f77d00928815a541b321b81",
+      "a2dd578193c8709cf3a7283217d590c664e2438237ce4755f94b7cd225248fb7",
+      "af068faec7a33f29bbd386b1cef7fb925239b000c5414b275fe240910a5cb15b"
+    ]
+  },
+  "evidence": {
+    "task_digest": "068f41d86647f4ef59cdad2d646111baba728a3518945f29a6a6fa10c154febe",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a024bc-3d6d-7412-8a36-95687776837e",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Added `working` busy detection for codex, gemini, and opencode plus a messaging regression. Claude behavior is unchanged. Apex Forge run completed with consistent durable state.",
+      "tests": [
+        {
+          "command": "node --import tsx --test tests/worker/messages.test.ts",
+          "status": "pass",
+          "detail": "7/7 tests passed."
+        },
+        {
+          "command": "npm run typecheck",
+          "status": "pass",
+          "detail": "TypeScript check passed."
+        }
+      ],
+      "risks": [
+        "Test execution emits a non-blocking Node DEP0205 deprecation warning."
+      ],
+      "evidence_refs": [
+        "artifact-mt3d4kfm-02e2b893",
+        "artifact-mt3d4ko3-fd0fd63a",
+        "artifact-mt3d4sci-1cb6d527",
+        "reconcile-mt3d9cdz-3e2f3110"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "node --import tsx --test tests/worker/messages.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 693,
+        "stdout_tail": "(node:84711) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n▶ structured worker messaging\n  ✔ stores, envelopes, and delivers a structured message (28.828ms)\n  ✔ can wait for and record ACKs (11.317417ms)\n  ✔ keeps normal messages pending while the worker is busy (6.948834ms)\n  ✔ keeps normal messages pending while the worker is working (6.835292ms)\n  ✔ interrupts first for urgent messages before delivering (8.8105ms)\n  ✔ uses the worker's recorded cmux adapter when no adapter override is provided (417.324958ms)\n  ✔ allocates unique message IDs under concurrent sends (37.323917ms)\n✔ structured worker messaging (517.983375ms)\nℹ tests 7\nℹ suites 1\nℹ pass 7\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 631.993458\n",
+        "stderr_tail": ""
+      },
+      {
+        "command": "npm run typecheck",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 596,
+        "stdout_tail": "\n> apex-manager@0.1.1 typecheck\n> tsc --noEmit\n\n",
+        "stderr_tail": ""
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "node --import tsx -e \"import {isWorkerIdleScreen} from './src/worker/idle.ts'; if(isWorkerIdleScreen('$ working on changes','codex')) process.exit(1); if(!isWorkerIdleScreen('$ ready','codex')) process.exit(1)\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 104,
+        "stdout_tail": "",
+        "stderr_tail": "(node:84779) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      },
+      {
+        "command": "node --import tsx --test tests/worker/messages.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 349,
+        "stdout_tail": "(node:84808) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n▶ structured worker messaging\n  ✔ stores, envelopes, and delivers a structured message (21.764417ms)\n  ✔ can wait for and record ACKs (10.637083ms)\n  ✔ keeps normal messages pending while the worker is busy (6.773791ms)\n  ✔ keeps normal messages pending while the worker is working (6.588042ms)\n  ✔ interrupts first for urgent messages before delivering (7.454375ms)\n  ✔ uses the worker's recorded cmux adapter when no adapter override is provided (137.582667ms)\n  ✔ allocates unique message IDs under concurrent sends (33.361417ms)\n✔ structured worker messaging (224.75975ms)\nℹ tests 7\nℹ suites 1\nℹ pass 7\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 301.400834\n",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/worker/idle.ts",
+        "tests/worker/messages.test.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": true,
+      "evidence_score": 1,
+      "run_ids": [
+        "run-mt31slky-1c1d7261"
+      ],
+      "done_run_ids": [
+        "run-mt31slky-1c1d7261"
+      ],
+      "fully_closed_run_ids": [
+        "run-mt31slky-1c1d7261"
+      ],
+      "active_runs": [],
+      "candidate_chain_equal": true,
+      "verification_ref": ".apex-v2/runs/run-mt31slky-1c1d7261/verification-report.json",
+      "review_ref": ".apex-v2/runs/run-mt31slky-1c1d7261/review-report.json",
+      "integration_ref": ".apex-v2/runs/run-mt31slky-1c1d7261/integration-report.json",
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "f278306206f58e0f7bd43be4aed7bc77a3efa1ae3817035920a590de6e84e986",
+        "replay_hash": "f278306206f58e0f7bd43be4aed7bc77a3efa1ae3817035920a590de6e84e986",
+        "hash_equal": true
+      }
+    }
+  }
+}

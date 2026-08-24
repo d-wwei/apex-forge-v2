@@ -1,0 +1,176 @@
+{
+  "schema_version": "v0",
+  "registry_version": "1.0.0",
+  "public_skill_id": "using-apex-forge",
+  "previous_versions": {},
+  "capabilities": [
+    {
+      "capability_id": "engineering-spec",
+      "version": "1.0.0",
+      "definition_sha256": "3c9212d7b7f2cdc45a1d0850d6d5af77f246123eb7cf0173b1a761c8e5920dcc",
+      "protocol_sha256": "298546e8a4abbc64e168d67ffd45726a5e71f2503dbfd9a689c21029a521da27",
+      "input_schema_sha256": "e52d266255026458f4e85e8225d5625b3befd105df23b0cdfd5b5f6f7eb9ab7b",
+      "output_schema_sha256": "8196e24c46a384fd85cbc4379629178bdb7b81b5714b3fb38e9523f1121e6991"
+    },
+    {
+      "capability_id": "source-grounding",
+      "version": "1.0.0",
+      "definition_sha256": "c702e493d6cc72391ebca18c5d20d950ffa2f0930f0800aa4cfcef6b70e8a2fe",
+      "protocol_sha256": "aa0dc8c8f64b5e868ded54f9919ddcd6b3346e9cd2aa26cb6935a87afb557de3",
+      "input_schema_sha256": "c97c25fe419a7386aa6cb07e58eb135e08706178f67929b1792398bfac189ea1",
+      "output_schema_sha256": "4e420759fde32237b40c6c2c9038e4ee5693c69ddc04713ab970c5bec67f79b4"
+    },
+    {
+      "capability_id": "architecture-design",
+      "version": "1.0.0",
+      "definition_sha256": "405e10658e8effbabc27f95ec763ab809ec5ccb422211abb4f87793f1d42f451",
+      "protocol_sha256": "5a58e7579bb4ffb4349adeec64e190a06b80060e4af1170bc53daff4f975c4b0",
+      "input_schema_sha256": "15f78dd5e920bb884fdf24371ad59b4e84efe6a41ee767f306c7bfebc2f3e737",
+      "output_schema_sha256": "09ae7e839fb628fafaa9ee54d89e57ec0dcc56e557995ac81e3fafac0e618af0"
+    },
+    {
+      "capability_id": "systematic-debugging",
+      "version": "1.0.0",
+      "definition_sha256": "1436608c554f9e62f0c7d6c21f21beef76ba4e543d6ee9053637c2d6c8f5148c",
+      "protocol_sha256": "61cb4624b148359436ebcc0f022c552fb55279d1d6e1b853760cc5195d3a453b",
+      "input_schema_sha256": "7d8e33675d8cfd54f3074e94cc3fb08929ba4c0ce021724a4da7f8c2ab225a8d",
+      "output_schema_sha256": "984875d9085435e1cfc84a4a43a9c2fc3ded74494fecc02576862f1ee23bea13"
+    },
+    {
+      "capability_id": "tdd-negative-control",
+      "version": "1.0.0",
+      "definition_sha256": "844a2d4e11d38a4bdad4a4f327446ed17bdf95f161f4f559d9fa3bb0658aece9",
+      "protocol_sha256": "b3b938d899b4317e5557ffd7aa811d0478a9382d755b1175268f752a24d52622",
+      "input_schema_sha256": "086f11962958d6cb4634678d1e1dfe242de189ec49cde43752533dc849fc6353",
+      "output_schema_sha256": "33535b65af4e26fe5bb3bcba8a46857775e92b23b732599170684c374c040bc4"
+    },
+    {
+      "capability_id": "incremental-delivery",
+      "version": "1.0.0",
+      "definition_sha256": "f350ff1642b30a6f1a623648e94f42cc86e0cafdfcedcf11e01fbe15c9cb6827",
+      "protocol_sha256": "26ed3724c6d56b6f3feb197dbaa32dc112f166b771b273d63cd80c6272182ff8",
+      "input_schema_sha256": "76cf53f57a9c3fe88a3ecc50bdaf1839ec73ddc2f818ffb6c95a79c35aac3502",
+      "output_schema_sha256": "e9be3b5fd00a0d6c0588612a7824ebaf18f6ef04145b6b3cef9d1d4dc248f290"
+    },
+    {
+      "capability_id": "code-review",
+      "version": "1.0.0",
+      "definition_sha256": "cc4b471e9f5ecdbce98aff87e95468b3ea60c182f391eaa5c24f704f0630ada5",
+      "protocol_sha256": "31034d7ae58362ca67d151e364cfdd9923e9274296f1aa0c72d441e13e401796",
+      "input_schema_sha256": "58732da0722429140e6531a6c9e8b3a112bfa067139e92189720d5727cb2c964",
+      "output_schema_sha256": "b4e12936dfee212290df6fc778a45f46cb658319b7be122b7df6ba962737dd49"
+    },
+    {
+      "capability_id": "security-audit",
+      "version": "1.0.0",
+      "definition_sha256": "f9d9d6c7936fba00f5464b081a307563bbf9c949857ebd2bcaff920959ff5c82",
+      "protocol_sha256": "93fb8f899dff1fabf894a76d4d45e345719055ad51ea45e20c04a9ea17979cd4",
+      "input_schema_sha256": "7380ccaec6b934742053f98cb2d4af4db01e5a769a4b8ed056886bf090b1136e",
+      "output_schema_sha256": "6efdd10999ab76e2355797dd786b8ecef7d29484e231d74cba4050c38031bb10"
+    },
+    {
+      "capability_id": "high-risk-review",
+      "version": "1.0.0",
+      "definition_sha256": "79f7b70d74d46700176018b94ab14305012654f11baffc18347431dac353a59f",
+      "protocol_sha256": "e247145a4b1faf75803a86fc763a998c6899ae9feb791635e03142aeaf16c433",
+      "input_schema_sha256": "c28669f76128d6d6f9c1177008b297245356bd51016bc4223164512cfe2f4c1a",
+      "output_schema_sha256": "960110d4f9e866defdeb29eba02556e9b83f9fe46b97c06ab15067b888a42c00"
+    },
+    {
+      "capability_id": "test-strategy",
+      "version": "1.0.0",
+      "definition_sha256": "df8506aa27e7e3c0951238969bddc56afe7d55fbdf319d887b84eea9ea53d703",
+      "protocol_sha256": "5fa3e05a134b91505f57e8afa59f5ad835dbe3671a018bc60bd2c84e5e0e1af5",
+      "input_schema_sha256": "77500bd2d0a449b8f837656914699b5b1da7fe4f5dde33376ba0f94b344f8412",
+      "output_schema_sha256": "22f5104f3dcb9487ae583b2901b0327ece057207580a021a4b5b41cb78bbec9c"
+    },
+    {
+      "capability_id": "documentation-sync",
+      "version": "1.0.0",
+      "definition_sha256": "95333e8b4dc6d6d157630b37eb6b484f7923a24eb90889077de3426c064f5b1c",
+      "protocol_sha256": "4b9e9ce8927c3a5c6a898cf51341b5578dfecb1f91afed981f21d461887dc625",
+      "input_schema_sha256": "9d0cfe280f8d45489d40a572b5682dd1d9d63a0bebf4b49717f1e72b6a131271",
+      "output_schema_sha256": "00168b71229eaecbff64210fd9575051bbcd9df23013d71e74859c404010d876"
+    },
+    {
+      "capability_id": "frontend-design",
+      "version": "1.0.0",
+      "definition_sha256": "d84243f92f4b127146954181d0997bb5ea47c04191018e22fc19358bb927c0b8",
+      "protocol_sha256": "a8e153747f26351bce5e5b06b0f645ec7776e657358d7751ffdf755a14853021",
+      "input_schema_sha256": "d4da05fff4b1950f98208b654ad842198d41d8930fc80c14b69d1c38049750ac",
+      "output_schema_sha256": "afd8ace4c9117478a6a45fbc3db4fe2b14fa8374b6628bf6d84f3facd5829862"
+    },
+    {
+      "capability_id": "design-to-code",
+      "version": "1.0.0",
+      "definition_sha256": "ff5a1d7e16be98da99ab4300746d4b59a46074336006c168e45e949e66519b73",
+      "protocol_sha256": "53bcd0ceee57d1499dc6d75c1d4a874064892eabddb9aff274e84c0ec0f4b802",
+      "input_schema_sha256": "f4135c10ce2cf4201565acfb3f8dafe3e0c1467da72e623bfd3a71aa80ba7bd3",
+      "output_schema_sha256": "b65d681e1fb90e4372b019a63e1521e0ab8d80c8e05ea87d179f5aa94b73841e"
+    },
+    {
+      "capability_id": "browser-qa",
+      "version": "1.0.0",
+      "definition_sha256": "4ca52b4bb7b9591b4fe19cbe3c207a4a73dfdf4e9dbff2c92a423de32ee0156c",
+      "protocol_sha256": "46233d275d6019dd846a4a5de687c812a49830d2e622db56da0ffbaa38505d23",
+      "input_schema_sha256": "4fdacbf0dd2095252ce118406aab0ce19009ca21454c2daef5bb513ac0e36fdd",
+      "output_schema_sha256": "7b63058d9dc108b5a51046d6b9b1773e64653ee4b0e4be55480947f6327d16d6"
+    },
+    {
+      "capability_id": "mobile-qa",
+      "version": "1.0.0",
+      "definition_sha256": "4e57769cd10f3e49fe9dfb4bf5db9636625085463c0d935e9dfb969fcd976e04",
+      "protocol_sha256": "574af5fee755d4f0463ce6fc1a83d66c165f71faaff1c660c9eba227ff56e589",
+      "input_schema_sha256": "685899c18b93de88305c870660fe9cdc5996bca9d25ef06c8686b47fbfcbde3a",
+      "output_schema_sha256": "9e8b6c310e26ece2deae9a8ea7f92fbddd67713ef98cb03aba1d3b4eee8c5518"
+    },
+    {
+      "capability_id": "performance-validation",
+      "version": "1.0.0",
+      "definition_sha256": "c2e9886d2aa017393c24a38813941a199eee3cd8f5b90a799e4f4ae1512cfcd7",
+      "protocol_sha256": "56caeeb770954f80fb3f9c11486afdc77673f5d773419f74ddd44647704ed178",
+      "input_schema_sha256": "55558243f45f8cec613e51f8452cadc6175e74e693c2ecf1ea3d842e8024440a",
+      "output_schema_sha256": "9437ceee6cf2dfb6c0d9b60a32677be4e012fee84942e8cff8fcb6fa464ec78c"
+    },
+    {
+      "capability_id": "migration-safety",
+      "version": "1.0.0",
+      "definition_sha256": "1269d42f84ad7c9201e0fd0158f4059478db071cb1836eb5a5f92bbde1e2c4a4",
+      "protocol_sha256": "495510fee2d7b19f4e16642697e64addc7c61a1fba71633ca196db06ab246195",
+      "input_schema_sha256": "7cf94af31b325cb680d519980f63d246830873d952d4734ad6a137fad435bfff",
+      "output_schema_sha256": "aedfc6f43aa9db3f9bbc5440320ed6555dca8b4529e7ba686a09ff9cc5c315f1"
+    },
+    {
+      "capability_id": "deploy-release",
+      "version": "1.0.0",
+      "definition_sha256": "c9f8cc873036e7c89bb43415a1b87bfb46eb31c0bab2b3e1b6ac19bee06cfb32",
+      "protocol_sha256": "962c6df69f4349fcc12cedc0a820a30ad6a463a6500119e10961e2585eec7407",
+      "input_schema_sha256": "caef829f7e24a449e939dd13b6453017ce8af05eed0090ef72ee1ee401741071",
+      "output_schema_sha256": "a7e97d39030cf3628a6524b486ffe218673158d2a5873ade9d22bfe03d2c9a27"
+    },
+    {
+      "capability_id": "project-audit",
+      "version": "1.0.0",
+      "definition_sha256": "8041b64e4e54a15250fa633449a05236e4a9a118b35235a939b6ccf4590b068e",
+      "protocol_sha256": "7d63f46d819f19194ee95aac0cc6d6d78bab4d26167ad34ed685902c1da02483",
+      "input_schema_sha256": "cfc1e549b18bb7524abcd4afd91a77d6a1fdabe7b3e24e527dab419aed72fd15",
+      "output_schema_sha256": "ea885286c94c015aac98d20de0ae22c4d9d2783e6d15935b06fb6e812786c919"
+    },
+    {
+      "capability_id": "postmortem",
+      "version": "1.0.0",
+      "definition_sha256": "501b67cef463f5d7ef7d040a2355f89f211b18d49aba2bbcd0e73eab6e6a748c",
+      "protocol_sha256": "43a86b21af35b3177e9fce1e716e1d54b92e7adb8b9bf36e3c7361f536df41dd",
+      "input_schema_sha256": "94bcbd8069f472a081df011c4c6405b624dc352eafef9a37cf7c2e4890d9f5a5",
+      "output_schema_sha256": "1e78b5f55d8a859f924741d8018149308ddeb2f2bd04656c6592e5954170ef53"
+    },
+    {
+      "capability_id": "simplification",
+      "version": "1.0.0",
+      "definition_sha256": "b6ab92f2764882a762261a0b857007770389bf33680ebe9a376361933faca89e",
+      "protocol_sha256": "19c9ee09c4b79780f93568bf3ec2e302b2bef4661d98863741f159752777a7c5",
+      "input_schema_sha256": "df81aa1e95e1830fe5fc814e3b947dc1f41b4bbfe2d782c5ec385e62548f21d9",
+      "output_schema_sha256": "c5a0056d11b4d81aa3e1d42a20f4e9d85bfb25ac47d00d734243ee1534676b50"
+    }
+  ]
+}

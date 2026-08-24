@@ -2976,7 +2976,7 @@ var require_compile = __commonJS({
       const schOrFunc = root.refs[ref];
       if (schOrFunc)
         return schOrFunc;
-      let _sch = resolve19.call(this, root, ref);
+      let _sch = resolve22.call(this, root, ref);
       if (_sch === void 0) {
         const schema = (_a = root.localRefs) === null || _a === void 0 ? void 0 : _a[ref];
         const { schemaId } = this.opts;
@@ -3003,7 +3003,7 @@ var require_compile = __commonJS({
     function sameSchemaEnv(s1, s2) {
       return s1.schema === s2.schema && s1.root === s2.root && s1.baseId === s2.baseId;
     }
-    function resolve19(root, ref) {
+    function resolve22(root, ref) {
       let sch;
       while (typeof (sch = this.refs[ref]) == "string")
         ref = sch;
@@ -3634,7 +3634,7 @@ var require_fast_uri = __commonJS({
       }
       return uri;
     }
-    function resolve19(baseURI, relativeURI, options) {
+    function resolve22(baseURI, relativeURI, options) {
       const schemelessOptions = options ? Object.assign({ scheme: "null" }, options) : { scheme: "null" };
       const { parsed: baseParsed, malformedAuthorityOrPort: baseMalformed } = parseWithStatus(baseURI, schemelessOptions);
       const { parsed: relativeParsed, malformedAuthorityOrPort: relativeMalformed } = parseWithStatus(relativeURI, schemelessOptions);
@@ -3645,49 +3645,49 @@ var require_fast_uri = __commonJS({
       schemelessOptions.skipEscape = true;
       return serialize(resolved, schemelessOptions);
     }
-    function resolveComponent(base, relative7, options, skipNormalization) {
+    function resolveComponent(base, relative8, options, skipNormalization) {
       const target = {};
       if (!skipNormalization) {
         base = parse(serialize(base, options), options);
-        relative7 = parse(serialize(relative7, options), options);
+        relative8 = parse(serialize(relative8, options), options);
       }
       options = options || {};
-      if (!options.tolerant && relative7.scheme) {
-        target.scheme = relative7.scheme;
-        target.userinfo = relative7.userinfo;
-        target.host = relative7.host;
-        target.port = relative7.port;
-        target.path = removeDotSegments(relative7.path || "");
-        target.query = relative7.query;
+      if (!options.tolerant && relative8.scheme) {
+        target.scheme = relative8.scheme;
+        target.userinfo = relative8.userinfo;
+        target.host = relative8.host;
+        target.port = relative8.port;
+        target.path = removeDotSegments(relative8.path || "");
+        target.query = relative8.query;
       } else {
-        if (relative7.userinfo !== void 0 || relative7.host !== void 0 || relative7.port !== void 0) {
-          target.userinfo = relative7.userinfo;
-          target.host = relative7.host;
-          target.port = relative7.port;
-          target.path = removeDotSegments(relative7.path || "");
-          target.query = relative7.query;
+        if (relative8.userinfo !== void 0 || relative8.host !== void 0 || relative8.port !== void 0) {
+          target.userinfo = relative8.userinfo;
+          target.host = relative8.host;
+          target.port = relative8.port;
+          target.path = removeDotSegments(relative8.path || "");
+          target.query = relative8.query;
         } else {
-          if (!relative7.path) {
+          if (!relative8.path) {
             target.path = base.path;
-            if (relative7.query !== void 0) {
-              target.query = relative7.query;
+            if (relative8.query !== void 0) {
+              target.query = relative8.query;
             } else {
               target.query = base.query;
             }
           } else {
-            if (relative7.path[0] === "/") {
-              target.path = removeDotSegments(relative7.path);
+            if (relative8.path[0] === "/") {
+              target.path = removeDotSegments(relative8.path);
             } else {
               if ((base.userinfo !== void 0 || base.host !== void 0 || base.port !== void 0) && !base.path) {
-                target.path = "/" + relative7.path;
+                target.path = "/" + relative8.path;
               } else if (!base.path) {
-                target.path = relative7.path;
+                target.path = relative8.path;
               } else {
-                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative7.path;
+                target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative8.path;
               }
               target.path = removeDotSegments(target.path);
             }
-            target.query = relative7.query;
+            target.query = relative8.query;
           }
           target.userinfo = base.userinfo;
           target.host = base.host;
@@ -3695,7 +3695,7 @@ var require_fast_uri = __commonJS({
         }
         target.scheme = base.scheme;
       }
-      target.fragment = relative7.fragment;
+      target.fragment = relative8.fragment;
       return target;
     }
     function equal(uriA, uriB, options) {
@@ -3918,7 +3918,7 @@ var require_fast_uri = __commonJS({
     var fastUri = {
       SCHEMES,
       normalize: normalize2,
-      resolve: resolve19,
+      resolve: resolve22,
       resolveComponent,
       equal,
       serialize,
@@ -7168,15 +7168,15 @@ var require__ = __commonJS({
 // src/apex-v2.mjs
 import {
   cpSync as cpSync4,
-  existsSync as existsSync27,
+  existsSync as existsSync30,
   mkdtempSync as mkdtempSync4,
-  readFileSync as readFileSync19,
-  readdirSync as readdirSync18,
-  rmSync as rmSync9,
+  readFileSync as readFileSync22,
+  readdirSync as readdirSync19,
+  rmSync as rmSync10,
   symlinkSync as symlinkSync4,
-  writeFileSync as writeFileSync14
+  writeFileSync as writeFileSync15
 } from "node:fs";
-import { basename as basename6, join as join39, resolve as resolve18 } from "node:path";
+import { basename as basename9, join as join43, resolve as resolve21 } from "node:path";
 
 // src/cli/args.mjs
 function parseArgs(items) {
@@ -7208,6 +7208,8 @@ function printHelp() {
   apex-v2 status --project <dir>
   apex-v2 validate --project <dir>
   apex-v2 intake add|list|triage --project <dir>
+  apex-v2 intake import-spec --project <dir> --format native|openspec|spec-kit|auto --path <file-or-dir>
+  apex-v2 capability list|show|route|verify
   apex-v2 roadmap promote --project <dir> --intake-id <id>
   apex-v2 run create|show|plan|carry|node --project <dir>
   apex-v2 artifact submit|list --project <dir>
@@ -7215,6 +7217,8 @@ function printHelp() {
   apex-v2 worker create|list|sandbox|exec-shell|exec-agent|retry|fallback|results|resume|decide|submit-patch --project <dir>
   apex-v2 worker adapters --project <dir>
   apex-v2 host actions|claim|submit|cancel --project <dir> --host-id <id>
+    host submit accepts --semantic-evidence-json|--semantic-evidence-file and
+    --capability-evidence-json|--capability-evidence-file
   apex-v2 merge enqueue|status|resolve|apply --project <dir>
   apex-v2 verify run --project <dir> --run-id <id>
   apex-v2 review generate --project <dir> --run-id <id>
@@ -7222,6 +7226,7 @@ function printHelp() {
   apex-v2 project tick --project <dir>
   apex-v2 project reconcile --project <dir>
   apex-v2 project metrics|quality|audit --project <dir>
+  apex-v2 project git discover|guard|claim|release|claim-status --project <dir>
   apex-v2 project heartbeat --project <dir> [--force-notifications]
   apex-v2 project heartbeat install|status|daemon-start|daemon-status|daemon-stop --project <dir>
   apex-v2 contracts validate --project <dir>
@@ -7234,8 +7239,8 @@ function printHelp() {
 }
 
 // src/core/store.mjs
-import { existsSync as existsSync8 } from "node:fs";
-import { join as join10, resolve as resolve5 } from "node:path";
+import { existsSync as existsSync9 } from "node:fs";
+import { join as join11, resolve as resolve6 } from "node:path";
 
 // src/lib/common.mjs
 import {
@@ -7383,16 +7388,16 @@ function normalizeEnum(value, allowed, name) {
 import {
   chmodSync,
   copyFileSync,
-  existsSync as existsSync7,
+  existsSync as existsSync8,
   lstatSync,
   mkdirSync as mkdirSync4,
-  readFileSync as readFileSync6,
+  readFileSync as readFileSync7,
   readdirSync as readdirSync5,
   rmSync as rmSync3,
   symlinkSync
 } from "node:fs";
-import { createHash as createHash3 } from "node:crypto";
-import { dirname as dirname3, join as join9, relative as relative3, resolve as resolve4, sep } from "node:path";
+import { createHash as createHash4 } from "node:crypto";
+import { dirname as dirname4, join as join10, relative as relative3, resolve as resolve5, sep } from "node:path";
 import { spawnSync as spawnSync2 } from "node:child_process";
 
 // src/core/contracts.mjs
@@ -8002,6 +8007,36 @@ function migrateLegacyContractsInternal(projectDir, apply) {
       value.route_id = null;
       fields.push("route_id");
     }
+    if (name === "execution-route.json") {
+      if (!("method_pack_id" in value)) {
+        value.method_pack_id = "legacy";
+        fields.push("method_pack_id");
+      }
+      if (!("cost_budget" in value)) {
+        value.cost_budget = null;
+        fields.push("cost_budget");
+      }
+      if (!("budget_status" in value)) {
+        value.budget_status = "not_configured";
+        fields.push("budget_status");
+      }
+      if (!("usage_policy" in value)) {
+        value.usage_policy = "record";
+        fields.push("usage_policy");
+      }
+    }
+    if (name === "items.json" && normalizedPathIncludes(path, "/intake/")) {
+      for (const item of value) {
+        if (!("method_pack_id" in item)) {
+          item.method_pack_id = null;
+          fields.push(`intake.${item.id}.method_pack_id`);
+        }
+        if (!("source_spec" in item)) {
+          item.source_spec = null;
+          fields.push(`intake.${item.id}.source_spec`);
+        }
+      }
+    }
     if (name === "retry.json" && normalizedPathIncludes(path, "/policies/") && value.max_attempts?.host == null) {
       value.max_attempts.host = 1;
       fields.push("max_attempts.host");
@@ -8028,7 +8063,6 @@ function migrateLegacyContractsInternal(projectDir, apply) {
       }
       if (!value.execution_router) {
         value.execution_router = {
-          factory_min_duration_minutes: 30,
           force_factory_risks: ["critical"],
           factory_on_isolation: true,
           factory_on_resume: true,
@@ -8036,6 +8070,50 @@ function migrateLegacyContractsInternal(projectDir, apply) {
           factory_on_parallel_execution: true
         };
         fields.push("execution_router");
+      }
+      if (!value.cost_governor) {
+        value.cost_governor = {
+          enabled: true,
+          unknown_usage: "record",
+          default_budget: {
+            max_wall_minutes: 30,
+            max_agent_turns: 12,
+            max_tool_calls: 80,
+            max_input_tokens: 16e4,
+            max_output_tokens: 3e4
+          },
+          method_pack_budgets: {
+            quick: {
+              max_wall_minutes: 12,
+              max_agent_turns: 6,
+              max_tool_calls: 30,
+              max_input_tokens: 6e4,
+              max_output_tokens: 12e3
+            },
+            "disciplined-tdd": {
+              max_wall_minutes: 30,
+              max_agent_turns: 12,
+              max_tool_calls: 80,
+              max_input_tokens: 16e4,
+              max_output_tokens: 3e4
+            },
+            "phase-context": {
+              max_wall_minutes: 30,
+              max_agent_turns: 12,
+              max_tool_calls: 80,
+              max_input_tokens: 16e4,
+              max_output_tokens: 3e4
+            },
+            governed: {
+              max_wall_minutes: 60,
+              max_agent_turns: 24,
+              max_tool_calls: 180,
+              max_input_tokens: 36e4,
+              max_output_tokens: 7e4
+            }
+          }
+        };
+        fields.push("cost_governor");
       }
       const missing = defaultAllowedExecutionAdapters().filter((adapter) => !value.permissions?.allowed_adapters?.includes(adapter));
       if (missing.length > 0) {
@@ -8105,6 +8183,8 @@ function contractTargets(path, value) {
   else if (name === "learning-report.json") push("learning-report.schema.json");
   else if (name === "retry.json" && normalized.includes("/policies/")) push("retry-policy.schema.json");
   else if (name === "execution.json" && normalized.includes("/policies/")) push("execution-policy.schema.json");
+  else if (name === "method-packs.json" && normalized.includes("/policies/")) push("method-pack-registry.schema.json");
+  else if (name === "git.json" && normalized.includes("/delivery/")) push("git-delivery.schema.json");
   else if (name === "quality.json" && normalized.includes("/policies/")) push("quality-policy.schema.json");
   else if (name === "notifications.json" && normalized.includes("/policies/")) push("notification-policy.schema.json");
   else if (name === "gates.json" && normalized.includes("/policies/")) push("gate-policy.schema.json");
@@ -8115,6 +8195,8 @@ function contractTargets(path, value) {
   else if (name === "host-result.json") push("host-result.schema.json");
   else if (name === "action-workspace.json") push("action-workspace.schema.json");
   else if (name === "cognitive-evidence.json") push("cognitive-evidence.schema.json");
+  else if (name.startsWith("capability-invocation-")) push("capability-invocation.schema.json");
+  else if (name.startsWith("capability-evidence-")) push("capability-evidence.schema.json");
   else if (name === "execution-route.json") push("execution-route.schema.json");
   else if (name.startsWith("candidate-") && normalized.includes("/candidates/")) push("candidate-set.schema.json");
   else if (name.startsWith("transaction-") && normalized.includes("/transactions/")) push("transaction-journal.schema.json");
@@ -8172,9 +8254,9 @@ function formatAjvErrors(errors) {
 }
 
 // src/core/worker.mjs
-import { existsSync as existsSync6, readFileSync as readFileSync5, readdirSync as readdirSync4, writeFileSync as writeFileSync4 } from "node:fs";
-import { createHash as createHash2 } from "node:crypto";
-import { join as join8, resolve as resolve3 } from "node:path";
+import { existsSync as existsSync7, readFileSync as readFileSync6, readdirSync as readdirSync4, writeFileSync as writeFileSync4 } from "node:fs";
+import { createHash as createHash3 } from "node:crypto";
+import { join as join9, resolve as resolve4 } from "node:path";
 import { spawnSync } from "node:child_process";
 
 // src/contracts/execution-capability.mjs
@@ -8206,7 +8288,6 @@ function routeExecution(planNode2, executionPolicy, options = {}) {
     requires_parallel_execution: Boolean(planNode2.execution_hints?.requires_parallel_execution)
   };
   const router = executionPolicy?.execution_router || {
-    factory_min_duration_minutes: 30,
     force_factory_risks: ["critical"],
     factory_on_isolation: true,
     factory_on_resume: true,
@@ -8233,10 +8314,6 @@ function routeExecution(planNode2, executionPolicy, options = {}) {
       mode = "factory";
       reasons.push(`risk=${planNode2.risk}`);
     }
-    if (hints.estimated_duration_minutes >= router.factory_min_duration_minutes) {
-      mode = "factory";
-      reasons.push(`duration>=${router.factory_min_duration_minutes}`);
-    }
     for (const [enabled, required2, reason] of [
       [router.factory_on_isolation, hints.requires_isolation, "requires_isolation"],
       [router.factory_on_resume, hints.requires_resume, "requires_resume"],
@@ -8253,23 +8330,61 @@ function routeExecution(planNode2, executionPolicy, options = {}) {
     if (!["interactive", "factory", "deterministic", "human"].includes(requestedMode)) {
       throw new Error(`execution mode override \u65E0\u6548\uFF1A${requestedMode}`);
     }
-    if (executionClass === "cognitive" && requestedMode !== "interactive" || executionClass === "deterministic_check" && requestedMode !== "deterministic" || executionClass === "human_decision" && requestedMode !== "human") {
+    if (executionClass === "cognitive" && requestedMode !== "interactive" || executionClass === "deterministic_check" && requestedMode !== "deterministic" || executionClass === "human_decision" && requestedMode !== "human" || executionClass === "workspace_patch" && !["interactive", "factory"].includes(requestedMode)) {
       throw new Error(`execution mode override \u4E0E execution_class \u4E0D\u517C\u5BB9\uFF1A${executionClass} -> ${requestedMode}`);
     }
     if (executionClass === "workspace_patch" && requestedMode === "interactive" && executionPolicy?.interactive_workspace_patch?.enabled !== true) {
       throw new Error("execution policy \u7981\u6B62 Interactive workspace_patch override");
     }
+    const hardFactoryReasons = reasons.filter(
+      (reason) => reason.startsWith("risk=") || ["requires_isolation", "requires_resume", "background", "parallel_execution"].includes(reason)
+    );
+    if (executionClass === "workspace_patch" && requestedMode === "interactive" && hardFactoryReasons.length > 0) {
+      throw new Error(`execution mode override \u4E0D\u80FD\u7ED5\u8FC7\u5F3A\u5236 Factory\uFF1A${hardFactoryReasons.join(",")}`);
+    }
     mode = requestedMode;
     reasons.push(`user_override=${requestedMode}`);
   }
   if (reasons.length === 0) reasons.push(`preferred_mode=${mode}`);
+  const methodPackId = planNode2.method_pack_id || "legacy";
+  const governor = executionPolicy?.cost_governor;
+  const costBudget = governor?.enabled === false ? null : governor?.method_pack_budgets?.[methodPackId] || governor?.default_budget || null;
+  const budgetStatus = costBudget ? "within_budget" : "not_configured";
+  if (costBudget && !["deterministic_check", "human_decision"].includes(executionClass) && hints.estimated_duration_minutes > costBudget.max_wall_minutes && options.allowBudgetOverride !== true) {
+    throw new Error(
+      `Cost Governor \u62D2\u7EDD\u9884\u8BA1\u8D85\u9650 route\uFF1A${hints.estimated_duration_minutes}/${costBudget.max_wall_minutes} minutes`
+    );
+  }
   return {
     mode,
     preferred_mode: preferredMode,
     user_override: requestedMode,
     reasons: Array.from(new Set(reasons)),
     hints,
-    required_capabilities: normalizeExecutionCapabilities(planNode2.required_capabilities || [])
+    required_capabilities: normalizeExecutionCapabilities(planNode2.required_capabilities || []),
+    method_pack_id: methodPackId,
+    cost_budget: costBudget,
+    budget_status: budgetStatus,
+    usage_policy: governor?.unknown_usage || "record"
+  };
+}
+function evaluateRouteUsage(route, execution) {
+  const budget = route?.cost_budget;
+  if (!budget) return { status: "NOT_CONFIGURED", exceeded: [], unknown: [] };
+  const usage = execution?.usage || {};
+  const measurements = [
+    ["wall_minutes", execution?.duration_ms == null ? null : execution.duration_ms / 6e4, budget.max_wall_minutes],
+    ["agent_turns", usage.agent_turns, budget.max_agent_turns],
+    ["tool_calls", usage.tool_calls, budget.max_tool_calls],
+    ["input_tokens", usage.input_tokens, budget.max_input_tokens],
+    ["output_tokens", usage.output_tokens, budget.max_output_tokens]
+  ];
+  const exceeded = measurements.filter(([, actual, limit]) => actual != null && actual > limit).map(([metric, actual, limit]) => ({ metric, actual, limit }));
+  const unknown = measurements.filter(([, actual]) => actual == null).map(([metric]) => metric);
+  return {
+    status: exceeded.length > 0 ? "FAIL" : unknown.length > 0 ? "UNKNOWN" : "PASS",
+    exceeded,
+    unknown
   };
 }
 function legacyExecutionClass(planNode2) {
@@ -8484,19 +8599,931 @@ function listAllArtifacts(root) {
   return artifacts;
 }
 
+// src/core/capability-registry.mjs
+import { existsSync as existsSync6, readFileSync as readFileSync5 } from "node:fs";
+import { createHash as createHash2 } from "node:crypto";
+import { basename as basename3, dirname as dirname3, join as join8, resolve as resolve3 } from "node:path";
+var DEFAULT_CAPABILITY_DIR = new URL("../../capabilities/", import.meta.url).pathname;
+var PROVIDER_REQUIRED_CAPABILITIES = /* @__PURE__ */ new Set([
+  "browser-qa",
+  "mobile-qa",
+  "performance-validation",
+  "deploy-release"
+]);
+function capabilityRegistry() {
+  const registry2 = withEnforcementOverride(
+    loadCapabilityRegistry(capabilityDirectory())
+  );
+  const lockPath = join8(capabilityDirectory(), "capability-lock.json");
+  if (!existsSync6(lockPath)) {
+    throw new Error(`Capability Lock \u4E0D\u5B58\u5728\uFF1A${lockPath}`);
+  }
+  validateCapabilityLock(
+    JSON.parse(readFileSync5(lockPath, "utf8")),
+    registry2
+  );
+  return registry2;
+}
+function withEnforcementOverride(registry2) {
+  const configured = String(
+    process.env.APEX_CAPABILITY_ENFORCEMENT_MODE || ""
+  ).trim();
+  if (!configured) return registry2;
+  if (!["shadow", "enforce"].includes(configured)) {
+    throw new Error(
+      `APEX_CAPABILITY_ENFORCEMENT_MODE \u65E0\u6548\uFF1A${configured}\uFF0C\u4EC5\u652F\u6301 shadow|enforce`
+    );
+  }
+  return {
+    ...registry2,
+    enforcement_mode: configured
+  };
+}
+function capabilityDirectory() {
+  return process.env.APEX_V2_CAPABILITY_DIR || DEFAULT_CAPABILITY_DIR;
+}
+function loadCapabilityRegistry(root = capabilityDirectory()) {
+  const registryPath = resolveRegistryPath(root);
+  if (!existsSync6(registryPath)) {
+    throw new Error(`Capability Registry \u4E0D\u5B58\u5728\uFF1A${registryPath}`);
+  }
+  const registry2 = JSON.parse(readFileSync5(registryPath, "utf8"));
+  const repoRoot = basename3(dirname3(registryPath)) === "capabilities" ? dirname3(dirname3(registryPath)) : resolve3(root);
+  return validateCapabilityRegistry(registry2, { repoRoot });
+}
+function validateCapabilityRegistry(registry2, options = {}) {
+  if (!Array.isArray(registry2?.capabilities) || registry2.capabilities.length === 0) {
+    throw new Error("Capability Registry \u81F3\u5C11\u5305\u542B 1 \u9879\u80FD\u529B");
+  }
+  assertContract("capability-registry.schema.json", registry2, "Capability Registry");
+  const repoRoot = options.repoRoot || dirname3(capabilityDirectory());
+  const capabilityIds = /* @__PURE__ */ new Set();
+  const bindingIds = /* @__PURE__ */ new Set();
+  const capabilities = registry2.capabilities.map((definition) => {
+    if (capabilityIds.has(definition.capability_id)) {
+      throw new Error(`Capability ID \u91CD\u590D\uFF1A${definition.capability_id}`);
+    }
+    capabilityIds.add(definition.capability_id);
+    assertSafeRelativePath(definition.protocol_ref);
+    if (!definition.protocol_ref.startsWith("capabilities/")) {
+      throw new Error(`Capability protocol_ref \u4E0D\u5B89\u5168\uFF1A${definition.protocol_ref}`);
+    }
+    const protocolPath = resolve3(repoRoot, definition.protocol_ref);
+    if (!existsSync6(protocolPath)) {
+      throw new Error(`Capability protocol \u4E0D\u5B58\u5728\uFF1A${definition.protocol_ref}`);
+    }
+    for (const [kind, contract] of [
+      ["input", definition.input_contract],
+      ["output", definition.output_contract]
+    ]) {
+      const schemaName = `${contract}.schema.json`;
+      if (!contractRegistry().validators.has(schemaName)) {
+        throw new Error(
+          `Capability ${kind} contract schema \u4E0D\u5B58\u5728\uFF1A${definition.capability_id} -> ${schemaName}`
+        );
+      }
+    }
+    const forbiddenTools = definition.allowed_tools.filter(
+      (tool) => definition.forbidden_actions.includes(tool)
+    );
+    if (forbiddenTools.length > 0) {
+      throw new Error(
+        `Capability tool \u540C\u65F6 allowed/forbidden\uFF1A${definition.capability_id} ` + forbiddenTools.join(",")
+      );
+    }
+    return {
+      ...definition,
+      protocol_path: protocolPath
+    };
+  });
+  for (const [capabilityId, versions] of Object.entries(
+    registry2.previous_versions || {}
+  )) {
+    const definition = capabilities.find(
+      (item) => item.capability_id === capabilityId
+    );
+    if (!definition) {
+      throw new Error(`Capability previous_versions \u5F15\u7528\u672A\u77E5\u80FD\u529B\uFF1A${capabilityId}`);
+    }
+    if (versions.includes(definition.version)) {
+      throw new Error(
+        `Capability previous_versions \u4E0D\u80FD\u5305\u542B\u5F53\u524D\u7248\u672C\uFF1A${capabilityId}@${definition.version}`
+      );
+    }
+  }
+  for (const binding of registry2.bindings || []) {
+    if (bindingIds.has(binding.binding_id)) {
+      throw new Error(`Capability Binding ID \u91CD\u590D\uFF1A${binding.binding_id}`);
+    }
+    bindingIds.add(binding.binding_id);
+    if (!capabilityIds.has(binding.capability_id)) {
+      throw new Error(`Capability Binding \u5F15\u7528\u672A\u77E5\u80FD\u529B\uFF1A${binding.capability_id}`);
+    }
+    for (const pattern of conditionPatterns(binding.conditions)) {
+      try {
+        new RegExp(pattern, "i");
+      } catch (error) {
+        throw new Error(`Capability Binding \u6B63\u5219\u65E0\u6548\uFF1A${binding.binding_id}\uFF1A${error.message}`);
+      }
+    }
+  }
+  return {
+    ...registry2,
+    capabilities
+  };
+}
+function readCapabilityProtocol(protocolRef) {
+  assertSafeRelativePath(protocolRef);
+  if (!protocolRef.startsWith("capabilities/")) {
+    throw new Error(`Capability protocol_ref \u4E0D\u5B89\u5168\uFF1A${protocolRef}`);
+  }
+  const path = resolve3(dirname3(capabilityDirectory()), protocolRef);
+  if (!existsSync6(path)) throw new Error(`Capability protocol \u4E0D\u5B58\u5728\uFF1A${protocolRef}`);
+  return readFileSync5(path, "utf8");
+}
+function routeCapabilities(registry2, intake) {
+  const routerMode = String(
+    process.env.APEX_CAPABILITY_ROUTER_MODE || "enabled"
+  ).trim();
+  if (!["enabled", "disabled"].includes(routerMode)) {
+    throw new Error(
+      `APEX_CAPABILITY_ROUTER_MODE \u65E0\u6548\uFF1A${routerMode}\uFF0C\u4EC5\u652F\u6301 enabled|disabled`
+    );
+  }
+  if (routerMode === "disabled") {
+    return {
+      registry_version: registry2.registry_version,
+      enforcement_mode: registry2.enforcement_mode,
+      router_mode: "disabled",
+      required: [],
+      optional: [],
+      advisory: [],
+      matched_binding_ids: []
+    };
+  }
+  const definitions = new Map(
+    registry2.capabilities.filter((definition) => definition.enabled !== false).map((definition) => [definition.capability_id, definition])
+  );
+  const selected = /* @__PURE__ */ new Map();
+  for (const binding of (registry2.bindings || []).filter((item) => item.enabled !== false).sort(
+    (left, right) => right.priority - left.priority || left.binding_id.localeCompare(right.binding_id)
+  )) {
+    if (!matchesConditions(binding.conditions, intake)) continue;
+    const definition = definitions.get(binding.capability_id);
+    if (!definition || selected.has(definition.capability_id)) continue;
+    selected.set(definition.capability_id, {
+      capability_id: definition.capability_id,
+      capability_version: definition.version,
+      category: definition.category,
+      execution_class: definition.execution_class,
+      required_host_capabilities: definition.required_host_capabilities,
+      input_contract: definition.input_contract,
+      output_contract: definition.output_contract,
+      protocol_ref: definition.protocol_ref,
+      protocol_path: definition.protocol_path,
+      availability: definition.availability,
+      certification: definition.certification,
+      binding_id: binding.binding_id,
+      priority: binding.priority,
+      mode: binding.mode,
+      target_node_id: binding.plan_insertion.target_node_id,
+      required: binding.plan_insertion.required
+    });
+  }
+  const values = [...selected.values()].sort(
+    (left, right) => right.priority - left.priority || left.capability_id.localeCompare(right.capability_id)
+  );
+  return {
+    registry_version: registry2.registry_version,
+    enforcement_mode: registry2.enforcement_mode,
+    router_mode: "enabled",
+    required: values.filter((item) => item.mode === "required"),
+    optional: values.filter((item) => item.mode === "optional"),
+    advisory: values.filter((item) => item.mode === "advisory"),
+    matched_binding_ids: values.map((item) => item.binding_id)
+  };
+}
+function assertCapabilityContextBudget(bindings = [], limits = { core: 3, conditional: 2 }) {
+  const counts = bindings.reduce((value, binding) => {
+    const category = String(binding.category || "");
+    value[category] = (value[category] || 0) + 1;
+    return value;
+  }, {});
+  for (const [category, limit] of Object.entries(limits)) {
+    if ((counts[category] || 0) > limit) {
+      throw new Error(
+        `Capability context budget exceeded\uFF1A${category} ${counts[category]} > ${limit}\uFF1B\u5FC5\u987B\u62C6\u5206\u6216 replan`
+      );
+    }
+  }
+  return {
+    counts,
+    limits: { ...limits }
+  };
+}
+function assertCapabilityProviderAvailability(bindings = [], declaredProviders = process.env.APEX_CAPABILITY_PROVIDERS || "") {
+  const available = new Set(
+    Array.isArray(declaredProviders) ? declaredProviders : String(declaredProviders).split(",").map((item) => item.trim()).filter(Boolean)
+  );
+  const missing = bindings.filter(
+    (binding) => binding.required && PROVIDER_REQUIRED_CAPABILITIES.has(binding.capability_id) && !available.has(binding.capability_id)
+  ).map((binding) => binding.capability_id);
+  if (missing.length > 0) {
+    throw new Error(
+      `Capability provider unavailable\uFF1A${missing.join(", ")}\uFF1B\u901A\u8FC7 APEX_CAPABILITY_PROVIDERS \u663E\u5F0F\u58F0\u660E\u5DF2\u8BA4\u8BC1 provider`
+    );
+  }
+  return {
+    declared: [...available].sort(),
+    required: bindings.filter((binding) => PROVIDER_REQUIRED_CAPABILITIES.has(binding.capability_id)).map((binding) => binding.capability_id)
+  };
+}
+function validateCapabilityLock(lock, registry2) {
+  assertContract("capability-lock.schema.json", lock, "Capability Lock");
+  if (lock.registry_version !== registry2.registry_version) {
+    throw new Error(
+      `Capability Lock registry version drift\uFF1A${lock.registry_version} != ${registry2.registry_version}`
+    );
+  }
+  if (JSON.stringify(lock.previous_versions || {}) !== JSON.stringify(registry2.previous_versions || {})) {
+    throw new Error("Capability Lock previous_versions drift");
+  }
+  const definitions = new Map(
+    registry2.capabilities.map((item) => [item.capability_id, item])
+  );
+  const seen = /* @__PURE__ */ new Set();
+  for (const item of lock.capabilities) {
+    if (seen.has(item.capability_id)) {
+      throw new Error(`Capability Lock ID \u91CD\u590D\uFF1A${item.capability_id}`);
+    }
+    seen.add(item.capability_id);
+    const definition = definitions.get(item.capability_id);
+    if (!definition) {
+      throw new Error(`Capability Lock \u5F15\u7528\u672A\u77E5\u80FD\u529B\uFF1A${item.capability_id}`);
+    }
+    if (item.version !== definition.version) {
+      throw new Error(
+        `Capability version drift\uFF1A${item.capability_id} ${item.version} != ${definition.version}`
+      );
+    }
+    const { protocol_path: _protocolPath, ...portableDefinition } = definition;
+    const definitionSha256 = createHash2("sha256").update(JSON.stringify(portableDefinition)).digest("hex");
+    if (definitionSha256 !== item.definition_sha256) {
+      throw new Error(
+        `Capability definition hash drift\uFF1A${item.capability_id} ${item.definition_sha256} != ${definitionSha256}`
+      );
+    }
+    const protocolSha256 = createHash2("sha256").update(readFileSync5(definition.protocol_path)).digest("hex");
+    if (protocolSha256 !== item.protocol_sha256) {
+      throw new Error(
+        `Capability protocol hash drift\uFF1A${item.capability_id} ${item.protocol_sha256} != ${protocolSha256}`
+      );
+    }
+    for (const [kind, contract, expected] of [
+      ["input", definition.input_contract, item.input_schema_sha256],
+      ["output", definition.output_contract, item.output_schema_sha256]
+    ]) {
+      const actual = createHash2("sha256").update(readFileSync5(schemaPath(`${contract}.schema.json`))).digest("hex");
+      if (actual !== expected) {
+        throw new Error(
+          `Capability ${kind} schema hash drift\uFF1A${item.capability_id} ${expected} != ${actual}`
+        );
+      }
+    }
+  }
+  if (seen.size !== definitions.size) {
+    const missing = [...definitions.keys()].filter((id) => !seen.has(id));
+    throw new Error(`Capability Lock \u7F3A\u5C11\u80FD\u529B\uFF1A${missing.join(",")}`);
+  }
+  return lock;
+}
+function resolveRegistryPath(root) {
+  const direct = join8(resolve3(root), "registry.json");
+  if (existsSync6(direct)) return direct;
+  return join8(resolve3(root), "capabilities", "registry.json");
+}
+function matchesConditions(conditions, intake) {
+  const checks = [];
+  if (conditions.intake_types?.length > 0) {
+    checks.push(conditions.intake_types.includes(String(intake.type || "")));
+  }
+  if (conditions.risk_levels?.length > 0) {
+    checks.push(conditions.risk_levels.includes(String(intake.risk || "")));
+  }
+  for (const [field, patterns] of [
+    ["title", conditions.title_patterns],
+    ["description", conditions.description_patterns],
+    ["affected_area", conditions.affected_area_patterns]
+  ]) {
+    if (!patterns?.length) continue;
+    const value = String(intake[field] || "");
+    checks.push(patterns.some((pattern) => new RegExp(pattern, "i").test(value)));
+  }
+  if (checks.length === 0) return false;
+  return conditions.match === "all" ? checks.every(Boolean) : checks.some(Boolean);
+}
+function conditionPatterns(conditions = {}) {
+  return [
+    ...conditions.title_patterns || [],
+    ...conditions.description_patterns || [],
+    ...conditions.affected_area_patterns || []
+  ];
+}
+
+// src/core/capability-evidence.mjs
+var REQUIRED_OUTPUT_FIELDS = {
+  "engineering-spec-evidence": [
+    "objective",
+    "in_scope",
+    "out_of_scope",
+    "acceptance",
+    "assumptions",
+    "open_questions",
+    "verification_plan"
+  ],
+  "source-grounding-evidence": [
+    "detected_version",
+    "authoritative_sources",
+    "verified_claims",
+    "conflicts",
+    "unverified_assumptions"
+  ],
+  "architecture-design-evidence": [
+    "problem",
+    "constraints",
+    "alternatives",
+    "selected_design",
+    "state_ownership",
+    "failure_modes",
+    "rollback",
+    "verification"
+  ],
+  "root-cause-evidence": [
+    "reproduction",
+    "observed_failure",
+    "failure_signature",
+    "data_flow",
+    "hypotheses",
+    "experiments",
+    "confirmed_root_cause",
+    "affected_scope",
+    "fix_constraints",
+    "regression_target"
+  ],
+  "negative-control-evidence": [
+    "test_entry",
+    "fault_model",
+    "red_command",
+    "red_signature",
+    "green_command",
+    "green_result",
+    "restoration_result"
+  ],
+  "incremental-plan-evidence": [
+    "slices",
+    "slice_dependencies",
+    "write_scopes",
+    "verification_per_slice"
+  ],
+  "code-review-evidence": [
+    "candidate_digest",
+    "findings",
+    "residual_risks",
+    "merge_posture"
+  ],
+  "security-audit-evidence": [
+    "scope",
+    "threat_model",
+    "findings",
+    "residual_risks",
+    "merge_posture"
+  ],
+  "high-risk-evidence": [
+    "safety_claim",
+    "assumptions",
+    "adversarial_cases",
+    "blast_radius",
+    "rollback",
+    "residual_risks"
+  ],
+  "test-strategy-evidence": [
+    "test_mode",
+    "affected_surfaces",
+    "selected_test_groups",
+    "excluded_groups",
+    "selection_rationale",
+    "stop_conditions"
+  ],
+  "documentation-sync-evidence": [
+    "changed_behavior",
+    "affected_docs",
+    "updated_docs",
+    "intentionally_unchanged",
+    "stale_refs",
+    "verification"
+  ],
+  "frontend-design-evidence": [
+    "brief",
+    "information_architecture",
+    "selected_direction",
+    "design_tokens",
+    "layout_spec",
+    "responsive_rules",
+    "interaction_states",
+    "acceptance"
+  ],
+  "design-to-code-evidence": [
+    "design_artifact_ref",
+    "implementation_spec",
+    "component_map",
+    "changed_files",
+    "acceptance_checklist",
+    "fidelity_findings"
+  ],
+  "browser-qa-evidence": [
+    "url",
+    "browser_provider",
+    "viewport",
+    "user_flows",
+    "screenshots",
+    "console_errors",
+    "network_errors",
+    "behavior_results"
+  ],
+  "mobile-qa-evidence": [
+    "platform",
+    "device",
+    "os_version",
+    "app_artifact",
+    "flows",
+    "screenshots_or_video",
+    "crashes",
+    "logs",
+    "cleanup"
+  ],
+  "performance-evidence": [
+    "metric",
+    "baseline",
+    "candidate",
+    "environment_fingerprint",
+    "sample_count",
+    "distribution",
+    "threshold",
+    "verdict"
+  ],
+  "migration-safety-evidence": [
+    "source_version",
+    "target_version",
+    "preconditions",
+    "dry_run",
+    "backup",
+    "forward_steps",
+    "rollback_steps",
+    "idempotency",
+    "replay_or_reconcile",
+    "data_diff"
+  ],
+  "deployment-receipt": [
+    "candidate_digest",
+    "environment",
+    "approval",
+    "deployment_id",
+    "started_at",
+    "completed_at",
+    "health_checks",
+    "canary_results",
+    "rollback_token"
+  ],
+  "project-audit-evidence": [
+    "objective",
+    "commitments",
+    "checks",
+    "findings",
+    "coverage",
+    "confidence",
+    "unverified_items",
+    "release_posture"
+  ],
+  "postmortem-evidence": [
+    "impact",
+    "timeline",
+    "detection_gap",
+    "root_causes",
+    "failed_controls",
+    "corrective_actions",
+    "control_candidates",
+    "owners",
+    "verification"
+  ],
+  "simplification-evidence": [
+    "candidates",
+    "consumer_evidence",
+    "deletion_plan",
+    "risk",
+    "verification_plan",
+    "estimated_savings",
+    "actual_savings",
+    "decision"
+  ]
+};
+function validateCapabilityEvidenceForBindings(bindings = [], evidenceItems = [], options = {}) {
+  const declared = new Map(bindings.map((binding) => [
+    binding.capability_id,
+    binding
+  ]));
+  const submitted = /* @__PURE__ */ new Map();
+  for (const evidence of evidenceItems || []) {
+    assertContract(
+      "capability-evidence.schema.json",
+      evidence,
+      `capability evidence:${evidence?.capability_id || "unknown"}`
+    );
+    const binding = declared.get(evidence.capability_id);
+    if (!binding) {
+      throw new Error(`Capability Evidence \u672A\u7ED1\u5B9A\uFF1A${evidence.capability_id}`);
+    }
+    if (submitted.has(evidence.capability_id)) {
+      throw new Error(`Capability Evidence \u91CD\u590D\uFF1A${evidence.capability_id}`);
+    }
+    if (evidence.capability_version !== binding.capability_version) {
+      throw new Error(
+        `Capability Evidence version \u4E0D\u5339\u914D\uFF1A${evidence.capability_id} ${evidence.capability_version} != ${binding.capability_version}`
+      );
+    }
+    if (evidence.output_contract !== binding.output_contract) {
+      throw new Error(
+        `Capability Evidence output contract \u4E0D\u5339\u914D\uFF1A${evidence.capability_id} ${evidence.output_contract} != ${binding.output_contract}`
+      );
+    }
+    const requiredFields = REQUIRED_OUTPUT_FIELDS[evidence.output_contract];
+    if (!requiredFields) {
+      throw new Error(`\u672A\u77E5 Capability Evidence output contract\uFF1A${evidence.output_contract}`);
+    }
+    const missingFields = requiredFields.filter(
+      (field) => !Object.hasOwn(evidence.output || {}, field)
+    );
+    if (missingFields.length > 0) {
+      throw new Error(
+        `Capability Evidence \u7F3A\u5C11 output \u5B57\u6BB5\uFF1A${evidence.capability_id} ${missingFields.join(",")}`
+      );
+    }
+    assertContract(
+      `${evidence.output_contract}.schema.json`,
+      evidence.output,
+      `capability output:${evidence.capability_id}`
+    );
+    const genericIssues = genericEvidenceIssues(evidence, options);
+    if (genericIssues.length > 0) {
+      throw new Error(
+        `Capability Evidence \u8BED\u4E49\u65E0\u6548\uFF1A${evidence.capability_id} ` + genericIssues.join("; ")
+      );
+    }
+    const semanticIssues = capabilityEvidenceSemanticIssues(evidence);
+    if (semanticIssues.length > 0) {
+      throw new Error(
+        `Capability Evidence \u8BED\u4E49\u65E0\u6548\uFF1A${evidence.capability_id} ` + semanticIssues.join("; ")
+      );
+    }
+    submitted.set(evidence.capability_id, evidence);
+  }
+  const missing = bindings.filter((binding) => binding.required).map((binding) => binding.capability_id).filter((capabilityId) => !submitted.has(capabilityId));
+  const enforceRequired = options.enforceRequired ?? options.requireAll ?? true;
+  if (missing.length > 0 && enforceRequired) {
+    throw new Error(`\u7F3A\u5C11 required capability evidence\uFF1A${missing.join(", ")}`);
+  }
+  return [...submitted.values()];
+}
+function genericEvidenceIssues(evidence, options) {
+  const issues = [];
+  const normalizedClaims = evidence.claims.map(normalizeClaim);
+  if (evidence.claims.some(isGenericClaim)) {
+    issues.push("generic claim \u4E0D\u80FD\u4F5C\u4E3A\u5B8C\u6210\u8BC1\u636E");
+  }
+  if (new Set(normalizedClaims).size !== normalizedClaims.length) {
+    issues.push("copied claim \u91CD\u590D");
+  }
+  if (hasContradictoryClaims(normalizedClaims)) {
+    issues.push("claims \u5B58\u5728 contradict \u51B2\u7A81");
+  }
+  if (Array.isArray(options.declaredEvidenceRefs)) {
+    const declared = new Set(options.declaredEvidenceRefs);
+    const undeclared = [
+      ...evidence.source_refs || [],
+      ...evidence.verification_refs || []
+    ].filter((ref) => !declared.has(ref));
+    if (undeclared.length > 0) {
+      issues.push(`undeclared evidence ref \u672A\u58F0\u660E\uFF1A${[...new Set(undeclared)].join(",")}`);
+    }
+  }
+  const candidateDigest = evidence.output?.candidate_digest;
+  if (options.expectedCandidateDigest && candidateDigest && candidateDigest !== options.expectedCandidateDigest) {
+    issues.push(
+      `candidate digest stale/\u4E0D\u5339\u914D\uFF1A${candidateDigest} != ${options.expectedCandidateDigest}`
+    );
+  }
+  if (options.expectedEnvironmentFingerprint && evidence.output?.environment_fingerprint && evidence.output.environment_fingerprint !== options.expectedEnvironmentFingerprint) {
+    issues.push(
+      `environment fingerprint drift/\u4E0D\u5339\u914D\uFF1A${evidence.output.environment_fingerprint} != ${options.expectedEnvironmentFingerprint}`
+    );
+  }
+  return issues;
+}
+function isGenericClaim(claim) {
+  const value = normalizeClaim(claim);
+  return /^(done|complete|completed|pass|passed|ok|okay|success|successful|fixed|implemented|完成|已完成|通过|成功)$/.test(
+    value
+  );
+}
+function normalizeClaim(claim) {
+  return String(claim || "").trim().toLowerCase().replace(/[.,;:!?'"`(){}[\]，。；：！？“”‘’]/g, " ").replace(/\s+/g, " ");
+}
+function hasContradictoryClaims(claims) {
+  const values = claims.map((claim) => {
+    const match = claim.match(/^(not|no|without|never|不|未|无)\s*(.+)$/);
+    return match ? { negated: true, value: match[2].trim() } : { negated: false, value: claim };
+  });
+  for (let left = 0; left < values.length; left += 1) {
+    for (let right = left + 1; right < values.length; right += 1) {
+      if (values[left].value && values[left].value === values[right].value && values[left].negated !== values[right].negated) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+function capabilityEvidenceSemanticIssues(evidence) {
+  const output = evidence?.output || {};
+  const issues = [];
+  if (evidence.capability_id === "engineering-spec") {
+    requireNonEmptyArray(output.in_scope, "in_scope", issues);
+    requireNonEmptyArray(output.acceptance, "acceptance", issues);
+    rejectArrayOverlap(output.in_scope, output.out_of_scope, "scope contradiction", issues);
+  }
+  if (evidence.capability_id === "source-grounding") {
+    requireNonEmptyArray(output.authoritative_sources, "authoritative_sources", issues);
+    requireNonEmptyArray(output.verified_claims, "verified_claims", issues);
+    rejectArrayOverlap(
+      output.verified_claims,
+      output.conflicts,
+      "verified claim conflicts with source evidence",
+      issues
+    );
+  }
+  if (evidence.capability_id === "architecture-design") {
+    if (!Array.isArray(output.alternatives) || output.alternatives.length < 2) {
+      issues.push("architecture alternatives \u5FC5\u987B\u81F3\u5C11 2 \u4E2A");
+    }
+    requireNonEmptyValue(output.state_ownership, "state_ownership", issues);
+    requireNonEmptyValue(output.rollback, "rollback", issues);
+    if (typeof output.selected_design === "string" && Array.isArray(output.alternatives) && !output.alternatives.some(
+      (item) => typeof item === "string" && normalizeSemanticValue(item) === normalizeSemanticValue(output.selected_design)
+    )) {
+      issues.push("selected_design \u4E0D\u5728 alternatives \u4E2D");
+    }
+  }
+  if (evidence.capability_id === "systematic-debugging") {
+    if (!Array.isArray(output.hypotheses) || output.hypotheses.length < 3) {
+      issues.push("debug hypotheses \u5FC5\u987B\u81F3\u5C11 3 \u4E2A");
+    }
+    requireNonEmptyArray(output.experiments, "experiments", issues);
+    if (typeof output.confirmed_root_cause !== "string" || output.confirmed_root_cause.trim().length < 12 || /^(unknown|unclear|not sure|未知|不确定)$/i.test(
+      output.confirmed_root_cause.trim()
+    )) {
+      issues.push("confirmed_root_cause \u4E0D\u5177\u4F53");
+    }
+  }
+  if (evidence.capability_id === "tdd-negative-control") {
+    requireNonEmptyValue(output.red_signature, "red_signature", issues);
+    requireNonEmptyValue(output.red_command, "red_command", issues);
+    requireNonEmptyValue(output.green_command, "green_command", issues);
+    if (typeof output.test_entry === "string" && (!String(output.red_command || "").includes(output.test_entry) || !String(output.green_command || "").includes(output.test_entry))) {
+      issues.push("RED/GREEN \u5FC5\u987B\u4F7F\u7528\u540C\u4E00 test_entry");
+    }
+  }
+  if (evidence.capability_id === "incremental-delivery") {
+    requireNonEmptyArray(output.slices, "slices", issues);
+    requireNonEmptyValue(output.write_scopes, "write_scopes", issues);
+    requireNonEmptyValue(output.verification_per_slice, "verification_per_slice", issues);
+  }
+  if (evidence.capability_id === "code-review") {
+    requireDigest(output.candidate_digest, "candidate_digest", issues);
+    if (output.merge_posture === "approve" && hasBlockingFinding(output.findings)) {
+      issues.push("blocking review finding \u4E0D\u80FD approve");
+    }
+  }
+  if (evidence.capability_id === "security-audit") {
+    if (output.merge_posture === "approve" && hasBlockingFinding(output.findings)) {
+      issues.push("critical/high security finding \u4E0D\u80FD approve");
+    }
+  }
+  if (evidence.capability_id === "high-risk-review") {
+    requireNonEmptyArray(output.assumptions, "assumptions", issues);
+    requireNonEmptyArray(output.adversarial_cases, "adversarial_cases", issues);
+    requireNonEmptyValue(output.rollback, "rollback", issues);
+  }
+  if (evidence.capability_id === "test-strategy") {
+    requireNonEmptyArray(output.selected_test_groups, "selected_test_groups", issues);
+    requireNonEmptyValue(output.selection_rationale, "selection_rationale", issues);
+    const onlySmoke = (output.selected_test_groups || []).length > 0 && output.selected_test_groups.every((item) => /\bsmoke\b/i.test(String(item)));
+    const highRiskSurface = (output.affected_surfaces || []).some(
+      (item) => /\b(auth(?:orization|entication)?|security|permission|migration|deploy|trading|payment|credential)\b/i.test(
+        String(item)
+      )
+    );
+    if (onlySmoke && highRiskSurface) {
+      issues.push("high-risk surface \u4E0D\u80FD\u53EA\u9009\u62E9 smoke tests");
+    }
+  }
+  if (evidence.capability_id === "documentation-sync") {
+    const affected = new Set(output.affected_docs || []);
+    const handled = /* @__PURE__ */ new Set([
+      ...output.updated_docs || [],
+      ...output.intentionally_unchanged || []
+    ]);
+    const missing = [...affected].filter((item) => !handled.has(item));
+    if (missing.length > 0) {
+      issues.push(`affected_docs \u672A\u5904\u7406\uFF1A${missing.join(",")}`);
+    }
+  }
+  if (evidence.capability_id === "frontend-design") {
+    requireNonEmptyValue(output.brief, "brief", issues);
+    requireNonEmptyValue(output.information_architecture, "information_architecture", issues);
+    requireNonEmptyValue(output.selected_direction, "selected_direction", issues);
+    requireNonEmptyValue(output.design_tokens, "design_tokens", issues);
+    requireNonEmptyArray(output.acceptance, "acceptance", issues);
+  }
+  if (evidence.capability_id === "design-to-code") {
+    requireNonEmptyValue(output.design_artifact_ref, "design_artifact_ref", issues);
+    requireNonEmptyValue(output.implementation_spec, "implementation_spec", issues);
+    requireNonEmptyValue(output.component_map, "component_map", issues);
+    requireNonEmptyValue(output.acceptance_checklist, "acceptance_checklist", issues);
+  }
+  if (evidence.capability_id === "browser-qa") {
+    requireNonEmptyValue(output.url, "url", issues);
+    requireNonEmptyArray(output.user_flows, "user_flows", issues);
+    requireNonEmptyArray(output.screenshots, "screenshots", issues);
+    requireNonEmptyValue(output.behavior_results, "behavior_results", issues);
+    if (claimsAssertSuccess(evidence.claims) && (hasFailureStatus(output.behavior_results) || hasRecordedIssues(output.console_errors) || hasRecordedIssues(output.network_errors))) {
+      issues.push("Browser PASS \u4E0E behavior/console/network failure \u51B2\u7A81");
+    }
+  }
+  if (evidence.capability_id === "mobile-qa") {
+    requireNonEmptyValue(output.platform, "platform", issues);
+    requireNonEmptyValue(output.device, "device", issues);
+    requireNonEmptyValue(output.app_artifact, "app_artifact", issues);
+    requireNonEmptyArray(output.flows, "flows", issues);
+    requireNonEmptyValue(output.screenshots_or_video, "screenshots_or_video", issues);
+    requireNonEmptyValue(output.cleanup, "cleanup", issues);
+    if (claimsAssertSuccess(evidence.claims) && hasRecordedIssues(output.crashes)) {
+      issues.push("Mobile PASS \u4E0E crash evidence \u51B2\u7A81");
+    }
+  }
+  if (evidence.capability_id === "performance-validation") {
+    requireNonEmptyValue(output.environment_fingerprint, "environment_fingerprint", issues);
+    if (!Number.isInteger(output.sample_count) || output.sample_count < 5) {
+      issues.push("performance sample_count \u5FC5\u987B\u81F3\u5C11 5");
+    }
+    requireNonEmptyValue(output.distribution, "distribution", issues);
+    requireNonEmptyValue(output.threshold, "threshold", issues);
+  }
+  if (evidence.capability_id === "migration-safety") {
+    requireNonEmptyValue(output.dry_run, "dry_run", issues);
+    requireNonEmptyValue(output.backup, "backup", issues);
+    requireNonEmptyValue(output.rollback_steps, "rollback_steps", issues);
+    requireNonEmptyValue(output.idempotency, "idempotency", issues);
+    requireNonEmptyValue(output.replay_or_reconcile, "replay_or_reconcile", issues);
+    if (claimsAssertSuccess(evidence.claims) && (hasFailureStatus([output.dry_run]) || hasFailureStatus([output.replay_or_reconcile]))) {
+      issues.push("Migration PASS \u4E0E dry-run/reconcile failure \u51B2\u7A81");
+    }
+  }
+  if (evidence.capability_id === "deploy-release") {
+    requireDigest(output.candidate_digest, "candidate_digest", issues);
+    requireNonEmptyValue(output.approval, "approval", issues);
+    requireNonEmptyValue(output.health_checks, "health_checks", issues);
+    requireNonEmptyValue(output.rollback_token, "rollback_token", issues);
+    if (claimsAssertSuccess(evidence.claims) && (hasFailureStatus(output.health_checks) || hasFailureStatus(output.canary_results))) {
+      issues.push("Deploy PASS \u4E0E health/canary failure \u51B2\u7A81");
+    }
+  }
+  if (evidence.capability_id === "project-audit") {
+    requireNonEmptyArray(output.commitments, "commitments", issues);
+    requireNonEmptyArray(output.checks, "checks", issues);
+    requireNonEmptyValue(output.release_posture, "release_posture", issues);
+    if (["PASS", "GO"].includes(output.release_posture) && (hasFailureStatus(output.checks) || Number(output.coverage) < 1 || hasRecordedIssues(output.unverified_items))) {
+      issues.push("Audit PASS \u542B\u5931\u8D25\u68C0\u67E5\u3001\u8986\u76D6\u7F3A\u53E3\u6216\u672A\u9A8C\u8BC1\u9879");
+    }
+  }
+  if (evidence.capability_id === "postmortem") {
+    requireNonEmptyValue(output.impact, "impact", issues);
+    requireNonEmptyArray(output.failed_controls, "failed_controls", issues);
+    requireNonEmptyArray(output.corrective_actions, "corrective_actions", issues);
+    requireNonEmptyArray(output.control_candidates, "control_candidates", issues);
+    requireNonEmptyValue(output.verification, "verification", issues);
+  }
+  if (evidence.capability_id === "simplification") {
+    requireNonEmptyArray(output.candidates, "candidates", issues);
+    requireNonEmptyValue(output.consumer_evidence, "consumer_evidence", issues);
+    requireNonEmptyValue(output.verification_plan, "verification_plan", issues);
+    if (!Object.hasOwn(output, "actual_savings")) {
+      issues.push("actual_savings \u5FC5\u987B\u663E\u5F0F\u8BB0\u5F55\u6216\u4E3A null");
+    }
+    if (output.decision === "delete" && (output.consumer_evidence || []).some(hasActiveConsumerEvidence)) {
+      issues.push("\u5B58\u5728\u771F\u5B9E consumer \u65F6\u4E0D\u80FD delete");
+    }
+  }
+  return issues;
+}
+function requireNonEmptyArray(value, name, issues) {
+  if (!Array.isArray(value) || value.length === 0) {
+    issues.push(`${name} \u4E0D\u80FD\u4E3A\u7A7A`);
+  }
+}
+function requireNonEmptyValue(value, name, issues) {
+  if (value == null || typeof value === "string" && value.trim() === "" || Array.isArray(value) && value.length === 0 || typeof value === "object" && !Array.isArray(value) && Object.keys(value).length === 0) {
+    issues.push(`${name} \u4E0D\u80FD\u4E3A\u7A7A`);
+  }
+}
+function requireDigest(value, name, issues) {
+  if (typeof value !== "string" || !/^[a-f0-9]{64}$/.test(value)) {
+    issues.push(`${name} \u5FC5\u987B\u662F candidate digest`);
+  }
+}
+function rejectArrayOverlap(left, right, label, issues) {
+  const rightValues = new Set((right || []).filter((item) => typeof item === "string").map(normalizeSemanticValue));
+  const overlap = (left || []).filter((item) => typeof item === "string").filter((item) => rightValues.has(normalizeSemanticValue(item)));
+  if (overlap.length > 0) {
+    issues.push(`${label}\uFF1A${overlap.join(",")}`);
+  }
+}
+function normalizeSemanticValue(value) {
+  return String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+function claimsAssertSuccess(claims = []) {
+  return claims.some(
+    (claim) => /\b(pass|passed|success|successful|safe|approved|ready)\b|通过|成功|安全|可发布/i.test(
+      String(claim)
+    )
+  );
+}
+function hasRecordedIssues(values) {
+  return Array.isArray(values) && values.length > 0;
+}
+function hasFailureStatus(values = []) {
+  return (values || []).some((value) => {
+    if (typeof value === "string") {
+      return /\b(fail|failed|error|blocked|inconsistent|unhealthy)\b/i.test(value);
+    }
+    return /\b(fail|failed|error|blocked|inconsistent|unhealthy)\b/i.test(
+      String(value?.status || value?.verdict || value?.result || "")
+    );
+  });
+}
+function hasActiveConsumerEvidence(value) {
+  if (typeof value === "string") {
+    return /\b(exists|active|used|imported|consumer found|production import)\b/i.test(value) && !/\b(no|none|not|zero|absent|unused)\b/i.test(value);
+  }
+  return Boolean(
+    value?.active === true || value?.exists === true || ["active", "used", "present"].includes(value?.status)
+  );
+}
+function hasBlockingFinding(findings) {
+  return (findings || []).some((finding) => {
+    if (typeof finding === "string") {
+      return /\b(P0|P1|critical|high|blocking)\b/i.test(finding);
+    }
+    return Boolean(
+      finding?.blocking || ["P0", "P1", "critical", "high"].includes(finding?.severity)
+    );
+  });
+}
+function assertCapabilityEvidence(bindings = [], evidenceItems = [], options = {}) {
+  const validated = validateCapabilityEvidenceForBindings(
+    bindings,
+    evidenceItems,
+    options
+  );
+  const submitted = new Set(validated.map((item) => item.capability_id));
+  return {
+    required: bindings.filter((binding) => binding.required).map((binding) => binding.capability_id),
+    submitted: [...submitted],
+    missing: bindings.filter((binding) => binding.required).map((binding) => binding.capability_id).filter((capabilityId) => !submitted.has(capabilityId))
+  };
+}
+
 // src/core/worker.mjs
 function createWorkerForPlanNode(root, run, planNode2, options = {}) {
   const generation = getWorkers(root, run.run_id).filter((worker) => worker.plan_node_id === planNode2.id).length + 1;
-  return withProjectTransaction(resolve3(root, ".."), {
+  return withProjectTransaction(resolve4(root, ".."), {
     kind: "worker-create",
     idempotencyKey: `worker-create:${run.run_id}:${planNode2.id}:${generation}`
   }, () => createWorkerForPlanNodeTransaction(root, run, planNode2, options)).result;
 }
 function createWorkerForPlanNodeTransaction(root, run, planNode2, options) {
   const timestamp = now();
+  assertCapabilityProviderAvailability(planNode2.capability_bindings || []);
   const workerId = shortId("worker");
   const namespace = `.apex-v2/runs/${run.run_id}/workers/${workerId}`;
-  const executionPolicy = readJson(join8(root, "policies", "execution.json"));
+  const executionPolicy = readJson(join9(root, "policies", "execution.json"));
   const route = routeExecution(planNode2, executionPolicy, options);
   const assignment = resolveWorkerAssignment(planNode2, executionPolicy, route);
   const worker = {
@@ -8516,6 +9543,9 @@ function createWorkerForPlanNodeTransaction(root, run, planNode2, options) {
     objective: planNode2.objective,
     deliverables: planNode2.deliverables,
     required_evidence: planNode2.required_evidence,
+    capability_bindings: planNode2.capability_bindings || [],
+    capability_enforcement: planNode2.capability_enforcement || "shadow",
+    capability_invocation_refs: [],
     read_scope: planNode2.read_scope,
     write_scope: planNode2.write_scope,
     verification: planNode2.verification,
@@ -8530,6 +9560,11 @@ function createWorkerForPlanNodeTransaction(root, run, planNode2, options) {
   };
   const dir = workerDir(root, run.run_id, workerId);
   ensureDir(dir);
+  worker.capability_invocation_refs = persistCapabilityInvocations(
+    dir,
+    worker,
+    timestamp
+  );
   const routeRecord = {
     schema_version: SCHEMA_VERSION,
     route_id: shortId("route"),
@@ -8540,9 +9575,9 @@ function createWorkerForPlanNodeTransaction(root, run, planNode2, options) {
     created_at: timestamp
   };
   worker.route_id = routeRecord.route_id;
-  writeJson(join8(dir, "execution-route.json"), routeRecord);
-  writeJson(join8(dir, "worker.json"), worker);
-  writeTextIfMissing(join8(dir, "README.md"), workerReadme(worker, planNode2));
+  writeJson(join9(dir, "execution-route.json"), routeRecord);
+  writeJson(join9(dir, "worker.json"), worker);
+  writeTextIfMissing(join9(dir, "README.md"), workerReadme(worker, planNode2));
   const event = appendEvent(root, "worker.created", "apex-v2", {
     run_id: run.run_id,
     worker_id: workerId,
@@ -8550,6 +9585,56 @@ function createWorkerForPlanNodeTransaction(root, run, planNode2, options) {
   });
   updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
   return worker;
+}
+function persistCapabilityInvocations(dir, worker, timestamp) {
+  return (worker.capability_bindings || []).map((binding) => {
+    const input = {
+      schema_version: SCHEMA_VERSION,
+      capability_id: binding.capability_id,
+      objective: worker.objective,
+      context_refs: uniqueStrings(worker.read_scope),
+      constraints: uniqueStrings([
+        ...(worker.write_scope || []).map((scope) => `write_scope:${scope}`),
+        `execution_class:${worker.execution_class}`
+      ]),
+      acceptance_refs: uniqueStrings(worker.required_evidence),
+      verification: uniqueStrings(worker.verification),
+      candidate_digest: null,
+      environment: null,
+      created_at: timestamp
+    };
+    assertContract(
+      `${binding.input_contract}.schema.json`,
+      input,
+      `capability input:${worker.worker_id}:${binding.capability_id}`
+    );
+    const invocation = {
+      schema_version: SCHEMA_VERSION,
+      invocation_id: `capinv-${worker.worker_id}-${binding.capability_id}`,
+      run_id: worker.run_id,
+      plan_node_id: worker.plan_node_id,
+      worker_id: worker.worker_id,
+      capability_id: binding.capability_id,
+      capability_version: binding.capability_version,
+      input_contract: binding.input_contract,
+      input_artifact_refs: uniqueStrings(worker.read_scope),
+      input,
+      output_contract: binding.output_contract,
+      required: binding.required,
+      created_at: timestamp
+    };
+    assertContract(
+      "capability-invocation.schema.json",
+      invocation,
+      `capability invocation:${worker.worker_id}:${binding.capability_id}`
+    );
+    const name = `capability-invocation-${binding.capability_id}.json`;
+    writeJson(join9(dir, name), invocation);
+    return `${worker.namespace}/${name}`;
+  });
+}
+function uniqueStrings(values = []) {
+  return [...new Set((values || []).map(String).filter(Boolean))];
 }
 function resolveWorkerAssignment(planNode2, executionPolicy, route = routeExecution(planNode2, executionPolicy)) {
   const executionClass = planNode2.execution_class || legacyExecutionClass2(planNode2);
@@ -8580,14 +9665,14 @@ function legacyExecutionClass2(planNode2) {
   return "cognitive";
 }
 function getWorkers(root, runId) {
-  const dir = join8(root, "runs", runId, "workers");
-  if (!existsSync6(dir)) {
+  const dir = join9(root, "runs", runId, "workers");
+  if (!existsSync7(dir)) {
     return [];
   }
-  return readdirSync4(dir, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => readJson(join8(dir, entry.name, "worker.json"), null)).filter(Boolean);
+  return readdirSync4(dir, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => readJson(join9(dir, entry.name, "worker.json"), null)).filter(Boolean);
 }
 function workerDir(root, runId, workerId) {
-  return join8(root, "runs", runId, "workers", workerId);
+  return join9(root, "runs", runId, "workers", workerId);
 }
 function patchBundleRef(worker, patchId) {
   assertPatchId(patchId);
@@ -8602,18 +9687,18 @@ function updatePatchBundle(root, patch) {
 function readWorkerPatchBundles(dir) {
   const patches = [];
   const seen = /* @__PURE__ */ new Set();
-  const versionsDir = join8(dir, "patches");
-  if (existsSync6(versionsDir)) {
+  const versionsDir = join9(dir, "patches");
+  if (existsSync7(versionsDir)) {
     for (const entry of readdirSync4(versionsDir, { withFileTypes: true })) {
       if (!entry.isDirectory()) continue;
-      const path = join8(versionsDir, entry.name, "patch-bundle.json");
+      const path = join9(versionsDir, entry.name, "patch-bundle.json");
       const patch = readJson(path, null);
       if (!patch?.patch_id || seen.has(patch.patch_id)) continue;
       patches.push({ patch, path });
       seen.add(patch.patch_id);
     }
   }
-  const legacyPath = join8(dir, "patch-bundle.json");
+  const legacyPath = join9(dir, "patch-bundle.json");
   const legacyPatch = readJson(legacyPath, null);
   if (legacyPatch?.patch_id && !seen.has(legacyPatch.patch_id)) {
     patches.push({ patch: legacyPatch, path: legacyPath });
@@ -8649,16 +9734,28 @@ ${bullet(worker.write_scope)}
 
 ${bullet(planNode2.required_evidence)}
 
+## Internal Capabilities
+
+${bullet((worker.capability_bindings || []).map(
+    (item) => `${item.capability_id}@${item.capability_version}: ${item.input_contract} -> ${item.output_contract}`
+  ))}
+
+Enforcement: ${worker.capability_enforcement || "shadow"}
+
+Invocation refs:
+
+${bullet(worker.capability_invocation_refs || [])}
+
 ## Verification
 
 ${bullet(worker.verification)}
 `;
 }
 function findWorker(root, workerId) {
-  const runsDir = join8(root, "runs");
+  const runsDir = join9(root, "runs");
   for (const runEntry of readdirSync4(runsDir, { withFileTypes: true })) {
     if (!runEntry.isDirectory()) continue;
-    const path = join8(runsDir, runEntry.name, "workers", workerId, "worker.json");
+    const path = join9(runsDir, runEntry.name, "workers", workerId, "worker.json");
     const worker = readJson(path, null);
     if (worker) return worker;
   }
@@ -8669,11 +9766,11 @@ function findPatch(root, runId, patchId) {
 }
 function findPatchWithPath(root, runId, patchId) {
   assertPatchId(patchId);
-  const workersDir = join8(root, "runs", runId, "workers");
-  if (!existsSync6(workersDir)) throw new Error(`run \u5C1A\u65E0 workers\uFF1A${runId}`);
+  const workersDir = join9(root, "runs", runId, "workers");
+  if (!existsSync7(workersDir)) throw new Error(`run \u5C1A\u65E0 workers\uFF1A${runId}`);
   for (const workerEntry of readdirSync4(workersDir, { withFileTypes: true })) {
     if (!workerEntry.isDirectory()) continue;
-    const dir = join8(workersDir, workerEntry.name);
+    const dir = join9(workersDir, workerEntry.name);
     for (const value of readWorkerPatchBundles(dir)) {
       if (value.patch.patch_id === patchId) return value;
     }
@@ -8683,14 +9780,14 @@ function findPatchWithPath(root, runId, patchId) {
 function writePatchBundle(root, patch, { latest }) {
   assertPatchId(patch?.patch_id);
   const dir = workerDir(root, patch.run_id, patch.worker_id);
-  const path = join8(dir, "patches", patch.patch_id, "patch-bundle.json");
+  const path = join9(dir, "patches", patch.patch_id, "patch-bundle.json");
   ensureDir(dirnameForPath(path));
   const existing = readJson(path, null);
   if (existing && patchContentHash(existing) !== patchContentHash(patch)) {
     throw new Error(`patch immutable content drift\uFF1A${patch.patch_id}`);
   }
   writeJson(path, patch);
-  const aliasPath = join8(dir, "patch-bundle.json");
+  const aliasPath = join9(dir, "patch-bundle.json");
   const alias = readJson(aliasPath, null);
   if (latest || alias?.patch_id === patch.patch_id) {
     writeJson(aliasPath, patch);
@@ -8699,7 +9796,7 @@ function writePatchBundle(root, patch, { latest }) {
 }
 function patchContentHash(patch) {
   const { status: _status, updated_at: _updatedAt, ...content } = patch;
-  return createHash2("sha256").update(JSON.stringify(content)).digest("hex");
+  return createHash3("sha256").update(JSON.stringify(content)).digest("hex");
 }
 function assertPatchId(patchId) {
   if (typeof patchId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(patchId)) {
@@ -8722,13 +9819,13 @@ function applyPatchOperations(projectDir, patch) {
   const applied = [];
   for (const operation of patch.operations || []) {
     assertSafeRelativePath(operation.path);
-    const target = join8(projectDir, operation.path);
+    const target = join9(projectDir, operation.path);
     if (operation.op === "write_text") {
       ensureDir(dirnameForPath(target));
       writeFileSync4(target, operation.content);
     } else if (operation.op === "replace_text") {
-      if (!existsSync6(target)) throw new Error(`replace_text \u76EE\u6807\u6587\u4EF6\u4E0D\u5B58\u5728\uFF1A${operation.path}`);
-      const current = readFileSync5(target, "utf8");
+      if (!existsSync7(target)) throw new Error(`replace_text \u76EE\u6807\u6587\u4EF6\u4E0D\u5B58\u5728\uFF1A${operation.path}`);
+      const current = readFileSync6(target, "utf8");
       const count = countOccurrences(current, operation.old_text);
       if (count !== 1) {
         throw new Error(`replace_text \u8981\u6C42 old_text \u552F\u4E00\u5339\u914D\uFF0C${operation.path} \u5B9E\u9645\u5339\u914D ${count} \u6B21`);
@@ -8757,17 +9854,35 @@ function findGitRoot(projectDir) {
   if (result.status !== 0) return null;
   return result.stdout.trim() || null;
 }
-function executeWorkerShell(root, worker, command, via) {
+function executeWorkerShell(root, worker, command, via, capabilityEvidence = []) {
   if (worker.execution_class && worker.execution_class !== "deterministic_check") {
     throw new Error(`shell adapter \u53EA\u5141\u8BB8 deterministic_check worker\uFF1A${worker.execution_class}`);
   }
-  const projectDir = join8(root, "..");
+  const projectDir = join9(root, "..");
   const timestamp = now();
   const result = spawnSync(command, {
     cwd: projectDir,
     encoding: "utf8",
     shell: true
   });
+  let capabilityStatus;
+  let capabilityError = "";
+  try {
+    capabilityStatus = assertCapabilityEvidence(
+      worker.capability_bindings || [],
+      capabilityEvidence,
+      { requireAll: worker.capability_enforcement === "enforce" }
+    );
+  } catch (error) {
+    capabilityError = error.message;
+    capabilityStatus = {
+      required: (worker.capability_bindings || []).filter((binding) => binding.required).map((binding) => binding.capability_id),
+      submitted: [],
+      missing: (worker.capability_bindings || []).filter((binding) => binding.required).map((binding) => binding.capability_id)
+    };
+  }
+  const commandPassed = result.status === 0;
+  const capabilityPassed = capabilityError === "";
   const adapterResult = {
     schema_version: SCHEMA_VERSION,
     result_id: shortId("adapter"),
@@ -8775,24 +9890,30 @@ function executeWorkerShell(root, worker, command, via) {
     run_id: worker.run_id,
     plan_node_id: worker.plan_node_id,
     adapter: "shell",
-    status: result.status === 0 ? "PASS" : "FAIL",
-    failure_kind: result.status === 0 ? null : "execution_error",
+    status: commandPassed && capabilityPassed ? "PASS" : "FAIL",
+    failure_kind: !commandPassed ? "execution_error" : !capabilityPassed ? "contract_error" : null,
     command,
-    summary: result.status === 0 ? "shell command passed" : "shell command failed",
+    summary: commandPassed && capabilityPassed ? "shell command passed" : !commandPassed ? "shell command failed" : "shell capability evidence invalid",
     exit_code: result.status ?? 1,
     stdout_tail: tail(result.stdout),
     stderr_tail: tail(result.stderr),
+    capability_evidence_status: {
+      enforcement: worker.capability_enforcement || "shadow",
+      submitted: capabilityStatus.submitted,
+      missing: capabilityStatus.missing,
+      error: capabilityError
+    },
     refs: [],
     created_at: timestamp
   };
   const expectedWorkerUpdatedAt = worker.updated_at;
-  return withProjectTransaction(resolve3(root, ".."), {
+  return withProjectTransaction(resolve4(root, ".."), {
     kind: "worker-shell-commit",
     idempotencyKey: [
       "worker-shell-commit",
       worker.worker_id,
       Number(worker.attempt || 0) + 1,
-      createHash2("sha256").update(command).digest("hex")
+      createHash3("sha256").update(command).digest("hex")
     ].join(":")
   }, () => commitWorkerShell(
     root,
@@ -8800,21 +9921,29 @@ function executeWorkerShell(root, worker, command, via) {
     expectedWorkerUpdatedAt,
     adapterResult,
     timestamp,
-    via
+    via,
+    capabilityEvidence
   )).result;
 }
-function commitWorkerShell(root, workerId, expectedWorkerUpdatedAt, adapterResult, timestamp, via) {
+function commitWorkerShell(root, workerId, expectedWorkerUpdatedAt, adapterResult, timestamp, via, capabilityEvidence) {
   const worker = findWorker(root, workerId);
   if (worker.status !== "active" || worker.updated_at !== expectedWorkerUpdatedAt) {
     throw new Error(`shell worker commit \u9047\u5230\u5E76\u53D1\u72B6\u6001\u53D8\u5316\uFF1A${worker.worker_id}`);
   }
+  const dir = workerDir(root, worker.run_id, worker.worker_id);
+  const capabilityEvidenceRefs = persistShellCapabilityEvidence(
+    dir,
+    worker.namespace,
+    capabilityEvidence
+  );
+  adapterResult.refs = capabilityEvidenceRefs;
   const file = `adapter-result-${adapterResult.result_id}.json`;
-  writeJson(join8(workerDir(root, worker.run_id, worker.worker_id), file), adapterResult);
+  writeJson(join9(dir, file), adapterResult);
   worker.status = adapterResult.status === "PASS" ? "evidence_submitted" : "blocked";
   worker.last_adapter = "shell";
   worker.attempt = Number(worker.attempt || 0) + 1;
   worker.updated_at = timestamp;
-  writeJson(join8(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
+  writeJson(join9(dir, "worker.json"), worker);
   const run = loadRun(root, worker.run_id);
   const artifact = createArtifact(root, run, "execute", {
     type: "evidence",
@@ -8822,7 +9951,7 @@ function commitWorkerShell(root, workerId, expectedWorkerUpdatedAt, adapterResul
     body: `worker=${worker.worker_id}
 command=${adapterResult.command}
 exit_code=${adapterResult.exit_code}`,
-    refs: [`${worker.namespace}/${file}`],
+    refs: [`${worker.namespace}/${file}`, ...capabilityEvidenceRefs],
     timestamp
   });
   const event = appendEvent(root, "worker.adapter.shell", "apex-v2", {
@@ -8836,6 +9965,13 @@ exit_code=${adapterResult.exit_code}`,
   });
   updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
   return { adapterResult, artifact };
+}
+function persistShellCapabilityEvidence(dir, namespace, evidenceItems = []) {
+  return (evidenceItems || []).map((evidence) => {
+    const name = `capability-evidence-${evidence.capability_id}.json`;
+    writeJson(join9(dir, name), evidence);
+    return `${namespace}/${name}`;
+  });
 }
 
 // src/core/schema-version.mjs
@@ -8852,23 +9988,23 @@ var IGNORED_ROOT_NAMES = /* @__PURE__ */ new Set([
 var IGNORED_TREE_NAMES = /* @__PURE__ */ new Set(["node_modules"]);
 var SECRET_BASENAMES = /* @__PURE__ */ new Set([".npmrc", ".pypirc", ".netrc", "credentials", "credentials.json"]);
 function createActionWorkspace(root, worker, actionId) {
-  const projectDir = resolve4(root, "..");
+  const projectDir = resolve5(root, "..");
   const dir = workerDir(root, worker.run_id, worker.worker_id);
-  const manifestPath = join9(dir, "action-workspace.json");
+  const manifestPath = join10(dir, "action-workspace.json");
   const existing = readJson(manifestPath, null);
   if (existing?.action_id === actionId && existing.status === "active" && existingActionWorkspaceExists(projectDir, existing)) {
     return existing;
   }
-  const container = join9(dir, "action-workspace");
-  const baseDir = join9(container, "base");
-  const workspaceDir = join9(container, "workspace");
+  const container = join10(dir, "action-workspace");
+  const baseDir = join10(container, "base");
+  const workspaceDir = join10(container, "workspace");
   rmSync3(container, { recursive: true, force: true });
   mkdirSync4(baseDir, { recursive: true });
   mkdirSync4(workspaceDir, { recursive: true });
   const excluded = { ignored: 0, secret: 0, symlink: 0 };
   const included = [];
   for (const path of listProjectSourceFiles(projectDir)) {
-    const source = join9(projectDir, path);
+    const source = join10(projectDir, path);
     const stat = lstatSync(source);
     if (stat.isSymbolicLink()) {
       excluded.symlink += 1;
@@ -8882,8 +10018,8 @@ function createActionWorkspace(root, worker, actionId) {
       excluded.secret += 1;
       continue;
     }
-    copyFile(source, join9(baseDir, path), stat.mode);
-    copyFile(source, join9(workspaceDir, path), stat.mode);
+    copyFile(source, join10(baseDir, path), stat.mode);
+    copyFile(source, join10(workspaceDir, path), stat.mode);
     included.push({ path, sha256: fileHash(source), mode: stat.mode & 511 });
   }
   linkDependencyDirectories(projectDir, workspaceDir);
@@ -8909,7 +10045,7 @@ function createActionWorkspace(root, worker, actionId) {
 }
 function collectActionWorkspaceChanges(projectDir, manifest) {
   const { baseDir, workspaceDir } = ownedActionWorkspacePaths(projectDir, manifest);
-  if (!existsSync7(baseDir) || !existsSync7(workspaceDir)) {
+  if (!existsSync8(baseDir) || !existsSync8(workspaceDir)) {
     throw new Error(`ActionWorkspace \u7F3A\u5931\uFF1A${manifest.action_id}`);
   }
   const base = scanTree(baseDir);
@@ -8948,7 +10084,7 @@ function collectActionWorkspaceChanges(projectDir, manifest) {
       unsupportedFiles.push(`${path}:${after.type}`);
       continue;
     }
-    const next = readFileSync6(join9(workspaceDir, path));
+    const next = readFileSync7(join10(workspaceDir, path));
     if (isBinary(next)) {
       unsupportedFiles.push(`${path}:binary`);
       continue;
@@ -8961,7 +10097,7 @@ function collectActionWorkspaceChanges(projectDir, manifest) {
       unsupportedFiles.push(`${path}:base_${before.type}`);
       continue;
     }
-    const previous = readFileSync6(join9(baseDir, path));
+    const previous = readFileSync7(join10(baseDir, path));
     if (isBinary(previous)) {
       unsupportedFiles.push(`${path}:binary`);
       continue;
@@ -8984,9 +10120,9 @@ function linkDependencyDirectories(projectDir, workspaceDir) {
   const visit = (directory) => {
     for (const entry of readdirSync5(directory, { withFileTypes: true })) {
       if ([".git", ".apex-v2"].includes(entry.name)) continue;
-      const source = join9(directory, entry.name);
+      const source = join10(directory, entry.name);
       if (entry.name === "node_modules") {
-        const target = join9(workspaceDir, relative3(projectDir, source));
+        const target = join10(workspaceDir, relative3(projectDir, source));
         createWritableDependencyShell(source, target);
       } else if (entry.isDirectory()) {
         visit(source);
@@ -8996,11 +10132,11 @@ function linkDependencyDirectories(projectDir, workspaceDir) {
   visit(projectDir);
 }
 function createWritableDependencyShell(source, target) {
-  if (existsSync7(target)) return;
+  if (existsSync8(target)) return;
   mkdirSync4(target, { recursive: true });
   for (const entry of readdirSync5(source, { withFileTypes: true })) {
-    const dependency = join9(source, entry.name);
-    const linked = join9(target, entry.name);
+    const dependency = join10(source, entry.name);
+    const linked = join10(target, entry.name);
     if ([".cache", ".tmp", ".vite", ".vite-temp"].includes(entry.name)) {
       mkdirSync4(linked, { recursive: true });
       continue;
@@ -9009,7 +10145,7 @@ function createWritableDependencyShell(source, target) {
   }
 }
 function gitIgnoredPaths(projectDir, paths) {
-  if (paths.length === 0 || !existsSync7(join9(projectDir, ".git"))) return /* @__PURE__ */ new Set();
+  if (paths.length === 0 || !existsSync8(join10(projectDir, ".git"))) return /* @__PURE__ */ new Set();
   const result = spawnSync2(
     "git",
     ["check-ignore", "--stdin", "-z"],
@@ -9049,26 +10185,26 @@ function discardActionWorkspace(projectDir, manifest, status2 = "cancelled") {
   return updated;
 }
 function recoverOrphanActionWorkspaces(root, options = {}) {
-  const projectDir = resolve4(root, "..");
-  const runsDir = join9(root, "runs");
-  if (!existsSync7(runsDir)) return [];
+  const projectDir = resolve5(root, "..");
+  const runsDir = join10(root, "runs");
+  if (!existsSync8(runsDir)) return [];
   const nowMs = Date.parse(options.now || (/* @__PURE__ */ new Date()).toISOString());
   const recovered = [];
   for (const runEntry of readdirSync5(runsDir, { withFileTypes: true })) {
     if (!runEntry.isDirectory()) continue;
-    const workersDir = join9(runsDir, runEntry.name, "workers");
-    if (!existsSync7(workersDir)) continue;
+    const workersDir = join10(runsDir, runEntry.name, "workers");
+    if (!existsSync8(workersDir)) continue;
     for (const workerEntry of readdirSync5(workersDir, { withFileTypes: true })) {
       if (!workerEntry.isDirectory()) continue;
-      const dir = join9(workersDir, workerEntry.name);
-      const manifest = readJson(join9(dir, "action-workspace.json"), null);
+      const dir = join10(workersDir, workerEntry.name);
+      const manifest = readJson(join10(dir, "action-workspace.json"), null);
       if (!manifest || manifest.status !== "active") continue;
       if (manifest.run_id !== runEntry.name || manifest.worker_id !== workerEntry.name) {
         throw new Error(
           `ActionWorkspace identity mismatch\uFF1A${runEntry.name}/${workerEntry.name}`
         );
       }
-      const worker = readJson(join9(dir, "worker.json"), null);
+      const worker = readJson(join10(dir, "worker.json"), null);
       const reason = orphanReason(worker, nowMs);
       if (!reason) continue;
       discardActionWorkspace(projectDir, manifest, "failed");
@@ -9085,7 +10221,7 @@ function recoverOrphanActionWorkspaces(root, options = {}) {
 function actionWorkspaceManifestPath(projectDir, manifest) {
   assertSafePathSegment(manifest.run_id, "run_id");
   assertSafePathSegment(manifest.worker_id, "worker_id");
-  return join9(
+  return join10(
     projectDir,
     ".apex-v2",
     "runs",
@@ -9097,13 +10233,13 @@ function actionWorkspaceManifestPath(projectDir, manifest) {
 }
 function existingActionWorkspaceExists(projectDir, manifest) {
   const { baseDir, workspaceDir } = ownedActionWorkspacePaths(projectDir, manifest);
-  return existsSync7(workspaceDir) && existsSync7(baseDir);
+  return existsSync8(workspaceDir) && existsSync8(baseDir);
 }
 function ownedActionWorkspacePaths(projectDir, manifest) {
   assertSafePathSegment(manifest.run_id, "run_id");
   assertSafePathSegment(manifest.worker_id, "worker_id");
-  const projectRoot2 = resolve4(projectDir);
-  const container = resolve4(
+  const projectRoot2 = resolve5(projectDir);
+  const container = resolve5(
     projectRoot2,
     ".apex-v2",
     "runs",
@@ -9122,7 +10258,7 @@ function ownedActionWorkspacePaths(projectDir, manifest) {
     manifest.base_path,
     "base_path"
   );
-  if (workspaceDir !== join9(container, "workspace") || baseDir !== join9(container, "base")) {
+  if (workspaceDir !== join10(container, "workspace") || baseDir !== join10(container, "base")) {
     throw new Error(`ActionWorkspace path \u8D8A\u51FA owned container\uFF1A${manifest.action_id}`);
   }
   return { projectRoot: projectRoot2, container, workspaceDir, baseDir };
@@ -9130,7 +10266,7 @@ function ownedActionWorkspacePaths(projectDir, manifest) {
 function resolveActionWorkspacePath(projectRoot2, path, field) {
   const normalized = String(path || "").split("\\").join("/");
   assertSafeRelativePath(normalized);
-  const target = resolve4(projectRoot2, normalized);
+  const target = resolve5(projectRoot2, normalized);
   if (target === projectRoot2 || !target.startsWith(`${projectRoot2}${sep}`)) {
     throw new Error(`ActionWorkspace ${field} \u8D8A\u51FA\u9879\u76EE\u6839\uFF1A${path}`);
   }
@@ -9164,7 +10300,7 @@ function listFilesRecursive(root) {
     for (const entry of readdirSync5(directory, { withFileTypes: true })) {
       if (directory === root && IGNORED_ROOT_NAMES.has(entry.name)) continue;
       if (entry.isDirectory() && IGNORED_TREE_NAMES.has(entry.name)) continue;
-      const path = join9(directory, entry.name);
+      const path = join10(directory, entry.name);
       const relativePath = relative3(root, path);
       if (entry.isDirectory()) visit(path);
       else files.push(relativePath);
@@ -9178,7 +10314,7 @@ function scanTree(root) {
   const visit = (directory) => {
     for (const entry of readdirSync5(directory, { withFileTypes: true })) {
       if (IGNORED_TREE_NAMES.has(entry.name)) continue;
-      const path = join9(directory, entry.name);
+      const path = join10(directory, entry.name);
       const relativePath = relative3(root, path);
       const stat = lstatSync(path);
       if (stat.isDirectory()) {
@@ -9210,7 +10346,7 @@ function isSecretPath(path) {
   );
 }
 function copyFile(source, target, mode) {
-  mkdirSync4(dirname3(target), { recursive: true });
+  mkdirSync4(dirname4(target), { recursive: true });
   copyFileSync(source, target);
   chmodSync(target, mode & 511);
 }
@@ -9221,10 +10357,10 @@ function sameEntry(left, right) {
   return left.sha256 === right.sha256 && left.mode === right.mode;
 }
 function fileHash(path) {
-  return createHash3("sha256").update(readFileSync6(path)).digest("hex");
+  return createHash4("sha256").update(readFileSync7(path)).digest("hex");
 }
 function hashEntries(entries) {
-  const hash = createHash3("sha256");
+  const hash = createHash4("sha256");
   for (const entry of [...entries].sort((left, right) => left.path.localeCompare(right.path))) {
     hash.update(entry.path);
     hash.update("\0");
@@ -9242,16 +10378,16 @@ function isBinary(buffer) {
 // src/core/store.mjs
 var STORE_DIR = ".apex-v2";
 function projectRoot(args) {
-  return resolve5(String(args.project || "."));
+  return resolve6(String(args.project || "."));
 }
 function storeRoot(projectDir) {
-  return join10(projectDir, STORE_DIR);
+  return join11(projectDir, STORE_DIR);
 }
 function requireStore(projectDir) {
   const root = storeRoot(projectDir);
   withProjectLock(projectDir, () => {
-    if (existsSync8(join10(root, "transactions"))) recoverProjectTransactions(projectDir);
-    if (!existsSync8(join10(root, "project.json"))) {
+    if (existsSync9(join11(root, "transactions"))) recoverProjectTransactions(projectDir);
+    if (!existsSync9(join11(root, "project.json"))) {
       throw new Error(`\u9879\u76EE\u5C1A\u672A\u521D\u59CB\u5316\uFF1A${root}`);
     }
     const recovered = recoverOrphanActionWorkspaces(root);
@@ -9262,10 +10398,10 @@ function requireStore(projectDir) {
   return root;
 }
 function appendEvent(root, type, actor, payload) {
-  const projectDir = resolve5(root, "..");
+  const projectDir = resolve6(root, "..");
   return withProjectLock(projectDir, () => {
-    const projectPath = join10(root, "project.json");
-    const project = existsSync8(projectPath) ? readJson(projectPath) : null;
+    const projectPath = join11(root, "project.json");
+    const project = existsSync9(projectPath) ? readJson(projectPath) : null;
     const event = {
       schema_version: SCHEMA_VERSION,
       event_id: shortId("event"),
@@ -9275,7 +10411,7 @@ function appendEvent(root, type, actor, payload) {
       payload
     };
     assertContract("event.schema.json", event, `${root}/events.jsonl`);
-    appendDurableFile(join10(root, "events.jsonl"), `${JSON.stringify(event)}
+    appendDurableFile(join11(root, "events.jsonl"), `${JSON.stringify(event)}
 `);
     if (project) {
       writeJson(projectPath, {
@@ -9289,9 +10425,9 @@ function appendEvent(root, type, actor, payload) {
   });
 }
 function updateProject(root, patch, options = {}) {
-  const projectDir = resolve5(root, "..");
+  const projectDir = resolve6(root, "..");
   withProjectLock(projectDir, () => {
-    const path = join10(root, "project.json");
+    const path = join11(root, "project.json");
     const project = readJson(path);
     const revision = Number(project.revision || 0);
     if (options.expectedRevision != null && Number(options.expectedRevision) !== revision) {
@@ -9318,7 +10454,7 @@ function nextEventTimestamp(previousTimestamp) {
 }
 
 // src/core/intake-roadmap.mjs
-import { join as join11 } from "node:path";
+import { join as join12 } from "node:path";
 function addIntakeItem(root, args) {
   const timestamp = now();
   const item = {
@@ -9331,8 +10467,10 @@ function addIntakeItem(root, args) {
     priority: normalizeEnum(args.priority || "P2", ["P0", "P1", "P2", "P3"], "priority"),
     risk: normalizeEnum(args.risk || "medium", ["low", "medium", "high", "critical"], "risk"),
     affected_area: String(args.area || "unknown"),
+    method_pack_id: args["method-pack"] ? String(args["method-pack"]) : null,
     acceptance_commands: parseAcceptanceCommands(args),
     evidence_refs: splitList(args.evidence),
+    source_spec: args.source_spec || null,
     triage: {
       status: "new",
       decision: null,
@@ -9342,7 +10480,7 @@ function addIntakeItem(root, args) {
     created_at: timestamp,
     updated_at: timestamp
   };
-  const path = join11(root, "intake", "items.json");
+  const path = join12(root, "intake", "items.json");
   const items = readJson(path, []);
   items.push(item);
   writeJson(path, items);
@@ -9364,12 +10502,12 @@ function parseAcceptanceCommands(args) {
   return [...new Set(commands.map((command) => command.trim()))];
 }
 function listIntakeItems(root, statusFilter = null) {
-  const items = readJson(join11(root, "intake", "items.json"), []);
+  const items = readJson(join12(root, "intake", "items.json"), []);
   return statusFilter ? items.filter((item) => item.triage.status === statusFilter) : items;
 }
 function triageIntakeItem(root, id, input) {
   const decision = normalizeEnum(input.decision || "accepted", ["accepted", "deferred", "rejected"], "decision");
-  const path = join11(root, "intake", "items.json");
+  const path = join12(root, "intake", "items.json");
   const items = readJson(path, []);
   const item = items.find((entry) => entry.id === id);
   if (!item) throw new Error(`\u627E\u4E0D\u5230 intake\uFF1A${id}`);
@@ -9386,13 +10524,13 @@ function triageIntakeItem(root, id, input) {
   return item;
 }
 function promoteRoadmapNode(root, intakeId, input = {}) {
-  const intake = readJson(join11(root, "intake", "items.json"), []);
+  const intake = readJson(join12(root, "intake", "items.json"), []);
   const item = intake.find((entry) => entry.id === intakeId);
   if (!item) throw new Error(`\u627E\u4E0D\u5230 intake\uFF1A${intakeId}`);
   if (item.triage.status !== "accepted") {
     throw new Error(`intake \u5C1A\u672A accepted\uFF0C\u4E0D\u80FD\u8FDB\u5165 roadmap\uFF1A${intakeId}`);
   }
-  const roadmapPath = join11(root, "roadmap", "graph.json");
+  const roadmapPath = join12(root, "roadmap", "graph.json");
   const graph = readJson(roadmapPath);
   const existing = graph.nodes.find((node2) => node2.source_intake_id === intakeId);
   if (existing) return existing;
@@ -9427,15 +10565,149 @@ function compareRoadmapPriority(a, b) {
 }
 
 // src/core/plan-graph.mjs
-import { join as join12 } from "node:path";
+import { join as join13 } from "node:path";
+
+// src/core/method-packs.mjs
+var SUPPORTED_WORKFLOWS = /* @__PURE__ */ new Set([
+  "quick",
+  "disciplined",
+  "phase_context",
+  "governed"
+]);
+function defaultMethodPackRegistry(timestamp) {
+  return {
+    schema_version: "v0",
+    updated_at: timestamp,
+    default_pack_id: "disciplined-tdd",
+    packs: [
+      methodPack(
+        "quick",
+        "1.0.0",
+        "Low-overhead implementation and review for bounded low-risk changes.",
+        "quick",
+        ["focused_verification", "semantic_review"]
+      ),
+      methodPack(
+        "disciplined-tdd",
+        "1.0.0",
+        "Default test-first delivery with design, implementation, independent verification, and review.",
+        "disciplined",
+        ["test_first", "independent_verification", "semantic_review"]
+      ),
+      methodPack(
+        "phase-context",
+        "1.0.0",
+        "Phase-scoped context and delivery for explicit milestone-oriented work.",
+        "phase_context",
+        ["phase_context", "independent_verification", "semantic_review"]
+      ),
+      methodPack(
+        "governed",
+        "1.0.0",
+        "Full evidence and separation-of-duties workflow for critical or recovery-sensitive work.",
+        "governed",
+        ["independent_risk", "separated_build", "independent_verification", "semantic_review"]
+      )
+    ]
+  };
+}
+function resolveMethodPack(registry2, intake, inventory = { files: [] }) {
+  assertRegistry(registry2);
+  const enabled = registry2.packs.filter((pack) => pack.enabled !== false);
+  const explicitId = String(intake.method_pack_id || "").trim();
+  if (explicitId) {
+    const pack = enabled.find((candidate) => candidate.id === explicitId);
+    if (!pack) throw new Error(`\u627E\u4E0D\u5230 Method Pack\uFF1A${explicitId}`);
+    assertSupportedWorkflow(pack);
+    return { pack, reason: `explicit=${explicitId}` };
+  }
+  const governed = enabled.find((pack) => pack.id === "governed");
+  if (requiresGovernedPack(intake)) {
+    if (!governed) throw new Error("Method Pack registry \u7F3A\u5C11 governed pack");
+    return { pack: governed, reason: governedReason(intake) };
+  }
+  const quick = enabled.find((pack) => pack.id === "quick");
+  if (quick && isQuickEligible(intake, inventory)) {
+    return { pack: quick, reason: "bounded_low_risk_change" };
+  }
+  const fallback = enabled.find((pack) => pack.id === registry2.default_pack_id);
+  if (!fallback) throw new Error(`\u9ED8\u8BA4 Method Pack \u4E0D\u53EF\u7528\uFF1A${registry2.default_pack_id}`);
+  assertSupportedWorkflow(fallback);
+  return { pack: fallback, reason: `default=${fallback.id}` };
+}
+function methodPack(id, version, description, workflow, qualityGates) {
+  return {
+    id,
+    version,
+    description,
+    workflow,
+    enabled: true,
+    quality_gates: qualityGates
+  };
+}
+function assertRegistry(registry2) {
+  if (!registry2 || !Array.isArray(registry2.packs) || !registry2.default_pack_id) {
+    throw new Error("Method Pack registry \u65E0\u6548");
+  }
+  const ids = /* @__PURE__ */ new Set();
+  for (const pack of registry2.packs) {
+    if (!pack?.id || ids.has(pack.id)) throw new Error(`Method Pack id \u65E0\u6548\u6216\u91CD\u590D\uFF1A${pack?.id || "(\u7A7A)"}`);
+    ids.add(pack.id);
+    assertSupportedWorkflow(pack);
+  }
+}
+function assertSupportedWorkflow(pack) {
+  if (!SUPPORTED_WORKFLOWS.has(pack.workflow)) {
+    throw new Error(`Method Pack workflow \u4E0D\u53D7\u652F\u6301\uFF1A${pack.id}=${pack.workflow}`);
+  }
+}
+function requiresGovernedPack(intake) {
+  if (intake.risk === "critical") return true;
+  if (intake.type === "risk" && intake.risk === "high") return true;
+  return /(critical|security|auth(?:entication|orization)?|credential|secret|production|destructive|migration|rollback|interrupted|resume|recovery|parallel execution|关键|安全|鉴权|凭据|生产|破坏性|迁移|回滚|中断|恢复|并行执行)/i.test(`${intake.title || ""}
+${intake.description || ""}`);
+}
+function governedReason(intake) {
+  if (intake.risk === "critical") return "risk=critical";
+  return "governance_signal";
+}
+function isQuickEligible(intake, inventory) {
+  if (!["low", "medium"].includes(intake.risk || "medium")) return false;
+  if (intake.triage?.status !== "accepted") return false;
+  const scopes = parseAffectedArea(intake.affected_area, inventory.files || []).filter((scope) => !scope.startsWith(".apex-v2/"));
+  if (scopes.length === 0 || scopes.length > 4) return false;
+  if (scopes.some((scope) => scope.endsWith("/") || scope.includes("*"))) return false;
+  return !/(parallel|interrupted|resume|recovery|review[- ]defect|security defect|two independent|并行|中断|恢复|安全缺陷)/i.test(`${intake.title || ""}
+${intake.description || ""}`);
+}
+function parseAffectedArea(value, files) {
+  const raw = String(value || "").trim();
+  if (!raw || ["unknown", "n/a", "none"].includes(raw.toLowerCase())) return [];
+  const available = new Set(files);
+  return Array.from(new Set(raw.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).map((item) => {
+    if (item.includes("*") || item.endsWith("/")) return item;
+    if (available.has(item)) return item;
+    if (files.some((file) => file.startsWith(`${item}/`))) return `${item}/`;
+    return item;
+  })));
+}
+
+// src/core/plan-graph.mjs
 function buildTaskPlanGraph(root, run, timestamp, inventory) {
-  const project = readJson(join12(root, "project.json"));
-  const roadmap = readJson(join12(root, "roadmap", "graph.json"));
+  const project = readJson(join13(root, "project.json"));
+  const roadmap = readJson(join13(root, "roadmap", "graph.json"));
   const roadmapNode = roadmap.nodes.find((node) => node.id === run.roadmap_node_id);
   if (!roadmapNode) throw new Error(`\u627E\u4E0D\u5230 run \u5BF9\u5E94\u7684 roadmap node\uFF1A${run.roadmap_node_id}`);
-  const intakeItems = readJson(join12(root, "intake", "items.json"), []);
+  const intakeItems = readJson(join13(root, "intake", "items.json"), []);
   const intake = intakeItems.find((item) => item.id === roadmapNode.source_intake_id);
   if (!intake) throw new Error(`\u627E\u4E0D\u5230 roadmap \u5BF9\u5E94\u7684 intake\uFF1A${roadmapNode.source_intake_id}`);
+  const methodPackRegistry = readJson(
+    join13(root, "policies", "method-packs.json"),
+    defaultMethodPackRegistry(timestamp)
+  );
+  const methodPackResolution = resolveMethodPack(methodPackRegistry, intake, inventory);
+  const methodPack2 = methodPackResolution.pack;
+  const routedCapabilities = routeCapabilities(capabilityRegistry(), intake);
   const planId = shortId("plan");
   const scopes = inferPlanScopes(intake, inventory);
   const verificationCommands = inferVerificationCommands(inventory);
@@ -9589,26 +10861,31 @@ function buildTaskPlanGraph(root, run, timestamp, inventory) {
       risk: normalizedRisk(intake.risk, "high")
     })
   ];
-  const profile = shouldUseQuickPlan(intake, inventory) ? "quick" : "full";
-  const nodes = profile === "quick" ? buildQuickPlanNodes({
+  const profile = methodPack2.workflow === "quick" ? "quick" : "full";
+  const quickNodes = buildQuickPlanNodes({
     roadmapNode,
     intake,
     scopes,
     verificationCommands: taskVerificationCommands,
     contextRefs,
     runArtifactScope
-  }) : fullNodes;
-  const parallelLanes = profile === "quick" ? [
-    { id: "build", purpose: "\u5355\u4E00 ActionWorkspace \u540C\u65F6\u5B8C\u6210\u5B9E\u73B0\u4E0E\u6D4B\u8BD5\uFF0C\u51CF\u5C11\u7B80\u5355\u4EFB\u52A1\u5F80\u8FD4\u3002", node_ids: ["delivery-implementation"] },
-    { id: "readiness", purpose: "\u590D\u6838\u9700\u6C42\u7B26\u5408\u6027\u4E0E merge posture\u3002", node_ids: ["delivery-review"] }
-  ] : [
-    { id: "discovery", purpose: "\u5E76\u884C\u6838\u5BF9\u4E0A\u4E0B\u6587\u4E0E\u98CE\u9669\uFF0C\u907F\u514D\u5355\u4E00\u8DEF\u5F84\u81EA\u8BC1\u3002", node_ids: ["delivery-context", "delivery-risk"] },
-    { id: "planning", purpose: "\u6C47\u603B\u8BC1\u636E\u5E76\u5F62\u6210\u4EFB\u52A1\u7EA7\u5B9E\u65BD\u5207\u7247\u3002", node_ids: ["delivery-design"] },
-    { id: "build", purpose: "\u4E3B\u5B9E\u73B0\u4E0E\u6D4B\u8BD5\u5728\u5199\u5165\u8303\u56F4\u4E92\u65A5\u65F6\u5E76\u884C\u3002", node_ids: ["delivery-implementation", "delivery-tests"] },
-    { id: "verification", purpose: "\u72EC\u7ACB\u6267\u884C\u771F\u5B9E\u9879\u76EE\u9A8C\u8BC1\u5E76\u56FA\u5316\u8BC1\u636E\u3002", node_ids: ["delivery-verification"] },
-    { id: "readiness", purpose: "\u590D\u6838\u9700\u6C42\u7B26\u5408\u6027\u5E76\u53EA\u4FEE\u590D\u660E\u786E\u963B\u585E\u9879\u3002", node_ids: ["delivery-review"] }
-  ];
-  const mergeOrder = profile === "quick" ? ["build", "readiness"] : ["discovery", "planning", "build", "verification", "readiness"];
+  });
+  const selectedNodes = selectMethodPackNodes(methodPack2.workflow, {
+    quickNodes,
+    fullNodes,
+    roadmapNode,
+    scopes
+  }).map((node) => ({
+    ...node,
+    method_pack_id: methodPack2.id
+  }));
+  const capabilityApplication = applyCapabilityBindings(
+    selectedNodes,
+    routedCapabilities
+  );
+  const nodes = capabilityApplication.nodes;
+  const parallelLanes = buildParallelLanes(methodPack2.workflow);
+  const mergeOrder = parallelLanes.map((lane) => lane.id);
   const edges = nodes.flatMap(
     (node) => node.dependencies.map((dependency) => edge(dependency, node.id, node.id === "delivery-verification" ? "verifies" : "blocks"))
   );
@@ -9623,10 +10900,20 @@ function buildTaskPlanGraph(root, run, timestamp, inventory) {
     affected_area: intake.affected_area,
     generated_at: timestamp,
     profile,
-    strategy: profile === "quick" ? `\u9488\u5BF9\u201C${roadmapNode.title}\u201D\u4F7F\u7528\u4F4E\u5F00\u9500 quick route\uFF1A\u5355\u4E00\u9694\u79BB patch \u540C\u65F6\u5B8C\u6210\u5B9E\u73B0\u4E0E\u6D4B\u8BD5\uFF0C\u518D\u72EC\u7ACB\u9A8C\u8BC1\u548C\u8BED\u4E49\u8BC4\u5BA1\u3002` : strategyForIntake(intake, roadmapNode.title),
+    method_pack: {
+      id: methodPack2.id,
+      version: methodPack2.version,
+      workflow: methodPack2.workflow,
+      selection_reason: methodPackResolution.reason,
+      quality_gates: methodPack2.quality_gates
+    },
+    capability_plan: capabilityApplication.capability_plan,
+    strategy: strategyForMethodPack(methodPack2, intake, roadmapNode.title),
     planning_basis: [
       `.apex-v2/intake/items.json#${intake.id}`,
       `.apex-v2/roadmap/graph.json#${roadmapNode.id}`,
+      `.apex-v2/policies/method-packs.json#${methodPack2.id}`,
+      `capabilities/registry.json@${routedCapabilities.registry_version}`,
       `.apex-v2/knowledge/manifest.json@${run.context_snapshot.knowledge_version}`,
       ...intake.evidence_refs
     ],
@@ -9635,6 +10922,8 @@ function buildTaskPlanGraph(root, run, timestamp, inventory) {
       "\u540C\u4E00 parallel_group \u7684 write_scope \u5FC5\u987B\u4E92\u65A5\uFF1B\u91CD\u53E0\u65F6\u7981\u6B62\u5E76\u884C\u3002",
       "\u6240\u6709 PASS \u5FC5\u987B\u5F15\u7528\u5F53\u524D run \u7684 artifact evidence\u3002",
       "\u5B9E\u73B0\u4FDD\u6301\u6700\u5C0F\u5207\u7247\uFF0C\u7981\u6B62\u628A\u65E0\u5173\u91CD\u6784\u6DF7\u5165\u4EA4\u4ED8\u3002",
+      "Method Pack \u53EF\u4EE5\u51CF\u5C11\u673A\u68B0\u8282\u70B9\uFF0C\u4F46\u4E0D\u80FD\u79FB\u9664 verification\u3001review \u6216 candidate binding\u3002",
+      "Required Capability \u5FC5\u987B\u4EA7\u51FA\u5BF9\u5E94 typed evidence\uFF0C\u4E0D\u80FD\u4EE5\u666E\u901A summary \u66FF\u4EE3\u3002",
       "\u53EA\u6709\u5168\u90E8 PlanGraph \u8282\u70B9\u5B8C\u6210\u540E\uFF0Cexecute \u624D\u80FD PASS\u3002"
     ],
     nodes,
@@ -9654,7 +10943,7 @@ function buildTaskPlanGraph(root, run, timestamp, inventory) {
     },
     verification_policy: {
       required_commands: taskVerificationCommands,
-      schema_check: declaredVerificationCommands.length === 0 && profile === "full" && inventory.schemaFiles.length > 0 ? "node src/apex-v2.mjs contracts validate --project ." : null,
+      schema_check: declaredVerificationCommands.length === 0 && methodPack2.workflow !== "quick" && inventory.schemaFiles.length > 0 ? "node src/apex-v2.mjs contracts validate --project ." : null,
       evidence_level: "PASS requires command evidence linked to the current run"
     },
     evidence_policy: {
@@ -9666,12 +10955,210 @@ function buildTaskPlanGraph(root, run, timestamp, inventory) {
     project_name: project.project_name
   };
 }
+function applyCapabilityBindings(nodes, routedCapabilities) {
+  const nextNodes = nodes.map((node) => ({
+    ...node,
+    required_evidence: [...node.required_evidence || []],
+    capability_bindings: [],
+    capability_enforcement: routedCapabilities.enforcement_mode
+  }));
+  const selected = [
+    ...routedCapabilities.required || [],
+    ...routedCapabilities.optional || [],
+    ...routedCapabilities.advisory || []
+  ];
+  for (const capability of selected) {
+    const node = selectCapabilityNode(capability, nextNodes);
+    if (!node) {
+      throw new Error(
+        `Capability \u65E0\u53EF\u7528 PlanGraph \u8282\u70B9\uFF1A${capability.capability_id} -> ${capability.target_node_id}`
+      );
+    }
+    node.capability_bindings.push(persistedCapabilityBinding({
+      ...capability,
+      target_node_id: node.id
+    }));
+    node.required_capabilities = unique([
+      ...node.required_capabilities || [],
+      ...capability.required_host_capabilities || []
+    ]);
+    if (capability.required) {
+      node.required_evidence.push(
+        `capability:${capability.capability_id}:${capability.output_contract}`
+      );
+    }
+  }
+  for (const node of nextNodes) {
+    node.capability_bindings.sort(
+      (left, right) => right.priority - left.priority || left.capability_id.localeCompare(right.capability_id)
+    );
+    assertCapabilityContextBudget(node.capability_bindings);
+    node.required_evidence = unique(node.required_evidence);
+  }
+  return {
+    nodes: nextNodes,
+    capability_plan: {
+      registry_version: routedCapabilities.registry_version,
+      enforcement_mode: routedCapabilities.enforcement_mode,
+      router_mode: routedCapabilities.router_mode || "enabled",
+      required: (routedCapabilities.required || []).map(persistedCapabilityBinding),
+      optional: (routedCapabilities.optional || []).map(persistedCapabilityBinding),
+      advisory: (routedCapabilities.advisory || []).map(persistedCapabilityBinding)
+    }
+  };
+}
+function selectCapabilityNode(capability, nodes) {
+  const targetId = resolveCapabilityTarget(
+    capability.target_node_id,
+    nodes
+  );
+  const targetIndex = nodes.findIndex((node) => node.id === targetId);
+  const candidates = [
+    nodes[targetIndex],
+    ...nodes.slice(targetIndex + 1)
+  ].filter(Boolean);
+  for (const node of candidates) {
+    try {
+      assertCapabilityContextBudget([
+        ...node.capability_bindings || [],
+        capability
+      ]);
+      return node;
+    } catch {
+    }
+  }
+  throw new Error(
+    `Capability context budget exceeded\uFF1A${capability.capability_id} \u65E0\u6CD5\u5728 ${candidates.map((node) => node.id).join(",")} \u4E2D\u62C6\u5206\uFF1B\u5FC5\u987B replan`
+  );
+}
+function persistedCapabilityBinding(capability) {
+  return {
+    capability_id: capability.capability_id,
+    capability_version: capability.capability_version,
+    category: capability.category,
+    mode: capability.mode,
+    required: capability.required,
+    priority: capability.priority,
+    target_node_id: capability.target_node_id,
+    execution_class: capability.execution_class,
+    required_host_capabilities: capability.required_host_capabilities,
+    input_contract: capability.input_contract,
+    output_contract: capability.output_contract,
+    protocol_ref: capability.protocol_ref,
+    availability: capability.availability,
+    certification: capability.certification
+  };
+}
+function resolveCapabilityTarget(targetNodeId, nodes) {
+  if (nodes.some((node) => node.id === targetNodeId)) return targetNodeId;
+  if (["delivery-context", "delivery-risk", "delivery-design", "delivery-verification"].includes(targetNodeId) && nodes.some((node) => node.id === "delivery-implementation")) {
+    return "delivery-implementation";
+  }
+  if (nodes.some((node) => node.id === "delivery-review")) {
+    return "delivery-review";
+  }
+  return nodes[0]?.id || null;
+}
+function buildParallelLanes(workflow) {
+  if (workflow === "quick") {
+    return [
+      { id: "build", purpose: "\u5355\u4E00 ActionWorkspace \u540C\u65F6\u5B8C\u6210\u5B9E\u73B0\u4E0E\u6D4B\u8BD5\uFF0C\u51CF\u5C11\u7B80\u5355\u4EFB\u52A1\u5F80\u8FD4\u3002", node_ids: ["delivery-implementation"] },
+      { id: "readiness", purpose: "\u590D\u6838\u9700\u6C42\u7B26\u5408\u6027\u4E0E merge posture\u3002", node_ids: ["delivery-review"] }
+    ];
+  }
+  if (workflow === "disciplined") {
+    return [
+      { id: "planning", purpose: "\u5728\u4E00\u4E2A\u8BBE\u8BA1\u8282\u70B9\u5185\u6C47\u603B\u4E0A\u4E0B\u6587\u3001\u98CE\u9669\u548C\u6D4B\u8BD5\u5207\u7247\u3002", node_ids: ["delivery-design"] },
+      { id: "build", purpose: "\u5355\u4E00 ActionWorkspace \u6309 TDD \u5B8C\u6210\u5B9E\u73B0\u4E0E\u6D4B\u8BD5\u3002", node_ids: ["delivery-implementation"] },
+      { id: "verification", purpose: "\u72EC\u7ACB\u6267\u884C\u771F\u5B9E\u9879\u76EE\u9A8C\u8BC1\u5E76\u56FA\u5316\u8BC1\u636E\u3002", node_ids: ["delivery-verification"] },
+      { id: "readiness", purpose: "\u590D\u6838\u9700\u6C42\u7B26\u5408\u6027\u4E0E merge posture\u3002", node_ids: ["delivery-review"] }
+    ];
+  }
+  if (workflow === "phase_context") {
+    return [
+      { id: "discovery", purpose: "\u4E3A\u5F53\u524D phase \u56FA\u5316\u6700\u5C0F\u4E0A\u4E0B\u6587\u548C\u9A8C\u6536\u8FB9\u754C\u3002", node_ids: ["delivery-context"] },
+      { id: "planning", purpose: "\u57FA\u4E8E phase context \u5F62\u6210\u5B9E\u65BD\u4E0E\u56DE\u6EDA\u5207\u7247\u3002", node_ids: ["delivery-design"] },
+      { id: "build", purpose: "\u5355\u4E00 ActionWorkspace \u6309\u8BA1\u5212\u5B8C\u6210\u5B9E\u73B0\u4E0E\u6D4B\u8BD5\u3002", node_ids: ["delivery-implementation"] },
+      { id: "verification", purpose: "\u72EC\u7ACB\u6267\u884C\u771F\u5B9E\u9879\u76EE\u9A8C\u8BC1\u5E76\u56FA\u5316\u8BC1\u636E\u3002", node_ids: ["delivery-verification"] },
+      { id: "readiness", purpose: "\u590D\u6838\u9700\u6C42\u7B26\u5408\u6027\u4E0E merge posture\u3002", node_ids: ["delivery-review"] }
+    ];
+  }
+  return [
+    { id: "discovery", purpose: "\u5E76\u884C\u6838\u5BF9\u4E0A\u4E0B\u6587\u4E0E\u98CE\u9669\uFF0C\u907F\u514D\u5355\u4E00\u8DEF\u5F84\u81EA\u8BC1\u3002", node_ids: ["delivery-context", "delivery-risk"] },
+    { id: "planning", purpose: "\u6C47\u603B\u8BC1\u636E\u5E76\u5F62\u6210\u4EFB\u52A1\u7EA7\u5B9E\u65BD\u5207\u7247\u3002", node_ids: ["delivery-design"] },
+    { id: "build", purpose: "\u4E3B\u5B9E\u73B0\u4E0E\u6D4B\u8BD5\u5728\u5199\u5165\u8303\u56F4\u4E92\u65A5\u65F6\u5E76\u884C\u3002", node_ids: ["delivery-implementation", "delivery-tests"] },
+    { id: "verification", purpose: "\u72EC\u7ACB\u6267\u884C\u771F\u5B9E\u9879\u76EE\u9A8C\u8BC1\u5E76\u56FA\u5316\u8BC1\u636E\u3002", node_ids: ["delivery-verification"] },
+    { id: "readiness", purpose: "\u590D\u6838\u9700\u6C42\u7B26\u5408\u6027\u5E76\u53EA\u4FEE\u590D\u660E\u786E\u963B\u585E\u9879\u3002", node_ids: ["delivery-review"] }
+  ];
+}
+function selectMethodPackNodes(workflow, input) {
+  if (workflow === "quick") return input.quickNodes;
+  if (workflow === "governed") return input.fullNodes;
+  const context = clonePlanNode(input.fullNodes, "delivery-context");
+  const design = clonePlanNode(input.fullNodes, "delivery-design");
+  const implementation = clonePlanNode(input.fullNodes, "delivery-implementation");
+  const verification = clonePlanNode(input.fullNodes, "delivery-verification");
+  const review = clonePlanNode(input.fullNodes, "delivery-review");
+  design.dependencies = workflow === "phase_context" ? ["delivery-context"] : [];
+  design.objective = workflow === "phase_context" ? `\u57FA\u4E8E\u5F53\u524D phase context\uFF0C\u4E3A\u201C${input.roadmapNode.title}\u201D\u5F62\u6210\u6700\u5C0F\u53EF\u4EA4\u4ED8\u5207\u7247\u3001\u6D4B\u8BD5\u7B56\u7565\u548C\u56DE\u6EDA\u65B9\u6848\u3002` : `\u5728\u5355\u4E00\u8BBE\u8BA1\u8282\u70B9\u5185\u6838\u5BF9\u201C${input.roadmapNode.title}\u201D\u7684\u4E0A\u4E0B\u6587\u3001\u98CE\u9669\u3001\u6700\u5C0F\u5207\u7247\u3001\u6D4B\u8BD5\u7B56\u7565\u548C\u56DE\u6EDA\u65B9\u6848\u3002`;
+  implementation.title = "\u6D4B\u8BD5\u5148\u884C\u7684\u5B9E\u73B0\u5207\u7247";
+  implementation.dependencies = ["delivery-design"];
+  implementation.write_scope = unique([
+    ...input.scopes.implementation,
+    ...input.scopes.tests
+  ]);
+  implementation.deliverables = [
+    "\u5B9E\u73B0\u4E0E\u6D4B\u8BD5 patch bundle",
+    "\u5931\u8D25\u8DEF\u5F84\u4E0E\u516C\u5F00\u9A8C\u6536\u7ED3\u679C",
+    "\u6B8B\u4F59\u98CE\u9669"
+  ];
+  implementation.required_evidence = [
+    "changed_files",
+    "patch artifact",
+    "\u6D4B\u8BD5\u547D\u4EE4\u8F93\u51FA"
+  ];
+  implementation.objective = `\u5728\u4E00\u4E2A\u9694\u79BB ActionWorkspace \u5185\u6309\u6D4B\u8BD5\u5148\u884C\u65B9\u5F0F\u5B8C\u6210\u201C${input.roadmapNode.title}\u201D\u7684\u6700\u5C0F\u5B9E\u73B0\u4E0E\u56DE\u5F52\u6D4B\u8BD5\u3002`;
+  verification.dependencies = ["delivery-implementation"];
+  review.dependencies = ["delivery-verification"];
+  return workflow === "phase_context" ? [context, design, implementation, verification, review] : [design, implementation, verification, review];
+}
+function clonePlanNode(nodes, id) {
+  const node = nodes.find((candidate) => candidate.id === id);
+  return {
+    ...node,
+    dependencies: [...node.dependencies],
+    read_scope: [...node.read_scope],
+    write_scope: [...node.write_scope],
+    deliverables: [...node.deliverables],
+    required_evidence: [...node.required_evidence],
+    verification: [...node.verification],
+    required_capabilities: [...node.required_capabilities],
+    execution_hints: { ...node.execution_hints }
+  };
+}
+function strategyForMethodPack(pack, intake, title) {
+  if (pack.workflow === "quick") {
+    return `\u9488\u5BF9\u201C${title}\u201D\u4F7F\u7528 quick Method Pack\uFF1A\u5355\u4E00\u9694\u79BB patch \u540C\u65F6\u5B8C\u6210\u5B9E\u73B0\u4E0E\u6D4B\u8BD5\uFF0C\u518D\u505A\u72EC\u7ACB\u8BED\u4E49\u8BC4\u5BA1\u3002`;
+  }
+  if (pack.workflow === "disciplined") {
+    return `\u9488\u5BF9\u201C${title}\u201D\u4F7F\u7528 disciplined-tdd Method Pack\uFF1A\u5408\u5E76\u91CD\u590D\u4E0A\u4E0B\u6587\u5F80\u8FD4\uFF0C\u4FDD\u7559\u8BBE\u8BA1\u3001\u6D4B\u8BD5\u5148\u884C\u5B9E\u73B0\u3001\u72EC\u7ACB\u9A8C\u8BC1\u548C\u8BC4\u5BA1\u3002`;
+  }
+  if (pack.workflow === "phase_context") {
+    return `\u9488\u5BF9\u201C${title}\u201D\u4F7F\u7528 phase-context Method Pack\uFF1A\u53EA\u52A0\u8F7D\u5F53\u524D\u9636\u6BB5\u4E0A\u4E0B\u6587\uFF0C\u518D\u5B8C\u6210\u8BBE\u8BA1\u3001\u5B9E\u73B0\u3001\u9A8C\u8BC1\u548C\u8BC4\u5BA1\u3002`;
+  }
+  return strategyForIntake(intake, title);
+}
 function validatePlanGraph(plan) {
   const errors = [];
   const ids = /* @__PURE__ */ new Set();
   const lanes = new Map((plan.parallel_lanes || []).map((lane) => [lane.id, lane]));
   const laneMembership = /* @__PURE__ */ new Map();
-  const minimumNodes = plan.profile === "quick" ? 2 : 5;
+  const minimumNodes = {
+    quick: 2,
+    disciplined: 4,
+    phase_context: 5,
+    governed: 7
+  }[plan.method_pack?.workflow] || (plan.profile === "quick" ? 2 : 5);
   if (!Array.isArray(plan.nodes) || plan.nodes.length < minimumNodes) {
     errors.push(`plan graph \u81F3\u5C11\u9700\u8981 ${minimumNodes} \u4E2A\u8282\u70B9`);
     return validationResult(plan, errors);
@@ -9692,6 +11179,21 @@ function validatePlanGraph(plan) {
     }
     if (node.required_capabilities != null && !Array.isArray(node.required_capabilities)) {
       errors.push(`${node.id} \u7684 required_capabilities \u5FC5\u987B\u662F\u6570\u7EC4`);
+    }
+    if (plan.method_pack && node.method_pack_id !== plan.method_pack.id) {
+      errors.push(`${node.id} \u7684 method_pack_id \u4E0E plan \u4E0D\u4E00\u81F4`);
+    }
+    const capabilityIds = /* @__PURE__ */ new Set();
+    for (const capability of node.capability_bindings || []) {
+      if (capabilityIds.has(capability.capability_id)) {
+        errors.push(`${node.id} \u7684 capability \u91CD\u590D\uFF1A${capability.capability_id}`);
+      }
+      capabilityIds.add(capability.capability_id);
+      if (capability.required && !node.required_evidence.includes(
+        `capability:${capability.capability_id}:${capability.output_contract}`
+      )) {
+        errors.push(`${node.id} \u7F3A\u5C11 required capability evidence\uFF1A${capability.capability_id}`);
+      }
     }
     if (node.output_contract != null && !["evidence", "patch", "decision"].includes(node.output_contract)) errors.push(`${node.id} \u7684 output_contract \u65E0\u6548\uFF1A${node.output_contract}`);
     if (!lanes.has(node.parallel_group)) errors.push(`${node.id} \u7684 parallel_group \u672A\u5728 parallel_lanes \u4E2D\u58F0\u660E\uFF1A${node.parallel_group}`);
@@ -9785,15 +11287,6 @@ function buildQuickPlanNodes({
     })
   ];
 }
-function shouldUseQuickPlan(intake, inventory) {
-  if (!["low", "medium"].includes(normalizedRisk(intake.risk, "medium"))) return false;
-  const explicit = parseAffectedArea(intake.affected_area, inventory.files).filter((scope) => !scope.startsWith(".apex-v2/"));
-  if (explicit.length === 0 || explicit.length > 4) return false;
-  if (intake.triage?.status !== "accepted") return false;
-  const description = `${intake.title}
-${intake.description}`.toLowerCase();
-  return !/(parallel|interrupted|resume|recovery|review[- ]defect|security defect|two independent|并行|中断|恢复|安全缺陷)/i.test(description);
-}
 function extractDeclaredVerificationCommands(intake) {
   const typed = (intake.acceptance_commands || []).map((value) => String(value).trim()).filter(isVerificationCommand);
   const refs = (intake.evidence_refs || []).map((value) => String(value).trim()).filter(isVerificationCommand);
@@ -9815,6 +11308,7 @@ run_id: ${plan.run_id}
 roadmap_node_id: ${plan.roadmap_node_id}
 source_intake_id: ${plan.source_intake_id || "unknown"}
 source_title: ${plan.source_title || "unknown"}
+method_pack: ${plan.method_pack?.id || "legacy"}
 generated_at: ${plan.generated_at}
 
 ## \u7B56\u7565
@@ -9851,6 +11345,8 @@ ${plan.nodes.map((node) => `### ${node.id}\uFF1A${node.title}
 - required_evidence: ${node.required_evidence.join(", ")}
 - verification: ${node.verification.join(" && ")}
 - adapter: ${node.adapter || "policy-selected"}
+- method_pack_id: ${node.method_pack_id || "legacy"}
+- capability_bindings: ${(node.capability_bindings || []).map((item) => `${item.capability_id}@${item.capability_version}`).join(", ") || "\u65E0"}
 - execution_class: ${node.execution_class || "legacy"}
 - preferred_mode: ${node.preferred_mode || "legacy"}
 - execution_hints: ${JSON.stringify(node.execution_hints || {})}
@@ -9874,7 +11370,7 @@ ${JSON.stringify(plan.conflict_policy, null, 2)}
 `;
 }
 function inferPlanScopes(intake, inventory) {
-  const explicit = parseAffectedArea(intake.affected_area, inventory.files);
+  const explicit = parseAffectedArea2(intake.affected_area, inventory.files);
   const explicitTests = explicit.filter(isTestScope);
   const explicitImplementation = explicit.filter((scope) => !isTestScope(scope) && !scope.startsWith(".apex-v2/"));
   const sourceRoots = unique(inventory.sourceFiles.map(scopeRoot));
@@ -9889,7 +11385,7 @@ function inferPlanScopes(intake, inventory) {
     tests: explicitTests.length > 0 ? explicitTests : fallbackTests
   };
 }
-function parseAffectedArea(value, files) {
+function parseAffectedArea2(value, files) {
   const raw = String(value || "").trim();
   if (!raw || ["unknown", "n/a", "none"].includes(raw.toLowerCase())) return [];
   const available = new Set(files);
@@ -10012,15 +11508,15 @@ function unique(values) {
 
 // src/core/worker-execution.mjs
 import {
-  existsSync as existsSync13,
-  readFileSync as readFileSync10,
+  existsSync as existsSync14,
+  readFileSync as readFileSync11,
   readdirSync as readdirSync6,
   rmSync as rmSync5,
   statSync as statSync3,
   writeFileSync as writeFileSync10
 } from "node:fs";
-import { createHash as createHash5 } from "node:crypto";
-import { join as join18, relative as relative4, resolve as resolve8 } from "node:path";
+import { createHash as createHash6 } from "node:crypto";
+import { join as join19, relative as relative4, resolve as resolve9 } from "node:path";
 
 // src/contracts/worker-executor.mjs
 function assertWorkerExecutor(executor) {
@@ -10051,22 +11547,22 @@ function normalizeExecutorInspection(executorId, inspection = {}) {
 
 // src/executors/claude-code-cli.mjs
 import { spawnSync as spawnSync5 } from "node:child_process";
-import { existsSync as existsSync10, readFileSync as readFileSync8, writeFileSync as writeFileSync6 } from "node:fs";
+import { existsSync as existsSync11, readFileSync as readFileSync9, writeFileSync as writeFileSync6 } from "node:fs";
 import { homedir as homedir3 } from "node:os";
-import { join as join14 } from "node:path";
+import { join as join15 } from "node:path";
 
 // src/core/capability-sandbox.mjs
 import {
-  existsSync as existsSync9,
+  existsSync as existsSync10,
   mkdtempSync,
-  readFileSync as readFileSync7,
+  readFileSync as readFileSync8,
   realpathSync as realpathSync2,
   rmSync as rmSync4,
   writeFileSync as writeFileSync5
 } from "node:fs";
 import { randomUUID as randomUUID3 } from "node:crypto";
 import { homedir, tmpdir } from "node:os";
-import { dirname as dirname4, join as join13, resolve as resolve6 } from "node:path";
+import { dirname as dirname5, join as join14, resolve as resolve7 } from "node:path";
 import { spawnSync as spawnSync4 } from "node:child_process";
 
 // src/core/process-guard.mjs
@@ -10234,7 +11730,7 @@ function spawnManagedProcess(executable, args, options = {}) {
   });
 }
 function capabilitySandboxCommand(executable, args, options) {
-  if (process.platform !== "darwin" || !existsSync9(SANDBOX_EXEC)) {
+  if (process.platform !== "darwin" || !existsSync10(SANDBOX_EXEC)) {
     return {
       available: false,
       error: "OS capability sandbox unavailable; refusing unsandboxed agent execution",
@@ -10272,16 +11768,16 @@ function buildMacSandboxProfile(options) {
 function defaultSecretPaths() {
   const home = realpathSync2(homedir());
   return [
-    resolve6(home, ".ssh"),
-    resolve6(home, ".aws"),
-    resolve6(home, ".kube"),
-    resolve6(home, ".config", "gcloud")
+    resolve7(home, ".ssh"),
+    resolve7(home, ".aws"),
+    resolve7(home, ".kube"),
+    resolve7(home, ".config", "gcloud")
   ];
 }
 function existingRealPath(path) {
-  const resolved = resolve6(path);
-  if (existsSync9(resolved)) return realpathSync2(resolved);
-  return realpathSync2(dirname4(resolved));
+  const resolved = resolve7(path);
+  if (existsSync10(resolved)) return realpathSync2(resolved);
+  return realpathSync2(dirname5(resolved));
 }
 function quote(value) {
   return JSON.stringify(value);
@@ -10293,9 +11789,9 @@ function runManagedProcess(sandbox, options) {
     ...options.env,
     APEX_PROCESS_GUARD_TOKEN: guardToken
   };
-  const exchangeDir = mkdtempSync(join13(capabilityExchangeRoot(), "apex-capability-runner-"));
-  const configPath = join13(exchangeDir, "config.json");
-  const resultPath = join13(exchangeDir, "result.json");
+  const exchangeDir = mkdtempSync(join14(capabilityExchangeRoot(), "apex-capability-runner-"));
+  const configPath = join14(exchangeDir, "config.json");
+  const resultPath = join14(exchangeDir, "result.json");
   let execution;
   let processCleanup = {
     terminated_pids: [],
@@ -10325,7 +11821,7 @@ function runManagedProcess(sandbox, options) {
       timeout: (options.timeoutMs || 30 * 60 * 1e3) + 1e4,
       env: guardedEnvironment
     });
-    if (!existsSync9(resultPath)) {
+    if (!existsSync10(resultPath)) {
       const message = runner.stderr || runner.error?.message || "capability runner produced no result";
       execution = {
         status: 1,
@@ -10339,7 +11835,7 @@ function runManagedProcess(sandbox, options) {
         sandbox
       };
     } else {
-      const result = JSON.parse(readFileSync7(resultPath, "utf8"));
+      const result = JSON.parse(readFileSync8(resultPath, "utf8"));
       const error = result.error ? Object.assign(new Error(result.error), { code: result.timed_out ? "ETIMEDOUT" : "EEXECUTION" }) : null;
       execution = {
         status: result.status,
@@ -10368,7 +11864,7 @@ function runManagedProcess(sandbox, options) {
   return execution;
 }
 function capabilityExchangeRoot() {
-  if (process.platform === "darwin" && existsSync9("/private/tmp")) {
+  if (process.platform === "darwin" && existsSync10("/private/tmp")) {
     return realpathSync2("/private/tmp");
   }
   return tmpdir();
@@ -10376,13 +11872,13 @@ function capabilityExchangeRoot() {
 
 // src/executors/secret-boundaries.mjs
 import { homedir as homedir2 } from "node:os";
-import { resolve as resolve7 } from "node:path";
+import { resolve as resolve8 } from "node:path";
 function providerSecretPaths() {
   const home = homedir2();
   return [
-    resolve7(home, ".codex"),
-    resolve7(home, ".claude"),
-    resolve7(home, ".gemini")
+    resolve8(home, ".codex"),
+    resolve8(home, ".claude"),
+    resolve8(home, ".gemini")
   ];
 }
 
@@ -10508,7 +12004,7 @@ function executeClaudeAdapter(options) {
   };
 }
 function buildClaudeArgs(options) {
-  const schema = readFileSync8(options.outputSchemaPath, "utf8");
+  const schema = readFileSync9(options.outputSchemaPath, "utf8");
   const args = [
     "-p",
     "--output-format",
@@ -10573,10 +12069,10 @@ function executionResult(executable, args, result, startedAt, failedEnvelope) {
   return { executable, args, command: [result.sandbox.executable, ...result.sandbox.args.slice(0, -1), "<prompt>"].join(" "), exit_code: failedEnvelope ? 1 : result.status ?? 1, signal: result.signal || "", timed_out: result.error?.code === "ETIMEDOUT", duration_ms: result.duration_ms ?? Date.now() - startedAt, stdout_tail: tail(result.stdout), stderr_tail: tail(result.stderr || result.error?.message || "") };
 }
 function loadClaudeProviderEnvironment() {
-  const path = join14(homedir3(), ".claude", "settings.json");
-  if (!existsSync10(path)) return {};
+  const path = join15(homedir3(), ".claude", "settings.json");
+  if (!existsSync11(path)) return {};
   try {
-    const value = JSON.parse(readFileSync8(path, "utf8"));
+    const value = JSON.parse(readFileSync9(path, "utf8"));
     const allowed = [
       "ANTHROPIC_API_KEY",
       "ANTHROPIC_AUTH_TOKEN",
@@ -10616,13 +12112,13 @@ import { spawnSync as spawnSync6 } from "node:child_process";
 import {
   chmodSync as chmodSync2,
   copyFileSync as copyFileSync2,
-  existsSync as existsSync11,
+  existsSync as existsSync12,
   mkdirSync as mkdirSync5,
-  readFileSync as readFileSync9,
+  readFileSync as readFileSync10,
   writeFileSync as writeFileSync7
 } from "node:fs";
 import { homedir as homedir4 } from "node:os";
-import { basename as basename3, dirname as dirname5, join as join15 } from "node:path";
+import { basename as basename4, dirname as dirname6, join as join16 } from "node:path";
 function inspectCodexAdapter(executable = "codex") {
   const result = spawnSync6(executable, ["--version"], {
     encoding: "utf8",
@@ -10663,7 +12159,7 @@ function executeCodexAdapter(options) {
     timeoutMs,
     adapter: "codex",
     network: true,
-    writablePaths: [dirname5(outputPath)],
+    writablePaths: [dirname6(outputPath)],
     deniedReadPaths: providerSecretPaths(),
     allowedSecretNames: ["OPENAI_API_KEY", "FUTU_LLM_PROXY_API_KEY"],
     env: {
@@ -10674,7 +12170,7 @@ function executeCodexAdapter(options) {
   });
   return {
     executable,
-    executable_name: basename3(executable),
+    executable_name: basename4(executable),
     args,
     command: [result.sandbox.executable, ...result.sandbox.args].join(" "),
     exit_code: result.status ?? 1,
@@ -10686,20 +12182,20 @@ function executeCodexAdapter(options) {
   };
 }
 function prepareIsolatedCodexHome(workspaceDir, profile) {
-  const sourceHome = process.env.CODEX_HOME || join15(homedir4(), ".codex");
-  const targetHome = join15(workspaceDir, ".apex-agent", "codex-home");
+  const sourceHome = process.env.CODEX_HOME || join16(homedir4(), ".codex");
+  const targetHome = join16(workspaceDir, ".apex-agent", "codex-home");
   mkdirSync5(targetHome, { recursive: true });
-  const sourceProviderModes = join15(sourceHome, "provider-modes");
-  const targetProviderModes = join15(targetHome, "provider-modes");
+  const sourceProviderModes = join16(sourceHome, "provider-modes");
+  const targetProviderModes = join16(targetHome, "provider-modes");
   mkdirSync5(targetProviderModes, { recursive: true });
   const files = ["config.toml", "auth.json"];
   if (profile) files.push(`${profile}.config.toml`);
   for (const file of files) {
-    const source = join15(sourceHome, file);
-    if (!existsSync11(source)) continue;
-    const target = join15(targetHome, file);
+    const source = join16(sourceHome, file);
+    if (!existsSync12(source)) continue;
+    const target = join16(targetHome, file);
     if (file.endsWith(".toml")) {
-      const content = readFileSync9(source, "utf8").replaceAll(sourceProviderModes, targetProviderModes);
+      const content = readFileSync10(source, "utf8").replaceAll(sourceProviderModes, targetProviderModes);
       writeFileSync7(target, content);
     } else {
       copyFileSync2(source, target);
@@ -10707,9 +12203,9 @@ function prepareIsolatedCodexHome(workspaceDir, profile) {
     chmodSync2(target, 384);
   }
   for (const file of ["state.json", "azure-models.json", "llm-proxy-models.json"]) {
-    const source = join15(sourceProviderModes, file);
-    if (!existsSync11(source)) continue;
-    const target = join15(targetProviderModes, file);
+    const source = join16(sourceProviderModes, file);
+    if (!existsSync12(source)) continue;
+    const target = join16(targetProviderModes, file);
     copyFileSync2(source, target);
     chmodSync2(target, 384);
   }
@@ -10752,12 +12248,12 @@ import { spawnSync as spawnSync7 } from "node:child_process";
 import {
   chmodSync as chmodSync3,
   copyFileSync as copyFileSync3,
-  existsSync as existsSync12,
+  existsSync as existsSync13,
   mkdirSync as mkdirSync6,
   writeFileSync as writeFileSync8
 } from "node:fs";
 import { homedir as homedir5 } from "node:os";
-import { join as join16 } from "node:path";
+import { join as join17 } from "node:path";
 function inspectGeminiAdapter(executable = "gemini") {
   const result = spawnSync7(executable, ["--version"], { encoding: "utf8", timeout: 5e3 });
   return { adapter: "gemini", executable, available: result.status === 0, version: result.status === 0 ? result.stdout.trim() : "", capabilities: ["structured_output", "session_resume", "workspace_write", "tool_use", "sandbox", "process_tree_cancel"], error: result.status === 0 ? "" : tail(result.stderr) };
@@ -10799,9 +12295,9 @@ function buildGeminiArgs(options) {
   ];
 }
 function prepareIsolatedGeminiHome(workspaceDir) {
-  const sourceRoot = join16(homedir5(), ".gemini");
-  const isolatedHome = join16(workspaceDir, ".apex-agent", "gemini-home");
-  const targetRoot = join16(isolatedHome, ".gemini");
+  const sourceRoot = join17(homedir5(), ".gemini");
+  const isolatedHome = join17(workspaceDir, ".apex-agent", "gemini-home");
+  const targetRoot = join17(isolatedHome, ".gemini");
   mkdirSync6(targetRoot, { recursive: true });
   for (const file of [
     "settings.json",
@@ -10812,9 +12308,9 @@ function prepareIsolatedGeminiHome(workspaceDir) {
     "trustedFolders.json",
     ".env"
   ]) {
-    const source = join16(sourceRoot, file);
-    if (!existsSync12(source)) continue;
-    const target = join16(targetRoot, file);
+    const source = join17(sourceRoot, file);
+    if (!existsSync13(source)) continue;
+    const target = join17(targetRoot, file);
     copyFileSync3(source, target);
     chmodSync3(target, 384);
   }
@@ -11046,7 +12542,7 @@ function createWorkerExecutorRegistry(initialExecutors = []) {
   function inspectAll() {
     return [...executors.keys()].map((id) => inspect(id));
   }
-  function resolve19(options = {}) {
+  function resolve22(options = {}) {
     const {
       preferred,
       fallbackOrder = [],
@@ -11076,7 +12572,7 @@ function createWorkerExecutorRegistry(initialExecutors = []) {
     inspect,
     inspectAll,
     register,
-    resolve: resolve19
+    resolve: resolve22
   };
 }
 var DEFAULT_REGISTRY = createWorkerExecutorRegistry(BUILTIN_EXECUTORS);
@@ -11099,10 +12595,10 @@ function resolveWorkerExecutor(preferred, fallbackOrder = [], allowed = [], requ
 }
 
 // src/core/governance.mjs
-import { createHash as createHash4 } from "node:crypto";
-import { join as join17 } from "node:path";
+import { createHash as createHash5 } from "node:crypto";
+import { join as join18 } from "node:path";
 function loadExecutionPolicy(root) {
-  return readJson(join17(root, "policies", "execution.json"));
+  return readJson(join18(root, "policies", "execution.json"));
 }
 function assertPatchWithinBudget(root, patch) {
   const policy = loadExecutionPolicy(root);
@@ -11116,9 +12612,10 @@ function assertPatchWithinBudget(root, patch) {
   }
   return { changed_files: changedFiles.length, patch_bytes: bytes };
 }
-function effectiveAgentTimeout(root, requestedMs) {
+function effectiveAgentTimeout(root, requestedMs, routeBudget2 = null) {
   const policy = loadExecutionPolicy(root);
-  return Math.min(requestedMs, policy.budgets.max_agent_duration_ms);
+  const routeLimit = routeBudget2?.max_wall_minutes ? routeBudget2.max_wall_minutes * 6e4 : Number.POSITIVE_INFINITY;
+  return Math.min(requestedMs, policy.budgets.max_agent_duration_ms, routeLimit);
 }
 function effectiveAgentLimit(root, requested) {
   const policy = loadExecutionPolicy(root);
@@ -11132,7 +12629,7 @@ function assertAdapterAllowed(root, adapter) {
 }
 function evaluateMergeApproval(root, run, queue, candidateDigest = null) {
   const policy = loadExecutionPolicy(root);
-  const roadmap = readJson(join17(root, "roadmap", "graph.json"));
+  const roadmap = readJson(join18(root, "roadmap", "graph.json"));
   const roadmapNode = roadmap.nodes.find((node) => node.id === run.roadmap_node_id);
   const changedFiles = Array.from(new Set(queue.items.filter((item) => item.status !== "dropped").flatMap((item) => item.changed_files))).sort();
   const reasons = [];
@@ -11154,7 +12651,7 @@ function evaluateMergeApproval(root, run, queue, candidateDigest = null) {
     artifact_hash: artifactHash,
     policy_revision: policyRevision
   });
-  const approvals = readJson(join17(root, "approvals", "items.json"), []);
+  const approvals = readJson(join18(root, "approvals", "items.json"), []);
   const existing = approvals.find(
     (item) => item.kind === "merge" && item.run_id === run.run_id && item.action_hash === actionHash && !approvalExpired(item)
   );
@@ -11206,14 +12703,14 @@ function ensureMergeApproval(root, run, queue, candidateDigest = null) {
     decision_capabilities: [],
     decision_reason: ""
   };
-  const path = join17(root, "approvals", "items.json");
+  const path = join18(root, "approvals", "items.json");
   const approvals = readJson(path, []);
   approvals.push(approval);
   writeJson(path, approvals);
   return { ...evaluation, approval, allowed: false, created: true };
 }
 function decideApproval(root, id, decision, reason, options = {}) {
-  const path = join17(root, "approvals", "items.json");
+  const path = join18(root, "approvals", "items.json");
   const approvals = readJson(path, []);
   const approval = approvals.find((item) => item.id === id);
   if (!approval) throw new Error(`\u627E\u4E0D\u5230 approval\uFF1A${id}`);
@@ -11246,7 +12743,7 @@ function ensureAdapterBaselineApproval(root, drift) {
     artifact_hash: artifactHash,
     policy_revision: policyRevision
   });
-  const path = join17(root, "approvals", "items.json");
+  const path = join18(root, "approvals", "items.json");
   const approvals = readJson(path, []);
   const existing = approvals.find(
     (item) => item.kind === "adapter_baseline" && item.action_hash === fingerprint && !approvalExpired(item)
@@ -11290,7 +12787,7 @@ function ensureAdapterBaselineApproval(root, drift) {
   return { required: true, allowed: false, created: true, approval };
 }
 function migrateApprovalRecords(root) {
-  const path = join17(root, "approvals", "items.json");
+  const path = join18(root, "approvals", "items.json");
   const approvals = readJson(path, []);
   let changed = false;
   for (const item of approvals) {
@@ -11330,7 +12827,7 @@ function mergeArtifactHash(root, runId, queue) {
   return stableHash(patches);
 }
 function stableHash(value) {
-  return createHash4("sha256").update(JSON.stringify(value)).digest("hex");
+  return createHash5("sha256").update(JSON.stringify(value)).digest("hex");
 }
 function matchesScope(file, scope) {
   if (scope.endsWith("/")) return file.startsWith(scope);
@@ -11369,14 +12866,14 @@ function executeWorkerExecutor(root, worker, planNode2, options = {}) {
   if (worker.status !== "active") {
     throw new Error(`worker \u5F53\u524D\u72B6\u6001\u4E0D\u53EF\u6267\u884C coding-agent adapter\uFF1A${worker.status}`);
   }
-  const projectDir = resolve8(root, "..");
-  const workspaceDir = resolve8(projectDir, worker.sandbox.path);
-  if (!existsSync13(workspaceDir)) {
+  const projectDir = resolve9(root, "..");
+  const workspaceDir = resolve9(projectDir, worker.sandbox.path);
+  if (!existsSync14(workspaceDir)) {
     throw new Error(`worker sandbox \u4E0D\u5B58\u5728\uFF1A${workspaceDir}`);
   }
   const dir = workerDir(root, worker.run_id, worker.worker_id);
-  const promptPath = join18(dir, "agent-prompt.md");
-  const outputPath = join18(workspaceDir, ".apex-agent", `result-${worker.worker_id}.json`);
+  const promptPath = join19(dir, "agent-prompt.md");
+  const outputPath = join19(workspaceDir, ".apex-agent", `result-${worker.worker_id}.json`);
   const prompt = buildWorkerAgentPrompt(worker, planNode2);
   writeFileSync10(promptPath, prompt);
   rmSync5(outputPath, { force: true });
@@ -11403,14 +12900,46 @@ function executeWorkerExecutor(root, worker, planNode2, options = {}) {
     sessionId: options.sessionId
   });
   const structured = readAgentResult(outputPath);
-  const rawAgentOutput = existsSync13(outputPath) ? readFileSync10(outputPath, "utf8") : "";
+  const rawAgentOutput = existsSync14(outputPath) ? readFileSync11(outputPath, "utf8") : "";
   rmSync5(outputPath, { force: true });
   const changes = collectWorkspaceChanges(projectDir, workspaceDir, worker.write_scope);
   const protectedChanges = diffProtectedWorkspace(protectedBefore, snapshotProtectedWorkspace(workspaceDir));
   changes.changed_files = Array.from(/* @__PURE__ */ new Set([...changes.changed_files, ...protectedChanges])).sort();
   changes.out_of_scope_files = Array.from(/* @__PURE__ */ new Set([...changes.out_of_scope_files, ...protectedChanges])).sort();
-  const success = execution.exit_code === 0 && structured.valid && structured.value.verdict === "pass" && changes.out_of_scope_files.length === 0 && changes.unsupported_files.length === 0 && (worker.output_contract !== "patch" || changes.operations.length > 0);
-  const failureKind = success ? null : classifyFailure(execution, structured, changes, worker);
+  const capabilityEvidence = structured.valid ? structured.value.capability_evidence || [] : [];
+  let capabilityEvidenceValidation = {
+    valid: true,
+    required: [],
+    submitted: [],
+    missing: [],
+    error: ""
+  };
+  if (structured.valid) {
+    try {
+      capabilityEvidenceValidation = {
+        valid: true,
+        ...assertCapabilityEvidence(
+          worker.capability_bindings || [],
+          capabilityEvidence,
+          { requireAll: worker.capability_enforcement === "enforce" }
+        ),
+        error: ""
+      };
+    } catch (error) {
+      capabilityEvidenceValidation = {
+        valid: false,
+        required: [],
+        submitted: [],
+        missing: [],
+        error: error.message
+      };
+    }
+  }
+  const route = readJson(join19(dir, "execution-route.json"), null);
+  const costEvaluation = evaluateRouteUsage(route, execution);
+  const budgetFailed = costEvaluation.status === "FAIL" || costEvaluation.status === "UNKNOWN" && route?.usage_policy === "fail";
+  const success = execution.exit_code === 0 && structured.valid && structured.value.verdict === "pass" && changes.out_of_scope_files.length === 0 && changes.unsupported_files.length === 0 && !budgetFailed && capabilityEvidenceValidation.valid && (worker.output_contract !== "patch" || changes.operations.length > 0);
+  const failureKind = success ? null : budgetFailed ? "budget_exceeded" : !capabilityEvidenceValidation.valid ? "contract_error" : classifyFailure(execution, structured, changes, worker);
   const timestamp = now();
   const adapterResult = {
     schema_version: SCHEMA_VERSION,
@@ -11438,6 +12967,13 @@ function executeWorkerExecutor(root, worker, planNode2, options = {}) {
       input_tokens: null,
       output_tokens: null,
       tool_calls: null
+    },
+    cost_evaluation: costEvaluation,
+    capability_evidence_status: {
+      enforcement: worker.capability_enforcement || "shadow",
+      submitted: capabilityEvidenceValidation.submitted,
+      missing: capabilityEvidenceValidation.missing,
+      error: capabilityEvidenceValidation.error
     },
     refs: [
       `${worker.namespace}/agent-prompt.md`,
@@ -11483,6 +13019,7 @@ function executeWorkerExecutor(root, worker, planNode2, options = {}) {
     execution,
     resolved,
     rawAgentOutput,
+    capabilityEvidence,
     timestamp
   })).result;
 }
@@ -11492,21 +13029,30 @@ function commitWorkerExecution(root, input) {
     throw new Error(`worker execution commit \u9047\u5230\u5E76\u53D1\u72B6\u6001\u53D8\u5316\uFF1A${worker.worker_id}`);
   }
   const dir = workerDir(root, worker.run_id, worker.worker_id);
+  const capabilityEvidenceRefs = persistCapabilityEvidence(
+    dir,
+    worker.namespace,
+    input.capabilityEvidence
+  );
+  input.adapterResult.refs = Array.from(/* @__PURE__ */ new Set([
+    ...input.adapterResult.refs,
+    ...capabilityEvidenceRefs
+  ]));
   if (input.structured.valid) {
     writeFileSync10(
-      join18(dir, "agent-result.json"),
+      join19(dir, "agent-result.json"),
       input.rawAgentOutput || `${JSON.stringify(input.structured.value)}
 `
     );
-    rmSync5(join18(dir, "agent-output-invalid.txt"), { force: true });
+    rmSync5(join19(dir, "agent-output-invalid.txt"), { force: true });
   } else {
-    rmSync5(join18(dir, "agent-result.json"), { force: true });
+    rmSync5(join19(dir, "agent-result.json"), { force: true });
     writeFileSync10(
-      join18(dir, "agent-output-invalid.txt"),
+      join19(dir, "agent-output-invalid.txt"),
       input.rawAgentOutput || input.adapterResult.stderr_tail || "missing structured output"
     );
   }
-  writeJson(join18(dir, `adapter-result-${input.adapterResult.result_id}.json`), input.adapterResult);
+  writeJson(join19(dir, `adapter-result-${input.adapterResult.result_id}.json`), input.adapterResult);
   const run = loadRun(root, worker.run_id);
   let artifact;
   if (input.patch) {
@@ -11519,6 +13065,7 @@ function commitWorkerExecution(root, input) {
       refs: [
         patchBundleRef(worker, input.patch.patch_id),
         `${worker.namespace}/agent-result.json`,
+        ...capabilityEvidenceRefs,
         ...input.changes.changed_files
       ],
       timestamp: input.timestamp
@@ -11545,7 +13092,7 @@ function commitWorkerExecution(root, input) {
   }
   worker.attempt = Number(worker.attempt || 0) + 1;
   worker.updated_at = input.timestamp;
-  writeJson(join18(dir, "worker.json"), worker);
+  writeJson(join19(dir, "worker.json"), worker);
   const event = appendEvent(root, `worker.adapter.${input.resolved.name}`, "apex-v2", {
     run_id: worker.run_id,
     worker_id: worker.worker_id,
@@ -11557,6 +13104,13 @@ function commitWorkerExecution(root, input) {
   });
   updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
   return { adapterResult: input.adapterResult, patch: input.patch, artifact };
+}
+function persistCapabilityEvidence(dir, namespace, evidenceItems = []) {
+  return evidenceItems.map((evidence) => {
+    const name = `capability-evidence-${evidence.capability_id}.json`;
+    writeJson(join19(dir, name), evidence);
+    return `${namespace}/${name}`;
+  });
 }
 function customExecutorResolution(executorId, executable) {
   const executor = getWorkerExecutor(executorId);
@@ -11572,8 +13126,8 @@ function customExecutorResolution(executorId, executable) {
 function snapshotProtectedWorkspace(workspaceDir) {
   const values = /* @__PURE__ */ new Map();
   for (const relativePath of [".apex-v2", ".apex-agent", "sandbox.json"]) {
-    const target = join18(workspaceDir, relativePath);
-    if (!existsSync13(target)) continue;
+    const target = join19(workspaceDir, relativePath);
+    if (!existsSync14(target)) continue;
     if (statSync3(target).isFile()) {
       values.set(relativePath, fileHash2(target));
       continue;
@@ -11593,14 +13147,14 @@ function diffProtectedWorkspace(before, after) {
 function listFilesRecursive2(root) {
   const files = [];
   for (const entry of readdirSync6(root, { withFileTypes: true })) {
-    const path = join18(root, entry.name);
+    const path = join19(root, entry.name);
     if (entry.isDirectory()) files.push(...listFilesRecursive2(path));
     else if (entry.isFile()) files.push(path);
   }
   return files;
 }
 function fileHash2(path) {
-  return createHash5("sha256").update(readFileSync10(path)).digest("hex");
+  return createHash6("sha256").update(readFileSync11(path)).digest("hex");
 }
 function buildWorkerAgentPrompt(worker, planNode2) {
   return `You are an isolated coding worker in Apex Forge V2.
@@ -11625,6 +13179,14 @@ ${lines(worker.write_scope)}
 
 ${lines(planNode2.required_evidence)}
 
+## Internal Capability Protocols
+
+${capabilityProtocols(planNode2.capability_bindings || [])}
+
+## Capability Invocation Refs
+
+${lines(worker.capability_invocation_refs || [])}
+
 ## Verification
 
 ${lines(worker.verification)}
@@ -11641,6 +13203,17 @@ ${lines(worker.verification)}
 8. Your final response must satisfy the provided JSON output schema.
 `;
 }
+function capabilityProtocols(bindings) {
+  if (bindings.length === 0) return "None";
+  assertCapabilityContextBudget(bindings);
+  return bindings.map((binding) => `### ${binding.capability_id}@${binding.capability_version}
+
+Required output: ${binding.output_contract}
+Typed input: ${binding.input_contract}
+
+${readCapabilityProtocol(binding.protocol_ref).trim()}
+`).join("\n");
+}
 function collectWorkspaceChanges(projectDir, workspaceDir, writeScope) {
   const projectFiles = listWorkspaceFiles(projectDir);
   const sandboxFiles = listWorkspaceFiles(workspaceDir);
@@ -11650,10 +13223,10 @@ function collectWorkspaceChanges(projectDir, workspaceDir, writeScope) {
   const unsupportedFiles = [];
   const operations = [];
   for (const file of Array.from(allFiles).sort()) {
-    const projectPath = join18(projectDir, file);
-    const sandboxPath = join18(workspaceDir, file);
-    const projectExists = existsSync13(projectPath);
-    const sandboxExists = existsSync13(sandboxPath);
+    const projectPath = join19(projectDir, file);
+    const sandboxPath = join19(workspaceDir, file);
+    const projectExists = existsSync14(projectPath);
+    const sandboxExists = existsSync14(sandboxPath);
     if (projectExists && sandboxExists && buffersEqual(projectPath, sandboxPath)) continue;
     if (!projectExists && !sandboxExists) continue;
     changedFiles.push(file);
@@ -11665,7 +13238,7 @@ function collectWorkspaceChanges(projectDir, workspaceDir, writeScope) {
       unsupportedFiles.push(`${file}:delete`);
       continue;
     }
-    const next = readFileSync10(sandboxPath);
+    const next = readFileSync11(sandboxPath);
     if (isBinary2(next)) {
       unsupportedFiles.push(`${file}:binary`);
       continue;
@@ -11674,7 +13247,7 @@ function collectWorkspaceChanges(projectDir, workspaceDir, writeScope) {
       operations.push({ op: "write_text", path: file, content: next.toString("utf8") });
       continue;
     }
-    const previous = readFileSync10(projectPath);
+    const previous = readFileSync11(projectPath);
     if (isBinary2(previous)) {
       unsupportedFiles.push(`${file}:binary`);
       continue;
@@ -11694,7 +13267,7 @@ function collectWorkspaceChanges(projectDir, workspaceDir, writeScope) {
   };
 }
 function readAgentResult(path) {
-  if (!existsSync13(path)) {
+  if (!existsSync14(path)) {
     return { valid: false, value: null, error: "agent-result.json missing" };
   }
   try {
@@ -11722,10 +13295,10 @@ function classifyFailure(execution, structured, changes, worker) {
 function listWorkspaceFiles(root) {
   const files = [];
   function walk(dir) {
-    if (!existsSync13(dir)) return;
+    if (!existsSync14(dir)) return;
     for (const entry of readdirSync6(dir, { withFileTypes: true })) {
       if (IGNORED_WORKSPACE_NAMES.has(entry.name)) continue;
-      const path = join18(dir, entry.name);
+      const path = join19(dir, entry.name);
       const relativePath = relative4(root, path);
       if (relativePath.startsWith(".apex-v2/")) {
         const contextRoot = relativePath.split("/")[1];
@@ -11745,7 +13318,7 @@ function buffersEqual(leftPath, rightPath) {
   const leftStat = statSync3(leftPath);
   const rightStat = statSync3(rightPath);
   if (leftStat.size !== rightStat.size) return false;
-  return readFileSync10(leftPath).equals(readFileSync10(rightPath));
+  return readFileSync11(leftPath).equals(readFileSync11(rightPath));
 }
 function isBinary2(buffer) {
   return buffer.subarray(0, 8e3).includes(0);
@@ -11755,22 +13328,22 @@ function lines(items) {
 }
 
 // src/core/reconcile.mjs
-import { existsSync as existsSync16, readFileSync as readFileSync12, readdirSync as readdirSync9 } from "node:fs";
-import { join as join21 } from "node:path";
+import { existsSync as existsSync17, readFileSync as readFileSync13, readdirSync as readdirSync9 } from "node:fs";
+import { join as join22 } from "node:path";
 
 // src/core/operational-state.mjs
-import { existsSync as existsSync15, readdirSync as readdirSync8 } from "node:fs";
-import { join as join20 } from "node:path";
+import { existsSync as existsSync16, readdirSync as readdirSync8 } from "node:fs";
+import { join as join21 } from "node:path";
 
 // src/core/candidate.mjs
 import {
-  existsSync as existsSync14,
+  existsSync as existsSync15,
   lstatSync as lstatSync2,
-  readFileSync as readFileSync11,
+  readFileSync as readFileSync12,
   readdirSync as readdirSync7
 } from "node:fs";
-import { createHash as createHash6 } from "node:crypto";
-import { join as join19, relative as relative5, resolve as resolve9 } from "node:path";
+import { createHash as createHash7 } from "node:crypto";
+import { join as join20, relative as relative5, resolve as resolve10 } from "node:path";
 import { spawnSync as spawnSync9 } from "node:child_process";
 var IGNORED_ROOT_NAMES2 = /* @__PURE__ */ new Set([
   ".git",
@@ -11781,8 +13354,8 @@ var IGNORED_ROOT_NAMES2 = /* @__PURE__ */ new Set([
 ]);
 var IGNORED_TREE_NAMES2 = /* @__PURE__ */ new Set(["node_modules"]);
 var SECRET_BASENAMES2 = /* @__PURE__ */ new Set([".npmrc", ".pypirc", ".netrc", "credentials", "credentials.json"]);
-function buildCandidateSet(root, run, queue, projectDir = resolve9(root, "..")) {
-  const plan = readJson(join19(root, "runs", run.run_id, "plan-graph.json"), null);
+function buildCandidateSet(root, run, queue, projectDir = resolve10(root, "..")) {
+  const plan = readJson(join20(root, "runs", run.run_id, "plan-graph.json"), null);
   if (!plan) throw new Error(`candidate \u7F3A\u5C11 plan graph\uFF1A${run.run_id}`);
   const patches = queue.items.filter((item) => item.status !== "dropped" && item.status !== "merged").map((item) => {
     const patch = findPatch(root, run.run_id, item.patch_id);
@@ -11815,11 +13388,11 @@ function buildCandidateSet(root, run, queue, projectDir = resolve9(root, "..")) 
   };
 }
 function persistCandidateSet(root, candidate) {
-  const dir = join19(root, "runs", candidate.run_id, "candidates");
-  const path = join19(dir, `candidate-${candidate.candidate_digest}.json`);
+  const dir = join20(root, "runs", candidate.run_id, "candidates");
+  const path = join20(dir, `candidate-${candidate.candidate_digest}.json`);
   assertContract("candidate-set.schema.json", candidate, path);
   ensureDir(dir);
-  if (!existsSync14(path)) writeJson(path, candidate);
+  if (!existsSync15(path)) writeJson(path, candidate);
   return {
     candidate,
     ref: `.apex-v2/runs/${candidate.run_id}/candidates/candidate-${candidate.candidate_digest}.json`
@@ -11829,19 +13402,19 @@ function projectSourceFingerprint(projectDir) {
   const entries = [];
   for (const path of listProjectSourceFiles2(projectDir)) {
     if (isSecretPath2(path)) continue;
-    const target = join19(projectDir, path);
+    const target = join20(projectDir, path);
     const stat = lstatSync2(target);
     if (!stat.isFile()) continue;
     entries.push({
       path,
       mode: stat.mode & 511,
-      sha256: createHash6("sha256").update(readFileSync11(target)).digest("hex")
+      sha256: createHash7("sha256").update(readFileSync12(target)).digest("hex")
     });
   }
   return stableHash2(entries);
 }
 function stableHash2(value) {
-  return createHash6("sha256").update(canonicalStringify(value)).digest("hex");
+  return createHash7("sha256").update(canonicalStringify(value)).digest("hex");
 }
 function canonicalStringify(value) {
   if (Array.isArray(value)) return `[${value.map(canonicalStringify).join(",")}]`;
@@ -11865,7 +13438,7 @@ function listProjectSourceFiles2(projectDir) {
     for (const entry of readdirSync7(directory, { withFileTypes: true })) {
       if (directory === projectDir && IGNORED_ROOT_NAMES2.has(entry.name)) continue;
       if (entry.isDirectory() && IGNORED_TREE_NAMES2.has(entry.name)) continue;
-      const target = join19(directory, entry.name);
+      const target = join20(directory, entry.name);
       const path = relative5(projectDir, target);
       if (entry.isDirectory()) visit(target);
       else files.push(path);
@@ -12053,7 +13626,7 @@ function buildOperationalState(root) {
   return {
     schema_version: "v0",
     runs: readRuns(root),
-    approvals: readJson(join20(root, "approvals", "items.json"), []).map((approval) => ({
+    approvals: readJson(join21(root, "approvals", "items.json"), []).map((approval) => ({
       id: approval.id,
       kind: approval.kind,
       run_id: approval.run_id,
@@ -12062,7 +13635,7 @@ function buildOperationalState(root) {
       candidate_digest: approval.candidate_digest ?? null,
       action_hash: approval.action_hash
     })).sort(byId),
-    transactions: readJsonFiles(join20(root, "transactions")).map((transaction) => ({
+    transactions: readJsonFiles(join21(root, "transactions")).map((transaction) => ({
       transaction_id: transaction.transaction_id,
       kind: transaction.kind,
       status: transaction.status,
@@ -12071,11 +13644,11 @@ function buildOperationalState(root) {
   };
 }
 function readRuns(root) {
-  const runsDir = join20(root, "runs");
-  if (!existsSync15(runsDir)) return [];
+  const runsDir = join21(root, "runs");
+  if (!existsSync16(runsDir)) return [];
   return readdirSync8(runsDir, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => {
-    const runDir = join20(runsDir, entry.name);
-    const run = readJson(join20(runDir, "run.json"), {});
+    const runDir = join21(runsDir, entry.name);
+    const run = readJson(join21(runDir, "run.json"), {});
     const workers = readWorkers(runDir);
     return {
       run_id: entry.name,
@@ -12086,25 +13659,25 @@ function readRuns(root) {
       })).sort((left, right) => left.worker_id.localeCompare(right.worker_id)),
       patches: workers.flatMap(({ patches }) => patches.map(patchSummary)).sort((left, right) => left.patch_id.localeCompare(right.patch_id)),
       action_workspaces: workers.map(({ actionWorkspace }) => actionWorkspace).filter(Boolean).sort((left, right) => left.worker_id.localeCompare(right.worker_id)),
-      merge_queue: readJson(join20(runDir, "merge-queue.json"), null),
-      verification: reportSummary(readJson(join20(runDir, "verification-report.json"), null)),
-      review: reportSummary(readJson(join20(runDir, "review-report.json"), null)),
-      integration: reportSummary(readJson(join20(runDir, "integration-report.json"), null)),
-      candidates: readJsonFiles(join20(runDir, "candidates")).sort(
+      merge_queue: readJson(join21(runDir, "merge-queue.json"), null),
+      verification: reportSummary(readJson(join21(runDir, "verification-report.json"), null)),
+      review: reportSummary(readJson(join21(runDir, "review-report.json"), null)),
+      integration: reportSummary(readJson(join21(runDir, "integration-report.json"), null)),
+      candidates: readJsonFiles(join21(runDir, "candidates")).sort(
         (left, right) => left.candidate_digest.localeCompare(right.candidate_digest)
       )
     };
   }).sort((left, right) => left.run_id.localeCompare(right.run_id));
 }
 function readWorkers(runDir) {
-  const workersDir = join20(runDir, "workers");
-  if (!existsSync15(workersDir)) return [];
+  const workersDir = join21(runDir, "workers");
+  if (!existsSync16(workersDir)) return [];
   return readdirSync8(workersDir, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => {
-    const dir = join20(workersDir, entry.name);
-    const worker = readJson(join20(dir, "worker.json"), {});
+    const dir = join21(workersDir, entry.name);
+    const worker = readJson(join21(dir, "worker.json"), {});
     const patches = readWorkerPatchBundles(dir).map(({ patch }) => patch);
-    const alias = readJson(join20(dir, "patch-bundle.json"), null);
-    const immutableAlias = alias?.patch_id ? readJson(join20(dir, "patches", alias.patch_id, "patch-bundle.json"), null) : null;
+    const alias = readJson(join21(dir, "patch-bundle.json"), null);
+    const immutableAlias = alias?.patch_id ? readJson(join21(dir, "patches", alias.patch_id, "patch-bundle.json"), null) : null;
     return {
       worker: {
         worker_id: entry.name,
@@ -12116,7 +13689,7 @@ function readWorkers(runDir) {
       },
       patches,
       patchAliasDrift: immutableAlias && stableHash2(alias) !== stableHash2(immutableAlias) ? alias.patch_id : null,
-      actionWorkspace: readJson(join20(dir, "action-workspace.json"), null)
+      actionWorkspace: readJson(join21(dir, "action-workspace.json"), null)
     };
   });
 }
@@ -12140,8 +13713,8 @@ function patchSummary(patch) {
   };
 }
 function readJsonFiles(directory) {
-  if (!existsSync15(directory)) return [];
-  return readdirSync8(directory).filter((name) => name.endsWith(".json")).map((name) => readJson(join20(directory, name), null)).filter(Boolean);
+  if (!existsSync16(directory)) return [];
+  return readdirSync8(directory).filter((name) => name.endsWith(".json")).map((name) => readJson(join21(directory, name), null)).filter(Boolean);
 }
 function issue(kind, path, detail) {
   return { kind, path, detail };
@@ -12152,15 +13725,15 @@ function byId(left, right) {
 
 // src/core/reconcile.mjs
 function inspectProjectConsistency(root) {
-  const project = readJson(join21(root, "project.json"));
-  const roadmap = readJson(join21(root, "roadmap", "graph.json"));
-  const manifest = readJson(join21(root, "knowledge", "manifest.json"));
+  const project = readJson(join22(root, "project.json"));
+  const roadmap = readJson(join22(root, "roadmap", "graph.json"));
+  const manifest = readJson(join22(root, "knowledge", "manifest.json"));
   const runStates = readRuns2(root).map((run) => ({
     actual: run,
     normalized: normalizeRunForReconciliation(run)
   }));
   const runs = runStates.map((entry) => entry.normalized);
-  const eventLog = inspectEventLog(join21(root, "events.jsonl"));
+  const eventLog = inspectEventLog(join22(root, "events.jsonl"));
   const replay = replayProjectStateFromEvents(eventLog.events);
   const operational = inspectOperationalIntegrity(root);
   const changes = [];
@@ -12357,12 +13930,12 @@ function applyProjectReconciliation(root, inspection) {
     knowledge_version: inspection.derived.knowledge_version,
     last_event_id: inspection.derived.last_event_id
   });
-  const roadmapPath = join21(root, "roadmap", "graph.json");
+  const roadmapPath = join22(root, "roadmap", "graph.json");
   const roadmap = readJson(roadmapPath);
   const runs = readRuns2(root).map(normalizeRunForReconciliation);
   for (const run of runs) {
     run.status = expectedRunStatus(run);
-    writeJson(join21(root, "runs", run.run_id, "run.json"), run);
+    writeJson(join22(root, "runs", run.run_id, "run.json"), run);
   }
   const runsByRoadmap = new Map(runs.map((run) => [run.roadmap_node_id, run]));
   for (const node of roadmap.nodes) {
@@ -12378,14 +13951,14 @@ function inspectEventLog(path) {
   const events = [];
   const ids = /* @__PURE__ */ new Set();
   const duplicateIds = [];
-  if (!existsSync16(path)) {
+  if (!existsSync17(path)) {
     return {
       events,
       duplicate_event_ids: duplicateIds,
       issues: [{ kind: "missing-event-log", path, detail: "events.jsonl \u4E0D\u5B58\u5728" }]
     };
   }
-  const lines2 = readFileSync12(path, "utf8").split("\n");
+  const lines2 = readFileSync13(path, "utf8").split("\n");
   let previousTimestamp = null;
   for (let index = 0; index < lines2.length; index += 1) {
     const line = lines2[index].trim();
@@ -12438,9 +14011,9 @@ function inspectEventLog(path) {
   return { events, duplicate_event_ids: duplicateIds, issues };
 }
 function readRuns2(root) {
-  const runsDir = join21(root, "runs");
-  if (!existsSync16(runsDir)) return [];
-  return readdirSync9(runsDir, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => readJson(join21(runsDir, entry.name, "run.json"), null)).filter(Boolean);
+  const runsDir = join22(root, "runs");
+  if (!existsSync17(runsDir)) return [];
+  return readdirSync9(runsDir, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => readJson(join22(runsDir, entry.name, "run.json"), null)).filter(Boolean);
 }
 function expectedRunStatus(run) {
   if (run.nodes.some((node) => node.status === "halted")) return "halted";
@@ -12500,9 +14073,9 @@ function compare(changes, path, field, actual, expected) {
 }
 
 // src/core/risks.mjs
-import { join as join22 } from "node:path";
+import { join as join23 } from "node:path";
 function listRisks(root, status2 = null) {
-  const risks = readJson(join22(root, "risks", "register.json"), []);
+  const risks = readJson(join23(root, "risks", "register.json"), []);
   return status2 ? risks.filter((risk) => risk.status === status2) : risks;
 }
 function addRisk(root, input) {
@@ -12529,11 +14102,11 @@ function addRisk(root, input) {
     updated_at: timestamp
   };
   risks.push(risk);
-  writeJson(join22(root, "risks", "register.json"), risks);
+  writeJson(join23(root, "risks", "register.json"), risks);
   return risk;
 }
 function updateRisk(root, id, status2, resolution) {
-  const path = join22(root, "risks", "register.json");
+  const path = join23(root, "risks", "register.json");
   const risks = readJson(path, []);
   const risk = risks.find((item) => item.id === id);
   if (!risk) throw new Error(`\u627E\u4E0D\u5230 risk\uFF1A${id}`);
@@ -12632,19 +14205,19 @@ function syncAdapterSmokeRisk(root, report) {
 }
 
 // src/core/metrics.mjs
-import { existsSync as existsSync17, readFileSync as readFileSync13, readdirSync as readdirSync10 } from "node:fs";
-import { join as join23 } from "node:path";
+import { existsSync as existsSync18, readFileSync as readFileSync14, readdirSync as readdirSync10 } from "node:fs";
+import { join as join24 } from "node:path";
 function buildProjectMetrics(root) {
   const runs = readRunFiles(root);
   const workers = findJson(root, (name) => name === "worker.json");
   const adapterResults = findJson(root, (name) => name.startsWith("adapter-result-"));
   const verification = findJson(root, (name) => name === "verification-report.json");
   const integration = findJson(root, (name) => name === "integration-report.json");
-  const events = readFileSync13(join23(root, "events.jsonl"), "utf8").split("\n").filter(Boolean).map(JSON.parse);
-  const risks = readJson(join23(root, "risks", "register.json"), []);
+  const events = readFileSync14(join24(root, "events.jsonl"), "utf8").split("\n").filter(Boolean).map(JSON.parse);
+  const risks = readJson(join24(root, "risks", "register.json"), []);
   const durations = runs.filter((run) => run.status === "done").map((run) => Date.parse(run.updated_at) - Date.parse(run.created_at));
-  const previous = readJson(join23(root, "metrics", "latest.json"), null);
-  const policy = readJson(join23(root, "policies", "quality.json"), null);
+  const previous = readJson(join24(root, "metrics", "latest.json"), null);
+  const policy = readJson(join24(root, "policies", "quality.json"), null);
   const rollingWindowDays = policy?.rolling_window_days || 7;
   const rollingRunCount = policy?.rolling_run_count || 20;
   const windowSince = Date.now() - rollingWindowDays * 864e5;
@@ -12741,36 +14314,36 @@ function check(id, pass, actual, limit) {
   return { id, status: pass ? "PASS" : "FAIL", actual, limit };
 }
 function readRunFiles(root) {
-  const dir = join23(root, "runs");
-  if (!existsSync17(dir)) return [];
-  return readdirSync10(dir, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => readJson(join23(dir, entry.name, "run.json"), null)).filter(Boolean);
+  const dir = join24(root, "runs");
+  if (!existsSync18(dir)) return [];
+  return readdirSync10(dir, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => readJson(join24(dir, entry.name, "run.json"), null)).filter(Boolean);
 }
 function findJson(root, predicate) {
   const values = [];
   function walk(dir) {
-    if (!existsSync17(dir)) return;
+    if (!existsSync18(dir)) return;
     for (const entry of readdirSync10(dir, { withFileTypes: true })) {
-      const path = join23(dir, entry.name);
+      const path = join24(dir, entry.name);
       if (entry.isDirectory()) walk(path);
       else if (entry.isFile() && entry.name.endsWith(".json") && predicate(entry.name)) values.push(readJson(path));
     }
   }
-  walk(join23(root, "runs"));
+  walk(join24(root, "runs"));
   return values;
 }
 
 // src/core/heartbeat.mjs
-import { existsSync as existsSync20, readdirSync as readdirSync12 } from "node:fs";
-import { join as join27 } from "node:path";
+import { existsSync as existsSync21, readdirSync as readdirSync12 } from "node:fs";
+import { join as join28 } from "node:path";
 
 // src/core/adapter-observability.mjs
-import { existsSync as existsSync19, readdirSync as readdirSync11 } from "node:fs";
-import { join as join26 } from "node:path";
+import { existsSync as existsSync20, readdirSync as readdirSync11 } from "node:fs";
+import { join as join27 } from "node:path";
 
 // src/core/adapter-smoke.mjs
-import { existsSync as existsSync18, mkdtempSync as mkdtempSync2, readFileSync as readFileSync14, rmSync as rmSync6 } from "node:fs";
+import { existsSync as existsSync19, mkdtempSync as mkdtempSync2, readFileSync as readFileSync15, rmSync as rmSync6 } from "node:fs";
 import { tmpdir as tmpdir2 } from "node:os";
-import { join as join24 } from "node:path";
+import { join as join25 } from "node:path";
 var RESULT_SCHEMA = schemaPath("agent-result.schema.json");
 function runAdapterSmoke(options = {}) {
   const names = options.adapters || DEFAULT_SMOKE_EXECUTOR_IDS;
@@ -12798,8 +14371,8 @@ function runAdapterSmoke(options = {}) {
   };
 }
 function runLiveProbe(name, info, timeoutMs) {
-  const workspace = mkdtempSync2(join24(tmpdir2(), `apex-adapter-smoke-${name}-`));
-  const outputPath = join24(workspace, "result.json");
+  const workspace = mkdtempSync2(join25(tmpdir2(), `apex-adapter-smoke-${name}-`));
+  const outputPath = join25(workspace, "result.json");
   const prompt = 'Do not use tools or modify files. Return verdict "pass", summary "adapter smoke", tests [], risks [], evidence_refs [] using the required structured output.';
   try {
     const executor = getWorkerExecutor(name);
@@ -12812,10 +14385,10 @@ function runLiveProbe(name, info, timeoutMs) {
       timeoutMs,
       smoke: true
     });
-    if (execution.exit_code !== 0 || !existsSync18(outputPath)) {
+    if (execution.exit_code !== 0 || !existsSync19(outputPath)) {
       return { adapter: name, status: "FAIL", mode: "live", version: info.version, session_id: execution.session_id || null, duration_ms: execution.duration_ms, errors: [execution.stderr_tail || "missing structured output"] };
     }
-    const value = JSON.parse(readFileSync14(outputPath, "utf8"));
+    const value = JSON.parse(readFileSync15(outputPath, "utf8"));
     const contract = validateContract("agent-result.schema.json", value, `${name} smoke`);
     return {
       adapter: name,
@@ -12835,7 +14408,7 @@ function runLiveProbe(name, info, timeoutMs) {
 
 // src/core/notifications.mjs
 import { appendFileSync } from "node:fs";
-import { dirname as dirname6, join as join25, resolve as resolve10 } from "node:path";
+import { dirname as dirname7, join as join26, resolve as resolve11 } from "node:path";
 var SEVERITY = {
   info: 0,
   medium: 1,
@@ -12862,17 +14435,17 @@ function defaultNotificationPolicy(timestamp = now()) {
   };
 }
 function listNotifications(root, status2 = null) {
-  const notifications = readJson(join25(root, "notifications", "outbox.json"), []);
+  const notifications = readJson(join26(root, "notifications", "outbox.json"), []);
   return status2 ? notifications.filter((item) => item.status === status2) : notifications;
 }
 function enqueueNotification(root, input) {
-  const policy = readJson(join25(root, "policies", "notifications.json"), defaultNotificationPolicy());
+  const policy = readJson(join26(root, "policies", "notifications.json"), defaultNotificationPolicy());
   if (!policy.enabled) return { queued: false, reason: "policy-disabled", notification: null };
   if (!policy.notify_on.includes(input.event_type)) return { queued: false, reason: "event-disabled", notification: null };
   if (SEVERITY[input.severity] < SEVERITY[policy.minimum_severity]) {
     return { queued: false, reason: "below-minimum-severity", notification: null };
   }
-  const path = join25(root, "notifications", "outbox.json");
+  const path = join26(root, "notifications", "outbox.json");
   const notifications = readJson(path, []);
   const dedupeAfter = Date.now() - policy.dedupe_window_minutes * 6e4;
   const existing = notifications.find(
@@ -12914,7 +14487,7 @@ function enqueueNotification(root, input) {
   return { queued: true, reason: "queued", notification };
 }
 function acknowledgeNotification(root, id, reason) {
-  const path = join25(root, "notifications", "outbox.json");
+  const path = join26(root, "notifications", "outbox.json");
   const notifications = readJson(path, []);
   const notification = notifications.find((item) => item.id === id);
   if (!notification) throw new Error(`\u627E\u4E0D\u5230 notification\uFF1A${id}`);
@@ -12933,8 +14506,8 @@ function acknowledgeNotification(root, id, reason) {
   return notification;
 }
 function dispatchNotifications(root, options = {}) {
-  const policy = readJson(join25(root, "policies", "notifications.json"), defaultNotificationPolicy());
-  const path = join25(root, "notifications", "outbox.json");
+  const policy = readJson(join26(root, "policies", "notifications.json"), defaultNotificationPolicy());
+  const path = join26(root, "notifications", "outbox.json");
   const notifications = readJson(path, []);
   const delivered = [];
   const failed = [];
@@ -12975,7 +14548,7 @@ function dispatchNotifications(root, options = {}) {
   return { delivered, failed, dead_letter: deadLetter };
 }
 function migrateNotificationState(root, timestamp = now()) {
-  const policyPath = join25(root, "policies", "notifications.json");
+  const policyPath = join26(root, "policies", "notifications.json");
   const policy = readJson(policyPath, defaultNotificationPolicy(timestamp));
   if (policy.delivery?.mode === "outbox" || !policy.delivery?.max_attempts) {
     policy.delivery = {
@@ -12987,7 +14560,7 @@ function migrateNotificationState(root, timestamp = now()) {
     policy.updated_at = timestamp;
     writeJson(policyPath, policy);
   }
-  const outboxPath = join25(root, "notifications", "outbox.json");
+  const outboxPath = join26(root, "notifications", "outbox.json");
   const notifications = readJson(outboxPath, []);
   let changed = false;
   for (const notification of notifications) {
@@ -13006,11 +14579,11 @@ function deliverToFile(root, policy, notification, deliveredAt) {
   if (policy.delivery.mode !== "file") {
     throw new Error(`unsupported notification delivery mode\uFF1A${policy.delivery.mode}`);
   }
-  const target = resolve10(root, policy.delivery.sink_path);
-  if (!target.startsWith(`${resolve10(root)}/`)) {
+  const target = resolve11(root, policy.delivery.sink_path);
+  if (!target.startsWith(`${resolve11(root)}/`)) {
     throw new Error(`notification sink \u8D85\u51FA\u9879\u76EE\u72B6\u6001\u76EE\u5F55\uFF1A${policy.delivery.sink_path}`);
   }
-  ensureDir(dirname6(target));
+  ensureDir(dirname7(target));
   appendFileSync(target, `${JSON.stringify({
     notification_id: notification.id,
     event_type: notification.event_type,
@@ -13037,9 +14610,9 @@ function appendNotificationEvent(root, type, notification) {
 
 // src/core/adapter-observability.mjs
 function recordAdapterSmokeReport(root, report, options = {}) {
-  ensureDir(join26(root, "adapters"));
-  const reportPath = join26(root, "adapters", `smoke-${report.smoke_id}.json`);
-  const latestPath = join26(root, "adapters", report.mode === "live" ? "latest-live-smoke.json" : "latest-static-smoke.json");
+  ensureDir(join27(root, "adapters"));
+  const reportPath = join27(root, "adapters", `smoke-${report.smoke_id}.json`);
+  const latestPath = join27(root, "adapters", report.mode === "live" ? "latest-live-smoke.json" : "latest-static-smoke.json");
   writeJson(reportPath, report);
   writeJson(latestPath, report);
   syncAdapterSmokeRisk(root, report);
@@ -13075,7 +14648,7 @@ function recordAdapterSmokeReport(root, report, options = {}) {
   return { report, observation, notification };
 }
 function refreshStaleAdapterSmoke(root, policy, options = {}) {
-  const latest = readJson(join26(root, "adapters", "latest-live-smoke.json"), null);
+  const latest = readJson(join27(root, "adapters", "latest-live-smoke.json"), null);
   if (!latest && !options.refreshMissing) {
     return { attempted: false, reason: "missing-live-smoke", status: null, smoke_id: null };
   }
@@ -13149,11 +14722,11 @@ function recordAdapterObservation(root, adapters, options = {}) {
       };
     })
   };
-  const historyDir = join26(root, "adapters", "history");
+  const historyDir = join27(root, "adapters", "history");
   ensureDir(historyDir);
-  writeJson(join26(historyDir, `${snapshot.snapshot_id}.json`), snapshot);
+  writeJson(join27(historyDir, `${snapshot.snapshot_id}.json`), snapshot);
   const trend = buildAdapterTrend(root);
-  writeJson(join26(root, "adapters", "latest-trend.json"), trend);
+  writeJson(join27(root, "adapters", "latest-trend.json"), trend);
   if (options.recordEvent !== false) {
     const event = appendEvent(root, "adapter.observation.recorded", "apex-v2", {
       snapshot_id: snapshot.snapshot_id,
@@ -13165,14 +14738,14 @@ function recordAdapterObservation(root, adapters, options = {}) {
   return snapshot;
 }
 function backfillAdapterObservations(root, options = {}) {
-  const historyDir = join26(root, "adapters", "history");
+  const historyDir = join27(root, "adapters", "history");
   ensureDir(historyDir);
-  const existing = readdirSync11(historyDir).filter((name) => name.startsWith("adapter-observation-") && name.endsWith(".json")).map((name) => readJson(join26(historyDir, name)));
+  const existing = readdirSync11(historyDir).filter((name) => name.startsWith("adapter-observation-") && name.endsWith(".json")).map((name) => readJson(join27(historyDir, name)));
   const smokeIds = new Set(existing.map((item) => item.smoke_id).filter(Boolean));
   const hasBaseline = existing.some((item) => item.source === "baseline" && item.smoke_id == null);
   const inspections = options.inspections || inspectWorkerExecutors();
   let created = 0;
-  const baseline = readJson(join26(root, "adapters", "capabilities.json"), null);
+  const baseline = readJson(join27(root, "adapters", "capabilities.json"), null);
   if (baseline && !hasBaseline) {
     recordAdapterObservation(root, baseline.adapters || inspections, {
       source: "baseline",
@@ -13181,9 +14754,9 @@ function backfillAdapterObservations(root, options = {}) {
     });
     created += 1;
   }
-  const smokeFiles = readdirSync11(join26(root, "adapters")).filter((name) => name.startsWith("smoke-") && name.endsWith(".json")).sort();
+  const smokeFiles = readdirSync11(join27(root, "adapters")).filter((name) => name.startsWith("smoke-") && name.endsWith(".json")).sort();
   for (const name of smokeFiles) {
-    const report = readJson(join26(root, "adapters", name));
+    const report = readJson(join27(root, "adapters", name));
     if (!report?.smoke_id || smokeIds.has(report.smoke_id)) continue;
     recordAdapterObservation(root, inspections, {
       source: "smoke",
@@ -13195,8 +14768,8 @@ function backfillAdapterObservations(root, options = {}) {
     created += 1;
   }
   const trend = buildAdapterTrend(root);
-  writeJson(join26(root, "adapters", "latest-trend.json"), trend);
-  if (created > 0 && existsSync19(join26(root, "events.jsonl"))) {
+  writeJson(join27(root, "adapters", "latest-trend.json"), trend);
+  if (created > 0 && existsSync20(join27(root, "events.jsonl"))) {
     const event = appendEvent(root, "adapter.observation.backfilled", "apex-v2", {
       created,
       snapshot_count: trend.snapshot_count
@@ -13206,8 +14779,8 @@ function backfillAdapterObservations(root, options = {}) {
   return { created, snapshot_count: trend.snapshot_count };
 }
 function buildAdapterTrend(root) {
-  const historyDir = join26(root, "adapters", "history");
-  const snapshots = existsSync19(historyDir) ? readdirSync11(historyDir).filter((name) => name.startsWith("adapter-observation-") && name.endsWith(".json")).map((name) => readJson(join26(historyDir, name))).sort(
+  const historyDir = join27(root, "adapters", "history");
+  const snapshots = existsSync20(historyDir) ? readdirSync11(historyDir).filter((name) => name.startsWith("adapter-observation-") && name.endsWith(".json")).map((name) => readJson(join27(historyDir, name))).sort(
     (left, right) => left.generated_at.localeCompare(right.generated_at) || left.snapshot_id.localeCompare(right.snapshot_id)
   ) : [];
   const names = Array.from(new Set(snapshots.flatMap((snapshot) => snapshot.adapters.map((item) => item.adapter)))).sort();
@@ -13266,7 +14839,7 @@ function summarizeAdapter(name, snapshots) {
 
 // src/core/heartbeat.mjs
 function runProjectHeartbeat(root, options = {}) {
-  const policy = readJson(join27(root, "policies", "quality.json"));
+  const policy = readJson(join28(root, "policies", "quality.json"));
   const inspections = options.inspections || inspectWorkerExecutors();
   const backfill = backfillAdapterObservations(root, { inspections });
   const smoke = refreshStaleAdapterSmoke(root, policy, {
@@ -13282,9 +14855,9 @@ function runProjectHeartbeat(root, options = {}) {
     });
   }
   const metrics = buildProjectMetrics(root);
-  ensureDir(join27(root, "metrics"));
-  writeJson(join27(root, "metrics", `${metrics.snapshot_id}.json`), metrics);
-  writeJson(join27(root, "metrics", "latest.json"), metrics);
+  ensureDir(join28(root, "metrics"));
+  writeJson(join28(root, "metrics", `${metrics.snapshot_id}.json`), metrics);
+  writeJson(join28(root, "metrics", "latest.json"), metrics);
   const notifications = dispatchNotifications(root, {
     force: Boolean(options.forceNotifications),
     deliverer: options.deliverer
@@ -13304,9 +14877,9 @@ function runProjectHeartbeat(root, options = {}) {
   return heartbeat;
 }
 function observationDue(root, intervalHours) {
-  const historyDir = join27(root, "adapters", "history");
-  if (!existsSync20(historyDir)) return true;
-  const latest = readdirSync12(historyDir).filter((name) => name.startsWith("adapter-observation-") && name.endsWith(".json")).map((name) => readJson(join27(historyDir, name))).sort((left, right) => right.generated_at.localeCompare(left.generated_at))[0];
+  const historyDir = join28(root, "adapters", "history");
+  if (!existsSync21(historyDir)) return true;
+  const latest = readdirSync12(historyDir).filter((name) => name.startsWith("adapter-observation-") && name.endsWith(".json")).map((name) => readJson(join28(historyDir, name))).sort((left, right) => right.generated_at.localeCompare(left.generated_at))[0];
   if (!latest) return true;
   return Date.now() - Date.parse(latest.generated_at) >= intervalHours * 36e5;
 }
@@ -13326,8 +14899,8 @@ var KNOWLEDGE_FILES = [
 ];
 
 // src/commands/knowledge.mjs
-import { existsSync as existsSync21, readdirSync as readdirSync13 } from "node:fs";
-import { join as join28 } from "node:path";
+import { existsSync as existsSync22, readdirSync as readdirSync13 } from "node:fs";
+import { join as join29 } from "node:path";
 
 // src/core/knowledge-renderers.mjs
 function renderKnowledgeIndex(inventory, version, timestamp) {
@@ -13515,10 +15088,10 @@ function refreshKnowledge(args, deps) {
   const root = requireStore(projectDir);
   const timestamp = now();
   const inventory = buildProjectInventory(projectDir);
-  const manifestPath = join28(root, "knowledge", "manifest.json");
+  const manifestPath = join29(root, "knowledge", "manifest.json");
   const existingManifest = readJson(manifestPath, { version: 0 });
   const nextVersion = Number(existingManifest.version || 0) + 1;
-  const knowledgeDir = join28(root, "knowledge");
+  const knowledgeDir = join29(root, "knowledge");
   const rendered = /* @__PURE__ */ new Map([
     ["index.md", renderKnowledgeIndex(inventory, nextVersion, timestamp)],
     ["module-map.md", renderModuleMap(inventory)],
@@ -13533,7 +15106,7 @@ function refreshKnowledge(args, deps) {
   ]);
   const staleAfter = new Date(Date.parse(timestamp) + 7 * 864e5).toISOString();
   for (const [name, content] of rendered) {
-    atomicWriteFile(join28(knowledgeDir, name), withKnowledgeMetadata(
+    atomicWriteFile(join29(knowledgeDir, name), withKnowledgeMetadata(
       content,
       timestamp,
       staleAfter,
@@ -13577,7 +15150,7 @@ function refreshKnowledge(args, deps) {
 }
 function buildProjectInventory(projectDir) {
   const files = walkProjectFiles(projectDir);
-  const packageJson = readJson(join28(projectDir, "package.json"), null);
+  const packageJson = readJson(join29(projectDir, "package.json"), null);
   const scripts = packageJson?.scripts || {};
   const sourceFiles = files.filter((file) => file.startsWith("src/"));
   const testFiles = files.filter((file) => file.startsWith("tests/") || file.includes(".test."));
@@ -13615,8 +15188,8 @@ function walkProjectFiles(projectDir) {
   const ignored = /* @__PURE__ */ new Set([".git", "node_modules", ".apex-v2", ".DS_Store"]);
   const out = [];
   function walk(relativeDir) {
-    const absoluteDir = join28(projectDir, relativeDir);
-    if (!existsSync21(absoluteDir)) return;
+    const absoluteDir = join29(projectDir, relativeDir);
+    if (!existsSync22(absoluteDir)) return;
     for (const entry of readdirSync13(absoluteDir, { withFileTypes: true })) {
       if (ignored.has(entry.name)) continue;
       const relativePath = relativeDir ? `${relativeDir}/${entry.name}` : entry.name;
@@ -13631,12 +15204,12 @@ function walkProjectFiles(projectDir) {
   return out.sort();
 }
 function directoryChildren(projectDir, relativeDir) {
-  const dir = join28(projectDir, relativeDir);
-  if (!existsSync21(dir)) return [];
+  const dir = join29(projectDir, relativeDir);
+  if (!existsSync22(dir)) return [];
   return readdirSync13(dir, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
 }
 function refreshActiveRunContextSnapshots(root, knowledgeVersion) {
-  const project = readJson(join28(root, "project.json"));
+  const project = readJson(join29(root, "project.json"));
   const updated = [];
   for (const runId of project.active_runs) {
     const run = loadRun(root, runId);
@@ -13657,7 +15230,7 @@ function refreshActiveRunContextSnapshots(root, knowledgeVersion) {
 
 // src/commands/run.mjs
 import { writeFileSync as writeFileSync11 } from "node:fs";
-import { join as join29, resolve as resolve11 } from "node:path";
+import { join as join30, resolve as resolve12 } from "node:path";
 function handleRunCommand(subcommand, args) {
   if (subcommand === "create") {
     createRun(args);
@@ -13707,16 +15280,16 @@ function generateRunPlanInternal(root, run) {
   requirePassedNode(run, "mandate");
   requirePassedNode(run, "context");
   const timestamp = now();
-  const projectDir = resolve11(root, "..");
+  const projectDir = resolve12(root, "..");
   const inventory = buildProjectInventory(projectDir);
   const plan = buildTaskPlanGraph(root, run, timestamp, inventory);
   const validation = validatePlanGraph(plan);
   if (validation.errors.length > 0) {
     throw new Error(`\u751F\u6210\u7684 plan graph \u65E0\u6548\uFF1A${validation.errors.join("; ")}`);
   }
-  const runDir = join29(root, "runs", run.run_id);
-  writeJson(join29(runDir, "plan-graph.json"), plan);
-  writeFileSync11(join29(runDir, "PLAN_GRAPH.md"), renderPlanGraphMarkdown(plan));
+  const runDir = join30(root, "runs", run.run_id);
+  writeJson(join30(runDir, "plan-graph.json"), plan);
+  writeFileSync11(join30(runDir, "PLAN_GRAPH.md"), renderPlanGraphMarkdown(plan));
   const artifact = createArtifact(root, run, "plan_graph", {
     type: "plan",
     title: `PlanGraph\uFF1A${plan.source_title}`,
@@ -13746,14 +15319,14 @@ function generateRunPlanInternal(root, run) {
 function showRunPlan(args) {
   const root = requireStore(projectRoot(args));
   const runId = required(args, "run-id");
-  const plan = readJson(join29(root, "runs", runId, "plan-graph.json"), null);
+  const plan = readJson(join30(root, "runs", runId, "plan-graph.json"), null);
   if (!plan) throw new Error(`\u627E\u4E0D\u5230 plan graph\uFF1A${runId}`);
   console.log(JSON.stringify(plan, null, 2));
 }
 function validateRunPlanCommand(args) {
   const root = requireStore(projectRoot(args));
   const runId = required(args, "run-id");
-  const plan = readJson(join29(root, "runs", runId, "plan-graph.json"), null);
+  const plan = readJson(join30(root, "runs", runId, "plan-graph.json"), null);
   if (!plan) throw new Error(`\u627E\u4E0D\u5230 plan graph\uFF1A${runId}`);
   const validation = validatePlanGraph(plan);
   if (validation.errors.length > 0) {
@@ -13769,28 +15342,28 @@ function createRun(args) {
   console.log(JSON.stringify(run, null, 2));
 }
 function createRunForRoadmapNode(root, roadmapId, timestamp) {
-  return withProjectTransaction(resolve11(root, ".."), {
+  return withProjectTransaction(resolve12(root, ".."), {
     kind: "run-create",
     idempotencyKey: `run-create:${roadmapId}`
   }, () => createRunForRoadmapNodeTransaction(root, roadmapId, timestamp)).result;
 }
 function createRunForRoadmapNodeTransaction(root, roadmapId, timestamp) {
-  const roadmapPath = join29(root, "roadmap", "graph.json");
+  const roadmapPath = join30(root, "roadmap", "graph.json");
   const graph = readJson(roadmapPath);
   const node = graph.nodes.find((entry) => entry.id === roadmapId);
   if (!node) throw new Error(`\u627E\u4E0D\u5230 roadmap node\uFF1A${roadmapId}`);
   if (!["ready", "active"].includes(node.status)) {
     throw new Error(`roadmap node \u5F53\u524D\u72B6\u6001\u4E0D\u53EF\u521B\u5EFA run\uFF1A${node.status}`);
   }
-  const projectPath = join29(root, "project.json");
+  const projectPath = join30(root, "project.json");
   const project = readJson(projectPath);
   if (project.active_runs.length >= project.wip_limits.active_runs) {
     throw new Error(`active run \u6570\u91CF\u5DF2\u8FBE\u5230 WIP \u9650\u5236\uFF1A${project.wip_limits.active_runs}`);
   }
   const runId = shortId("run");
-  const runDir = join29(root, "runs", runId);
+  const runDir = join30(root, "runs", runId);
   ensureDir(runDir);
-  ensureDir(join29(root, "artifacts", runId));
+  ensureDir(join30(root, "artifacts", runId));
   const run = {
     schema_version: SCHEMA_VERSION,
     run_id: runId,
@@ -13819,8 +15392,8 @@ function createRunForRoadmapNodeTransaction(root, roadmapId, timestamp) {
     created_at: timestamp,
     updated_at: timestamp
   };
-  writeJson(join29(runDir, "run.json"), run);
-  writeTextIfMissing(join29(runDir, "HANDOFF.md"), runHandoffTemplate(run));
+  writeJson(join30(runDir, "run.json"), run);
+  writeTextIfMissing(join30(runDir, "HANDOFF.md"), runHandoffTemplate(run));
   node.status = "active";
   node.updated_at = timestamp;
   graph.updated_at = timestamp;
@@ -14078,7 +15651,7 @@ function listArtifacts(args) {
 }
 
 // src/commands/governance.mjs
-import { join as join30, resolve as resolve12 } from "node:path";
+import { join as join31, resolve as resolve13 } from "node:path";
 function handleContractsCommand(subcommand, args) {
   const projectDir = projectRoot(args);
   requireStore(projectDir);
@@ -14099,15 +15672,15 @@ function handleApprovalCommand(subcommand, args) {
   const projectDir = projectRoot(args);
   const root = requireStore(projectDir);
   if (subcommand === "list") {
-    console.log(JSON.stringify(readJson(join30(root, "approvals", "items.json"), []), null, 2));
+    console.log(JSON.stringify(readJson(join31(root, "approvals", "items.json"), []), null, 2));
     return;
   }
   if (subcommand === "decide") {
     const decision = normalizeEnum(required(args, "decision"), ["approved", "rejected"], "decision");
     const approvalId = required(args, "id");
-    const approvalItem = readJson(join30(root, "approvals", "items.json"), []).find((item) => item.id === approvalId);
+    const approvalItem = readJson(join31(root, "approvals", "items.json"), []).find((item) => item.id === approvalId);
     if (!approvalItem) throw new Error(`\u627E\u4E0D\u5230 approval\uFF1A${approvalId}`);
-    const approval = withProjectTransaction(resolve12(projectDir), {
+    const approval = withProjectTransaction(resolve13(projectDir), {
       kind: "approval-decide",
       idempotencyKey: `approval-decide:${approvalId}:${decision}:${approvalItem.revision || 1}`
     }, () => {
@@ -14180,6 +15753,483 @@ function handleNotificationCommand(subcommand, args) {
   throw new Error(`\u672A\u77E5 notification \u5B50\u547D\u4EE4\uFF1A${subcommand || "(\u7A7A)"}`);
 }
 
+// src/core/spec-adapter.mjs
+import {
+  existsSync as existsSync23,
+  readFileSync as readFileSync16,
+  readdirSync as readdirSync14,
+  realpathSync as realpathSync3,
+  statSync as statSync4
+} from "node:fs";
+import { createHash as createHash8 } from "node:crypto";
+import {
+  basename as basename5,
+  dirname as dirname8,
+  extname,
+  isAbsolute,
+  join as join32,
+  relative as relative6,
+  resolve as resolve14,
+  sep as sep2
+} from "node:path";
+var SUPPORTED_FORMATS = /* @__PURE__ */ new Set(["native", "openspec", "spec-kit"]);
+var MARKDOWN_EXTENSIONS = /* @__PURE__ */ new Set([".md", ".markdown"]);
+var IGNORED_DIRECTORIES = /* @__PURE__ */ new Set([".git", ".apex-v2", "node_modules"]);
+var DESCRIPTION_HEADINGS = /* @__PURE__ */ new Set([
+  "description",
+  "overview",
+  "summary",
+  "problem",
+  "proposal",
+  "specification",
+  "\u63CF\u8FF0",
+  "\u6982\u8FF0",
+  "\u6458\u8981",
+  "\u80CC\u666F",
+  "\u65B9\u6848"
+]);
+var COMMAND_HEADINGS = /* @__PURE__ */ new Set([
+  "acceptance",
+  "acceptance commands",
+  "verification",
+  "verification commands",
+  "validation",
+  "validation commands",
+  "test commands",
+  "\u9A8C\u6536",
+  "\u9A8C\u6536\u547D\u4EE4",
+  "\u9A8C\u8BC1",
+  "\u9A8C\u8BC1\u547D\u4EE4",
+  "\u6D4B\u8BD5\u547D\u4EE4"
+]);
+var EVIDENCE_HEADINGS = /* @__PURE__ */ new Set([
+  "evidence",
+  "evidence refs",
+  "evidence references",
+  "references",
+  "artifacts",
+  "supporting files",
+  "\u8BC1\u636E",
+  "\u8BC1\u636E\u5F15\u7528",
+  "\u53C2\u8003",
+  "\u4EA7\u7269"
+]);
+var AFFECTED_AREA_HEADINGS = /* @__PURE__ */ new Set([
+  "affected area",
+  "affected areas",
+  "affected component",
+  "affected components",
+  "scope",
+  "\u5F71\u54CD\u8303\u56F4",
+  "\u5F71\u54CD\u533A\u57DF",
+  "\u5F71\u54CD\u7EC4\u4EF6"
+]);
+function normalizeSpecSource(projectDir, input = {}) {
+  const projectRoot2 = resolveExistingProjectRoot(projectDir);
+  const requestedPath = String(input.path || "").trim();
+  if (!requestedPath) throw new Error("Spec path \u4E0D\u80FD\u4E3A\u7A7A");
+  const requestedFormat = normalizeFormat(input.format || "auto");
+  const sourcePath = resolveSourcePath(projectRoot2, requestedPath);
+  const sourceStat = statSync4(sourcePath);
+  const kind = sourceStat.isDirectory() ? "directory" : sourceStat.isFile() ? "file" : null;
+  if (!kind) throw new Error(`Spec source \u4E0D\u662F\u666E\u901A\u6587\u4EF6\u6216\u76EE\u5F55\uFF1A${requestedPath}`);
+  const files = kind === "file" ? collectSingleMarkdownFile(projectRoot2, sourcePath) : collectMarkdownDirectory(projectRoot2, sourcePath);
+  const format = requestedFormat === "auto" ? detectFormat(projectRoot2, sourcePath, files) : requestedFormat;
+  assertFormatShape(format, projectRoot2, sourcePath, files);
+  const documents = files.map((path) => parseDocument(projectRoot2, path));
+  const primary = selectPrimaryDocument(format, documents);
+  const sourceFiles = files.map((path) => projectRelative(projectRoot2, path)).sort();
+  const acceptanceCommands = unique2(documents.flatMap(extractAcceptanceCommands));
+  const explicitEvidence = documents.flatMap((document) => extractEvidenceRefs(
+    projectRoot2,
+    document
+  ));
+  const affectedAreas = unique2(documents.flatMap(extractAffectedAreas));
+  return {
+    source: `spec:${format}`,
+    type: "feature",
+    title: extractTitle(primary),
+    description: extractDescription(primary),
+    priority: "P2",
+    risk: "medium",
+    affected_area: affectedAreas.length > 0 ? affectedAreas.join(", ") : "unknown",
+    acceptance_commands: acceptanceCommands,
+    evidence_refs: unique2([...sourceFiles, ...explicitEvidence]),
+    source_spec: {
+      schema_version: "v0",
+      format,
+      path: projectRelative(projectRoot2, sourcePath) || ".",
+      kind,
+      files: sourceFiles,
+      checksum: checksumFiles(projectRoot2, files)
+    }
+  };
+}
+function resolveExistingProjectRoot(projectDir) {
+  const path = resolve14(String(projectDir || "."));
+  if (!existsSync23(path)) throw new Error(`\u9879\u76EE\u6839\u76EE\u5F55\u4E0D\u5B58\u5728\uFF1A${path}`);
+  const real = realpathSync3(path);
+  if (!statSync4(real).isDirectory()) throw new Error(`\u9879\u76EE\u6839\u76EE\u5F55\u4E0D\u662F\u76EE\u5F55\uFF1A${path}`);
+  return real;
+}
+function normalizeFormat(value) {
+  const normalized = String(value).trim().toLowerCase().replaceAll("_", "-");
+  if (normalized === "auto") return normalized;
+  if (normalized === "speckit" || normalized === "spec kit") return "spec-kit";
+  if (!SUPPORTED_FORMATS.has(normalized)) {
+    throw new Error(`\u4E0D\u652F\u6301\u7684 Spec \u683C\u5F0F\uFF1A${value}`);
+  }
+  return normalized;
+}
+function resolveSourcePath(projectRoot2, requestedPath) {
+  const lexicalPath = isAbsolute(requestedPath) ? resolve14(requestedPath) : resolve14(projectRoot2, requestedPath);
+  assertInsideProject(projectRoot2, lexicalPath);
+  if (!existsSync23(lexicalPath)) throw new Error(`Spec source \u4E0D\u5B58\u5728\uFF1A${requestedPath}`);
+  const realPath = realpathSync3(lexicalPath);
+  assertInsideProject(projectRoot2, realPath);
+  return realPath;
+}
+function collectSingleMarkdownFile(projectRoot2, path) {
+  assertMarkdownFile(path);
+  assertInsideProject(projectRoot2, realpathSync3(path));
+  return [realpathSync3(path)];
+}
+function collectMarkdownDirectory(projectRoot2, sourcePath) {
+  const files = [];
+  const visited = /* @__PURE__ */ new Set();
+  walk(sourcePath);
+  if (files.length === 0) {
+    throw new Error(`Spec \u76EE\u5F55\u6CA1\u6709 Markdown \u6587\u4EF6\uFF1A${projectRelative(projectRoot2, sourcePath)}`);
+  }
+  return [...new Set(files)].sort((left, right) => projectRelative(projectRoot2, left).localeCompare(projectRelative(projectRoot2, right)));
+  function walk(directory) {
+    const realDirectory = realpathSync3(directory);
+    assertInsideProject(projectRoot2, realDirectory);
+    if (visited.has(realDirectory)) return;
+    visited.add(realDirectory);
+    for (const entry of readdirSync14(realDirectory, { withFileTypes: true })) {
+      if (entry.isDirectory() && IGNORED_DIRECTORIES.has(entry.name)) continue;
+      const entryPath = join32(realDirectory, entry.name);
+      const realEntry = realpathSync3(entryPath);
+      assertInsideProject(projectRoot2, realEntry);
+      const stats = statSync4(realEntry);
+      if (stats.isDirectory()) {
+        if (!IGNORED_DIRECTORIES.has(entry.name)) walk(realEntry);
+      } else if (stats.isFile() && MARKDOWN_EXTENSIONS.has(extname(entry.name).toLowerCase())) {
+        files.push(realEntry);
+      }
+    }
+  }
+}
+function assertMarkdownFile(path) {
+  if (!MARKDOWN_EXTENSIONS.has(extname(path).toLowerCase())) {
+    throw new Error(`Spec Adapter \u53EA\u652F\u6301 Markdown \u6587\u4EF6\uFF1A${path}`);
+  }
+}
+function assertInsideProject(projectRoot2, target) {
+  const pathFromRoot = relative6(projectRoot2, target);
+  if (pathFromRoot === ".." || pathFromRoot.startsWith(`..${sep2}`) || isAbsolute(pathFromRoot)) {
+    throw new Error(`Spec source \u4F4D\u4E8E\u9879\u76EE\u6839\u76EE\u5F55\u4E4B\u5916\uFF1A${target}`);
+  }
+}
+function detectFormat(projectRoot2, sourcePath, files) {
+  const sourceRelative = projectRelative(projectRoot2, sourcePath).toLowerCase();
+  const relativeFiles = files.map((path) => projectRelative(projectRoot2, path).toLowerCase());
+  const basenames = new Set(relativeFiles.map((path) => basename5(path)));
+  if (sourceRelative.split("/").some((part) => part === "openspec" || part === ".openspec") || relativeFiles.some((path) => path.split("/").some((part) => part === "openspec" || part === ".openspec")) || basenames.has("proposal.md")) {
+    return "openspec";
+  }
+  if (basenames.has("spec.md") && (basenames.has("plan.md") || basenames.has("tasks.md"))) {
+    return "spec-kit";
+  }
+  return "native";
+}
+function assertFormatShape(format, projectRoot2, sourcePath, files) {
+  if (format === "native") return;
+  const sourceRelative = projectRelative(projectRoot2, sourcePath).toLowerCase();
+  const relativeFiles = files.map((path) => projectRelative(projectRoot2, path).toLowerCase());
+  const basenames = new Set(relativeFiles.map((path) => basename5(path)));
+  if (format === "openspec") {
+    const recognized = sourceRelative.split("/").some((part) => part === "openspec" || part === ".openspec") || ["proposal.md", "design.md", "tasks.md", "spec.md"].some((name) => basenames.has(name));
+    if (!recognized) {
+      throw new Error("OpenSpec source \u7F3A\u5C11 proposal.md\u3001design.md\u3001tasks.md \u6216 spec.md");
+    }
+  }
+  if (format === "spec-kit") {
+    const recognized = ["spec.md", "plan.md", "tasks.md", "research.md", "quickstart.md"].some((name) => basenames.has(name));
+    if (!recognized) {
+      throw new Error("Spec Kit source \u7F3A\u5C11 spec.md\u3001plan.md\u3001tasks.md \u7B49\u7EA6\u5B9A\u6587\u4EF6");
+    }
+  }
+}
+function parseDocument(projectRoot2, path) {
+  const buffer = readFileSync16(path);
+  if (buffer.includes(0)) throw new Error(`Markdown \u6587\u4EF6\u5305\u542B\u4E8C\u8FDB\u5236\u5185\u5BB9\uFF1A${path}`);
+  const text = buffer.toString("utf8").replace(/^\uFEFF/, "");
+  const { attributes, body } = parseFrontmatter(text);
+  return {
+    path,
+    relativePath: projectRelative(projectRoot2, path),
+    attributes,
+    body,
+    sections: parseSections(body)
+  };
+}
+function parseFrontmatter(text) {
+  const normalized = text.replaceAll("\r\n", "\n");
+  if (!normalized.startsWith("---\n")) return { attributes: {}, body: normalized };
+  const end = normalized.indexOf("\n---\n", 4);
+  if (end === -1) return { attributes: {}, body: normalized };
+  const attributes = {};
+  const lines2 = normalized.slice(4, end).split("\n");
+  let currentKey = null;
+  let blockStyle = null;
+  let blockLines = [];
+  const flushBlock = () => {
+    if (!currentKey || !blockStyle) return;
+    attributes[currentKey] = blockStyle === ">" ? blockLines.map((line) => line.trim()).join(" ").trim() : blockLines.join("\n").trim();
+    blockStyle = null;
+    blockLines = [];
+  };
+  for (const line of lines2) {
+    const property = line.match(/^([A-Za-z][A-Za-z0-9_-]*):(?:\s*(.*))?$/);
+    if (property) {
+      flushBlock();
+      currentKey = property[1].toLowerCase().replaceAll("-", "_");
+      const rawValue = (property[2] || "").trim();
+      if (rawValue === "|" || rawValue === ">") {
+        blockStyle = rawValue;
+        blockLines = [];
+      } else if (!rawValue) {
+        attributes[currentKey] = [];
+      } else {
+        attributes[currentKey] = parseFrontmatterValue(rawValue);
+      }
+      continue;
+    }
+    if (blockStyle && /^\s+/.test(line)) {
+      blockLines.push(line.replace(/^\s{1,4}/, ""));
+      continue;
+    }
+    const listItem = line.match(/^\s*-\s+(.+)$/);
+    if (currentKey && listItem) {
+      if (!Array.isArray(attributes[currentKey])) attributes[currentKey] = [];
+      attributes[currentKey].push(unquote(listItem[1].trim()));
+    }
+  }
+  flushBlock();
+  return {
+    attributes,
+    body: normalized.slice(end + 5)
+  };
+}
+function parseFrontmatterValue(rawValue) {
+  if (rawValue.startsWith("[") && rawValue.endsWith("]")) {
+    try {
+      const parsed = JSON.parse(rawValue);
+      if (Array.isArray(parsed)) return parsed.map((value) => String(value));
+    } catch {
+      return rawValue.slice(1, -1).split(",").map((value) => unquote(value.trim()));
+    }
+  }
+  return unquote(rawValue);
+}
+function parseSections(body) {
+  const lines2 = body.replaceAll("\r\n", "\n").split("\n");
+  const sections = [];
+  let current = { heading: "", level: 0, lines: [] };
+  for (const line of lines2) {
+    const heading = line.match(/^(#{1,6})\s+(.+?)\s*#*\s*$/);
+    if (heading) {
+      sections.push({
+        heading: normalizeHeading(current.heading),
+        rawHeading: current.heading,
+        level: current.level,
+        body: current.lines.join("\n").trim()
+      });
+      current = {
+        heading: cleanInline(heading[2]),
+        level: heading[1].length,
+        lines: []
+      };
+    } else {
+      current.lines.push(line);
+    }
+  }
+  sections.push({
+    heading: normalizeHeading(current.heading),
+    rawHeading: current.heading,
+    level: current.level,
+    body: current.lines.join("\n").trim()
+  });
+  return sections;
+}
+function selectPrimaryDocument(format, documents) {
+  const priorities = format === "openspec" ? ["proposal.md", "spec.md", "design.md", "tasks.md"] : format === "spec-kit" ? ["spec.md", "plan.md", "tasks.md", "research.md", "quickstart.md"] : ["readme.md", "spec.md"];
+  return [...documents].sort((left, right) => {
+    const leftRank = documentRank(left, priorities);
+    const rightRank = documentRank(right, priorities);
+    return leftRank - rightRank || left.relativePath.localeCompare(right.relativePath);
+  })[0];
+}
+function documentRank(document, priorities) {
+  const index = priorities.indexOf(basename5(document.path).toLowerCase());
+  return index === -1 ? priorities.length : index;
+}
+function extractTitle(document) {
+  const explicit = firstString(document.attributes.title);
+  if (explicit) return cleanInline(explicit);
+  const heading = document.sections.find((section) => section.level === 1)?.rawHeading;
+  if (heading) return cleanInline(heading);
+  const stem = basename5(document.path, extname(document.path)).replace(/^\d+[-_]?/, "").replaceAll(/[-_]+/g, " ").trim();
+  return stem ? stem[0].toUpperCase() + stem.slice(1) : "Untitled spec";
+}
+function extractDescription(document) {
+  const explicit = firstString(document.attributes.description);
+  if (explicit) return cleanMarkdownText(explicit);
+  const section = document.sections.find((entry) => DESCRIPTION_HEADINGS.has(entry.heading) && cleanMarkdownText(entry.body));
+  if (section) return cleanMarkdownText(section.body);
+  const preamble = document.sections.find((entry) => entry.level === 0);
+  const fallback = firstParagraph(preamble?.body || "");
+  if (fallback) return cleanMarkdownText(fallback);
+  const firstContent = document.sections.find((entry) => entry.level > 0 && !COMMAND_HEADINGS.has(entry.heading) && cleanMarkdownText(entry.body));
+  return firstContent ? cleanMarkdownText(firstParagraph(firstContent.body)) : "";
+}
+function extractAcceptanceCommands(document) {
+  const frontmatter = [
+    ...asList(document.attributes.acceptance_commands),
+    ...asList(document.attributes.verification_commands),
+    ...asList(document.attributes.test_commands)
+  ];
+  const sections = document.sections.filter((section) => COMMAND_HEADINGS.has(section.heading)).flatMap((section) => commandsFromSection(section.body));
+  return unique2([...frontmatter, ...sections].map(cleanCommand).filter(Boolean));
+}
+function commandsFromSection(body) {
+  const commands = [];
+  const fenced = /```(?:bash|sh|shell|zsh|console)?\s*\n([\s\S]*?)```/gi;
+  let match;
+  while ((match = fenced.exec(body)) !== null) {
+    commands.push(...match[1].split("\n"));
+  }
+  const withoutFences = body.replace(fenced, "");
+  for (const line of withoutFences.split("\n")) {
+    const listItem = line.match(/^\s*(?:[-*+]|\d+[.)])\s+(.+)$/);
+    const prompt = line.match(/^\s*\$\s+(.+)$/);
+    if (!listItem && !prompt) continue;
+    const value = listItem?.[1] || prompt?.[1] || "";
+    const inlineCode = [...value.matchAll(/`([^`]+)`/g)].map((entry) => entry[1]);
+    commands.push(...inlineCode.length > 0 ? inlineCode : [value]);
+  }
+  return commands;
+}
+function cleanCommand(value) {
+  const command = cleanInline(String(value)).replace(/^\$\s+/, "").trim();
+  if (!command || command.startsWith("#")) return "";
+  return command;
+}
+function extractEvidenceRefs(projectRoot2, document) {
+  const refs = [
+    ...asList(document.attributes.evidence_refs),
+    ...asList(document.attributes.evidence)
+  ];
+  for (const section of document.sections.filter((entry) => EVIDENCE_HEADINGS.has(entry.heading))) {
+    refs.push(...valuesFromSection(section.body, true));
+  }
+  return unique2(refs.map((ref) => normalizeEvidenceRef(
+    projectRoot2,
+    dirname8(document.path),
+    ref
+  )).filter(Boolean));
+}
+function normalizeEvidenceRef(projectRoot2, documentDir, value) {
+  let ref = cleanInline(String(value)).trim();
+  const markdownLink = ref.match(/^\[[^\]]+\]\(([^)]+)\)$/);
+  if (markdownLink) ref = markdownLink[1].trim();
+  if (!ref || ref.startsWith("#")) return "";
+  if (/^[a-z][a-z0-9+.-]*:/i.test(ref)) return ref;
+  const candidate = isAbsolute(ref) ? resolve14(ref) : ref.startsWith(".") ? resolve14(documentDir, ref) : resolve14(projectRoot2, ref);
+  assertInsideProject(projectRoot2, candidate);
+  return projectRelative(projectRoot2, candidate);
+}
+function extractAffectedAreas(document) {
+  const values = [
+    ...asList(document.attributes.affected_area),
+    ...asList(document.attributes.affected_areas),
+    ...asList(document.attributes.affected_components)
+  ];
+  for (const section of document.sections.filter((entry) => AFFECTED_AREA_HEADINGS.has(entry.heading))) {
+    values.push(...valuesFromSection(section.body));
+  }
+  return unique2(values.flatMap(splitCommaSeparated).map(cleanInline).filter(Boolean));
+}
+function valuesFromSection(body, preserveMarkdownLinks = false) {
+  const values = [];
+  for (const line of body.split("\n")) {
+    const item = line.match(/^\s*(?:[-*+]|\d+[.)])\s+(.+)$/);
+    if (!item) continue;
+    let value = item[1].trim();
+    if (!preserveMarkdownLinks) value = value.replace(/^\[([^\]]+)\]\([^)]+\)$/, "$1");
+    values.push(value);
+  }
+  return values;
+}
+function checksumFiles(projectRoot2, files) {
+  const hash = createHash8("sha256");
+  for (const path of [...files].sort((left, right) => projectRelative(projectRoot2, left).localeCompare(projectRelative(projectRoot2, right)))) {
+    const contents = readFileSync16(path);
+    hash.update(projectRelative(projectRoot2, path));
+    hash.update("\0");
+    hash.update(String(contents.byteLength));
+    hash.update("\0");
+    hash.update(contents);
+    hash.update("\0");
+  }
+  return `sha256:${hash.digest("hex")}`;
+}
+function asList(value) {
+  if (value == null) return [];
+  if (Array.isArray(value)) return value.map((entry) => String(entry).trim()).filter(Boolean);
+  return splitCommaSeparated(String(value));
+}
+function splitCommaSeparated(value) {
+  return String(value).split(",").map((entry) => entry.trim()).filter(Boolean);
+}
+function firstString(value) {
+  return asList(value)[0] || "";
+}
+function firstParagraph(value) {
+  return String(value).split(/\n\s*\n/).find((part) => cleanMarkdownText(part)) || "";
+}
+function normalizeHeading(value) {
+  return cleanInline(value).toLowerCase().replace(/[:：]+$/, "").trim();
+}
+function cleanInline(value) {
+  let text = unquote(String(value)).trim();
+  for (const marker of ["`", "**", "__", "~~"]) {
+    if (text.length > marker.length * 2 && text.startsWith(marker) && text.endsWith(marker)) {
+      text = text.slice(marker.length, -marker.length).trim();
+      break;
+    }
+  }
+  return text;
+}
+function cleanMarkdownText(value) {
+  return String(value).replace(/```[\s\S]*?```/g, " ").replace(/^#{1,6}\s+/gm, "").replace(/^\s*(?:[-*+]|\d+[.)])\s+/gm, "").replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").replace(/`([^`]+)`/g, "$1").replace(/\*\*([^*]+)\*\*/g, "$1").replace(/__([^_]+)__/g, "$1").replace(/~~([^~]+)~~/g, "$1").replace(/\*([^*]+)\*/g, "$1").replace(/\s+/g, " ").trim();
+}
+function unquote(value) {
+  const text = String(value).trim();
+  if (text.length >= 2 && (text.startsWith('"') && text.endsWith('"') || text.startsWith("'") && text.endsWith("'"))) {
+    return text.slice(1, -1);
+  }
+  return text;
+}
+function unique2(values) {
+  return [...new Set(values)];
+}
+function projectRelative(projectRoot2, path) {
+  return relative6(projectRoot2, path).split(sep2).join("/");
+}
+
 // src/commands/intake-roadmap.mjs
 function handleIntakeCommand(subcommand, args) {
   if (subcommand === "add") {
@@ -14194,7 +16244,33 @@ function handleIntakeCommand(subcommand, args) {
     triageIntake(args);
     return;
   }
+  if (subcommand === "import-spec") {
+    importSpec(args);
+    return;
+  }
   throw new Error(`\u672A\u77E5 intake \u5B50\u547D\u4EE4\uFF1A${subcommand || "(\u7A7A)"}`);
+}
+function importSpec(args) {
+  const projectDir = projectRoot(args);
+  const root = requireStore(projectDir);
+  const normalized = normalizeSpecSource(projectDir, {
+    format: args.format || "auto",
+    path: required(args, "path")
+  });
+  const item = addIntakeItem(root, {
+    source: normalized.source,
+    type: args.type || normalized.type,
+    title: args.title || normalized.title,
+    description: normalized.description,
+    priority: args.priority || normalized.priority,
+    risk: args.risk || normalized.risk,
+    area: normalized.affected_area,
+    "method-pack": args["method-pack"],
+    "acceptance-json": JSON.stringify(normalized.acceptance_commands),
+    evidence: normalized.evidence_refs.join(","),
+    source_spec: normalized.source_spec
+  });
+  console.log(JSON.stringify(item, null, 2));
 }
 function addIntake(args) {
   required(args, "title");
@@ -14227,9 +16303,78 @@ function promoteRoadmap(args) {
   console.log(JSON.stringify(node, null, 2));
 }
 
+// src/commands/capability.mjs
+function handleCapabilityCommand(subcommand, args) {
+  const registry2 = capabilityRegistry();
+  if (subcommand === "list") {
+    console.log(JSON.stringify(
+      registry2.capabilities.map(publicDefinition),
+      null,
+      2
+    ));
+    return;
+  }
+  if (subcommand === "show") {
+    const id = required(args, "id");
+    const definition = registry2.capabilities.find(
+      (item) => item.capability_id === id
+    );
+    if (!definition) throw new Error(`\u627E\u4E0D\u5230 Capability\uFF1A${id}`);
+    console.log(JSON.stringify({
+      ...publicDefinition(definition),
+      protocol: readCapabilityProtocol(definition.protocol_ref)
+    }, null, 2));
+    return;
+  }
+  if (subcommand === "route") {
+    const intake = {
+      type: normalizeEnum(
+        args.type || "feature",
+        [
+          "feature",
+          "bug",
+          "test_failure",
+          "review_feedback",
+          "tech_debt",
+          "risk",
+          "idea",
+          "other"
+        ],
+        "type"
+      ),
+      risk: normalizeEnum(
+        args.risk || "medium",
+        ["low", "medium", "high", "critical"],
+        "risk"
+      ),
+      title: String(args.title || ""),
+      description: String(args.description || ""),
+      affected_area: String(args.area || "unknown")
+    };
+    console.log(JSON.stringify(routeCapabilities(registry2, intake), null, 2));
+    return;
+  }
+  if (subcommand === "verify") {
+    console.log(JSON.stringify({
+      status: "PASS",
+      registry_version: registry2.registry_version,
+      enforcement_mode: registry2.enforcement_mode,
+      public_skill_id: registry2.public_skill_id,
+      capability_count: registry2.capabilities.length,
+      binding_count: registry2.bindings.length
+    }, null, 2));
+    return;
+  }
+  throw new Error(`\u672A\u77E5 capability \u5B50\u547D\u4EE4\uFF1A${subcommand || "(\u7A7A)"}`);
+}
+function publicDefinition(definition) {
+  const { protocol_path: _protocolPath, ...publicValue } = definition;
+  return publicValue;
+}
+
 // src/commands/host.mjs
-import { readFileSync as readFileSync16 } from "node:fs";
-import { join as join32, resolve as resolve14 } from "node:path";
+import { readFileSync as readFileSync18 } from "node:fs";
+import { join as join34, resolve as resolve16 } from "node:path";
 
 // src/core/cognitive-evidence.mjs
 var GENERIC_CLAIMS = /* @__PURE__ */ new Set([
@@ -14312,18 +16457,18 @@ function normalize(value) {
 // src/commands/integration.mjs
 import {
   cpSync as cpSync2,
-  existsSync as existsSync22,
+  existsSync as existsSync24,
   mkdtempSync as mkdtempSync3,
-  realpathSync as realpathSync3,
-  readFileSync as readFileSync15,
-  readdirSync as readdirSync14,
+  realpathSync as realpathSync4,
+  readFileSync as readFileSync17,
+  readdirSync as readdirSync15,
   rmSync as rmSync7,
   symlinkSync as symlinkSync2,
   writeFileSync as writeFileSync12
 } from "node:fs";
-import { createHash as createHash7 } from "node:crypto";
+import { createHash as createHash9 } from "node:crypto";
 import { tmpdir as tmpdir3 } from "node:os";
-import { basename as basename4, join as join31, relative as relative6, resolve as resolve13, sep as sep2 } from "node:path";
+import { basename as basename6, join as join33, relative as relative7, resolve as resolve15, sep as sep3 } from "node:path";
 import { spawnSync as spawnSync10 } from "node:child_process";
 function handleMergeCommand(subcommand, args) {
   if (subcommand === "enqueue") {
@@ -14353,7 +16498,7 @@ function enqueueMerge(args) {
   console.log(JSON.stringify(queue, null, 2));
 }
 function enqueuePatchInternal(root, run, patch) {
-  return withProjectTransaction(resolve13(root, ".."), {
+  return withProjectTransaction(resolve15(root, ".."), {
     kind: "merge-enqueue",
     idempotencyKey: `merge-enqueue:${run.run_id}:${patch.patch_id}`
   }, () => enqueuePatchTransaction(root, run, patch)).result;
@@ -14393,7 +16538,7 @@ function resolveMerge(args) {
   const run = loadRun(root, required(args, "run-id"));
   const keepPatchId = required(args, "keep-patch-id");
   const reason = String(args.reason || "coordinator selected one patch to resolve conflict");
-  const result = withProjectTransaction(resolve13(root, ".."), {
+  const result = withProjectTransaction(resolve15(root, ".."), {
     kind: "merge-resolve",
     idempotencyKey: `merge-resolve:${run.run_id}:${keepPatchId}:${stableTransitionHash(reason)}`
   }, () => resolveMergeTransaction(root, run, keepPatchId, reason)).result;
@@ -14421,7 +16566,7 @@ function resolveMergeTransaction(root, run, keepPatchId, reason) {
     const worker = findWorker(root, item.worker_id);
     worker.status = "dropped";
     worker.updated_at = now();
-    writeJson(join31(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
+    writeJson(join33(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
   }
   const resolution = {
     schema_version: SCHEMA_VERSION,
@@ -14432,8 +16577,8 @@ function resolveMergeTransaction(root, run, keepPatchId, reason) {
     dropped_patch_ids: droppedPatchIds,
     reason
   };
-  ensureDir(join31(root, "runs", run.run_id, "resolutions"));
-  writeJson(join31(root, "runs", run.run_id, "resolutions", `${resolution.resolution_id}.json`), resolution);
+  ensureDir(join33(root, "runs", run.run_id, "resolutions"));
+  writeJson(join33(root, "runs", run.run_id, "resolutions", `${resolution.resolution_id}.json`), resolution);
   queue.resolutions = [...queue.resolutions || [], {
     resolution_id: resolution.resolution_id,
     kept_patch_id: keepPatchId,
@@ -14482,10 +16627,10 @@ function applyMergeInternal(root, run) {
   recomputeMergeConflicts(root, queue);
   const currentCandidate = persistCandidateSet(
     root,
-    buildCandidateSet(root, run, queue, resolve13(root, ".."))
+    buildCandidateSet(root, run, queue, resolve15(root, ".."))
   );
-  const verification = readJson(join31(root, "runs", run.run_id, "verification-report.json"), null);
-  const review = readJson(join31(root, "runs", run.run_id, "review-report.json"), null);
+  const verification = readJson(join33(root, "runs", run.run_id, "verification-report.json"), null);
+  const review = readJson(join33(root, "runs", run.run_id, "review-report.json"), null);
   if (!verification || verification.status !== "PASS" || verification.candidate_digest !== currentCandidate.candidate.candidate_digest) {
     throw new Error("merge apply \u62D2\u7EDD\u672A\u7ED1\u5B9A\u5F53\u524D candidate \u7684 verification PASS");
   }
@@ -14561,7 +16706,7 @@ function applyMergeInternal(root, run) {
   }
   const mergeItems = queue.items.filter((item) => item.status !== "dropped");
   const changedFiles = Array.from(new Set(mergeItems.flatMap((item) => item.changed_files))).sort();
-  return withProjectTransaction(resolve13(root, ".."), {
+  return withProjectTransaction(resolve15(root, ".."), {
     kind: "merge-apply",
     idempotencyKey: `merge-apply:${run.run_id}:${currentCandidate.candidate.candidate_digest}`,
     extraPaths: changedFiles
@@ -14580,14 +16725,14 @@ function applyMergeTransaction(root, run, queue, candidateDigest) {
     item.status = "merged";
     mergedPatches.push(item.patch_id);
     const patchInfo = findPatchWithPath(root, run.run_id, item.patch_id);
-    appliedFiles.push(...applyPatchOperations(resolve13(root, ".."), patchInfo.patch));
+    appliedFiles.push(...applyPatchOperations(resolve15(root, ".."), patchInfo.patch));
     patchInfo.patch.status = "merged";
     patchInfo.patch.updated_at = now();
     updatePatchBundle(root, patchInfo.patch);
     const worker = findWorker(root, item.worker_id);
     worker.status = "merged";
     worker.updated_at = now();
-    writeJson(join31(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
+    writeJson(join33(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
   }
   writeMergeQueue(root, queue);
   const report = writeIntegrationReport(
@@ -14633,7 +16778,7 @@ function runVerification(args) {
 }
 function runVerificationInternal(root, run, projectDir) {
   requirePassedNode(run, "execute");
-  if (existsSync22(join31(root, "runs", run.run_id, "integration-report.json"))) {
+  if (existsSync24(join33(root, "runs", run.run_id, "integration-report.json"))) {
     throw new Error("integration \u540E verification \u5DF2\u51BB\u7ED3\uFF0C\u4E0D\u80FD\u8986\u76D6 candidate chain");
   }
   const timestamp = now();
@@ -14701,7 +16846,7 @@ function runVerificationInternal(root, run, projectDir) {
 }
 function commitVerification(root, run, report, candidate, timestamp) {
   persistCandidateSet(root, candidate);
-  writeJson(join31(root, "runs", run.run_id, "verification-report.json"), report);
+  writeJson(join33(root, "runs", run.run_id, "verification-report.json"), report);
   syncVerificationRisk(root, run.run_id, report);
   const artifact = createArtifact(root, run, "verify", {
     type: "test",
@@ -14754,13 +16899,13 @@ function prepareVerificationWorkspace(root, run, projectDir) {
       }
     };
   }
-  const tempRoot = mkdtempSync3(join31(
+  const tempRoot = mkdtempSync3(join33(
     verificationTempBase(projectDir),
     `apex-v2-verify-${run.run_id}-`
   ));
-  const workspaceDir = join31(tempRoot, "project");
-  const verificationHome = join31(tempRoot, "home");
-  const verificationTmp = join31(tempRoot, "tmp");
+  const workspaceDir = join33(tempRoot, "project");
+  const verificationHome = join33(tempRoot, "home");
+  const verificationTmp = join33(tempRoot, "tmp");
   ensureDir(verificationHome);
   ensureDir(verificationTmp);
   try {
@@ -14768,7 +16913,7 @@ function prepareVerificationWorkspace(root, run, projectDir) {
       recursive: true,
       filter(source) {
         if (source === projectDir) return true;
-        const name = basename4(source);
+        const name = basename6(source);
         return ![
           ".git",
           ".apex-v2",
@@ -14810,8 +16955,8 @@ function prepareVerificationWorkspace(root, run, projectDir) {
     environment: {
       HOME: verificationHome,
       TMPDIR: verificationTmp,
-      XDG_CACHE_HOME: join31(verificationHome, ".cache"),
-      XDG_CONFIG_HOME: join31(verificationHome, ".config")
+      XDG_CACHE_HOME: join33(verificationHome, ".cache"),
+      XDG_CONFIG_HOME: join33(verificationHome, ".config")
     },
     metadata,
     materializationCheck: verificationCheck(
@@ -14828,7 +16973,7 @@ function prepareVerificationWorkspace(root, run, projectDir) {
   };
 }
 function verificationTempBase(projectDir) {
-  const projectReal = realpathSync3(projectDir);
+  const projectReal = realpathSync4(projectDir);
   const candidates = [
     process.env.APEX_V2_VERIFY_TMPDIR,
     tmpdir3(),
@@ -14836,9 +16981,9 @@ function verificationTempBase(projectDir) {
     "/tmp"
   ].filter(Boolean);
   for (const candidate of candidates) {
-    if (!existsSync22(candidate)) continue;
-    const candidateReal = realpathSync3(candidate);
-    if (candidateReal !== projectReal && !candidateReal.startsWith(`${projectReal}${sep2}`)) {
+    if (!existsSync24(candidate)) continue;
+    const candidateReal = realpathSync4(candidate);
+    if (candidateReal !== projectReal && !candidateReal.startsWith(`${projectReal}${sep3}`)) {
       return candidateReal;
     }
   }
@@ -14856,7 +17001,7 @@ function initializeVerificationRepository(workspaceDir) {
     }
   }
   writeFileSync12(
-    join31(workspaceDir, ".git", "info", "exclude"),
+    join33(workspaceDir, ".git", "info", "exclude"),
     "node_modules\nnode_modules/\n**/node_modules\n**/node_modules/\n.apex-v2/\n"
   );
   for (const args of [
@@ -14879,11 +17024,11 @@ function initializeVerificationRepository(workspaceDir) {
 }
 function linkVerificationDependencies(projectDir, workspaceDir) {
   const visit = (directory) => {
-    for (const entry of readdirSync14(directory, { withFileTypes: true })) {
+    for (const entry of readdirSync15(directory, { withFileTypes: true })) {
       if ([".git", ".apex-v2"].includes(entry.name)) continue;
-      const source = join31(directory, entry.name);
+      const source = join33(directory, entry.name);
       if (entry.name === "node_modules") {
-        const target = join31(workspaceDir, relative6(projectDir, source));
+        const target = join33(workspaceDir, relative7(projectDir, source));
         createWritableVerificationDependencyShell(source, target);
       } else if (entry.isDirectory()) {
         visit(source);
@@ -14893,11 +17038,11 @@ function linkVerificationDependencies(projectDir, workspaceDir) {
   visit(projectDir);
 }
 function createWritableVerificationDependencyShell(source, target) {
-  if (existsSync22(target)) return;
+  if (existsSync24(target)) return;
   ensureDir(target);
-  for (const entry of readdirSync14(source, { withFileTypes: true })) {
-    const dependency = join31(source, entry.name);
-    const linked = join31(target, entry.name);
+  for (const entry of readdirSync15(source, { withFileTypes: true })) {
+    const dependency = join33(source, entry.name);
+    const linked = join33(target, entry.name);
     if ([".cache", ".tmp", ".vite", ".vite-temp"].includes(entry.name)) {
       ensureDir(linked);
       continue;
@@ -14972,10 +17117,10 @@ function generateReview(args) {
 function generateReviewInternal(root, run) {
   const queue = readMergeQueue(root, run.run_id);
   recomputeMergeConflicts(root, queue);
-  const candidate = buildCandidateSet(root, run, queue, resolve13(root, ".."));
-  const verification = readJson(join31(root, "runs", run.run_id, "verification-report.json"), null);
+  const candidate = buildCandidateSet(root, run, queue, resolve15(root, ".."));
+  const verification = readJson(join33(root, "runs", run.run_id, "verification-report.json"), null);
   const verifyStatus = getRunNode(run, "verify").status;
-  return withProjectTransaction(resolve13(root, ".."), {
+  return withProjectTransaction(resolve15(root, ".."), {
     kind: "review-generate",
     idempotencyKey: [
       "review-generate",
@@ -14993,9 +17138,9 @@ function generateReviewTransaction(root, run) {
   writeMergeQueue(root, queue);
   const candidate = persistCandidateSet(
     root,
-    buildCandidateSet(root, run, queue, resolve13(root, ".."))
+    buildCandidateSet(root, run, queue, resolve15(root, ".."))
   );
-  const verification = readJson(join31(root, "runs", run.run_id, "verification-report.json"), null);
+  const verification = readJson(join33(root, "runs", run.run_id, "verification-report.json"), null);
   const blocking = [];
   const nonBlocking = [];
   if (getRunNode(run, "verify").status !== "passed") {
@@ -15030,7 +17175,7 @@ function generateReviewTransaction(root, run) {
     blocking_findings: blocking,
     non_blocking_findings: nonBlocking
   };
-  writeJson(join31(root, "runs", run.run_id, "review-report.json"), report);
+  writeJson(join33(root, "runs", run.run_id, "review-report.json"), report);
   syncReviewRisk(root, run.run_id, report);
   const artifact = createArtifact(root, run, "review", {
     type: "review",
@@ -15054,11 +17199,11 @@ function generateReviewTransaction(root, run) {
   return { report, artifact_id: artifact.artifact_id };
 }
 function isNoopIntegrationRun(root, runId) {
-  const workersDir = join31(root, "runs", runId, "workers");
-  if (existsSync22(workersDir)) {
-    for (const workerEntry of readdirSync14(workersDir, { withFileTypes: true })) {
+  const workersDir = join33(root, "runs", runId, "workers");
+  if (existsSync24(workersDir)) {
+    for (const workerEntry of readdirSync15(workersDir, { withFileTypes: true })) {
       if (!workerEntry.isDirectory()) continue;
-      if (existsSync22(join31(workersDir, workerEntry.name, "patch-bundle.json"))) return false;
+      if (existsSync24(join33(workersDir, workerEntry.name, "patch-bundle.json"))) return false;
     }
   }
   const run = loadRun(root, runId);
@@ -15066,12 +17211,12 @@ function isNoopIntegrationRun(root, runId) {
   if (executeNode.status !== "passed" || executeNode.evidence_refs.length === 0) return false;
   const queue = readDecisionQueue(root, runId);
   return queue.items.length > 0 || executeNode.evidence_refs.some((artifactId) => {
-    const artifact = readJson(join31(root, "artifacts", runId, `${artifactId}.json`), null);
+    const artifact = readJson(join33(root, "artifacts", runId, `${artifactId}.json`), null);
     return artifact && ["evidence", "decision"].includes(artifact.type);
   });
 }
 function readMergeQueue(root, runId) {
-  const path = join31(root, "runs", runId, "merge-queue.json");
+  const path = join33(root, "runs", runId, "merge-queue.json");
   return readJson(path, {
     schema_version: SCHEMA_VERSION,
     run_id: runId,
@@ -15083,7 +17228,7 @@ function readMergeQueue(root, runId) {
 }
 function writeMergeQueue(root, queue) {
   queue.updated_at = now();
-  writeJson(join31(root, "runs", queue.run_id, "merge-queue.json"), queue);
+  writeJson(join33(root, "runs", queue.run_id, "merge-queue.json"), queue);
 }
 function recomputeMergeConflicts(root, queue) {
   const owners = /* @__PURE__ */ new Map();
@@ -15153,7 +17298,7 @@ function syncWorkerStatusesFromMergeQueue(root, queue) {
     const worker = findWorker(root, workerId);
     worker.status = workerStatusForMergeItems(items);
     worker.updated_at = queue.updated_at;
-    writeJson(join31(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
+    writeJson(join33(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
   }
 }
 function writeIntegrationReport(root, run, status2, mergedPatches, conflicts, appliedFiles = [], candidateDigest = null) {
@@ -15168,17 +17313,17 @@ function writeIntegrationReport(root, run, status2, mergedPatches, conflicts, ap
     applied_files: appliedFiles,
     conflicts
   };
-  writeJson(join31(root, "runs", run.run_id, "integration-report.json"), report);
+  writeJson(join33(root, "runs", run.run_id, "integration-report.json"), report);
   return report;
 }
 function stableTransitionHash(value) {
-  return createHash7("sha256").update(String(value)).digest("hex");
+  return createHash9("sha256").update(String(value)).digest("hex");
 }
 function readDecisionQueue(root, runId) {
-  return readJson(join31(root, "runs", runId, "decision-queue.json"), { schema_version: SCHEMA_VERSION, run_id: runId, updated_at: now(), items: [] });
+  return readJson(join33(root, "runs", runId, "decision-queue.json"), { schema_version: SCHEMA_VERSION, run_id: runId, updated_at: now(), items: [] });
 }
 function loadPlanGraph(root, runId) {
-  const plan = readJson(join31(root, "runs", runId, "plan-graph.json"), null);
+  const plan = readJson(join33(root, "runs", runId, "plan-graph.json"), null);
   if (!plan) throw new Error(`\u627E\u4E0D\u5230 plan graph\uFF1A${runId}`);
   return plan;
 }
@@ -15206,7 +17351,8 @@ function handleHostCommand(subcommand, args) {
         summary: required(args, "summary"),
         refs: splitList(args.refs),
         claimToken: required(args, "claim-token"),
-        semanticEvidence: parseSemanticEvidence(args)
+        semanticEvidence: parseSemanticEvidence(args),
+        capabilityEvidence: parseCapabilityEvidence(args)
       }
     ), null, 2));
     return;
@@ -15224,7 +17370,7 @@ function handleHostCommand(subcommand, args) {
   throw new Error(`\u672A\u77E5 host \u5B50\u547D\u4EE4\uFF1A${subcommand || "(\u7A7A)"}`);
 }
 function listHostActions(root) {
-  const project = readJson(join32(root, "project.json"));
+  const project = readJson(join34(root, "project.json"));
   const workspacePatchEnabled = interactiveWorkspacePatchEnabled(root);
   return project.active_runs.flatMap(
     (runId) => getWorkers(root, runId).filter(
@@ -15238,6 +17384,10 @@ function listHostActions(root) {
       objective: worker.objective,
       deliverables: worker.deliverables,
       required_evidence: worker.required_evidence,
+      capability_bindings: worker.capability_bindings || [],
+      capability_enforcement: worker.capability_enforcement || "shadow",
+      capability_invocation_refs: worker.capability_invocation_refs || [],
+      capability_protocols: capabilityProtocols2(worker.capability_bindings || []),
       read_scope: worker.read_scope,
       write_scope: worker.write_scope,
       output_contract: worker.output_contract,
@@ -15246,7 +17396,7 @@ function listHostActions(root) {
       fencing_token: worker.fencing_token || 0,
       claim_expired: worker.status === "claimed" && claimExpired(worker),
       workspace_path: readJson(
-        join32(workerDir(root, worker.run_id, worker.worker_id), "action-workspace.json"),
+        join34(workerDir(root, worker.run_id, worker.worker_id), "action-workspace.json"),
         null
       )?.workspace_path || null
     }))
@@ -15255,7 +17405,7 @@ function listHostActions(root) {
 function reviewCandidateDigest(root, worker) {
   if (!worker.plan_node_id.endsWith("review")) return null;
   const run = loadRun(root, worker.run_id);
-  const queue = readJson(join32(root, "runs", worker.run_id, "merge-queue.json"), {
+  const queue = readJson(join34(root, "runs", worker.run_id, "merge-queue.json"), {
     schema_version: SCHEMA_VERSION,
     run_id: worker.run_id,
     updated_at: now(),
@@ -15263,7 +17413,7 @@ function reviewCandidateDigest(root, worker) {
     conflicts: [],
     resolutions: []
   });
-  return buildCandidateSet(root, run, queue, resolve14(root, "..")).candidate_digest;
+  return buildCandidateSet(root, run, queue, resolve16(root, "..")).candidate_digest;
 }
 function claimHostAction(root, workerId, hostId) {
   const worker = findWorker(root, workerId);
@@ -15271,7 +17421,7 @@ function claimHostAction(root, workerId, hostId) {
     return existingHostClaim(root, worker);
   }
   const nextFencingToken = Number(worker.fencing_token || 0) + 1;
-  return withProjectTransaction(resolve14(root, ".."), {
+  return withProjectTransaction(resolve16(root, ".."), {
     kind: "host-claim",
     idempotencyKey: `host-claim:${workerId}:${hostId}:${nextFencingToken}`
   }, () => claimHostActionTransaction(root, workerId, hostId)).result;
@@ -15302,9 +17452,9 @@ function claimHostActionTransaction(root, workerId, hostId) {
       throw new Error(`\u5DF2\u6709 workspace_patch action \u88AB claim\uFF1A${claimedPatch.worker_id}`);
     }
   }
-  const project = readJson(join32(root, "project.json"));
+  const project = readJson(join34(root, "project.json"));
   const timestamp = now();
-  const leaseSeconds = readJson(join32(root, "policies", "execution.json")).interactive_host_claim?.lease_seconds || 1800;
+  const leaseSeconds = readJson(join34(root, "policies", "execution.json")).interactive_host_claim?.lease_seconds || 1800;
   const claimToken = shortId("claim");
   const fencingToken = Number(worker.fencing_token || 0) + 1;
   const leaseExpiresAt = new Date(Date.parse(timestamp) + leaseSeconds * 1e3).toISOString();
@@ -15318,7 +17468,11 @@ function claimHostActionTransaction(root, workerId, hostId) {
       worker_id: worker.worker_id,
       run_id: worker.run_id,
       plan_node_id: worker.plan_node_id,
-      objective: worker.objective
+      objective: worker.objective,
+      capability_bindings: worker.capability_bindings || [],
+      capability_enforcement: worker.capability_enforcement || "shadow",
+      capability_invocation_refs: worker.capability_invocation_refs || [],
+      capability_protocols: capabilityProtocols2(worker.capability_bindings || [])
     },
     idempotency_key: `${hostId}:${worker.worker_id}`,
     claim_token: claimToken,
@@ -15334,7 +17488,7 @@ function claimHostActionTransaction(root, workerId, hostId) {
   }
   const validation = validateContract("host-action.schema.json", action, `${worker.namespace}/host-action.json`);
   if (!validation.valid) {
-    if (workspace) discardActionWorkspace(resolve14(root, ".."), workspace, "failed");
+    if (workspace) discardActionWorkspace(resolve16(root, ".."), workspace, "failed");
     throw new Error(`host action contract \u65E0\u6548\uFF1A${JSON.stringify(validation.errors)}`);
   }
   if (worker.adapter !== "host") {
@@ -15349,8 +17503,8 @@ function claimHostActionTransaction(root, workerId, hostId) {
   worker.claim_expires_at = leaseExpiresAt;
   worker.fencing_token = fencingToken;
   worker.updated_at = timestamp;
-  writeJson(join32(dir, "host-action.json"), action);
-  writeJson(join32(dir, "worker.json"), worker);
+  writeJson(join34(dir, "host-action.json"), action);
+  writeJson(join34(dir, "worker.json"), worker);
   const event = appendEvent(root, "worker.host.claimed", hostId, {
     run_id: worker.run_id,
     worker_id: worker.worker_id,
@@ -15360,14 +17514,25 @@ function claimHostActionTransaction(root, workerId, hostId) {
   updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
   return { action, worker, workspace };
 }
+function capabilityProtocols2(bindings) {
+  assertCapabilityContextBudget(bindings);
+  return bindings.map((binding) => ({
+    capability_id: binding.capability_id,
+    capability_version: binding.capability_version,
+    required_host_capabilities: binding.required_host_capabilities,
+    input_contract: binding.input_contract,
+    output_contract: binding.output_contract,
+    protocol: readCapabilityProtocol(binding.protocol_ref)
+  }));
+}
 function submitHostResult(root, workerId, hostId, input) {
   const worker = findWorker(root, workerId);
   const action = readJson(
-    join32(workerDir(root, worker.run_id, worker.worker_id), "host-action.json"),
+    join34(workerDir(root, worker.run_id, worker.worker_id), "host-action.json"),
     null
   );
   if (!action) throw new Error(`Host action \u7F3A\u5931\uFF1A${worker.worker_id}`);
-  return withProjectTransaction(resolve14(root, ".."), {
+  return withProjectTransaction(resolve16(root, ".."), {
     kind: "host-submit",
     idempotencyKey: `host-submit:${action.action_id}:${input.claimToken}`
   }, () => submitHostResultTransaction(root, workerId, hostId, input)).result;
@@ -15380,19 +17545,30 @@ function submitHostResultTransaction(root, workerId, hostId, input) {
   if (worker.status !== "claimed" || worker.claimed_by !== hostId) {
     throw new Error(`worker \u5FC5\u987B\u7531\u5F53\u524D host claim \u540E\u624D\u80FD submit\uFF1A${worker.worker_id}`);
   }
-  const action = readJson(join32(workerDir(root, worker.run_id, worker.worker_id), "host-action.json"));
+  const action = readJson(join34(workerDir(root, worker.run_id, worker.worker_id), "host-action.json"));
   assertActiveClaim(worker, action, input.claimToken);
   const timestamp = now();
   const dir = workerDir(root, worker.run_id, worker.worker_id);
   let patch = null;
   let queueStatus = null;
   let semanticEvidenceRef = null;
+  const capabilityEvidence = input.capabilityEvidence || [];
+  const capabilityStatus = assertCapabilityEvidence(
+    worker.capability_bindings || [],
+    capabilityEvidence,
+    { requireAll: worker.capability_enforcement === "enforce" }
+  );
+  const capabilityEvidenceRefs = persistCapabilityEvidence2(
+    dir,
+    worker.namespace,
+    capabilityEvidence
+  );
   if (worker.execution_class === "workspace_patch") {
     patch = buildHostPatch(root, worker, input.summary, timestamp);
   } else {
     const semanticEvidence = validateSemanticEvidence(root, worker, input.semanticEvidence);
     semanticEvidenceRef = `${worker.namespace}/cognitive-evidence.json`;
-    writeJson(join32(dir, "cognitive-evidence.json"), semanticEvidence);
+    writeJson(join34(dir, "cognitive-evidence.json"), semanticEvidence);
   }
   const result = {
     schema_version: SCHEMA_VERSION,
@@ -15403,15 +17579,22 @@ function submitHostResultTransaction(root, workerId, hostId, input) {
     artifact_refs: [
       ...input.refs || [],
       ...patch?.changed_files || [],
-      ...input.semanticEvidence?.source_refs || []
+      ...input.semanticEvidence?.source_refs || [],
+      ...capabilityEvidenceRefs
     ],
     semantic_evidence_ref: semanticEvidenceRef,
+    capability_evidence_refs: capabilityEvidenceRefs,
+    capability_evidence_status: {
+      enforcement: worker.capability_enforcement || "shadow",
+      submitted: capabilityStatus.submitted,
+      missing: capabilityStatus.missing
+    },
     error: null,
     created_at: timestamp
   };
   const validation = validateContract("host-result.schema.json", result, `${worker.namespace}/host-result.json`);
   if (!validation.valid) throw new Error(`host result contract \u65E0\u6548\uFF1A${JSON.stringify(validation.errors)}`);
-  writeJson(join32(dir, "host-result.json"), result);
+  writeJson(join34(dir, "host-result.json"), result);
   const run = loadRun(root, worker.run_id);
   let artifact;
   if (patch) {
@@ -15423,13 +17606,14 @@ function submitHostResultTransaction(root, workerId, hostId, input) {
         `${worker.namespace}/host-action.json`,
         `${worker.namespace}/host-result.json`,
         patchBundleRef(worker, patch.patch_id),
+        ...capabilityEvidenceRefs,
         ...patch.changed_files
       ],
       timestamp
     });
     worker.status = "patch_submitted";
     worker.updated_at = timestamp;
-    writeJson(join32(dir, "worker.json"), worker);
+    writeJson(join34(dir, "worker.json"), worker);
     const queue = enqueuePatchInternal(root, run, patch);
     queueStatus = queue.conflicts.length > 0 ? "blocked_conflict" : "queued";
   } else {
@@ -15447,7 +17631,7 @@ function submitHostResultTransaction(root, workerId, hostId, input) {
     });
     worker.status = "evidence_submitted";
     worker.updated_at = timestamp;
-    writeJson(join32(dir, "worker.json"), worker);
+    writeJson(join34(dir, "worker.json"), worker);
   }
   const event = appendEvent(root, "worker.host.submitted", hostId, {
     run_id: worker.run_id,
@@ -15464,14 +17648,21 @@ function submitHostResultTransaction(root, workerId, hostId, input) {
     queue_status: queueStatus
   };
 }
+function persistCapabilityEvidence2(dir, namespace, evidenceItems) {
+  return evidenceItems.map((evidence) => {
+    const name = `capability-evidence-${evidence.capability_id}.json`;
+    writeJson(join34(dir, name), evidence);
+    return `${namespace}/${name}`;
+  });
+}
 function cancelHostAction(root, workerId, hostId, claimToken, reason) {
   const worker = findWorker(root, workerId);
   const action = readJson(
-    join32(workerDir(root, worker.run_id, worker.worker_id), "host-action.json"),
+    join34(workerDir(root, worker.run_id, worker.worker_id), "host-action.json"),
     null
   );
   if (!action) throw new Error(`Host action \u7F3A\u5931\uFF1A${worker.worker_id}`);
-  return withProjectTransaction(resolve14(root, ".."), {
+  return withProjectTransaction(resolve16(root, ".."), {
     kind: "host-cancel",
     idempotencyKey: `host-cancel:${action.action_id}:${claimToken}`
   }, () => cancelHostActionTransaction(
@@ -15488,10 +17679,10 @@ function cancelHostActionTransaction(root, workerId, hostId, claimToken, reason)
     throw new Error(`worker \u5FC5\u987B\u7531\u5F53\u524D host claim \u540E\u624D\u80FD cancel\uFF1A${worker.worker_id}`);
   }
   const dir = workerDir(root, worker.run_id, worker.worker_id);
-  const action = readJson(join32(dir, "host-action.json"));
+  const action = readJson(join34(dir, "host-action.json"));
   assertActiveClaim(worker, action, claimToken);
-  const workspace = readJson(join32(dir, "action-workspace.json"), null);
-  if (workspace) discardActionWorkspace(resolve14(root, ".."), workspace, "cancelled");
+  const workspace = readJson(join34(dir, "action-workspace.json"), null);
+  if (workspace) discardActionWorkspace(resolve16(root, ".."), workspace, "cancelled");
   const timestamp = now();
   const result = {
     schema_version: SCHEMA_VERSION,
@@ -15503,10 +17694,10 @@ function cancelHostActionTransaction(root, workerId, hostId, claimToken, reason)
     error: null,
     created_at: timestamp
   };
-  writeJson(join32(dir, "host-result.json"), result);
+  writeJson(join34(dir, "host-result.json"), result);
   worker.status = "cancelled";
   worker.updated_at = timestamp;
-  writeJson(join32(dir, "worker.json"), worker);
+  writeJson(join34(dir, "worker.json"), worker);
   const event = appendEvent(root, "worker.host.cancelled", hostId, {
     run_id: worker.run_id,
     worker_id: worker.worker_id,
@@ -15517,8 +17708,8 @@ function cancelHostActionTransaction(root, workerId, hostId, claimToken, reason)
   return { result, worker };
 }
 function buildHostPatch(root, worker, summary, timestamp) {
-  const projectDir = resolve14(root, "..");
-  const manifestPath = join32(workerDir(root, worker.run_id, worker.worker_id), "action-workspace.json");
+  const projectDir = resolve16(root, "..");
+  const manifestPath = join34(workerDir(root, worker.run_id, worker.worker_id), "action-workspace.json");
   const workspace = readJson(manifestPath, null);
   if (!workspace) throw new Error(`ActionWorkspace \u7F3A\u5931\uFF1A${worker.worker_id}`);
   const changes = collectActionWorkspaceChanges(projectDir, workspace);
@@ -15551,17 +17742,17 @@ function buildHostPatch(root, worker, summary, timestamp) {
   return patch;
 }
 function interactiveWorkspacePatchEnabled(root) {
-  const policy = readJson(join32(root, "policies", "execution.json"), {});
+  const policy = readJson(join34(root, "policies", "execution.json"), {});
   return policy.interactive_workspace_patch?.enabled === true;
 }
 function existingHostClaim(root, worker) {
   const dir = workerDir(root, worker.run_id, worker.worker_id);
-  const existingAction = readJson(join32(dir, "host-action.json"), null);
+  const existingAction = readJson(join34(dir, "host-action.json"), null);
   if (!existingAction) throw new Error(`\u5DF2 claim worker \u7F3A\u5C11 host action\uFF1A${worker.worker_id}`);
   return {
     action: existingAction,
     worker,
-    workspace: readJson(join32(dir, "action-workspace.json"), null)
+    workspace: readJson(join34(dir, "action-workspace.json"), null)
   };
 }
 function parseSemanticEvidence(args) {
@@ -15570,10 +17761,32 @@ function parseSemanticEvidence(args) {
   if (!inline2 && !file) return null;
   if (inline2 && file) throw new Error("\u53EA\u80FD\u6307\u5B9A --evidence-json \u6216 --evidence-file \u4E4B\u4E00");
   try {
-    return JSON.parse(file ? readFileSync16(resolve14(String(file)), "utf8") : String(inline2));
+    return JSON.parse(file ? readFileSync18(resolve16(String(file)), "utf8") : String(inline2));
   } catch (error) {
     throw new Error(`semantic evidence JSON \u65E0\u6548\uFF1A${error.message}`);
   }
+}
+function parseCapabilityEvidence(args) {
+  const inline2 = args["capability-evidence-json"];
+  const file = args["capability-evidence-file"];
+  if (!inline2 && !file) return [];
+  if (inline2 && file) {
+    throw new Error(
+      "\u53EA\u80FD\u6307\u5B9A --capability-evidence-json \u6216 --capability-evidence-file \u4E4B\u4E00"
+    );
+  }
+  let value;
+  try {
+    value = JSON.parse(
+      file ? readFileSync18(resolve16(String(file)), "utf8") : String(inline2)
+    );
+  } catch (error) {
+    throw new Error(`capability evidence JSON \u65E0\u6548\uFF1A${error.message}`);
+  }
+  if (!Array.isArray(value)) {
+    throw new Error("capability evidence JSON \u5FC5\u987B\u662F\u6570\u7EC4");
+  }
+  return value;
 }
 function validateSemanticEvidence(root, worker, evidence) {
   if (!evidence) {
@@ -15588,7 +17801,7 @@ function validateSemanticEvidence(root, worker, evidence) {
   }
   if (expectedType === "review") {
     const run = loadRun(root, worker.run_id);
-    const queue = readJson(join32(root, "runs", worker.run_id, "merge-queue.json"), {
+    const queue = readJson(join34(root, "runs", worker.run_id, "merge-queue.json"), {
       schema_version: SCHEMA_VERSION,
       run_id: worker.run_id,
       updated_at: now(),
@@ -15596,7 +17809,7 @@ function validateSemanticEvidence(root, worker, evidence) {
       conflicts: [],
       resolutions: []
     });
-    const current = buildCandidateSet(root, run, queue, resolve14(root, ".."));
+    const current = buildCandidateSet(root, run, queue, resolve16(root, ".."));
     if (evidence.candidate_digest !== current.candidate_digest) {
       throw new Error("review evidence \u672A\u7ED1\u5B9A\u5F53\u524D candidate_digest");
     }
@@ -15635,18 +17848,18 @@ function claimExpired(worker) {
 }
 
 // src/commands/worker.mjs
-import { cpSync as cpSync3, existsSync as existsSync24, readFileSync as readFileSync17, readdirSync as readdirSync16, rmSync as rmSync8, symlinkSync as symlinkSync3, writeFileSync as writeFileSync13 } from "node:fs";
-import { createHash as createHash8 } from "node:crypto";
-import { join as join34, resolve as resolve15 } from "node:path";
-import { spawnSync as spawnSync11 } from "node:child_process";
+import { cpSync as cpSync3, existsSync as existsSync27, readFileSync as readFileSync20, readdirSync as readdirSync17, rmSync as rmSync9, symlinkSync as symlinkSync3, writeFileSync as writeFileSync14 } from "node:fs";
+import { createHash as createHash11 } from "node:crypto";
+import { join as join37, resolve as resolve18 } from "node:path";
+import { spawnSync as spawnSync12 } from "node:child_process";
 
 // src/core/worker-results.mjs
-import { existsSync as existsSync23, readdirSync as readdirSync15 } from "node:fs";
-import { join as join33 } from "node:path";
+import { existsSync as existsSync25, readdirSync as readdirSync16 } from "node:fs";
+import { join as join35 } from "node:path";
 function buildWorkerSummary(root, worker, record = false) {
   const dir = workerDir(root, worker.run_id, worker.worker_id);
-  const results = existsSync23(dir) ? readdirSync15(dir).filter((file) => file.startsWith("adapter-result-") && file.endsWith(".json")).map((file) => readJson(join33(dir, file))).sort((left, right) => left.created_at.localeCompare(right.created_at)) : [];
-  const patch = readJson(join33(dir, "patch-bundle.json"), null);
+  const results = existsSync25(dir) ? readdirSync16(dir).filter((file) => file.startsWith("adapter-result-") && file.endsWith(".json")).map((file) => readJson(join35(dir, file))).sort((left, right) => left.created_at.localeCompare(right.created_at)) : [];
+  const patch = readJson(join35(dir, "patch-bundle.json"), null);
   const summary = {
     schema_version: "v0",
     summary_id: shortId("worker-summary"),
@@ -15667,7 +17880,8 @@ function buildWorkerSummary(root, worker, record = false) {
       usage: result.usage || {
         input_tokens: null,
         output_tokens: null,
-        tool_calls: null
+        tool_calls: null,
+        agent_turns: null
       },
       summary: result.summary || ""
     })),
@@ -15678,20 +17892,649 @@ function buildWorkerSummary(root, worker, record = false) {
       input_tokens: addNullable(total.input_tokens, result.usage?.input_tokens),
       output_tokens: addNullable(total.output_tokens, result.usage?.output_tokens),
       tool_calls: addNullable(total.tool_calls, result.usage?.tool_calls),
+      agent_turns: addNullable(total.agent_turns, result.usage?.agent_turns),
       duration_ms: total.duration_ms + (result.duration_ms || 0)
     }), {
       input_tokens: null,
       output_tokens: null,
       tool_calls: null,
+      agent_turns: null,
       duration_ms: 0
     })
   };
-  if (record) writeJson(join33(dir, "worker-summary.json"), summary);
+  if (record) writeJson(join35(dir, "worker-summary.json"), summary);
   return summary;
 }
 function addNullable(left, right) {
   if (left == null && right == null) return null;
   return Number(left || 0) + Number(right || 0);
+}
+
+// src/core/git-delivery.mjs
+import {
+  closeSync as closeSync2,
+  existsSync as existsSync26,
+  fsyncSync as fsyncSync2,
+  mkdirSync as mkdirSync7,
+  openSync as openSync2,
+  readFileSync as readFileSync19,
+  realpathSync as realpathSync5,
+  renameSync as renameSync3,
+  rmSync as rmSync8,
+  statSync as statSync5,
+  writeFileSync as writeFileSync13
+} from "node:fs";
+import { createHash as createHash10, randomUUID as randomUUID4 } from "node:crypto";
+import { basename as basename7, isAbsolute as isAbsolute2, join as join36, resolve as resolve17 } from "node:path";
+import { spawnSync as spawnSync11 } from "node:child_process";
+var DEFAULT_PROTECTED_BRANCHES = Object.freeze([
+  "main",
+  "master",
+  "trunk",
+  "release/*"
+]);
+var DEFAULT_MAX_STAGED_FILES = 25;
+var GitDeliveryError = class extends Error {
+  constructor(code, message, details = {}) {
+    super(message);
+    this.name = "GitDeliveryError";
+    this.code = code;
+    this.details = details;
+  }
+};
+function discoverGitDelivery(repositoryPath, options = {}) {
+  const repository = discoverRepository(repositoryPath);
+  const protectedBranches = normalizeProtectedBranches(
+    options.protectedBranches ?? DEFAULT_PROTECTED_BRANCHES
+  );
+  const branch = discoverCurrentBranch(repository.root_path);
+  const components = normalizeComponents(options.components ?? []);
+  const delivery = {
+    schema_version: SCHEMA_VERSION,
+    document_type: "git_delivery",
+    discovered_at: (/* @__PURE__ */ new Date()).toISOString(),
+    repository,
+    current_branch: {
+      ...branch,
+      protected: branch.name != null && protectedBranches.some((pattern) => branchMatches(branch.name, pattern))
+    },
+    worktrees: discoverWorktrees(repository.root_path),
+    components,
+    pull_request: normalizePullRequest(options.pullRequest ?? null),
+    protected_branches: protectedBranches,
+    staged_files: discoverStagedFiles(repository.root_path)
+  };
+  assertContract("git-delivery.schema.json", delivery, repository.root_path);
+  return delivery;
+}
+function claimCheckout(repositoryPath, ownerInput2) {
+  const repository = discoverRepository(repositoryPath);
+  const owner = normalizeOwner(ownerInput2);
+  const paths = checkoutClaimPaths(repository);
+  mkdirSync7(paths.parent, { recursive: true, mode: 448 });
+  try {
+    mkdirSync7(paths.claim_dir, { mode: 448 });
+  } catch (error) {
+    if (error.code !== "EEXIST") throw error;
+    const existing = readClaimRecord(paths.claim_dir, repository);
+    assertSameOwner(existing.owner, owner);
+    return existing;
+  }
+  const claim = {
+    schema_version: SCHEMA_VERSION,
+    document_type: "checkout_claim",
+    kind: "checkout_claim",
+    claim_token: randomUUID4(),
+    repository_id: repository.repository_id,
+    checkout_path: repository.root_path,
+    owner,
+    status: "active",
+    claimed_at: (/* @__PURE__ */ new Date()).toISOString(),
+    released_at: null
+  };
+  assertContract("git-delivery.schema.json", claim, paths.owner_path);
+  try {
+    writeExclusiveJson(paths.owner_path, claim);
+    fsyncDirectory2(paths.claim_dir);
+    fsyncDirectory2(paths.parent);
+  } catch (error) {
+    rmSync8(paths.claim_dir, { recursive: true, force: true });
+    throw error;
+  }
+  return claim;
+}
+function readCheckoutClaim(repositoryPath) {
+  const repository = discoverRepository(repositoryPath);
+  const paths = checkoutClaimPaths(repository);
+  if (!existsSync26(paths.claim_dir)) return null;
+  return readClaimRecord(paths.claim_dir, repository);
+}
+function releaseCheckout(repositoryPath, releaseInput) {
+  const repository = discoverRepository(repositoryPath);
+  const owner = normalizeOwner(releaseInput);
+  const claimToken = requiredString(releaseInput?.claim_token, "claim_token");
+  const paths = checkoutClaimPaths(repository);
+  if (!existsSync26(paths.claim_dir)) {
+    throw new GitDeliveryError(
+      "CHECKOUT_CLAIM_NOT_FOUND",
+      `checkout \u6CA1\u6709 active claim\uFF1A${repository.root_path}`,
+      { checkout_path: repository.root_path }
+    );
+  }
+  const existing = readClaimRecord(paths.claim_dir, repository);
+  assertSameOwner(existing.owner, owner);
+  if (existing.claim_token !== claimToken) {
+    throw new GitDeliveryError(
+      "CHECKOUT_CLAIM_TOKEN_MISMATCH",
+      `checkout claim token \u4E0D\u5339\u914D\uFF1A${repository.root_path}`,
+      { checkout_path: repository.root_path }
+    );
+  }
+  const releaseDir = `${paths.claim_dir}.releasing-${process.pid}-${randomUUID4()}`;
+  try {
+    renameSync3(paths.claim_dir, releaseDir);
+  } catch (error) {
+    throw new GitDeliveryError(
+      "CHECKOUT_CLAIM_RELEASE_RACE",
+      `checkout claim \u5728\u91CA\u653E\u65F6\u53D1\u751F\u5E76\u53D1\u53D8\u5316\uFF1A${repository.root_path}`,
+      { checkout_path: repository.root_path, cause: error.message }
+    );
+  }
+  try {
+    const moved = readClaimRecord(releaseDir, repository);
+    assertSameOwner(moved.owner, owner);
+    if (moved.claim_token !== claimToken) {
+      throw new GitDeliveryError(
+        "CHECKOUT_CLAIM_TOKEN_MISMATCH",
+        `checkout claim token \u5728\u91CA\u653E\u65F6\u53D1\u751F\u53D8\u5316\uFF1A${repository.root_path}`,
+        { checkout_path: repository.root_path }
+      );
+    }
+    rmSync8(releaseDir, { recursive: true, force: true });
+    fsyncDirectory2(paths.parent);
+  } catch (error) {
+    if (existsSync26(releaseDir) && !existsSync26(paths.claim_dir)) {
+      renameSync3(releaseDir, paths.claim_dir);
+    }
+    throw error;
+  }
+  const released = {
+    ...existing,
+    status: "released",
+    released_at: (/* @__PURE__ */ new Date()).toISOString()
+  };
+  assertContract("git-delivery.schema.json", released, repository.root_path);
+  return released;
+}
+function assertGitDeliveryGuards(delivery, options = {}) {
+  if (!delivery || delivery.document_type !== "git_delivery") {
+    throw new GitDeliveryError(
+      "INVALID_GIT_DELIVERY",
+      "Git Delivery context \u65E0\u6548"
+    );
+  }
+  assertContract(
+    "git-delivery.schema.json",
+    delivery,
+    delivery.repository?.root_path || "git delivery"
+  );
+  const stagedFiles = delivery.staged_files.map(
+    (path) => normalizeRepositoryPath(path, "staged file")
+  );
+  const protectedBranches = normalizeProtectedBranches(delivery.protected_branches);
+  const branchName = delivery.current_branch?.name;
+  const protectedBranch = branchName != null && protectedBranches.some((pattern) => branchMatches(branchName, pattern));
+  if (protectedBranch && options.allowProtectedBranch !== true) {
+    throw new GitDeliveryError(
+      "PROTECTED_BRANCH",
+      `\u62D2\u7EDD\u5728 protected branch \u4E0A\u4EA4\u4ED8\uFF1A${branchName}`,
+      { branch: branchName }
+    );
+  }
+  const maxStagedFiles = options.maxStagedFiles ?? DEFAULT_MAX_STAGED_FILES;
+  if (!Number.isSafeInteger(maxStagedFiles) || maxStagedFiles < 0) {
+    throw new GitDeliveryError(
+      "INVALID_GUARD_CONFIGURATION",
+      "maxStagedFiles \u5FC5\u987B\u662F\u975E\u8D1F\u6574\u6570",
+      { max_staged_files: maxStagedFiles }
+    );
+  }
+  if (stagedFiles.length > maxStagedFiles) {
+    throw new GitDeliveryError(
+      "BROAD_STAGING",
+      `staged files \u8D85\u51FA\u4E0A\u9650\uFF1A${stagedFiles.length} > ${maxStagedFiles}`,
+      {
+        staged_file_count: stagedFiles.length,
+        max_staged_files: maxStagedFiles,
+        staged_files: stagedFiles
+      }
+    );
+  }
+  let component = null;
+  if (options.componentId != null) {
+    const componentId = requiredIdentifier(options.componentId, "componentId");
+    component = delivery.components.find((item) => item.component_id === componentId);
+    if (!component) {
+      throw new GitDeliveryError(
+        "COMPONENT_NOT_FOUND",
+        `Git Delivery component \u4E0D\u5B58\u5728\uFF1A${componentId}`,
+        { component_id: componentId }
+      );
+    }
+    const componentRoot = normalizeRepositoryPath(
+      component.root_path,
+      `component ${componentId}`
+    );
+    const outOfScopeFiles = stagedFiles.filter(
+      (path) => !pathInsideComponent(path, componentRoot)
+    );
+    if (outOfScopeFiles.length > 0) {
+      throw new GitDeliveryError(
+        "COMPONENT_SCOPE_VIOLATION",
+        `\u5B58\u5728\u8D8A\u51FA component scope \u7684 staged files\uFF1A${componentId}`,
+        {
+          component_id: componentId,
+          component_root: componentRoot,
+          out_of_scope_files: outOfScopeFiles
+        }
+      );
+    }
+  }
+  return {
+    status: "PASS",
+    repository_id: delivery.repository.repository_id,
+    branch: branchName,
+    component_id: component?.component_id ?? null,
+    staged_files: stagedFiles
+  };
+}
+function discoverRepository(repositoryPath) {
+  const requestedPath = canonicalDirectory(repositoryPath);
+  const bare = runGit(requestedPath, ["rev-parse", "--is-bare-repository"]).trim() === "true";
+  if (bare) {
+    throw new GitDeliveryError(
+      "BARE_REPOSITORY_UNSUPPORTED",
+      `Git Delivery \u9700\u8981 non-bare checkout\uFF1A${requestedPath}`
+    );
+  }
+  const rootPath = canonicalDirectory(
+    runGit(requestedPath, ["rev-parse", "--show-toplevel"]).trim()
+  );
+  const gitDir = canonicalDirectory(
+    runGit(rootPath, ["rev-parse", "--absolute-git-dir"]).trim()
+  );
+  const commonDir = canonicalDirectory(
+    runGit(rootPath, [
+      "rev-parse",
+      "--path-format=absolute",
+      "--git-common-dir"
+    ]).trim()
+  );
+  const headOid = tryGit(rootPath, ["rev-parse", "--verify", "HEAD"]);
+  return {
+    kind: "repository",
+    repository_id: createHash10("sha256").update(commonDir).digest("hex"),
+    name: basename7(rootPath),
+    root_path: rootPath,
+    git_dir: gitDir,
+    common_dir: commonDir,
+    head_oid: headOid?.trim() || null,
+    bare: false
+  };
+}
+function discoverCurrentBranch(repositoryRoot) {
+  const ref = tryGit(repositoryRoot, ["symbolic-ref", "--quiet", "HEAD"])?.trim() || null;
+  const name = tryGit(repositoryRoot, [
+    "symbolic-ref",
+    "--quiet",
+    "--short",
+    "HEAD"
+  ])?.trim() || null;
+  const headOid = tryGit(repositoryRoot, ["rev-parse", "--verify", "HEAD"])?.trim() || null;
+  return {
+    kind: "branch",
+    name,
+    ref,
+    head_oid: headOid,
+    detached: ref == null,
+    protected: false
+  };
+}
+function discoverWorktrees(repositoryRoot) {
+  const output = runGitBuffer(repositoryRoot, [
+    "worktree",
+    "list",
+    "--porcelain",
+    "-z"
+  ]).toString("utf8");
+  const records = [];
+  let current = {};
+  for (const token of output.split("\0")) {
+    if (token === "") {
+      if (current.worktree) records.push(current);
+      current = {};
+      continue;
+    }
+    const separator = token.indexOf(" ");
+    const key = separator === -1 ? token : token.slice(0, separator);
+    const value = separator === -1 ? "" : token.slice(separator + 1);
+    current[key] = value;
+  }
+  if (current.worktree) records.push(current);
+  return records.map((record) => {
+    const checkoutPath = existsSync26(record.worktree) ? realpathSync5(record.worktree) : resolve17(record.worktree);
+    return {
+      kind: "checkout",
+      checkout_path: checkoutPath,
+      head_oid: record.HEAD || null,
+      branch: record.branch?.startsWith("refs/heads/") ? record.branch.slice("refs/heads/".length) : record.branch || null,
+      detached: Object.hasOwn(record, "detached"),
+      bare: Object.hasOwn(record, "bare"),
+      locked: Object.hasOwn(record, "locked"),
+      prunable: Object.hasOwn(record, "prunable"),
+      is_current: checkoutPath === repositoryRoot
+    };
+  });
+}
+function discoverStagedFiles(repositoryRoot) {
+  const output = runGitBuffer(repositoryRoot, [
+    "diff",
+    "--cached",
+    "--name-only",
+    "--diff-filter=ACMRDTUXB",
+    "--no-ext-diff",
+    "--no-textconv",
+    "-z"
+  ]).toString("utf8");
+  return [...new Set(
+    output.split("\0").filter(Boolean).map((path) => normalizeRepositoryPath(path, "staged file"))
+  )].sort();
+}
+function normalizeComponents(components) {
+  if (!Array.isArray(components)) {
+    throw new GitDeliveryError(
+      "INVALID_COMPONENT",
+      "components \u5FC5\u987B\u662F\u6570\u7EC4"
+    );
+  }
+  const seen = /* @__PURE__ */ new Set();
+  return components.map((component) => {
+    if (!component || typeof component !== "object" || Array.isArray(component)) {
+      throw new GitDeliveryError("INVALID_COMPONENT", "component \u5FC5\u987B\u662F\u5BF9\u8C61");
+    }
+    const componentId = requiredIdentifier(component.component_id, "component_id");
+    if (seen.has(componentId)) {
+      throw new GitDeliveryError(
+        "DUPLICATE_COMPONENT",
+        `component_id \u91CD\u590D\uFF1A${componentId}`
+      );
+    }
+    seen.add(componentId);
+    return {
+      kind: "component",
+      component_id: componentId,
+      root_path: normalizeRepositoryPath(component.root_path, `component ${componentId}`)
+    };
+  });
+}
+function normalizePullRequest(pullRequest) {
+  if (pullRequest == null) return null;
+  if (typeof pullRequest !== "object" || Array.isArray(pullRequest)) {
+    throw new GitDeliveryError("INVALID_PULL_REQUEST", "pullRequest \u5FC5\u987B\u662F\u5BF9\u8C61\u6216 null");
+  }
+  const provider = requiredString(pullRequest.provider, "pullRequest.provider");
+  const allowedProviders = /* @__PURE__ */ new Set([
+    "github",
+    "gitlab",
+    "bitbucket",
+    "azure_devops",
+    "gitea",
+    "other"
+  ]);
+  if (!allowedProviders.has(provider)) {
+    throw new GitDeliveryError(
+      "INVALID_PULL_REQUEST",
+      `\u4E0D\u652F\u6301\u7684 pull request provider\uFF1A${provider}`
+    );
+  }
+  const status2 = pullRequest.status == null ? "unknown" : requiredString(pullRequest.status, "pullRequest.status");
+  if (!["open", "draft", "closed", "merged", "unknown"].includes(status2)) {
+    throw new GitDeliveryError(
+      "INVALID_PULL_REQUEST",
+      `\u4E0D\u652F\u6301\u7684 pull request status\uFF1A${status2}`
+    );
+  }
+  const normalized = {
+    kind: "pull_request",
+    provider,
+    pr_id: requiredString(pullRequest.pr_id, "pullRequest.pr_id"),
+    base_branch: requiredString(pullRequest.base_branch, "pullRequest.base_branch"),
+    head_branch: requiredString(pullRequest.head_branch, "pullRequest.head_branch"),
+    status: status2
+  };
+  if (pullRequest.url != null) {
+    normalized.url = requiredString(pullRequest.url, "pullRequest.url");
+  }
+  return normalized;
+}
+function normalizeProtectedBranches(patterns) {
+  if (!Array.isArray(patterns)) {
+    throw new GitDeliveryError(
+      "INVALID_PROTECTED_BRANCHES",
+      "protectedBranches \u5FC5\u987B\u662F\u6570\u7EC4"
+    );
+  }
+  return [...new Set(patterns.map((pattern) => {
+    const value = requiredString(pattern, "protected branch pattern");
+    if (value.includes("\0") || value.includes("..") || /\s/.test(value)) {
+      throw new GitDeliveryError(
+        "INVALID_PROTECTED_BRANCHES",
+        `protected branch pattern \u4E0D\u5B89\u5168\uFF1A${value}`
+      );
+    }
+    return value;
+  }))];
+}
+function normalizeOwner(owner) {
+  if (!owner || typeof owner !== "object" || Array.isArray(owner)) {
+    throw new GitDeliveryError("INVALID_CHECKOUT_OWNER", "checkout owner \u5FC5\u987B\u662F\u5BF9\u8C61");
+  }
+  const normalized = {
+    owner_id: requiredString(owner.owner_id, "owner_id")
+  };
+  if (owner.run_id != null) normalized.run_id = requiredString(owner.run_id, "run_id");
+  if (owner.worker_id != null) {
+    normalized.worker_id = requiredString(owner.worker_id, "worker_id");
+  }
+  return normalized;
+}
+function assertSameOwner(existingOwner, requestedOwner) {
+  if (existingOwner.owner_id !== requestedOwner.owner_id || (existingOwner.run_id ?? null) !== (requestedOwner.run_id ?? null) || (existingOwner.worker_id ?? null) !== (requestedOwner.worker_id ?? null)) {
+    throw new GitDeliveryError(
+      "CHECKOUT_OWNED_BY_FOREIGN_OWNER",
+      `checkout \u5DF2\u7531\u5176\u4ED6 owner \u6301\u6709\uFF1A${existingOwner.owner_id}`,
+      { current_owner: existingOwner, requested_owner: requestedOwner }
+    );
+  }
+}
+function checkoutClaimPaths(repository) {
+  const key = createHash10("sha256").update(repository.root_path).digest("hex");
+  const parent = join36(repository.common_dir, "apex-forge", "checkout-claims");
+  const claimDir = join36(parent, `${key}.claim`);
+  return {
+    parent,
+    claim_dir: claimDir,
+    owner_path: join36(claimDir, "owner.json")
+  };
+}
+function readClaimRecord(claimDir, repository) {
+  const ownerPath = join36(claimDir, "owner.json");
+  let claim;
+  try {
+    claim = JSON.parse(readFileSync19(ownerPath, "utf8"));
+    assertContract("git-delivery.schema.json", claim, ownerPath);
+  } catch (error) {
+    throw new GitDeliveryError(
+      "CHECKOUT_CLAIM_CORRUPT",
+      `checkout claim \u65E0\u6CD5\u5B89\u5168\u8BFB\u53D6\uFF0C\u62D2\u7EDD\u63A5\u7BA1\uFF1A${repository.root_path}`,
+      { checkout_path: repository.root_path, cause: error.message }
+    );
+  }
+  if (claim.status !== "active" || claim.repository_id !== repository.repository_id || claim.checkout_path !== repository.root_path) {
+    throw new GitDeliveryError(
+      "CHECKOUT_CLAIM_CORRUPT",
+      `checkout claim identity \u4E0D\u5339\u914D\uFF0C\u62D2\u7EDD\u63A5\u7BA1\uFF1A${repository.root_path}`,
+      { checkout_path: repository.root_path }
+    );
+  }
+  return claim;
+}
+function normalizeRepositoryPath(path, label) {
+  const value = requiredString(path, label);
+  if (value.includes("\0") || isAbsolute2(value) || /^[A-Za-z]:[\\/]/.test(value) || value.includes("\\")) {
+    throw new GitDeliveryError(
+      "UNSAFE_REPOSITORY_PATH",
+      `${label} \u4E0D\u662F\u5B89\u5168\u7684 repository-relative path\uFF1A${value}`,
+      { path: value }
+    );
+  }
+  const parts = value.split("/");
+  if (parts.some((part) => part === "..")) {
+    throw new GitDeliveryError(
+      "UNSAFE_REPOSITORY_PATH",
+      `${label} \u8BD5\u56FE\u8D8A\u51FA repository\uFF1A${value}`,
+      { path: value }
+    );
+  }
+  const normalized = parts.filter((part) => part !== "" && part !== ".").join("/");
+  if (value === "." || normalized === "") return ".";
+  return normalized;
+}
+function pathInsideComponent(path, componentRoot) {
+  if (componentRoot === ".") return true;
+  return path === componentRoot || path.startsWith(`${componentRoot}/`);
+}
+function branchMatches(branch, pattern) {
+  const expression = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*");
+  return new RegExp(`^${expression}$`).test(branch);
+}
+function requiredIdentifier(value, label) {
+  const normalized = requiredString(value, label);
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(normalized)) {
+    throw new GitDeliveryError(
+      "INVALID_IDENTIFIER",
+      `${label} \u4E0D\u662F\u5B89\u5168\u6807\u8BC6\u7B26\uFF1A${normalized}`
+    );
+  }
+  return normalized;
+}
+function requiredString(value, label) {
+  if (typeof value !== "string" || value.trim() === "") {
+    throw new GitDeliveryError(
+      "INVALID_GIT_DELIVERY_INPUT",
+      `${label} \u5FC5\u987B\u662F\u975E\u7A7A\u5B57\u7B26\u4E32`
+    );
+  }
+  if (value.includes("\0")) {
+    throw new GitDeliveryError(
+      "INVALID_GIT_DELIVERY_INPUT",
+      `${label} \u5305\u542B NUL`
+    );
+  }
+  return value;
+}
+function canonicalDirectory(path) {
+  const value = requiredString(String(path ?? ""), "repository path");
+  let canonical;
+  try {
+    canonical = realpathSync5(value);
+  } catch (error) {
+    throw new GitDeliveryError(
+      "REPOSITORY_PATH_NOT_FOUND",
+      `repository path \u4E0D\u5B58\u5728\uFF1A${value}`,
+      { path: value, cause: error.message }
+    );
+  }
+  if (!statSync5(canonical).isDirectory()) {
+    throw new GitDeliveryError(
+      "REPOSITORY_PATH_NOT_DIRECTORY",
+      `repository path \u4E0D\u662F\u76EE\u5F55\uFF1A${canonical}`,
+      { path: canonical }
+    );
+  }
+  return canonical;
+}
+function runGit(cwd, args) {
+  const result = spawnSync11("git", args, {
+    cwd,
+    encoding: "utf8",
+    env: gitEnvironment()
+  });
+  if (result.status !== 0) throw gitCommandError(cwd, args, result);
+  return result.stdout;
+}
+function runGitBuffer(cwd, args) {
+  const result = spawnSync11("git", args, {
+    cwd,
+    encoding: "buffer",
+    env: gitEnvironment()
+  });
+  if (result.status !== 0) throw gitCommandError(cwd, args, result);
+  return result.stdout;
+}
+function tryGit(cwd, args) {
+  const result = spawnSync11("git", args, {
+    cwd,
+    encoding: "utf8",
+    env: gitEnvironment()
+  });
+  if (result.status === 0) return result.stdout;
+  if (result.status === 1) return null;
+  throw gitCommandError(cwd, args, result);
+}
+function gitEnvironment() {
+  return {
+    ...process.env,
+    GIT_CONFIG_NOSYSTEM: "1",
+    GIT_OPTIONAL_LOCKS: "0",
+    GIT_TERMINAL_PROMPT: "0"
+  };
+}
+function gitCommandError(cwd, args, result) {
+  const stderr = Buffer.isBuffer(result.stderr) ? result.stderr.toString("utf8") : result.stderr;
+  return new GitDeliveryError(
+    "GIT_DISCOVERY_FAILED",
+    `\u672C\u5730 git \u53D1\u73B0\u5931\u8D25\uFF1Agit ${args.join(" ")}`,
+    {
+      cwd,
+      status: result.status,
+      stderr: String(stderr || "").trim()
+    }
+  );
+}
+function writeExclusiveJson(path, value) {
+  let descriptor = null;
+  try {
+    descriptor = openSync2(path, "wx", 384);
+    writeFileSync13(descriptor, `${JSON.stringify(value, null, 2)}
+`);
+    fsyncSync2(descriptor);
+    closeSync2(descriptor);
+    descriptor = null;
+  } finally {
+    if (descriptor != null) closeSync2(descriptor);
+  }
+}
+function fsyncDirectory2(path) {
+  let descriptor = null;
+  try {
+    descriptor = openSync2(path, "r");
+    fsyncSync2(descriptor);
+  } catch (error) {
+    if (!["EINVAL", "ENOTSUP", "EISDIR"].includes(error.code)) throw error;
+  } finally {
+    if (descriptor != null) closeSync2(descriptor);
+  }
 }
 
 // src/commands/worker.mjs
@@ -15792,22 +18635,28 @@ function initWorkerSandbox(args) {
   console.log(JSON.stringify(initialized, null, 2));
 }
 function initializeWorkerSandbox(root, worker, requestedType) {
-  const projectDir = resolve15(root, "..");
-  const existingDir = worker.sandbox?.path ? resolve15(projectDir, worker.sandbox.path) : null;
-  if (worker.sandbox?.status === "ready" && existingDir && existsSync24(existingDir)) {
-    const manifest2 = readJson(join34(existingDir, "sandbox.json"), null);
+  const projectDir = resolve18(root, "..");
+  const existingDir = worker.sandbox?.path ? resolve18(projectDir, worker.sandbox.path) : null;
+  if (worker.sandbox?.status === "ready" && existingDir && existsSync27(existingDir)) {
+    const manifest2 = readJson(join37(existingDir, "sandbox.json"), null);
+    if (worker.sandbox.type === "worktree" && worker.sandbox.checkout_claim_token) {
+      const claim = claimCheckout(existingDir, checkoutOwner(worker));
+      if (claim.claim_token !== worker.sandbox.checkout_claim_token) {
+        throw new Error(`worktree checkout claim token \u6F02\u79FB\uFF1A${worker.worker_id}`);
+      }
+    }
     return { worker, manifest: manifest2 };
   }
   const gitRoot = findGitRoot(projectDir);
   const useWorktree = requestedType === "worktree" && gitRoot;
-  const dir = join34(workerDir(root, worker.run_id, worker.worker_id), "sandbox");
+  const dir = join37(workerDir(root, worker.run_id, worker.worker_id), "sandbox");
   if (useWorktree) {
     ensureDir(dirnameForPath(dir));
-    const result = spawnSync11("git", ["worktree", "add", "--detach", dir, "HEAD"], {
+    const result = spawnSync12("git", ["worktree", "add", "--detach", dir, "HEAD"], {
       cwd: gitRoot,
       encoding: "utf8"
     });
-    if (result.status !== 0 && !existsSync24(dir)) {
+    if (result.status !== 0 && !existsSync27(dir)) {
       throw new Error(`git worktree add \u5931\u8D25\uFF1A${result.stderr || result.stdout}`);
     }
   } else {
@@ -15817,6 +18666,18 @@ function initializeWorkerSandbox(root, worker, requestedType) {
   copyProjectContextSnapshot(projectDir, dir);
   const actualType = useWorktree ? "worktree" : "scratch";
   const fallbackReason = requestedType === "worktree" && !gitRoot ? "\u5F53\u524D\u9879\u76EE\u4E0D\u662F git repository\uFF0C\u964D\u7EA7\u4E3A scratch sandbox\u3002" : "";
+  let checkoutClaim = null;
+  if (useWorktree) {
+    try {
+      checkoutClaim = claimCheckout(dir, checkoutOwner(worker));
+    } catch (error) {
+      spawnSync12("git", ["worktree", "remove", dir, "--force"], {
+        cwd: gitRoot,
+        encoding: "utf8"
+      });
+      throw error;
+    }
+  }
   const manifest = {
     schema_version: SCHEMA_VERSION,
     worker_id: worker.worker_id,
@@ -15825,14 +18686,16 @@ function initializeWorkerSandbox(root, worker, requestedType) {
     requested_type: requestedType,
     type: actualType,
     fallback_reason: fallbackReason,
+    checkout_owner_id: checkoutClaim?.owner.owner_id || null,
+    checkout_claim_token: checkoutClaim?.claim_token || null,
     created_at: now(),
     read_scope: worker.read_scope,
     write_scope: worker.write_scope,
     verification: worker.verification
   };
-  writeJson(join34(dir, "sandbox.json"), manifest);
-  ensureDir(join34(dir, ".apex-agent"));
-  writeTextIfMissing(join34(dir, ".apex-agent", "README.md"), `# Worker Sandbox
+  writeJson(join37(dir, "sandbox.json"), manifest);
+  ensureDir(join37(dir, ".apex-agent"));
+  writeTextIfMissing(join37(dir, ".apex-agent", "README.md"), `# Worker Sandbox
 
 \u672C\u76EE\u5F55\u662F worker \u7684\u9694\u79BB ${actualType} sandbox\u3002
 
@@ -15846,10 +18709,12 @@ function initializeWorkerSandbox(root, worker, requestedType) {
     type: actualType,
     path: `${worker.namespace}/sandbox`,
     status: "ready",
-    fallback_reason: fallbackReason
+    fallback_reason: fallbackReason,
+    checkout_owner_id: checkoutClaim?.owner.owner_id || null,
+    checkout_claim_token: checkoutClaim?.claim_token || null
   };
   worker.updated_at = now();
-  writeJson(join34(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
+  writeJson(join37(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
   const event = appendEvent(root, "worker.sandbox.initialized", "apex-v2", {
     run_id: worker.run_id,
     worker_id: worker.worker_id,
@@ -15867,23 +18732,23 @@ function copyProjectIntoScratchSandbox(projectDir, sandboxDir) {
     ".apex-v2.transaction-backups",
     "node_modules"
   ]);
-  for (const entry of readdirSync16(projectDir, { withFileTypes: true })) {
+  for (const entry of readdirSync17(projectDir, { withFileTypes: true })) {
     if (ignored.has(entry.name)) continue;
-    cpSync3(join34(projectDir, entry.name), join34(sandboxDir, entry.name), {
+    cpSync3(join37(projectDir, entry.name), join37(sandboxDir, entry.name), {
       recursive: true,
       force: true
     });
   }
-  const nodeModules = join34(projectDir, "node_modules");
-  const sandboxNodeModules = join34(sandboxDir, "node_modules");
-  if (existsSync24(nodeModules) && !existsSync24(sandboxNodeModules)) {
+  const nodeModules = join37(projectDir, "node_modules");
+  const sandboxNodeModules = join37(sandboxDir, "node_modules");
+  if (existsSync27(nodeModules) && !existsSync27(sandboxNodeModules)) {
     symlinkSync3(nodeModules, sandboxNodeModules, "dir");
   }
 }
 function copyProjectContextSnapshot(projectDir, sandboxDir) {
-  const sourceRoot = join34(projectDir, ".apex-v2");
-  if (!existsSync24(sourceRoot)) return;
-  const targetRoot = join34(sandboxDir, ".apex-v2");
+  const sourceRoot = join37(projectDir, ".apex-v2");
+  if (!existsSync27(sourceRoot)) return;
+  const targetRoot = join37(sandboxDir, ".apex-v2");
   ensureDir(targetRoot);
   for (const relativePath of [
     "project.json",
@@ -15897,9 +18762,9 @@ function copyProjectContextSnapshot(projectDir, sandboxDir) {
     "approvals",
     "metrics"
   ]) {
-    const source = join34(sourceRoot, relativePath);
-    if (!existsSync24(source)) continue;
-    cpSync3(source, join34(targetRoot, relativePath), {
+    const source = join37(sourceRoot, relativePath);
+    if (!existsSync27(source)) continue;
+    cpSync3(source, join37(targetRoot, relativePath), {
       recursive: true,
       force: true
     });
@@ -15911,9 +18776,9 @@ function writeWorkerSandbox(args) {
   ensureWorkerSandboxReady(worker);
   const sandboxPath = required(args, "path");
   assertSafeRelativePath(sandboxPath);
-  const target = resolve15(root, "..", worker.sandbox.path, sandboxPath);
+  const target = resolve18(root, "..", worker.sandbox.path, sandboxPath);
   ensureDir(dirnameForPath(target));
-  writeFileSync13(target, required(args, "content"));
+  writeFileSync14(target, required(args, "content"));
   const event = appendEvent(root, "worker.sandbox.written", "apex-v2", {
     run_id: worker.run_id,
     worker_id: worker.worker_id,
@@ -15928,7 +18793,7 @@ function promoteWorkerSandbox(args) {
   const sandboxPath = required(args, "sandbox-path");
   const targetFile = required(args, "target-file");
   const summary = required(args, "summary");
-  const result = withProjectTransaction(resolve15(root, ".."), {
+  const result = withProjectTransaction(resolve18(root, ".."), {
     kind: "worker-promote-sandbox",
     idempotencyKey: transitionKey("worker-promote-sandbox", {
       worker_id: worker.worker_id,
@@ -15953,9 +18818,9 @@ function promoteWorkerSandboxTransaction(root, worker, sandboxPath, targetFile, 
   if (!isFileAllowedByScope(targetFile, worker.write_scope)) {
     throw new Error(`sandbox promote \u76EE\u6807\u8D85\u51FA worker write_scope\uFF1A${targetFile}`);
   }
-  const source = resolve15(root, "..", worker.sandbox.path, sandboxPath);
-  if (!existsSync24(source)) throw new Error(`sandbox \u6587\u4EF6\u4E0D\u5B58\u5728\uFF1A${sandboxPath}`);
-  const content = readFileSync17(source, "utf8");
+  const source = resolve18(root, "..", worker.sandbox.path, sandboxPath);
+  if (!existsSync27(source)) throw new Error(`sandbox \u6587\u4EF6\u4E0D\u5B58\u5728\uFF1A${sandboxPath}`);
+  const content = readFileSync20(source, "utf8");
   const run = loadRun(root, worker.run_id);
   const timestamp = now();
   const patch = {
@@ -15976,7 +18841,7 @@ function promoteWorkerSandboxTransaction(root, worker, sandboxPath, targetFile, 
   persistPatchBundle(root, patch);
   worker.status = "patch_submitted";
   worker.updated_at = timestamp;
-  writeJson(join34(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
+  writeJson(join37(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
   const artifact = createArtifact(root, run, "execute", {
     type: "patch",
     title: `SandboxPatch\uFF1A${worker.plan_node_id}`,
@@ -16002,7 +18867,7 @@ function submitWorkerPatch(args) {
   const root = requireStore(projectRoot(args));
   const workerId = required(args, "worker-id");
   const worker = findWorker(root, workerId);
-  const result = withProjectTransaction(resolve15(root, ".."), {
+  const result = withProjectTransaction(resolve18(root, ".."), {
     kind: "worker-submit-patch",
     idempotencyKey: transitionKey("worker-submit-patch", {
       worker_id: workerId,
@@ -16051,7 +18916,7 @@ function submitWorkerPatchTransaction(root, worker, args) {
   persistPatchBundle(root, patch);
   worker.status = "patch_submitted";
   worker.updated_at = timestamp;
-  writeJson(join34(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
+  writeJson(join37(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
   const artifact = createArtifact(root, run, "execute", {
     type: "patch",
     title: `PatchBundle\uFF1A${worker.plan_node_id}`,
@@ -16080,8 +18945,36 @@ function execWorkerShell(args) {
     throw new Error(`worker \u5F53\u524D\u72B6\u6001\u4E0D\u53EF\u6267\u884C shell adapter\uFF1A${worker.status}`);
   }
   const command = required(args, "cmd");
-  const result = executeWorkerShell(root, worker, command, "manual");
+  const result = executeWorkerShell(
+    root,
+    worker,
+    command,
+    "manual",
+    parseCapabilityEvidence2(args)
+  );
   console.log(JSON.stringify({ result: result.adapterResult, artifact_id: result.artifact.artifact_id }, null, 2));
+}
+function parseCapabilityEvidence2(args) {
+  const inline2 = args["capability-evidence-json"];
+  const file = args["capability-evidence-file"];
+  if (!inline2 && !file) return [];
+  if (inline2 && file) {
+    throw new Error(
+      "\u53EA\u80FD\u6307\u5B9A --capability-evidence-json \u6216 --capability-evidence-file \u4E4B\u4E00"
+    );
+  }
+  let value;
+  try {
+    value = JSON.parse(
+      file ? readFileSync20(resolve18(String(file)), "utf8") : String(inline2)
+    );
+  } catch (error) {
+    throw new Error(`capability evidence JSON \u65E0\u6548\uFF1A${error.message}`);
+  }
+  if (!Array.isArray(value)) {
+    throw new Error("capability evidence JSON \u5FC5\u987B\u662F\u6570\u7EC4");
+  }
+  return value;
 }
 function execWorkerAgent(args) {
   const projectDir = projectRoot(args);
@@ -16092,7 +18985,8 @@ function execWorkerAgent(args) {
   const plan = loadPlanGraph2(root, worker.run_id);
   const planNode2 = getPlanNode(plan, worker.plan_node_id);
   const requestedTimeoutMs = Number(args["timeout-ms"] || 30 * 60 * 1e3);
-  const timeoutMs = effectiveAgentTimeout(root, requestedTimeoutMs);
+  const route = readJson(join37(workerDir(root, worker.run_id, worker.worker_id), "execution-route.json"), null);
+  const timeoutMs = effectiveAgentTimeout(root, requestedTimeoutMs, route?.cost_budget);
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
     throw new Error("--timeout-ms \u5FC5\u987B\u662F\u6B63\u6574\u6570");
   }
@@ -16155,8 +19049,8 @@ function listWorkerAdapters(args) {
       }
       throw new Error(`adapter baseline approval required\uFF1A${approval.approval.id}=${approval.approval.decision || "pending"}`);
     }
-    ensureDir(join34(root, "adapters"));
-    writeJson(join34(root, "adapters", "capabilities.json"), {
+    ensureDir(join37(root, "adapters"));
+    writeJson(join37(root, "adapters", "capabilities.json"), {
       schema_version: SCHEMA_VERSION,
       generated_at: now(),
       adapters
@@ -16171,7 +19065,7 @@ function evaluateAdapterCapabilityDrift(root, adapters = null) {
     { adapter: "human", available: true, mode: "structured decision" },
     ...inspectWorkerExecutors().map((item) => ({ ...item, mode: "isolated coding agent" }))
   ];
-  const baseline = readJson(join34(root, "adapters", "capabilities.json"), null);
+  const baseline = readJson(join37(root, "adapters", "capabilities.json"), null);
   const previous = new Map((baseline?.adapters || []).map((item) => [item.adapter, item]));
   const changes = [];
   for (const current of currentAdapters) {
@@ -16232,7 +19126,7 @@ function fallbackWorkerInternal(root, worker, via) {
   if (worker.status !== "blocked") throw new Error(`\u53EA\u6709 blocked worker \u53EF\u4EE5 fallback\uFF1A${worker.status}`);
   const latest = latestWorkerAdapterResult(root, worker);
   const failureKind = latest?.failure_kind || "unknown";
-  const policy = readJson(join34(root, "policies", "execution.json"));
+  const policy = readJson(join37(root, "policies", "execution.json"));
   if (!policy.permissions.adapter_fallback_failure_kinds.includes(failureKind)) {
     throw new Error(`failure_kind \u4E0D\u5141\u8BB8 adapter fallback\uFF1A${failureKind}`);
   }
@@ -16249,7 +19143,7 @@ function fallbackWorkerInternal(root, worker, via) {
   worker.executor_id = next;
   worker.status = "active";
   worker.updated_at = now();
-  writeJson(join34(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
+  writeJson(join37(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
   const event = appendEvent(root, "worker.adapter.fallback", "apex-v2", {
     run_id: worker.run_id,
     worker_id: worker.worker_id,
@@ -16265,7 +19159,7 @@ function retryWorkerInternal(root, worker, via) {
   if (worker.status !== "blocked") {
     throw new Error(`\u53EA\u6709 blocked worker \u53EF\u4EE5 retry\uFF0C\u5F53\u524D\u72B6\u6001\uFF1A${worker.status}`);
   }
-  const policy = readJson(join34(root, "policies", "retry.json"));
+  const policy = readJson(join37(root, "policies", "retry.json"));
   const adapter = worker.last_adapter || worker.adapter || "shell";
   const maxAttempts = Number(policy.max_attempts?.[adapter] || 1);
   const latestResult = latestWorkerAdapterResult(root, worker);
@@ -16279,7 +19173,7 @@ function retryWorkerInternal(root, worker, via) {
   if (policy.auto_retry.reset_sandbox) resetWorkerSandbox(root, worker);
   worker.status = "active";
   worker.updated_at = now();
-  writeJson(join34(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
+  writeJson(join37(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
   const event = appendEvent(root, "worker.retry.requested", "apex-v2", {
     run_id: worker.run_id,
     worker_id: worker.worker_id,
@@ -16301,25 +19195,38 @@ function retryWorkerInternal(root, worker, via) {
 }
 function resetWorkerSandbox(root, worker) {
   if (!worker.sandbox?.path) return;
-  const projectDir = resolve15(root, "..");
-  const sandboxDir = resolve15(projectDir, worker.sandbox.path);
-  if (existsSync24(sandboxDir) && worker.sandbox.type === "worktree") {
-    spawnSync11("git", ["worktree", "remove", sandboxDir, "--force"], {
+  const projectDir = resolve18(root, "..");
+  const sandboxDir = resolve18(projectDir, worker.sandbox.path);
+  if (existsSync27(sandboxDir) && worker.sandbox.type === "worktree") {
+    if (worker.sandbox.checkout_claim_token) {
+      releaseCheckout(sandboxDir, {
+        ...checkoutOwner(worker),
+        claim_token: worker.sandbox.checkout_claim_token
+      });
+    }
+    spawnSync12("git", ["worktree", "remove", sandboxDir, "--force"], {
       cwd: projectDir,
       encoding: "utf8"
     });
   }
-  rmSync8(sandboxDir, { recursive: true, force: true });
+  rmSync9(sandboxDir, { recursive: true, force: true });
   worker.sandbox = {
     type: "none",
     path: "",
     status: "missing"
   };
 }
+function checkoutOwner(worker) {
+  return {
+    owner_id: `apex-v2-worker:${worker.worker_id}`,
+    run_id: worker.run_id,
+    worker_id: worker.worker_id
+  };
+}
 function latestWorkerAdapterResult(root, worker) {
   const dir = workerDir(root, worker.run_id, worker.worker_id);
-  if (!existsSync24(dir)) return null;
-  return readdirSync16(dir).filter((file) => file.startsWith("adapter-result-") && file.endsWith(".json")).map((file) => readJson(join34(dir, file))).sort((left, right) => right.created_at.localeCompare(left.created_at))[0] || null;
+  if (!existsSync27(dir)) return null;
+  return readdirSync17(dir).filter((file) => file.startsWith("adapter-result-") && file.endsWith(".json")).map((file) => readJson(join37(dir, file))).sort((left, right) => right.created_at.localeCompare(left.created_at))[0] || null;
 }
 function decideWorker(args) {
   const root = requireStore(projectRoot(args));
@@ -16342,10 +19249,10 @@ function decideWorker(args) {
     created_at: timestamp
   };
   const file = `adapter-result-${adapterResult.result_id}.json`;
-  writeJson(join34(workerDir(root, worker.run_id, worker.worker_id), file), adapterResult);
+  writeJson(join37(workerDir(root, worker.run_id, worker.worker_id), file), adapterResult);
   worker.status = "decision_submitted";
   worker.updated_at = timestamp;
-  writeJson(join34(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
+  writeJson(join37(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
   const run = loadRun(root, worker.run_id);
   const artifact = createArtifact(root, run, "execute", {
     type: "decision",
@@ -16385,10 +19292,10 @@ function buildPatchOperations(args) {
   return operations;
 }
 function transitionKey(kind, value) {
-  return `${kind}:${createHash8("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `${kind}:${createHash11("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function loadPlanGraph2(root, runId) {
-  const plan = readJson(join34(root, "runs", runId, "plan-graph.json"), null);
+  const plan = readJson(join37(root, "runs", runId, "plan-graph.json"), null);
   if (!plan) throw new Error(`\u627E\u4E0D\u5230 plan graph\uFF1A${runId}`);
   return plan;
 }
@@ -16399,8 +19306,8 @@ function getPlanNode(plan, id) {
 }
 
 // src/commands/project-workspace.mjs
-import { existsSync as existsSync25, readFileSync as readFileSync18 } from "node:fs";
-import { basename as basename5, join as join35 } from "node:path";
+import { existsSync as existsSync28, readFileSync as readFileSync21 } from "node:fs";
+import { basename as basename8, join as join38 } from "node:path";
 
 // src/core/policy-defaults.mjs
 function defaultGatePolicy(timestamp) {
@@ -16435,12 +19342,22 @@ function defaultExecutionPolicy(timestamp) {
       lease_seconds: 1800
     },
     execution_router: {
-      factory_min_duration_minutes: 30,
       force_factory_risks: ["critical"],
       factory_on_isolation: true,
       factory_on_resume: true,
       factory_on_background: true,
       factory_on_parallel_execution: true
+    },
+    cost_governor: {
+      enabled: true,
+      unknown_usage: "record",
+      default_budget: routeBudget(30, 12, 80, 16e4, 3e4),
+      method_pack_budgets: {
+        quick: routeBudget(12, 6, 30, 6e4, 12e3),
+        "disciplined-tdd": routeBudget(30, 12, 80, 16e4, 3e4),
+        "phase-context": routeBudget(30, 12, 80, 16e4, 3e4),
+        governed: routeBudget(60, 24, 180, 36e4, 7e4)
+      }
     },
     budgets: {
       max_changed_files_per_patch: 20,
@@ -16459,6 +19376,15 @@ function defaultExecutionPolicy(timestamp) {
       ttl_minutes: 60,
       required_capabilities: { merge: "merge_apply", adapter_baseline: "adapter_baseline_update" }
     }
+  };
+}
+function routeBudget(wallMinutes, agentTurns, toolCalls, inputTokens, outputTokens) {
+  return {
+    max_wall_minutes: wallMinutes,
+    max_agent_turns: agentTurns,
+    max_tool_calls: toolCalls,
+    max_input_tokens: inputTokens,
+    max_output_tokens: outputTokens
   };
 }
 function defaultQualityPolicy(timestamp) {
@@ -16487,29 +19413,29 @@ function initProject(args) {
   const projectDir = projectRoot(args);
   const root = storeRoot(projectDir);
   const timestamp = now();
-  const firstInit = !existsSync25(join35(root, "project.json"));
-  const projectName = String(args.name || basename5(projectDir) || "apex-v2-project");
+  const firstInit = !existsSync28(join38(root, "project.json"));
+  const projectName = String(args.name || basename8(projectDir) || "apex-v2-project");
   for (const dir of [
     root,
-    join35(root, "intake"),
-    join35(root, "roadmap"),
-    join35(root, "knowledge"),
-    join35(root, "risks"),
-    join35(root, "runs"),
-    join35(root, "artifacts"),
-    join35(root, "derived"),
-    join35(root, "policies"),
-    join35(root, "learning"),
-    join35(root, "approvals"),
-    join35(root, "metrics"),
-    join35(root, "adapters"),
-    join35(root, "adapters", "history"),
-    join35(root, "notifications")
+    join38(root, "intake"),
+    join38(root, "roadmap"),
+    join38(root, "knowledge"),
+    join38(root, "risks"),
+    join38(root, "runs"),
+    join38(root, "artifacts"),
+    join38(root, "derived"),
+    join38(root, "policies"),
+    join38(root, "learning"),
+    join38(root, "approvals"),
+    join38(root, "metrics"),
+    join38(root, "adapters"),
+    join38(root, "adapters", "history"),
+    join38(root, "notifications")
   ]) {
     ensureDir(dir);
   }
   if (firstInit) {
-    writeJson(join35(root, "project.json"), {
+    writeJson(join38(root, "project.json"), {
       schema_version: SCHEMA_VERSION,
       format_version: 1,
       revision: 0,
@@ -16526,8 +19452,8 @@ function initProject(args) {
         parallel_workers: 6
       }
     });
-    writeJson(join35(root, "intake", "items.json"), []);
-    writeJson(join35(root, "roadmap", "graph.json"), {
+    writeJson(join38(root, "intake", "items.json"), []);
+    writeJson(join38(root, "roadmap", "graph.json"), {
       schema_version: SCHEMA_VERSION,
       updated_at: timestamp,
       milestones: [],
@@ -16537,30 +19463,31 @@ function initProject(args) {
         active_nodes: 5
       }
     });
-    writeJson(join35(root, "risks", "register.json"), []);
-    writeJson(join35(root, "policies", "gates.json"), defaultGatePolicy(timestamp));
-    writeJson(join35(root, "policies", "retry.json"), defaultRetryPolicy(timestamp));
-    writeJson(join35(root, "policies", "execution.json"), defaultExecutionPolicy(timestamp));
-    writeJson(join35(root, "policies", "quality.json"), defaultQualityPolicy(timestamp));
-    writeJson(join35(root, "policies", "notifications.json"), defaultNotificationPolicy(timestamp));
-    writeJson(join35(root, "approvals", "items.json"), []);
-    writeJson(join35(root, "learning", "proposals.json"), []);
-    writeJson(join35(root, "notifications", "outbox.json"), []);
+    writeJson(join38(root, "risks", "register.json"), []);
+    writeJson(join38(root, "policies", "gates.json"), defaultGatePolicy(timestamp));
+    writeJson(join38(root, "policies", "retry.json"), defaultRetryPolicy(timestamp));
+    writeJson(join38(root, "policies", "execution.json"), defaultExecutionPolicy(timestamp));
+    writeJson(join38(root, "policies", "method-packs.json"), defaultMethodPackRegistry(timestamp));
+    writeJson(join38(root, "policies", "quality.json"), defaultQualityPolicy(timestamp));
+    writeJson(join38(root, "policies", "notifications.json"), defaultNotificationPolicy(timestamp));
+    writeJson(join38(root, "approvals", "items.json"), []);
+    writeJson(join38(root, "learning", "proposals.json"), []);
+    writeJson(join38(root, "notifications", "outbox.json"), []);
   }
-  if (!existsSync25(join35(root, "policies", "retry.json"))) {
-    writeJson(join35(root, "policies", "retry.json"), defaultRetryPolicy(timestamp));
+  if (!existsSync28(join38(root, "policies", "retry.json"))) {
+    writeJson(join38(root, "policies", "retry.json"), defaultRetryPolicy(timestamp));
   } else {
-    const retryPolicy = readJson(join35(root, "policies", "retry.json"));
+    const retryPolicy = readJson(join38(root, "policies", "retry.json"));
     retryPolicy.max_attempts.claude = retryPolicy.max_attempts.claude || 3;
     retryPolicy.max_attempts.gemini = retryPolicy.max_attempts.gemini || 3;
     retryPolicy.max_attempts.host = retryPolicy.max_attempts.host || 1;
     retryPolicy.max_attempts["deepseek-runner"] = retryPolicy.max_attempts["deepseek-runner"] || 3;
-    writeJson(join35(root, "policies", "retry.json"), retryPolicy);
+    writeJson(join38(root, "policies", "retry.json"), retryPolicy);
   }
-  if (!existsSync25(join35(root, "policies", "execution.json"))) {
-    writeJson(join35(root, "policies", "execution.json"), defaultExecutionPolicy(timestamp));
+  if (!existsSync28(join38(root, "policies", "execution.json"))) {
+    writeJson(join38(root, "policies", "execution.json"), defaultExecutionPolicy(timestamp));
   } else {
-    const executionPolicy = readJson(join35(root, "policies", "execution.json"));
+    const executionPolicy = readJson(join38(root, "policies", "execution.json"));
     if (!executionPolicy.interactive_workspace_patch) {
       executionPolicy.interactive_workspace_patch = { enabled: true };
       executionPolicy.updated_at = timestamp;
@@ -16571,6 +19498,10 @@ function initProject(args) {
     }
     if (!executionPolicy.execution_router) {
       executionPolicy.execution_router = defaultExecutionPolicy(timestamp).execution_router;
+      executionPolicy.updated_at = timestamp;
+    }
+    if (!executionPolicy.cost_governor) {
+      executionPolicy.cost_governor = defaultExecutionPolicy(timestamp).cost_governor;
       executionPolicy.updated_at = timestamp;
     }
     if (!executionPolicy.permissions.adapter_fallback_order) {
@@ -16592,12 +19523,15 @@ function initProject(args) {
       };
       executionPolicy.updated_at = timestamp;
     }
-    writeJson(join35(root, "policies", "execution.json"), executionPolicy);
+    writeJson(join38(root, "policies", "execution.json"), executionPolicy);
   }
-  if (!existsSync25(join35(root, "policies", "quality.json"))) {
-    writeJson(join35(root, "policies", "quality.json"), defaultQualityPolicy(timestamp));
+  if (!existsSync28(join38(root, "policies", "method-packs.json"))) {
+    writeJson(join38(root, "policies", "method-packs.json"), defaultMethodPackRegistry(timestamp));
+  }
+  if (!existsSync28(join38(root, "policies", "quality.json"))) {
+    writeJson(join38(root, "policies", "quality.json"), defaultQualityPolicy(timestamp));
   } else {
-    const qualityPolicy = readJson(join35(root, "policies", "quality.json"));
+    const qualityPolicy = readJson(join38(root, "policies", "quality.json"));
     if (qualityPolicy.block_new_runs_on_smoke_failure == null) {
       qualityPolicy.block_new_runs_on_smoke_failure = true;
       qualityPolicy.updated_at = timestamp;
@@ -16626,20 +19560,20 @@ function initProject(args) {
       qualityPolicy.rolling_run_count = 20;
       qualityPolicy.updated_at = timestamp;
     }
-    writeJson(join35(root, "policies", "quality.json"), qualityPolicy);
+    writeJson(join38(root, "policies", "quality.json"), qualityPolicy);
   }
-  if (!existsSync25(join35(root, "approvals", "items.json"))) writeJson(join35(root, "approvals", "items.json"), []);
+  if (!existsSync28(join38(root, "approvals", "items.json"))) writeJson(join38(root, "approvals", "items.json"), []);
   migrateApprovalRecords(root);
-  if (!existsSync25(join35(root, "policies", "notifications.json"))) {
-    writeJson(join35(root, "policies", "notifications.json"), defaultNotificationPolicy(timestamp));
+  if (!existsSync28(join38(root, "policies", "notifications.json"))) {
+    writeJson(join38(root, "policies", "notifications.json"), defaultNotificationPolicy(timestamp));
   }
-  if (!existsSync25(join35(root, "notifications", "outbox.json"))) {
-    writeJson(join35(root, "notifications", "outbox.json"), []);
+  if (!existsSync28(join38(root, "notifications", "outbox.json"))) {
+    writeJson(join38(root, "notifications", "outbox.json"), []);
   }
   migrateNotificationState(root, timestamp);
   writeKnowledgeBase(root, timestamp);
-  writeTextIfMissing(join35(root, "derived", "README.md"), derivedReadme());
-  writeTextIfMissing(join35(root, "events.jsonl"), "");
+  writeTextIfMissing(join38(root, "derived", "README.md"), derivedReadme());
+  writeTextIfMissing(join38(root, "events.jsonl"), "");
   if (firstInit) {
     const event = appendEvent(root, "project.initialized", "apex-v2", {
       project_name: projectName
@@ -16649,13 +19583,13 @@ function initProject(args) {
   console.log(`\u5DF2\u521D\u59CB\u5316\u9879\u76EE\u7EA7\u5DE5\u4F5C\u533A\uFF1A${root}`);
 }
 function writeKnowledgeBase(root, timestamp) {
-  const knowledgeDir = join35(root, "knowledge");
-  const manifestPath = join35(knowledgeDir, "manifest.json");
+  const knowledgeDir = join38(root, "knowledge");
+  const manifestPath = join38(knowledgeDir, "manifest.json");
   const existing = readJson(manifestPath, null);
   const staleAfter = new Date(Date.parse(timestamp) + 7 * 864e5).toISOString();
   const files = [];
   for (const [name, purpose] of KNOWLEDGE_FILES) {
-    const filePath = join35(knowledgeDir, name);
+    const filePath = join38(knowledgeDir, name);
     writeTextIfMissing(filePath, knowledgeTemplate(name, purpose));
     files.push({
       path: `knowledge/${name}`,
@@ -16709,11 +19643,11 @@ function derivedReadme() {
 function status(args) {
   const projectDir = projectRoot(args);
   const root = requireStore(projectDir);
-  const project = readJson(join35(root, "project.json"));
-  const intake = readJson(join35(root, "intake", "items.json"), []);
-  const roadmap = readJson(join35(root, "roadmap", "graph.json"));
-  const risks = readJson(join35(root, "risks", "register.json"), []);
-  const learning = readJson(join35(root, "learning", "proposals.json"), []);
+  const project = readJson(join38(root, "project.json"));
+  const intake = readJson(join38(root, "intake", "items.json"), []);
+  const roadmap = readJson(join38(root, "roadmap", "graph.json"));
+  const risks = readJson(join38(root, "risks", "register.json"), []);
+  const learning = readJson(join38(root, "learning", "proposals.json"), []);
   console.log(JSON.stringify({
     project: project.project_name,
     project_id: project.project_id,
@@ -16753,8 +19687,8 @@ function validateProject(args) {
     "learning/proposals.json"
   ];
   for (const file of requiredFiles) {
-    const path = join35(root, file);
-    if (!existsSync25(path)) {
+    const path = join38(root, file);
+    if (!existsSync28(path)) {
       errors.push(`\u7F3A\u5C11\u6587\u4EF6\uFF1A${file}`);
       continue;
     }
@@ -16767,21 +19701,21 @@ function validateProject(args) {
     }
   }
   for (const [name] of KNOWLEDGE_FILES) {
-    if (!existsSync25(join35(root, "knowledge", name))) {
+    if (!existsSync28(join38(root, "knowledge", name))) {
       errors.push(`\u7F3A\u5C11\u77E5\u8BC6\u6587\u4EF6\uFF1Aknowledge/${name}`);
     }
   }
-  const intake = readJson(join35(root, "intake", "items.json"), []);
-  const roadmap = readJson(join35(root, "roadmap", "graph.json"), null);
-  const project = readJson(join35(root, "project.json"), null);
+  const intake = readJson(join38(root, "intake", "items.json"), []);
+  const roadmap = readJson(join38(root, "roadmap", "graph.json"), null);
+  const project = readJson(join38(root, "project.json"), null);
   if (!Array.isArray(intake)) errors.push("intake/items.json \u5FC5\u987B\u662F\u6570\u7EC4");
   if (!roadmap || !Array.isArray(roadmap.nodes) || !Array.isArray(roadmap.edges)) {
     errors.push("roadmap/graph.json \u5FC5\u987B\u5305\u542B nodes \u548C edges \u6570\u7EC4");
   }
   if (!project?.project_id) errors.push("project.json \u7F3A\u5C11 project_id");
   if (args["strict-knowledge"]) {
-    const manifest = readJson(join35(root, "knowledge", "manifest.json"), null);
-    const index = existsSync25(join35(root, "knowledge", "index.md")) ? readFileSync18(join35(root, "knowledge", "index.md"), "utf8") : "";
+    const manifest = readJson(join38(root, "knowledge", "manifest.json"), null);
+    const index = existsSync28(join38(root, "knowledge", "index.md")) ? readFileSync21(join38(root, "knowledge", "index.md"), "utf8") : "";
     if (!manifest || manifest.version < 1) {
       errors.push("strict-knowledge \u8981\u6C42 knowledge/manifest.json version >= 1");
     }
@@ -16803,34 +19737,138 @@ function validateProject(args) {
   console.log(`\u9879\u76EE\u6821\u9A8C\u901A\u8FC7\uFF1A${root}`);
 }
 
+// src/commands/git-delivery.mjs
+import { join as join39 } from "node:path";
+function handleGitDeliveryCommand(action, args) {
+  const projectDir = projectRoot(args);
+  const root = requireStore(projectDir);
+  if (action === "discover") {
+    const delivery = discoverGitDelivery(projectDir, discoveryOptions(args));
+    if (args.record) {
+      ensureDir(join39(root, "delivery"));
+      writeJson(join39(root, "delivery", "git.json"), delivery);
+      recordEvent(root, "git.delivery.discovered", {
+        repository_id: delivery.repository.repository_id,
+        branch: delivery.current_branch.name,
+        worktree_count: delivery.worktrees.length
+      });
+    }
+    console.log(JSON.stringify(delivery, null, 2));
+    return;
+  }
+  if (action === "guard") {
+    const delivery = args.recorded ? readJson(join39(root, "delivery", "git.json"), null) : discoverGitDelivery(projectDir, discoveryOptions(args));
+    if (!delivery) throw new Error("\u627E\u4E0D\u5230 recorded Git Delivery context");
+    console.log(JSON.stringify(assertGitDeliveryGuards(delivery, {
+      allowProtectedBranch: Boolean(args["allow-protected-branch"]),
+      componentId: args["component-id"] ? String(args["component-id"]) : void 0,
+      maxStagedFiles: args["max-staged-files"] == null ? void 0 : Number(args["max-staged-files"])
+    }), null, 2));
+    return;
+  }
+  if (action === "claim") {
+    const owner = ownerInput(args);
+    const claim = claimCheckout(projectDir, owner);
+    recordEvent(root, "git.checkout.claimed", {
+      repository_id: claim.repository_id,
+      checkout_path: claim.checkout_path,
+      owner: claim.owner,
+      claim_token: claim.claim_token
+    });
+    console.log(JSON.stringify(claim, null, 2));
+    return;
+  }
+  if (action === "release") {
+    const released = releaseCheckout(projectDir, {
+      ...ownerInput(args),
+      claim_token: required(args, "claim-token")
+    });
+    recordEvent(root, "git.checkout.released", {
+      repository_id: released.repository_id,
+      checkout_path: released.checkout_path,
+      owner: released.owner,
+      claim_token: released.claim_token
+    });
+    console.log(JSON.stringify(released, null, 2));
+    return;
+  }
+  if (action === "claim-status") {
+    console.log(JSON.stringify(readCheckoutClaim(projectDir), null, 2));
+    return;
+  }
+  throw new Error(`\u672A\u77E5 project git \u52A8\u4F5C\uFF1A${action || "(\u7A7A)"}`);
+}
+function discoveryOptions(args) {
+  return {
+    protectedBranches: args["protected-branches"] ? splitList(args["protected-branches"]) : void 0,
+    components: parseJsonArray(args["components-json"], "components-json"),
+    pullRequest: parseJsonObject(args["pr-json"], "pr-json")
+  };
+}
+function parseJsonArray(value, name) {
+  if (value == null) return void 0;
+  const parsed = parseJson(value, name);
+  if (!Array.isArray(parsed)) throw new Error(`--${name} \u5FC5\u987B\u662F JSON \u6570\u7EC4`);
+  return parsed;
+}
+function parseJsonObject(value, name) {
+  if (value == null) return void 0;
+  const parsed = parseJson(value, name);
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error(`--${name} \u5FC5\u987B\u662F JSON \u5BF9\u8C61`);
+  }
+  return parsed;
+}
+function parseJson(value, name) {
+  try {
+    return JSON.parse(String(value));
+  } catch (error) {
+    throw new Error(`--${name} \u4E0D\u662F\u6709\u6548 JSON\uFF1A${error.message}`);
+  }
+}
+function ownerInput(args) {
+  return {
+    owner_id: required(args, "owner-id"),
+    run_id: args["run-id"] ? String(args["run-id"]) : void 0,
+    worker_id: args["worker-id"] ? String(args["worker-id"]) : void 0
+  };
+}
+function recordEvent(root, type, payload) {
+  const event = appendEvent(root, type, "apex-v2", payload);
+  updateProject(root, {
+    last_event_id: event.event_id,
+    updated_at: event.timestamp
+  });
+}
+
 // src/core/heartbeat-scheduler.mjs
-import { createHash as createHash9 } from "node:crypto";
-import { chmodSync as chmodSync4, existsSync as existsSync26, mkdirSync as mkdirSync7 } from "node:fs";
+import { createHash as createHash12 } from "node:crypto";
+import { chmodSync as chmodSync4, existsSync as existsSync29, mkdirSync as mkdirSync8 } from "node:fs";
 import { homedir as homedir6 } from "node:os";
-import { join as join36, resolve as resolve16 } from "node:path";
-import { spawnSync as spawnSync12 } from "node:child_process";
+import { join as join40, resolve as resolve19 } from "node:path";
+import { spawnSync as spawnSync13 } from "node:child_process";
 function heartbeatJobId(projectDir) {
-  const suffix = createHash9("sha256").update(resolve16(projectDir)).digest("hex").slice(0, 12);
+  const suffix = createHash12("sha256").update(resolve19(projectDir)).digest("hex").slice(0, 12);
   return `com.apex-forge-v2.heartbeat.${suffix}`;
 }
 function installHeartbeatScheduler(projectDir, options = {}) {
-  const resolvedProject = resolve16(projectDir);
-  const root = join36(resolvedProject, ".apex-v2");
-  if (!existsSync26(join36(root, "project.json"))) throw new Error(`\u9879\u76EE\u5C1A\u672A\u521D\u59CB\u5316\uFF1A${root}`);
+  const resolvedProject = resolve19(projectDir);
+  const root = join40(resolvedProject, ".apex-v2");
+  if (!existsSync29(join40(root, "project.json"))) throw new Error(`\u9879\u76EE\u5C1A\u672A\u521D\u59CB\u5316\uFF1A${root}`);
   const intervalMinutes = Number(options.intervalMinutes || 60);
   if (!Number.isInteger(intervalMinutes) || intervalMinutes < 1) {
     throw new Error("heartbeat intervalMinutes \u5FC5\u987B\u662F\u6B63\u6574\u6570");
   }
   const home = options.homeDir || homedir6();
-  const stateDir = join36(root, "heartbeat");
-  const logDir = join36(stateDir, "logs");
-  mkdirSync7(logDir, { recursive: true });
+  const stateDir = join40(root, "heartbeat");
+  const logDir = join40(stateDir, "logs");
+  mkdirSync8(logDir, { recursive: true });
   const label = heartbeatJobId(resolvedProject);
-  const runnerPath = join36(stateDir, "run.zsh");
-  const statePlistPath = join36(stateDir, `${label}.plist`);
-  const launchAgentsDir = join36(home, "Library", "LaunchAgents");
-  const installedPlistPath = join36(launchAgentsDir, `${label}.plist`);
-  mkdirSync7(launchAgentsDir, { recursive: true });
+  const runnerPath = join40(stateDir, "run.zsh");
+  const statePlistPath = join40(stateDir, `${label}.plist`);
+  const launchAgentsDir = join40(home, "Library", "LaunchAgents");
+  const installedPlistPath = join40(launchAgentsDir, `${label}.plist`);
+  mkdirSync8(launchAgentsDir, { recursive: true });
   const envFile = options.envFile || defaultEnvFile(home);
   atomicWriteFile(runnerPath, renderHeartbeatRunner({
     projectDir: resolvedProject,
@@ -16844,14 +19882,14 @@ function installHeartbeatScheduler(projectDir, options = {}) {
     runnerPath,
     projectDir: resolvedProject,
     intervalSeconds: intervalMinutes * 60,
-    stdoutPath: join36(logDir, "stdout.log"),
-    stderrPath: join36(logDir, "stderr.log")
+    stdoutPath: join40(logDir, "stdout.log"),
+    stderrPath: join40(logDir, "stderr.log")
   });
   atomicWriteFile(statePlistPath, plist);
   atomicWriteFile(installedPlistPath, plist);
   let activation = null;
   if (options.activate) {
-    const launcher = options.launcher || spawnSync12;
+    const launcher = options.launcher || spawnSync13;
     const domain = `gui/${process.getuid()}`;
     launcher("launchctl", ["bootout", domain, installedPlistPath], { encoding: "utf8" });
     const bootstrap = launcher("launchctl", ["bootstrap", domain, installedPlistPath], { encoding: "utf8" });
@@ -16877,7 +19915,7 @@ function installHeartbeatScheduler(projectDir, options = {}) {
 }
 function heartbeatSchedulerStatus(projectDir, options = {}) {
   const label = heartbeatJobId(projectDir);
-  const launcher = options.launcher || spawnSync12;
+  const launcher = options.launcher || spawnSync13;
   const domain = `gui/${process.getuid()}`;
   const status2 = launcher("launchctl", ["print", `${domain}/${label}`], { encoding: "utf8" });
   const output = `${status2.stdout || ""}
@@ -16929,8 +19967,8 @@ ${source}exec ${shell(options.nodePath)} ${shell(options.cliPath)} project heart
 `;
 }
 function defaultEnvFile(home) {
-  const candidate = join36(home, ".codex", "provider-modes", "third-party.env");
-  return existsSync26(candidate) ? candidate : null;
+  const candidate = join40(home, ".codex", "provider-modes", "third-party.env");
+  return existsSync29(candidate) ? candidate : null;
 }
 function xml(value) {
   return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
@@ -16944,22 +19982,22 @@ function numberFrom(value, pattern) {
 }
 
 // src/core/heartbeat-daemon-control.mjs
-import { closeSync as closeSync2, openSync as openSync2 } from "node:fs";
-import { join as join37, resolve as resolve17 } from "node:path";
-import { spawn, spawnSync as spawnSync13 } from "node:child_process";
+import { closeSync as closeSync3, openSync as openSync3 } from "node:fs";
+import { join as join41, resolve as resolve20 } from "node:path";
+import { spawn, spawnSync as spawnSync14 } from "node:child_process";
 var DAEMON = new URL("./heartbeat-daemon.mjs", import.meta.url).pathname;
 function startHeartbeatDaemon(projectDir, options = {}) {
-  const resolvedProject = resolve17(projectDir);
-  const root = join37(resolvedProject, ".apex-v2");
-  const statePath = join37(root, "heartbeat", "daemon.json");
+  const resolvedProject = resolve20(projectDir);
+  const root = join41(resolvedProject, ".apex-v2");
+  const statePath = join41(root, "heartbeat", "daemon.json");
   const current = readJson(statePath, null);
   if (current && processAlive2(current.pid)) return { ...current, already_running: true };
   const intervalMinutes = Number(options.intervalMinutes || 60);
   if (!Number.isInteger(intervalMinutes) || intervalMinutes < 1) {
     throw new Error("heartbeat daemon intervalMinutes \u5FC5\u987B\u662F\u6B63\u6574\u6570");
   }
-  const stdoutFd = openSync2(join37(root, "heartbeat", "logs", "daemon-stdout.log"), "a");
-  const stderrFd = openSync2(join37(root, "heartbeat", "logs", "daemon-stderr.log"), "a");
+  const stdoutFd = openSync3(join41(root, "heartbeat", "logs", "daemon-stdout.log"), "a");
+  const stderrFd = openSync3(join41(root, "heartbeat", "logs", "daemon-stderr.log"), "a");
   const child = spawn(process.execPath, [options.daemonPath || DAEMON, resolvedProject, String(intervalMinutes * 6e4)], {
     cwd: resolvedProject,
     detached: true,
@@ -16967,8 +20005,8 @@ function startHeartbeatDaemon(projectDir, options = {}) {
     stdio: ["ignore", stdoutFd, stderrFd]
   });
   child.unref();
-  closeSync2(stdoutFd);
-  closeSync2(stderrFd);
+  closeSync3(stdoutFd);
+  closeSync3(stderrFd);
   const state = {
     pid: child.pid,
     started_at: now(),
@@ -16979,7 +20017,7 @@ function startHeartbeatDaemon(projectDir, options = {}) {
   return { ...state, already_running: false };
 }
 function heartbeatDaemonStatus(projectDir) {
-  const state = readJson(join37(resolve17(projectDir), ".apex-v2", "heartbeat", "daemon.json"), null);
+  const state = readJson(join41(resolve20(projectDir), ".apex-v2", "heartbeat", "daemon.json"), null);
   return {
     configured: Boolean(state),
     running: Boolean(state && processAlive2(state.pid)),
@@ -16987,7 +20025,7 @@ function heartbeatDaemonStatus(projectDir) {
   };
 }
 function stopHeartbeatDaemon(projectDir) {
-  const state = readJson(join37(resolve17(projectDir), ".apex-v2", "heartbeat", "daemon.json"), null);
+  const state = readJson(join41(resolve20(projectDir), ".apex-v2", "heartbeat", "daemon.json"), null);
   if (!state || !processAlive2(state.pid)) return { stopped: false, reason: "not-running" };
   signalDaemon(state.pid, "SIGTERM");
   waitForExit(state.pid, 1e3);
@@ -17009,7 +20047,7 @@ function processAlive2(pid) {
   } catch {
     return false;
   }
-  const state = spawnSync13("ps", ["-o", "stat=", "-p", String(pid)], {
+  const state = spawnSync14("ps", ["-o", "stat=", "-p", String(pid)], {
     encoding: "utf8"
   });
   const status2 = String(state.stdout || "").trim();
@@ -17036,7 +20074,7 @@ function waitForExit(pid, timeoutMs) {
 }
 
 // src/core/project-audit.mjs
-import { spawnSync as spawnSync14 } from "node:child_process";
+import { spawnSync as spawnSync15 } from "node:child_process";
 function runProjectAuditTests(projectDir, options = {}) {
   if (options.skip) {
     return {
@@ -17054,7 +20092,7 @@ function runProjectAuditTests(projectDir, options = {}) {
   }
   const command = options.command || "npm test";
   const startedAt = Date.now();
-  const execution = spawnSync14(command, {
+  const execution = spawnSync15(command, {
     cwd: projectDir,
     encoding: "utf8",
     shell: true,
@@ -17186,27 +20224,27 @@ ${JSON.stringify(report.summary, null, 2)}
 }
 
 // src/audit/project-audit-summary.mjs
-import { readdirSync as readdirSync17 } from "node:fs";
-import { join as join38 } from "node:path";
+import { readdirSync as readdirSync18 } from "node:fs";
+import { join as join42 } from "node:path";
 function buildAuditSummary(root, projectDir, testExecution, deps) {
   const { evaluateAdapterCapabilityDrift: evaluateAdapterCapabilityDrift2, findFilesByName: findFilesByName2, findRunFiles: findRunFiles2, getWorkers: getWorkers2, listRunStates: listRunStates2, workerSuccessfullyCompleted: workerSuccessfullyCompleted2 } = deps;
-  const project = readJson(join38(root, "project.json"));
-  const intake = readJson(join38(root, "intake", "items.json"), []);
-  const roadmap = readJson(join38(root, "roadmap", "graph.json"));
-  const learning = readJson(join38(root, "learning", "proposals.json"), []);
-  const approvals = readJson(join38(root, "approvals", "items.json"), []);
-  const risks = readJson(join38(root, "risks", "register.json"), []);
-  const latestMetrics = readJson(join38(root, "metrics", "latest.json"), null);
-  const latestAdapterSmoke = readJson(join38(root, "adapters", "latest-live-smoke.json"), null);
-  const qualityPolicy = readJson(join38(root, "policies", "quality.json"), null);
-  const notificationPolicy = readJson(join38(root, "policies", "notifications.json"), null);
-  const notifications = readJson(join38(root, "notifications", "outbox.json"), []);
-  const adapterTrend = readJson(join38(root, "adapters", "latest-trend.json"), buildAdapterTrend(root));
+  const project = readJson(join42(root, "project.json"));
+  const intake = readJson(join42(root, "intake", "items.json"), []);
+  const roadmap = readJson(join42(root, "roadmap", "graph.json"));
+  const learning = readJson(join42(root, "learning", "proposals.json"), []);
+  const approvals = readJson(join42(root, "approvals", "items.json"), []);
+  const risks = readJson(join42(root, "risks", "register.json"), []);
+  const latestMetrics = readJson(join42(root, "metrics", "latest.json"), null);
+  const latestAdapterSmoke = readJson(join42(root, "adapters", "latest-live-smoke.json"), null);
+  const qualityPolicy = readJson(join42(root, "policies", "quality.json"), null);
+  const notificationPolicy = readJson(join42(root, "policies", "notifications.json"), null);
+  const notifications = readJson(join42(root, "notifications", "outbox.json"), []);
+  const adapterTrend = readJson(join42(root, "adapters", "latest-trend.json"), buildAdapterTrend(root));
   const runs = listRunStates2(root);
   const carryForward = runs.flatMap((run) => run.carry_forward || []);
   const artifacts = listAllArtifacts(root);
-  const schemaCount = readdirSync17(join38(projectDir, "schemas")).filter((file) => file.endsWith(".json")).length;
-  const capabilities = readJson(join38(projectDir, "capabilities.json"), { groups: [] });
+  const schemaCount = readdirSync18(join42(projectDir, "schemas")).filter((file) => file.endsWith(".json")).length;
+  const capabilities = readJson(join42(projectDir, "capabilities.json"), { groups: [] });
   const capabilityCommandCount = (capabilities.groups || []).reduce((sum, group) => sum + (group.commands?.length || 0), 0);
   const verificationReports = findRunFiles2(root, "verification-report.json");
   const verificationReportData = verificationReports.map((file) => readJson(file));
@@ -17219,8 +20257,8 @@ function buildAuditSummary(root, projectDir, testExecution, deps) {
   const codexAdapter = inspectWorkerExecutor("codex");
   const agentAdapters = inspectWorkerExecutors();
   const adapterDrift = evaluateAdapterCapabilityDrift2(root);
-  const retryPolicy = readJson(join38(root, "policies", "retry.json"), null);
-  const eventLog = inspectEventLog(join38(root, "events.jsonl"));
+  const retryPolicy = readJson(join42(root, "policies", "retry.json"), null);
+  const eventLog = inspectEventLog(join42(root, "events.jsonl"));
   const reconciliationReports = findFilesByName2(root, (name) => name.startsWith("reconcile-") && name.endsWith(".json")).map((file) => readJson(file));
   const contractReport = scanProjectContracts(projectDir);
   const planGraphs = findRunFiles2(root, "plan-graph.json").map((file) => readJson(file));
@@ -17381,6 +20419,10 @@ function main() {
       handleRoadmapCommand(subcommand, parseArgs(rest));
       return;
     }
+    if (command === "capability") {
+      handleCapabilityCommand(subcommand, parseArgs(rest));
+      return;
+    }
     if (command === "run") {
       handleRunCommand(subcommand, parseArgs(rest));
       return;
@@ -17471,9 +20513,9 @@ function proposeLearning(args) {
 function proposeLearningInternal(root, run) {
   requirePassedNode(run, "integrate");
   const timestamp = now();
-  const verification = readJson(join39(root, "runs", run.run_id, "verification-report.json"), null);
-  const review = readJson(join39(root, "runs", run.run_id, "review-report.json"), null);
-  const integration = readJson(join39(root, "runs", run.run_id, "integration-report.json"), null);
+  const verification = readJson(join43(root, "runs", run.run_id, "verification-report.json"), null);
+  const review = readJson(join43(root, "runs", run.run_id, "review-report.json"), null);
+  const integration = readJson(join43(root, "runs", run.run_id, "integration-report.json"), null);
   if (!verification || verification.status !== "PASS") throw new Error("\u7F3A\u5C11 PASS verification-report\uFF0C\u4E0D\u80FD\u751F\u6210 learning proposal");
   if (!review || review.status !== "PASS") throw new Error("\u7F3A\u5C11 PASS review-report\uFF0C\u4E0D\u80FD\u751F\u6210 learning proposal");
   if (!integration || !["MERGED", "NOOP"].includes(integration.status)) throw new Error("\u7F3A\u5C11 MERGED/NOOP integration-report\uFF0C\u4E0D\u80FD\u751F\u6210 learning proposal");
@@ -17502,7 +20544,7 @@ function proposeLearningInternal(root, run) {
       confidence: 0.9
     }
   ];
-  const proposalsPath = join39(root, "learning", "proposals.json");
+  const proposalsPath = join43(root, "learning", "proposals.json");
   const proposals = readJson(proposalsPath, []);
   const created = [];
   for (const candidate of candidates) {
@@ -17529,7 +20571,7 @@ function proposeLearningInternal(root, run) {
     created.push(proposal);
   }
   writeJson(proposalsPath, proposals);
-  writeJson(join39(root, "runs", run.run_id, "learning-report.json"), {
+  writeJson(join43(root, "runs", run.run_id, "learning-report.json"), {
     schema_version: SCHEMA_VERSION,
     report_id: shortId("learning-report"),
     run_id: run.run_id,
@@ -17556,14 +20598,14 @@ function proposeLearningInternal(root, run) {
 }
 function listLearning(args) {
   const root = requireStore(projectRoot(args));
-  const proposals = readJson(join39(root, "learning", "proposals.json"), []);
+  const proposals = readJson(join43(root, "learning", "proposals.json"), []);
   const status2 = args.status ? String(args.status) : null;
   console.log(JSON.stringify(status2 ? proposals.filter((proposal) => proposal.status === status2) : proposals, null, 2));
 }
 function approveLearning(args) {
   const root = requireStore(projectRoot(args));
   const id = required(args, "id");
-  const proposal = withProjectTransaction(resolve18(root, ".."), {
+  const proposal = withProjectTransaction(resolve21(root, ".."), {
     kind: "learning-approve",
     idempotencyKey: `learning-approve:${id}`
   }, () => {
@@ -17581,7 +20623,7 @@ function approveLearning(args) {
 function applyLearning(args) {
   const root = requireStore(projectRoot(args));
   const id = required(args, "id");
-  const proposal = withProjectTransaction(resolve18(root, ".."), {
+  const proposal = withProjectTransaction(resolve21(root, ".."), {
     kind: "learning-apply",
     idempotencyKey: `learning-apply:${id}`
   }, () => {
@@ -17603,6 +20645,10 @@ function applyLearning(args) {
   console.log(JSON.stringify(proposal, null, 2));
 }
 function handleProject(subcommand, args) {
+  if (subcommand === "git") {
+    handleGitDeliveryCommand(args._[0], args);
+    return;
+  }
   if (subcommand === "tick") {
     projectTick(args);
     return;
@@ -17662,9 +20708,9 @@ function projectMetrics(args) {
   const root = requireStore(projectRoot(args));
   const snapshot = buildProjectMetrics(root);
   if (args.record) {
-    ensureDir(join39(root, "metrics"));
-    writeJson(join39(root, "metrics", `${snapshot.snapshot_id}.json`), snapshot);
-    writeJson(join39(root, "metrics", "latest.json"), snapshot);
+    ensureDir(join43(root, "metrics"));
+    writeJson(join43(root, "metrics", `${snapshot.snapshot_id}.json`), snapshot);
+    writeJson(join43(root, "metrics", "latest.json"), snapshot);
     const event = appendEvent(root, "project.metrics.recorded", "apex-v2", { snapshot_id: snapshot.snapshot_id });
     updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
   }
@@ -17674,7 +20720,7 @@ function projectQuality(args) {
   const action = args._[0];
   if (action !== "set") throw new Error(`\u672A\u77E5 project quality \u52A8\u4F5C\uFF1A${action || "(\u7A7A)"}`);
   const root = requireStore(projectRoot(args));
-  const path = join39(root, "policies", "quality.json");
+  const path = join43(root, "policies", "quality.json");
   const policy = readJson(path);
   const mappings = [
     ["max-open-risks", "max_open_risks"],
@@ -17763,18 +20809,18 @@ function reconcileProject(args) {
     report.applied = true;
     report.status = inspection.changes.length > 0 ? "REPAIRED" : "CONSISTENT";
     report.post_check = inspectProjectConsistency(root);
-    const reportDir = join39(root, "reconciliations");
+    const reportDir = join43(root, "reconciliations");
     ensureDir(reportDir);
-    writeJson(join39(reportDir, `${report.report_id}.json`), report);
+    writeJson(join43(reportDir, `${report.report_id}.json`), report);
   }
   console.log(JSON.stringify(report, null, 2));
 }
 function projectTick(args) {
   const root = requireStore(projectRoot(args));
   const timestamp = now();
-  const intakePath = join39(root, "intake", "items.json");
-  const roadmapPath = join39(root, "roadmap", "graph.json");
-  const projectPath = join39(root, "project.json");
+  const intakePath = join43(root, "intake", "items.json");
+  const roadmapPath = join43(root, "roadmap", "graph.json");
+  const projectPath = join43(root, "project.json");
   const intake = readJson(intakePath, []);
   const roadmap = readJson(roadmapPath);
   const project = readJson(projectPath);
@@ -17814,8 +20860,8 @@ function projectTick(args) {
   let activeRunSlots = Math.max(0, project.wip_limits.active_runs - project.active_runs.length);
   let activeNodeSlots = Math.max(0, roadmap.wip_limits.active_nodes - roadmap.nodes.filter((node) => node.status === "active").length);
   const readyNodes = roadmap.nodes.filter((node) => node.status === "ready").sort(compareRoadmapPriority);
-  const qualityPolicy = readJson(join39(root, "policies", "quality.json"));
-  const latestMetrics = readJson(join39(root, "metrics", "latest.json"), null);
+  const qualityPolicy = readJson(join43(root, "policies", "quality.json"));
+  const latestMetrics = readJson(join43(root, "metrics", "latest.json"), null);
   if (readyNodes.length > 0 && qualityPolicy.block_new_runs_on_failure && latestMetrics?.evaluation?.status === "FAIL") {
     throw new Error(`quality gate \u963B\u6B62\u521B\u5EFA\u65B0 run\uFF1A${latestMetrics.evaluation.failures.join(",")}`);
   }
@@ -17824,7 +20870,7 @@ function projectTick(args) {
       trigger: "project.tick"
     });
   }
-  const latestSmoke = readJson(join39(root, "adapters", "latest-live-smoke.json"), null);
+  const latestSmoke = readJson(join43(root, "adapters", "latest-live-smoke.json"), null);
   if (readyNodes.length > 0 && qualityPolicy.block_new_runs_on_smoke_failure && latestSmoke?.status === "FAIL") {
     throw new Error(`adapter smoke gate \u963B\u6B62\u521B\u5EFA\u65B0 run\uFF1A${latestSmoke.results.filter((item) => item.status === "FAIL").map((item) => item.adapter).join(",")}`);
   }
@@ -17965,10 +21011,10 @@ function auditProject(args) {
     checks,
     summary
   };
-  const auditDir = join39(root, "audits");
+  const auditDir = join43(root, "audits");
   ensureDir(auditDir);
-  writeJson(join39(auditDir, `${report.audit_id}.json`), report);
-  writeFileSync14(join39(auditDir, `${report.audit_id}.md`), renderAuditMarkdown(report));
+  writeJson(join43(auditDir, `${report.audit_id}.json`), report);
+  writeFileSync15(join43(auditDir, `${report.audit_id}.md`), renderAuditMarkdown(report));
   const event = appendEvent(root, "project.audit", "apex-v2", {
     audit_id: report.audit_id,
     status: report.status
@@ -17982,7 +21028,7 @@ function auditProject(args) {
   console.log(JSON.stringify(report, null, 2));
 }
 function createIntakeFromAuditGaps(root, report) {
-  const path = join39(root, "intake", "items.json");
+  const path = join43(root, "intake", "items.json");
   const items = readJson(path, []);
   const created = [];
   for (const check2 of report.checks.filter((item) => item.status !== "PASS")) {
@@ -18080,7 +21126,7 @@ function learnReadyRuns(root, runIds, applyLearning2) {
     const run = loadRun(root, runId);
     if (getRunNode(run, "integrate").status !== "passed") continue;
     if (getRunNode(run, "learn").status !== "pending") continue;
-    const transition = withProjectTransaction(resolve18(root, ".."), {
+    const transition = withProjectTransaction(resolve21(root, ".."), {
       kind: "learning-governance",
       idempotencyKey: `learning-governance:${run.run_id}:${applyLearning2 ? "apply" : "propose"}`
     }, () => learnReadyRunTransaction(root, run, applyLearning2)).result;
@@ -18149,7 +21195,7 @@ function runReadyWorkerAdapters(root, runIds, limit) {
 }
 function retryBlockedWorkers(root, runIds, limit) {
   const out = [];
-  const policy = readJson(join39(root, "policies", "retry.json"));
+  const policy = readJson(join43(root, "policies", "retry.json"));
   if (!policy.auto_retry.enabled) return out;
   for (const runId of runIds) {
     if (out.length >= limit) break;
@@ -18239,7 +21285,7 @@ function runReadyCodingAgents(root, runIds, limit, args) {
       } catch (error) {
         worker.status = "blocked";
         worker.updated_at = now();
-        writeJson(join39(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
+        writeJson(join43(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
         out.push({
           run_id: runId,
           worker_id: worker.worker_id,
@@ -18326,7 +21372,7 @@ function completeReadyExecuteNodes(root, runIds) {
   return completed;
 }
 function readDecisionQueue2(root, runId) {
-  return readJson(join39(root, "runs", runId, "decision-queue.json"), {
+  return readJson(join43(root, "runs", runId, "decision-queue.json"), {
     schema_version: SCHEMA_VERSION,
     run_id: runId,
     updated_at: now(),
@@ -18335,18 +21381,18 @@ function readDecisionQueue2(root, runId) {
 }
 function writeDecisionQueue(root, queue) {
   queue.updated_at = now();
-  writeJson(join39(root, "runs", queue.run_id, "decision-queue.json"), queue);
+  writeJson(join43(root, "runs", queue.run_id, "decision-queue.json"), queue);
 }
 function findArtifactsForWorker(root, runId, worker) {
-  const artifactDir = join39(root, "artifacts", runId);
-  if (!existsSync27(artifactDir)) return [];
-  return readDirectoryJsonFiles(artifactDir).map((file) => readJson(join39(artifactDir, file))).filter((artifact) => artifact.refs.some((ref) => ref.startsWith(`${worker.namespace}/`)));
+  const artifactDir = join43(root, "artifacts", runId);
+  if (!existsSync30(artifactDir)) return [];
+  return readDirectoryJsonFiles(artifactDir).map((file) => readJson(join43(artifactDir, file))).filter((artifact) => artifact.refs.some((ref) => ref.startsWith(`${worker.namespace}/`)));
 }
 function findAdapterResultsForWorker(root, worker) {
   const dir = workerDir(root, worker.run_id, worker.worker_id);
-  if (!existsSync27(dir)) return [];
-  const results = readdirSync18(dir).filter((file) => file.startsWith("adapter-result-") && file.endsWith(".json")).map((file) => readJson(join39(dir, file)));
-  const hostResult = readJson(join39(dir, "host-result.json"), null);
+  if (!existsSync30(dir)) return [];
+  const results = readdirSync19(dir).filter((file) => file.startsWith("adapter-result-") && file.endsWith(".json")).map((file) => readJson(join43(dir, file)));
+  const hostResult = readJson(join43(dir, "host-result.json"), null);
   if (hostResult) {
     results.push({
       result_id: hostResult.action_id,
@@ -18359,7 +21405,7 @@ function findAdapterResultsForWorker(root, worker) {
   return results;
 }
 function dispatchReadyWorkers(root, runIds, options = {}) {
-  const project = readJson(join39(root, "project.json"));
+  const project = readJson(join43(root, "project.json"));
   const dispatched = [];
   let available = Math.max(0, project.wip_limits.parallel_workers - countOpenWorkers(root));
   if (available <= 0) return dispatched;
@@ -18391,10 +21437,10 @@ function dispatchReadyWorkers(root, runIds, options = {}) {
   return dispatched;
 }
 function countOpenWorkers(root) {
-  const runsDir = join39(root, "runs");
-  if (!existsSync27(runsDir)) return 0;
+  const runsDir = join43(root, "runs");
+  if (!existsSync30(runsDir)) return 0;
   let count = 0;
-  for (const runEntry of readdirSync18(runsDir, { withFileTypes: true })) {
+  for (const runEntry of readdirSync19(runsDir, { withFileTypes: true })) {
     if (!runEntry.isDirectory()) continue;
     for (const worker of getWorkers(root, runEntry.name)) {
       if (["active", "claimed", "patch_submitted", "blocked"].includes(worker.status)) count += 1;
@@ -18467,8 +21513,8 @@ function passNode(root, runId, nodeId, artifactIds, reason) {
   updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
 }
 function renderAutoMandate(root, run) {
-  const roadmap = readJson(join39(root, "roadmap", "graph.json"));
-  const intake = readJson(join39(root, "intake", "items.json"), []);
+  const roadmap = readJson(join43(root, "roadmap", "graph.json"));
+  const intake = readJson(join43(root, "intake", "items.json"), []);
   const roadmapNode = roadmap.nodes.find((node) => node.id === run.roadmap_node_id);
   const intakeItem = intake.find((item) => item.id === roadmapNode?.source_intake_id);
   return `\u76EE\u6807\uFF1A${roadmapNode?.title || run.roadmap_node_id}
@@ -18483,7 +21529,7 @@ function renderAutoMandate(root, run) {
 \u6210\u529F\u6807\u51C6\uFF1A\u8FDB\u5165 plan_graph \u524D\uFF0C\u5FC5\u987B\u62E5\u6709 context snapshot \u548C\u53EF\u9A8C\u8BC1 PlanGraph\u3002`;
 }
 function updateLearningProposal(root, id, updater) {
-  const path = join39(root, "learning", "proposals.json");
+  const path = join43(root, "learning", "proposals.json");
   const proposals = readJson(path, []);
   const proposal = proposals.find((item) => item.id === id);
   if (!proposal) throw new Error(`\u627E\u4E0D\u5230 learning proposal\uFF1A${id}`);
@@ -18492,20 +21538,20 @@ function updateLearningProposal(root, id, updater) {
   return proposal;
 }
 function getLearningProposal(root, id) {
-  const proposals = readJson(join39(root, "learning", "proposals.json"), []);
+  const proposals = readJson(join43(root, "learning", "proposals.json"), []);
   const proposal = proposals.find((item) => item.id === id);
   if (!proposal) throw new Error(`\u627E\u4E0D\u5230 learning proposal\uFF1A${id}`);
   return proposal;
 }
 function appendLearningToKnowledge(root, proposal) {
-  const target = join39(root, proposal.target_file);
-  if (!target.startsWith(join39(root, "knowledge"))) {
+  const target = join43(root, proposal.target_file);
+  if (!target.startsWith(join43(root, "knowledge"))) {
     throw new Error(`learning proposal \u53EA\u80FD\u5199\u5165 knowledge/\uFF1A${proposal.target_file}`);
   }
   const section = renderAppliedLearningSection(proposal);
-  const existing = existsSync27(target) ? readFileSync19(target, "utf8") : "";
+  const existing = existsSync30(target) ? readFileSync22(target, "utf8") : "";
   if (!existing.includes(`learning_id: ${proposal.id}`)) {
-    writeFileSync14(target, `${existing.trimEnd()}
+    writeFileSync15(target, `${existing.trimEnd()}
 
 ${section}
 `);
@@ -18529,14 +21575,14 @@ ${bullet(proposal.evidence_refs)}
 `;
 }
 function appendAppliedLearning(root) {
-  const proposals = readJson(join39(root, "learning", "proposals.json"), []);
+  const proposals = readJson(join43(root, "learning", "proposals.json"), []);
   for (const proposal of proposals.filter((item) => item.status === "applied")) {
     appendLearningToKnowledge(root, proposal);
   }
 }
 function bumpKnowledgeVersion(root) {
   const timestamp = now();
-  const manifestPath = join39(root, "knowledge", "manifest.json");
+  const manifestPath = join43(root, "knowledge", "manifest.json");
   const manifest = readJson(manifestPath, { version: 0, files: [] });
   manifest.version = Number(manifest.version || 0) + 1;
   manifest.updated_at = timestamp;
@@ -18548,7 +21594,7 @@ function bumpKnowledgeVersion(root) {
   return manifest.version;
 }
 function loadPlanGraph3(root, runId) {
-  const plan = readJson(join39(root, "runs", runId, "plan-graph.json"), null);
+  const plan = readJson(join43(root, "runs", runId, "plan-graph.json"), null);
   if (!plan) throw new Error(`\u627E\u4E0D\u5230 plan graph\uFF1A${runId}`);
   return plan;
 }
@@ -18558,27 +21604,27 @@ function getPlanNode2(plan, planNodeId) {
   return node;
 }
 function listRunStates(root) {
-  const runsDir = join39(root, "runs");
-  if (!existsSync27(runsDir)) return [];
-  return readdirSync18(runsDir, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => readJson(join39(runsDir, entry.name, "run.json"), null)).filter(Boolean);
+  const runsDir = join43(root, "runs");
+  if (!existsSync30(runsDir)) return [];
+  return readdirSync19(runsDir, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => readJson(join43(runsDir, entry.name, "run.json"), null)).filter(Boolean);
 }
 function findRunFiles(root, name) {
-  const runsDir = join39(root, "runs");
-  if (!existsSync27(runsDir)) return [];
+  const runsDir = join43(root, "runs");
+  if (!existsSync30(runsDir)) return [];
   const out = [];
-  for (const runEntry of readdirSync18(runsDir, { withFileTypes: true })) {
+  for (const runEntry of readdirSync19(runsDir, { withFileTypes: true })) {
     if (!runEntry.isDirectory()) continue;
-    const file = join39(runsDir, runEntry.name, name);
-    if (existsSync27(file)) out.push(file);
+    const file = join43(runsDir, runEntry.name, name);
+    if (existsSync30(file)) out.push(file);
   }
   return out;
 }
 function findFilesByName(root, predicate) {
   const out = [];
   function walk(dir) {
-    if (!existsSync27(dir)) return;
-    for (const entry of readdirSync18(dir, { withFileTypes: true })) {
-      const path = join39(dir, entry.name);
+    if (!existsSync30(dir)) return;
+    for (const entry of readdirSync19(dir, { withFileTypes: true })) {
+      const path = join43(dir, entry.name);
       if (entry.isDirectory()) {
         walk(path);
       } else if (entry.isFile() && predicate(entry.name)) {

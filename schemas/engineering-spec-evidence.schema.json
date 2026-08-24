@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/engineering-spec-evidence.schema.json",
+  "title": "Engineering Spec Evidence Output",
+  "type": "object",
+  "required": ["objective", "in_scope", "out_of_scope", "acceptance", "assumptions", "open_questions", "verification_plan"],
+  "properties": {
+    "objective": { "type": "string", "minLength": 1 },
+    "in_scope": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 },
+    "out_of_scope": { "type": "array", "items": { "type": "string" } },
+    "acceptance": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 },
+    "assumptions": { "type": "array", "items": { "type": "string" } },
+    "open_questions": { "type": "array", "items": { "type": "string" } },
+    "verification_plan": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 }
+  },
+  "additionalProperties": true
+}

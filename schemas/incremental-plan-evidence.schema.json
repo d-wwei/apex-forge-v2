@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/incremental-plan-evidence.schema.json",
+  "title": "Incremental Plan Evidence Output",
+  "type": "object",
+  "required": ["slices", "slice_dependencies", "write_scopes", "verification_per_slice"],
+  "properties": {
+    "slices": { "type": "array", "items": { "type": ["string", "object"] }, "minItems": 1 },
+    "slice_dependencies": { "type": "object" },
+    "write_scopes": { "type": "object", "minProperties": 1 },
+    "verification_per_slice": { "type": "object", "minProperties": 1 },
+    "rollback": { "type": ["array", "object", "string"] },
+    "completion_order": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": true
+}

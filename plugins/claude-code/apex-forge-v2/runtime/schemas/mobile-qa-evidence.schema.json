@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/mobile-qa-evidence.schema.json",
+  "title": "Mobile QA Evidence Output",
+  "type": "object",
+  "required": ["platform", "device", "os_version", "app_artifact", "flows", "screenshots_or_video", "crashes", "logs", "cleanup"],
+  "properties": {
+    "platform": { "type": "string", "enum": ["ios", "android"] },
+    "device": { "type": "string", "minLength": 1 },
+    "os_version": { "type": "string", "minLength": 1 },
+    "app_artifact": { "type": "string", "minLength": 1 },
+    "flows": { "type": "array", "items": { "type": ["string", "object"] }, "minItems": 1 },
+    "screenshots_or_video": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 },
+    "crashes": { "type": "array", "items": { "type": ["string", "object"] } },
+    "logs": { "type": "array", "items": { "type": ["string", "object"] } },
+    "cleanup": { "type": "string", "minLength": 1 }
+  },
+  "additionalProperties": true
+}

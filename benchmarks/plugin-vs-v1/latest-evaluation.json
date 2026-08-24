@@ -3,7 +3,7 @@
   "required_runs": 90,
   "completed_runs": 90,
   "missing_runs": [],
-  "candidate_digest": "45c1d36d2ca1225725d97f93c33a68819845b756d7083ac14fa9ac82e1abc9c6",
+  "candidate_digest": "6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd",
   "plugin_metrics_won": 1,
   "plugin_metrics_noninferior": [
     "completion",
@@ -22,7 +22,7 @@
   "required_improved_metrics": 1,
   "scenarios_passed": 5,
   "required_scenarios": 4,
-  "simple_overhead_ratio": -0.1600811686265613,
+  "simple_overhead_ratio": -0.4035935042204843,
   "simple_overhead_pass": true,
   "durable_value_scenarios": [
     {
@@ -45,7 +45,7 @@
           "id": "kernel_durability_parity",
           "status": "PASS",
           "actual": 1,
-          "threshold": ">= 0.4"
+          "threshold": ">= 0.8"
         },
         {
           "id": "completion_no_regression",
@@ -246,11 +246,11 @@
     "v1-skill": {
       "completion": 1,
       "recovery": 1,
-      "evidence": 0.7333333333333333,
+      "evidence": 0.7555555555555558,
       "user_actions": 0,
-      "wall_ms": 142105.46666666667,
-      "cost": 307487.3,
-      "safety": 0.9666666666666667,
+      "wall_ms": 198311.16666666666,
+      "cost": 337327.9666666667,
+      "safety": 1,
       "hidden_acceptance": 1,
       "defect_detection": 1,
       "false_positive": 0,
@@ -259,23 +259,23 @@
     "cli-kernel": {
       "completion": 1,
       "recovery": 1,
-      "evidence": 0.85,
+      "evidence": 0.8833333333333333,
       "user_actions": 0,
-      "wall_ms": 710844.1,
-      "cost": 3952789.2,
-      "safety": 1,
+      "wall_ms": 973777.8,
+      "cost": 4352516.266666667,
+      "safety": 0.9666666666666667,
       "hidden_acceptance": 1,
       "defect_detection": 1,
       "false_positive": 0,
-      "durable_closure": 0.7
+      "durable_closure": 0.7333333333333333
     },
     "plugin-kernel": {
       "completion": 1,
       "recovery": 1,
       "evidence": 1,
       "user_actions": 0,
-      "wall_ms": 520746.86666666664,
-      "cost": 3240388.3333333335,
+      "wall_ms": 879469.7333333333,
+      "cost": 3718047.966666667,
       "safety": 1,
       "hidden_acceptance": 1,
       "defect_detection": 1,
@@ -327,16 +327,15 @@
         "completion",
         "recovery",
         "evidence",
-        "user_actions",
-        "wall_ms",
-        "cost"
+        "user_actions"
       ],
       "improved": [
-        "evidence",
+        "evidence"
+      ],
+      "regressed": [
         "wall_ms",
         "cost"
       ],
-      "regressed": [],
       "safety_regression": false,
       "pass": true
     },

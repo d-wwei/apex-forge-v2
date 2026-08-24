@@ -1,0 +1,150 @@
+{
+  "task_id": "apex-manager--parallel",
+  "task_digest": "6e9dbe42342ca3c93492ff6354f7dc5e3e01e058837bf8992136005b95920902",
+  "repository": "apex-manager",
+  "scenario": "parallel",
+  "mode": "v1-skill",
+  "candidate_digest": "6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 376166,
+    "cost": 477505,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 0,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "2da4c45e9bc278590ff0a908bf7e6bbbc0966e12",
+    "runtime_hash": "528e8b02a687efafd5236ab0db47910b4b782885fd3facc93f7df7678ff12ea1",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "ae7487891a192e7d93a64f13b1ec1f81f6e02d37ce5c0eb2609841b5789fc985",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--parallel--v1-skill/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--parallel--v1-skill/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--parallel--v1-skill/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--parallel--v1-skill/codex-home/sessions/2026/08/21/rollout-2026-08-21T23-15-48-01a024e4-79c3-7890-b135-bbb7f062e794.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--parallel--v1-skill/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--parallel--v1-skill/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--parallel--v1-skill/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--parallel--v1-skill/codex-home/sessions/2026/08/21/rollout-2026-08-21T23-15-48-01a024e4-79c3-7890-b135-bbb7f062e794.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--parallel--v1-skill/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "b4f114f16a530e2bd51e4089a95f0df607a0c22f826d7a94d76ddfdab4926c16",
+      "1cd39b7bfa91002c99b997a717438c5a3047c311e701f3f30bc9180a40236723",
+      "d2a15520fa0d797cb54173370c4ed98227ccf26094b1637cd627676cd371bbd8",
+      "8464d2a645d7cb1bb3a4d446449bbb1a3400f987207dc00681c1e1921133523b",
+      "e2dd829123d4a44a6c7cb78580f158908b9d43f456135e9f1a103035add17762"
+    ]
+  },
+  "evidence": {
+    "task_digest": "6e9dbe42342ca3c93492ff6354f7dc5e3e01e058837bf8992136005b95920902",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a024e4-79c3-7890-b135-bbb7f062e794",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "DONE: zero rate limits now format as 0%; interrupt names are trimmed and matched case-insensitively. Focused tests added in both suites.",
+      "tests": [
+        {
+          "command": "node --import tsx --test tests/worker/cost.test.ts tests/worker/interrupt.test.ts",
+          "status": "pass",
+          "detail": "32 passed, 0 failed."
+        },
+        {
+          "command": "npm run typecheck",
+          "status": "pass",
+          "detail": "tsc --noEmit passed."
+        },
+        {
+          "command": "git diff --check -- src/worker/cost.ts tests/worker/cost.test.ts src/worker/interrupt.ts tests/worker/interrupt.test.ts",
+          "status": "pass",
+          "detail": "No whitespace errors."
+        }
+      ],
+      "risks": [
+        "The test runner emitted a non-blocking DEP0205 deprecation warning from the tsx loader."
+      ],
+      "evidence_refs": [
+        "src/worker/cost.ts",
+        "tests/worker/cost.test.ts",
+        "src/worker/interrupt.ts",
+        "tests/worker/interrupt.test.ts"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "node --import tsx --test tests/worker/cost.test.ts tests/worker/interrupt.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 294,
+        "stdout_tail": "(node:68479) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n▶ formatTokens\n  ✔ formats thousands with k suffix (1.762666ms)\n  ✔ formats fractional thousands (1.147125ms)\n  ✔ formats small counts without suffix (0.920292ms)\n  ✔ formats zero (1.082958ms)\n  ✔ formats exact thousand (1.121917ms)\n  ✔ rounds to one decimal (1.066959ms)\n✔ formatTokens (7.631709ms)\n▶ formatCostReport\n  ✔ formats basic cost report without budget (0.912209ms)\n  ✔ includes task titles from tasks.json when available (1.225667ms)\n  ✔ formats report with budget info (1.069125ms)\n  ✔ handles empty summary (0.992625ms)\n✔ formatCostReport (4.392041ms)\n▶ checkBudget\n  ✔ returns ok when no budget set (1.0945ms)\n  ✔ returns ok when under warning threshold (1.80025ms)\n  ✔ returns warn when usage exceeds warning threshold (1.229ms)\n  ✔ returns exceeded when usage meets budget (0.973541ms)\n  ✔ respects custom warning threshold (1.001292ms)\n  ✔ exceeded takes priority over warn (1.278125ms)\n✔ checkBudget (7.684542ms)\n▶ formatRateLimitStatus\n  ✔ formats rate limit info (9.754583ms)\n  ✔ shows throttled warning (1.307708ms)\n  ✔ formats a zero token limit as 0% (1.186041ms)\n  ✔ formats a zero request limit as 0% (0.868333ms)\n  ✔ formats zero token and request limits as 0% (0.985208ms)\n  ✔ returns message when null (0.865084ms)\n✔ formatRateLimitStatus (15.231ms)\n(node:68480) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n▶ interruptKeys\n  ✔ claude returns Escape (tmux default) (1.143708ms)\n  ✔ codex returns C-c (tmux default) (0.14575ms)\n  ✔ gemini returns C-c (tmux default) (0.141667ms)\n  ✔ unknown agent returns both Escape and C-c (tmux) (0.081209ms)\n  ✔ claude returns escape for cmux adapter (0.043459ms)\n  ✔ codex returns ctrl-c for cmux adapter (0.034ms)\n  ✔ unknown agent returns both for cmux adapter (0.036125ms)\n  ✔ trims and matches canonical esc case-insensitively (0.049458ms)\n  ✔ trims and matches canonical ctrlc case-insensitively (0.0475ms)\n  ✔ trims and matches the legacy claude alias case-insensitively (0.086167ms)\n✔ interruptKeys (2.772209ms)\nℹ tests 32\nℹ suites 5\nℹ pass 32\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 220.889167\n",
+        "stderr_tail": ""
+      },
+      {
+        "command": "npm run typecheck",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 857,
+        "stdout_tail": "\n> apex-manager@0.1.1 typecheck\n> tsc --noEmit\n\n",
+        "stderr_tail": ""
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "node --import tsx -e \"import {formatRateLimitStatus} from './src/worker/cost.ts'; const r=formatRateLimitStatus({tokens_remaining:0,tokens_limit:0,requests_remaining:0,requests_limit:0,utilization_5h:0,throttled:false,updated_at:''}); if(r.includes('NaN')||r.includes('Infinity')||(r.match(/0%/g)?.length??0)<2) process.exit(1)\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 163,
+        "stdout_tail": "",
+        "stderr_tail": "(node:68525) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      },
+      {
+        "command": "node --import tsx -e \"import {interruptKeys} from './src/worker/interrupt.ts'; if(JSON.stringify(interruptKeys(' CtrlC ','tmux'))!=='[\\\"C-c\\\"]'||JSON.stringify(interruptKeys(' ESC ','cmux'))!=='[\\\"escape\\\"]') process.exit(1)\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 121,
+        "stdout_tail": "",
+        "stderr_tail": "(node:68539) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      },
+      {
+        "command": "node --import tsx --test tests/worker/cost.test.ts tests/worker/interrupt.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 221,
+        "stdout_tail": "(node:68566) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n▶ formatTokens\n  ✔ formats thousands with k suffix (6.468083ms)\n  ✔ formats fractional thousands (1.086583ms)\n  ✔ formats small counts without suffix (0.834917ms)\n  ✔ formats zero (1.055125ms)\n  ✔ formats exact thousand (0.724541ms)\n  ✔ rounds to one decimal (0.629833ms)\n✔ formatTokens (11.369667ms)\n▶ formatCostReport\n  ✔ formats basic cost report without budget (1.046833ms)\n  ✔ includes task titles from tasks.json when available (1.594ms)\n  ✔ formats report with budget info (1.149ms)\n  ✔ handles empty summary (0.885708ms)\n✔ formatCostReport (4.800458ms)\n▶ checkBudget\n  ✔ returns ok when no budget set (0.935666ms)\n  ✔ returns ok when under warning threshold (1.16525ms)\n  ✔ returns warn when usage exceeds warning threshold (1.299917ms)\n  ✔ returns exceeded when usage meets budget (1.047083ms)\n  ✔ respects custom warning threshold (1.421917ms)\n  ✔ exceeded takes priority over warn (1.702625ms)\n✔ checkBudget (7.721625ms)\n▶ formatRateLimitStatus\n  ✔ formats rate limit info (9.5185ms)\n  ✔ shows throttled warning (0.786375ms)\n  ✔ formats a zero token limit as 0% (1.073959ms)\n  ✔ formats a zero request limit as 0% (1.056208ms)\n  ✔ formats zero token and request limits as 0% (1.025458ms)\n  ✔ returns message when null (0.931666ms)\n✔ formatRateLimitStatus (14.568958ms)\n(node:68567) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n▶ interruptKeys\n  ✔ claude returns Escape (tmux default) (0.722125ms)\n  ✔ codex returns C-c (tmux default) (0.048875ms)\n  ✔ gemini returns C-c (tmux default) (0.034459ms)\n  ✔ unknown agent returns both Escape and C-c (tmux) (0.412166ms)\n  ✔ claude returns escape for cmux adapter (0.05175ms)\n  ✔ codex returns ctrl-c for cmux adapter (0.040833ms)\n  ✔ unknown agent returns both for cmux adapter (0.138541ms)\n  ✔ trims and matches canonical esc case-insensitively (0.063625ms)\n  ✔ trims and matches canonical ctrlc case-insensitively (0.0505ms)\n  ✔ trims and matches the legacy claude alias case-insensitively (0.075417ms)\n✔ interruptKeys (2.427583ms)\nℹ tests 32\nℹ suites 5\nℹ pass 32\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 159.980709\n",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/worker/cost.ts",
+        "src/worker/interrupt.ts",
+        "tests/worker/cost.test.ts",
+        "tests/worker/interrupt.test.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": false,
+      "evidence_score": 1,
+      "reason": "no .apex-v2 durable state"
+    }
+  }
+}

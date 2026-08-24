@@ -19,6 +19,11 @@ import {
 } from "../core/action-workspace.mjs";
 import { buildCandidateSet } from "../core/candidate.mjs";
 import { assertCognitiveEvidenceSemantics } from "../core/cognitive-evidence.mjs";
+import {
+  assertCapabilityContextBudget,
+  readCapabilityProtocol
+} from "../core/capability-registry.mjs";
+import { assertCapabilityEvidence } from "../core/capability-evidence.mjs";
 import { withProjectTransaction } from "../core/project-transaction.mjs";
 import {
   findWorker,
@@ -59,7 +64,8 @@ export function handleHostCommand(subcommand, args) {
         summary: required(args, "summary"),
         refs: splitList(args.refs),
         claimToken: required(args, "claim-token"),
-        semanticEvidence: parseSemanticEvidence(args)
+        semanticEvidence: parseSemanticEvidence(args),
+        capabilityEvidence: parseCapabilityEvidence(args)
       }
     ), null, 2));
     return;
@@ -101,6 +107,10 @@ export function listHostActions(root) {
         objective: worker.objective,
         deliverables: worker.deliverables,
         required_evidence: worker.required_evidence,
+        capability_bindings: worker.capability_bindings || [],
+        capability_enforcement: worker.capability_enforcement || "shadow",
+        capability_invocation_refs: worker.capability_invocation_refs || [],
+        capability_protocols: capabilityProtocols(worker.capability_bindings || []),
         read_scope: worker.read_scope,
         write_scope: worker.write_scope,
         output_contract: worker.output_contract,
@@ -191,7 +201,11 @@ function claimHostActionTransaction(root, workerId, hostId) {
       worker_id: worker.worker_id,
       run_id: worker.run_id,
       plan_node_id: worker.plan_node_id,
-      objective: worker.objective
+      objective: worker.objective,
+      capability_bindings: worker.capability_bindings || [],
+      capability_enforcement: worker.capability_enforcement || "shadow",
+      capability_invocation_refs: worker.capability_invocation_refs || [],
+      capability_protocols: capabilityProtocols(worker.capability_bindings || [])
     },
     idempotency_key: `${hostId}:${worker.worker_id}`,
     claim_token: claimToken,
@@ -234,6 +248,18 @@ function claimHostActionTransaction(root, workerId, hostId) {
   return { action, worker, workspace };
 }
 
+function capabilityProtocols(bindings) {
+  assertCapabilityContextBudget(bindings);
+  return bindings.map((binding) => ({
+    capability_id: binding.capability_id,
+    capability_version: binding.capability_version,
+    required_host_capabilities: binding.required_host_capabilities,
+    input_contract: binding.input_contract,
+    output_contract: binding.output_contract,
+    protocol: readCapabilityProtocol(binding.protocol_ref)
+  }));
+}
+
 export function submitHostResult(root, workerId, hostId, input) {
   const worker = findWorker(root, workerId);
   const action = readJson(
@@ -265,6 +291,17 @@ function submitHostResultTransaction(root, workerId, hostId, input) {
   let patch = null;
   let queueStatus = null;
   let semanticEvidenceRef = null;
+  const capabilityEvidence = input.capabilityEvidence || [];
+  const capabilityStatus = assertCapabilityEvidence(
+    worker.capability_bindings || [],
+    capabilityEvidence,
+    { requireAll: worker.capability_enforcement === "enforce" }
+  );
+  const capabilityEvidenceRefs = persistCapabilityEvidence(
+    dir,
+    worker.namespace,
+    capabilityEvidence
+  );
   if (worker.execution_class === "workspace_patch") {
     patch = buildHostPatch(root, worker, input.summary, timestamp);
   } else {
@@ -281,9 +318,16 @@ function submitHostResultTransaction(root, workerId, hostId, input) {
     artifact_refs: [
       ...(input.refs || []),
       ...(patch?.changed_files || []),
-      ...(input.semanticEvidence?.source_refs || [])
+      ...(input.semanticEvidence?.source_refs || []),
+      ...capabilityEvidenceRefs
     ],
     semantic_evidence_ref: semanticEvidenceRef,
+    capability_evidence_refs: capabilityEvidenceRefs,
+    capability_evidence_status: {
+      enforcement: worker.capability_enforcement || "shadow",
+      submitted: capabilityStatus.submitted,
+      missing: capabilityStatus.missing
+    },
     error: null,
     created_at: timestamp
   };
@@ -301,6 +345,7 @@ function submitHostResultTransaction(root, workerId, hostId, input) {
         `${worker.namespace}/host-action.json`,
         `${worker.namespace}/host-result.json`,
         patchBundleRef(worker, patch.patch_id),
+        ...capabilityEvidenceRefs,
         ...patch.changed_files
       ],
       timestamp
@@ -341,6 +386,14 @@ function submitHostResultTransaction(root, workerId, hostId, input) {
     patch_id: patch?.patch_id || null,
     queue_status: queueStatus
   };
+}
+
+function persistCapabilityEvidence(dir, namespace, evidenceItems) {
+  return evidenceItems.map((evidence) => {
+    const name = `capability-evidence-${evidence.capability_id}.json`;
+    writeJson(join(dir, name), evidence);
+    return `${namespace}/${name}`;
+  });
 }
 
 export function cancelHostAction(root, workerId, hostId, claimToken, reason) {
@@ -458,6 +511,29 @@ function parseSemanticEvidence(args) {
   } catch (error) {
     throw new Error(`semantic evidence JSON 无效：${error.message}`);
   }
+}
+
+function parseCapabilityEvidence(args) {
+  const inline = args["capability-evidence-json"];
+  const file = args["capability-evidence-file"];
+  if (!inline && !file) return [];
+  if (inline && file) {
+    throw new Error(
+      "只能指定 --capability-evidence-json 或 --capability-evidence-file 之一"
+    );
+  }
+  let value;
+  try {
+    value = JSON.parse(
+      file ? readFileSync(resolve(String(file)), "utf8") : String(inline)
+    );
+  } catch (error) {
+    throw new Error(`capability evidence JSON 无效：${error.message}`);
+  }
+  if (!Array.isArray(value)) {
+    throw new Error("capability evidence JSON 必须是数组");
+  }
+  return value;
 }
 
 function validateSemanticEvidence(root, worker, evidence) {

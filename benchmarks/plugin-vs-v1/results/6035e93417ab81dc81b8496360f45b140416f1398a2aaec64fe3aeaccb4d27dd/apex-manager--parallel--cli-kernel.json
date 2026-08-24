@@ -1,0 +1,167 @@
+{
+  "task_id": "apex-manager--parallel",
+  "task_digest": "6e9dbe42342ca3c93492ff6354f7dc5e3e01e058837bf8992136005b95920902",
+  "repository": "apex-manager",
+  "scenario": "parallel",
+  "mode": "cli-kernel",
+  "candidate_digest": "6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 1143233,
+    "cost": 5952501,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 1,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "2da4c45e9bc278590ff0a908bf7e6bbbc0966e12",
+    "runtime_hash": "528e8b02a687efafd5236ab0db47910b4b782885fd3facc93f7df7678ff12ea1",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "2e35f4ea2ddd3708d58171a9e443f7a9cb3cfcdfcf9acd9a828bd873cda835bf",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--parallel--cli-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--parallel--cli-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--parallel--cli-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--parallel--cli-kernel/codex-home/sessions/2026/08/21/rollout-2026-08-21T23-22-09-01a024ea-49ac-7372-968b-3898779b6675.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--parallel--cli-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--parallel--cli-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--parallel--cli-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--parallel--cli-kernel/codex-home/sessions/2026/08/21/rollout-2026-08-21T23-22-09-01a024ea-49ac-7372-968b-3898779b6675.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-manager--parallel--cli-kernel/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "31c8a61545dec7727f8ac669c9a0c442a5ce1ab38fe70c65a961b7524d542129",
+      "0696b6c724fce51b59c31f5602642d317ef87527979cbefeba2e2a70891da4ec",
+      "657c34d5935b1850f37ecfd50aeed9b6d29b58c90c652406ab2ca8b1123cf5d8",
+      "bc9c68e8202e1ecf328a9664d1fe369107e93f5f1ab5c62c08f2e207fd3303bc",
+      "946c73d964871f8dfa7a7caab6c0b780a4d44e7544ed22b984f2a8454a0aa675"
+    ]
+  },
+  "evidence": {
+    "task_digest": "6e9dbe42342ca3c93492ff6354f7dc5e3e01e058837bf8992136005b95920902",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a024ea-49ac-7372-968b-3898779b6675",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Rate-limit zero limits now render 0%. Interrupt names are trimmed and matched case-insensitively. Run run-mt33laby-6090264f was verified, reviewed, integrated, and closed.",
+      "tests": [
+        {
+          "command": "node --import tsx --test tests/worker/cost.test.ts tests/worker/interrupt.test.ts",
+          "status": "pass",
+          "detail": "29 passed, 0 failed."
+        },
+        {
+          "command": "npm run typecheck",
+          "status": "pass",
+          "detail": "tsc --noEmit exited 0."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "verification-mt343kxm-9b741f92",
+        "review-mt344awr-5001e3b0",
+        "integration-mt3451d9-4de754dd",
+        "artifact-mt3483cm-d6fb045e"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "node --import tsx --test tests/worker/cost.test.ts tests/worker/interrupt.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 227,
+        "stdout_tail": "(node:76631) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n▶ formatTokens\n  ✔ formats thousands with k suffix (1.437ms)\n  ✔ formats fractional thousands (0.877542ms)\n  ✔ formats small counts without suffix (1.223417ms)\n  ✔ formats zero (0.805833ms)\n  ✔ formats exact thousand (0.732709ms)\n  ✔ rounds to one decimal (0.75625ms)\n✔ formatTokens (6.254334ms)\n▶ formatCostReport\n  ✔ formats basic cost report without budget (0.901875ms)\n  ✔ includes task titles from tasks.json when available (1.109084ms)\n  ✔ formats report with budget info (0.826667ms)\n  ✔ handles empty summary (0.933708ms)\n✔ formatCostReport (3.878625ms)\n▶ checkBudget\n  ✔ returns ok when no budget set (0.794333ms)\n  ✔ returns ok when under warning threshold (1.275791ms)\n  ✔ returns warn when usage exceeds warning threshold (1.212042ms)\n  ✔ returns exceeded when usage meets budget (0.995959ms)\n  ✔ respects custom warning threshold (0.95225ms)\n  ✔ exceeded takes priority over warn (0.912125ms)\n✔ checkBudget (6.254458ms)\n▶ formatRateLimitStatus\n  ✔ formats rate limit info (8.422334ms)\n  ✔ shows throttled warning (0.913708ms)\n  ✔ formats zero limits as 0% (0.571875ms)\n  ✔ returns message when null (0.986041ms)\n✔ formatRateLimitStatus (10.965208ms)\n(node:76632) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n▶ interruptKeys\n  ✔ claude returns Escape (tmux default) (0.556916ms)\n  ✔ codex returns C-c (tmux default) (0.044334ms)\n  ✔ gemini returns C-c (tmux default) (0.031791ms)\n  ✔ unknown agent returns both Escape and C-c (tmux) (0.029417ms)\n  ✔ claude returns escape for cmux adapter (0.027542ms)\n  ✔ codex returns ctrl-c for cmux adapter (0.029167ms)\n  ✔ unknown agent returns both for cmux adapter (0.032667ms)\n  ✔ trims whitespace and matches agent aliases case-insensitively (0.032708ms)\n  ✔ trims whitespace and matches canonical names case-insensitively (0.04425ms)\n✔ interruptKeys (1.296125ms)\nℹ tests 29\nℹ suites 5\nℹ pass 29\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 171.637916\n",
+        "stderr_tail": ""
+      },
+      {
+        "command": "npm run typecheck",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 673,
+        "stdout_tail": "\n> apex-manager@0.1.1 typecheck\n> tsc --noEmit\n\n",
+        "stderr_tail": ""
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "node --import tsx -e \"import {formatRateLimitStatus} from './src/worker/cost.ts'; const r=formatRateLimitStatus({tokens_remaining:0,tokens_limit:0,requests_remaining:0,requests_limit:0,utilization_5h:0,throttled:false,updated_at:''}); if(r.includes('NaN')||r.includes('Infinity')||(r.match(/0%/g)?.length??0)<2) process.exit(1)\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 136,
+        "stdout_tail": "",
+        "stderr_tail": "(node:76670) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      },
+      {
+        "command": "node --import tsx -e \"import {interruptKeys} from './src/worker/interrupt.ts'; if(JSON.stringify(interruptKeys(' CtrlC ','tmux'))!=='[\\\"C-c\\\"]'||JSON.stringify(interruptKeys(' ESC ','cmux'))!=='[\\\"escape\\\"]') process.exit(1)\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 104,
+        "stdout_tail": "",
+        "stderr_tail": "(node:76684) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n"
+      },
+      {
+        "command": "node --import tsx --test tests/worker/cost.test.ts tests/worker/interrupt.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 180,
+        "stdout_tail": "(node:76711) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n▶ formatTokens\n  ✔ formats thousands with k suffix (4.454333ms)\n  ✔ formats fractional thousands (0.996208ms)\n  ✔ formats small counts without suffix (1.119792ms)\n  ✔ formats zero (0.847792ms)\n  ✔ formats exact thousand (1.007ms)\n  ✔ rounds to one decimal (0.901208ms)\n✔ formatTokens (9.819708ms)\n▶ formatCostReport\n  ✔ formats basic cost report without budget (1.064667ms)\n  ✔ includes task titles from tasks.json when available (1.327166ms)\n  ✔ formats report with budget info (0.990792ms)\n  ✔ handles empty summary (0.906792ms)\n✔ formatCostReport (4.4065ms)\n▶ checkBudget\n  ✔ returns ok when no budget set (0.8015ms)\n  ✔ returns ok when under warning threshold (1.028958ms)\n  ✔ returns warn when usage exceeds warning threshold (1.121417ms)\n  ✔ returns exceeded when usage meets budget (1.004416ms)\n  ✔ respects custom warning threshold (0.883709ms)\n  ✔ exceeded takes priority over warn (1.0715ms)\n✔ checkBudget (6.034208ms)\n▶ formatRateLimitStatus\n  ✔ formats rate limit info (8.791916ms)\n  ✔ shows throttled warning (0.639417ms)\n  ✔ formats zero limits as 0% (0.631625ms)\n  ✔ returns message when null (0.979875ms)\n✔ formatRateLimitStatus (11.149541ms)\n(node:76712) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n▶ interruptKeys\n  ✔ claude returns Escape (tmux default) (0.695625ms)\n  ✔ codex returns C-c (tmux default) (0.045958ms)\n  ✔ gemini returns C-c (tmux default) (0.031792ms)\n  ✔ unknown agent returns both Escape and C-c (tmux) (0.031917ms)\n  ✔ claude returns escape for cmux adapter (0.029792ms)\n  ✔ codex returns ctrl-c for cmux adapter (0.031375ms)\n  ✔ unknown agent returns both for cmux adapter (0.03275ms)\n  ✔ trims whitespace and matches agent aliases case-insensitively (0.034041ms)\n  ✔ trims whitespace and matches canonical names case-insensitively (0.049375ms)\n✔ interruptKeys (1.645167ms)\nℹ tests 29\nℹ suites 5\nℹ pass 29\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 127.392959\n",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/worker/cost.ts",
+        "src/worker/interrupt.ts",
+        "tests/worker/cost.test.ts",
+        "tests/worker/interrupt.test.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": true,
+      "evidence_score": 1,
+      "run_ids": [
+        "run-mt33laby-6090264f"
+      ],
+      "done_run_ids": [
+        "run-mt33laby-6090264f"
+      ],
+      "fully_closed_run_ids": [
+        "run-mt33laby-6090264f"
+      ],
+      "active_runs": [],
+      "candidate_chain_equal": true,
+      "verification_ref": ".apex-v2/runs/run-mt33laby-6090264f/verification-report.json",
+      "review_ref": ".apex-v2/runs/run-mt33laby-6090264f/review-report.json",
+      "integration_ref": ".apex-v2/runs/run-mt33laby-6090264f/integration-report.json",
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "1459b947d1515a54a2fa2e150cd3c2742c02bb75ccc68e6d4b516f32d7241197",
+        "replay_hash": "1459b947d1515a54a2fa2e150cd3c2742c02bb75ccc68e6d4b516f32d7241197",
+        "hash_equal": true
+      }
+    }
+  }
+}

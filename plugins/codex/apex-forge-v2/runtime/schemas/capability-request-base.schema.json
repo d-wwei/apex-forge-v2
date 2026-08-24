@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/capability-request-base.schema.json",
+  "title": "Apex Forge Capability Request Base",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "capability_id",
+    "objective",
+    "context_refs",
+    "constraints",
+    "acceptance_refs",
+    "verification",
+    "created_at"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "capability_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "objective": { "type": "string", "minLength": 1 },
+    "context_refs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "constraints": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "acceptance_refs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "verification": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "candidate_digest": {
+      "type": ["string", "null"],
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "environment": {
+      "type": ["object", "null"]
+    },
+    "created_at": { "type": "string", "minLength": 1 }
+  },
+  "additionalProperties": false
+}

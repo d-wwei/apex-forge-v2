@@ -1,0 +1,133 @@
+{
+  "task_id": "apex-forge-v1--multi-step",
+  "task_digest": "096d755ee28b942e5721bc9ddac30569c7d9432ee3d2de71c1a43a41634303d2",
+  "repository": "apex-forge-v1",
+  "scenario": "multi-step",
+  "mode": "v1-skill",
+  "candidate_digest": "6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 0.6666666666666666,
+    "wall_ms": 159623,
+    "cost": 260030,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 0,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "3755583552540121bcb1287c5bdba3c8b2578726",
+    "runtime_hash": "528e8b02a687efafd5236ab0db47910b4b782885fd3facc93f7df7678ff12ea1",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "6e7360216947e51cc9acf5629105e41af0de1594b90cf679f09ca6c4d569eef5",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--multi-step--v1-skill/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--multi-step--v1-skill/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--multi-step--v1-skill/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--multi-step--v1-skill/codex-home/sessions/2026/08/21/rollout-2026-08-21T21-32-31-01a02485-ed5d-75d2-b7ec-d42f6ddbef27.jsonl"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--multi-step--v1-skill/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--multi-step--v1-skill/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--multi-step--v1-skill/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--multi-step--v1-skill/codex-home/sessions/2026/08/21/rollout-2026-08-21T21-32-31-01a02485-ed5d-75d2-b7ec-d42f6ddbef27.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/apex-forge-v1--multi-step--v1-skill/agent-output-1.json"
+    ],
+    "artifact_hashes": [
+      "0e97dfd1bda2d575f1e7d3580fbdd57251d1dec9b560a9be09a413a5a3857d16",
+      "934c276e812e0efefdff458068076b1393de26a09e32cf07e5a9b3cbf7175ba0",
+      "ef5875c79c0db23a9fe3607ac6b886677fe01887554d720fa3f3d7631d194963",
+      "e84156c57a9d46c8cc5034aeda2a13faeab74def89eb67a34b862f61f112c541",
+      "68c3543559ab31b51246f0c45adc5fd80e3ac89c87b714fccfe9db3beaa70045"
+    ]
+  },
+  "evidence": {
+    "task_digest": "096d755ee28b942e5721bc9ddac30569c7d9432ee3d2de71c1a43a41634303d2",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a02485-ed5d-75d2-b7ec-d42f6ddbef27",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "DONE: YAML inline comments are now detected only outside quoted values. Added the requested focused regression test.",
+      "tests": [
+        {
+          "command": "bun test src/__tests__/cli.test.ts --test-name-pattern 'parseSimpleYaml preserves hashes inside quoted values'",
+          "status": "fail",
+          "detail": "Expected RED before implementation: quoted hashes were truncated."
+        },
+        {
+          "command": "bun test src/__tests__/cli.test.ts --test-name-pattern 'parseSimpleYaml preserves hashes inside quoted values'",
+          "status": "pass",
+          "detail": "1 test passed; 13 filtered out."
+        },
+        {
+          "command": "bun -e 'import { parseSimpleYaml } from \"./src/state/config.ts\"; const v=parseSimpleYaml(\"a: plain\\nb: '\\''quoted'\\''\\n\"); if (v.a !== \"plain\" || v.b !== \"quoted\") process.exit(1)'",
+          "status": "pass",
+          "detail": "Public acceptance command exited 0."
+        },
+        {
+          "command": "git diff --check",
+          "status": "pass",
+          "detail": "No whitespace errors."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "src/state/config.ts",
+        "src/__tests__/cli.test.ts"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "bun -e 'import { parseSimpleYaml } from \"./src/state/config.ts\"; const v=parseSimpleYaml(\"a: plain\\nb: '\\''quoted'\\''\\n\"); if (v.a !== \"plain\" || v.b !== \"quoted\") process.exit(1)'",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 43,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "bun -e 'import { parseSimpleYaml } from \"./src/state/config.ts\"; const v=parseSimpleYaml(\"label: \\\"release #1\\\"\\nmode: fast # local\\n\"); if (v.label !== \"release #1\" || v.mode !== \"fast\") process.exit(1)'",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 39,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      },
+      {
+        "command": "bun -e 'import { parseSimpleYaml } from \"./src/state/config.ts\"; const v=parseSimpleYaml(\"a: plain\\nb: '\\''quoted'\\''\\n\"); if (v.a !== \"plain\" || v.b !== \"quoted\") process.exit(1)'",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 39,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/__tests__/cli.test.ts",
+        "src/state/config.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": false,
+      "evidence_score": 0.6666666666666666,
+      "reason": "no .apex-v2 durable state"
+    }
+  }
+}

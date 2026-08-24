@@ -23,9 +23,12 @@ import { validateBenchmarkTaskPlans } from "../benchmark/task-plans.mjs";
 const REPRODUCIBLE_TIMESTAMP = "2000-01-01T00:00:00.000Z";
 const EXCLUDED_FILES = new Set([
   ".benchmark-task-plan.json",
+  "node_modules",
+  "benchmarks/plugin-vs-v1/workspaces",
   "benchmarks/plugin-vs-v1/benchmark-plan.json",
   "benchmarks/plugin-vs-v1/latest-evaluation.json",
   "benchmarks/plugin-vs-v1/results-manifest.json",
+  "benchmarks/capability-absorption/latest-evaluation.json",
   "benchmarks/plugin-vs-v1/task-manifest.json",
   "benchmarks/plugin-vs-v1/task-preflight.json",
   "planning/plugin-upgrade-execution-status.md",
@@ -221,6 +224,9 @@ export function verifyReleaseCandidateBundle({
     if (runtime.schemas_sha256 !== manifest.content.schemas_sha256) {
       errors.push("schema hash differs from candidate content");
     }
+    if (runtime.capabilities_sha256 !== manifest.content.capabilities_sha256) {
+      errors.push("capabilities hash differs from candidate content");
+    }
   }
   if (checkCurrentSource) {
     const current = currentReleaseSourceManifest(repoRoot);
@@ -307,6 +313,7 @@ export function candidateContent({
     source_manifest_sha256: hashSelectedFiles(sourceRoot, sourceFiles),
     runtime_sha256: runtime.runtime_sha256,
     schemas_sha256: runtime.schemas_sha256,
+    capabilities_sha256: runtime.capabilities_sha256,
     codex_plugin_sha256: hashTree(codexPlugin),
     claude_plugin_sha256: hashTree(claudePlugin),
     policies_sha256: hashSelectedFiles(sourceRoot, policyFiles),

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/postmortem-evidence.schema.json",
+  "title": "Postmortem Evidence Output",
+  "type": "object",
+  "required": ["impact", "timeline", "detection_gap", "root_causes", "failed_controls", "corrective_actions", "control_candidates", "owners", "verification"],
+  "properties": {
+    "impact": { "type": ["string", "object"] },
+    "timeline": { "type": "array", "items": { "type": ["string", "object"] }, "minItems": 1 },
+    "detection_gap": { "type": ["string", "object"] },
+    "root_causes": { "type": "array", "items": { "type": ["string", "object"] }, "minItems": 1 },
+    "failed_controls": { "type": "array", "items": { "type": ["string", "object"] }, "minItems": 1 },
+    "corrective_actions": { "type": "array", "items": { "type": ["string", "object"] }, "minItems": 1 },
+    "control_candidates": { "type": "array", "items": { "type": ["string", "object"] }, "minItems": 1 },
+    "owners": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 },
+    "verification": { "type": ["string", "object", "array"] }
+  },
+  "additionalProperties": true
+}

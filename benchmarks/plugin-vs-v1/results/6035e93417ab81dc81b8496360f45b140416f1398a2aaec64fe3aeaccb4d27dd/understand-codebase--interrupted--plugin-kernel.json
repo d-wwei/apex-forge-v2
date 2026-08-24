@@ -1,0 +1,173 @@
+{
+  "task_id": "understand-codebase--interrupted",
+  "task_digest": "4832a6cfd6bf35d619f77078d93997073139e771b00879b326535fdec2ffe93d",
+  "repository": "understand-codebase",
+  "scenario": "interrupted",
+  "mode": "plugin-kernel",
+  "candidate_digest": "6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 1123798,
+    "cost": 7432202,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 1,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "b5eb3607e982743adfdc28eb8929043ed3a2b478",
+    "runtime_hash": "528e8b02a687efafd5236ab0db47910b4b782885fd3facc93f7df7678ff12ea1",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "b9fcd2c3aa6e58d9fb865312b62167704b0e9cba657a1dd61a3ba7002f8d9d3b",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--interrupted--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--interrupted--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--interrupted--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--interrupted--plugin-kernel/codex-home/sessions/2026/08/22/rollout-2026-08-22T01-09-56-01a0254c-f714-7070-b3e0-0447c425b296.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--interrupted--plugin-kernel/execution-2.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--interrupted--plugin-kernel/process-2.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--interrupted--plugin-kernel/process-2.stderr.log"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--interrupted--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--interrupted--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--interrupted--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--interrupted--plugin-kernel/codex-home/sessions/2026/08/22/rollout-2026-08-22T01-09-56-01a0254c-f714-7070-b3e0-0447c425b296.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--interrupted--plugin-kernel/execution-2.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--interrupted--plugin-kernel/process-2.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--interrupted--plugin-kernel/process-2.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--interrupted--plugin-kernel/agent-output-2.json"
+    ],
+    "artifact_hashes": [
+      "3cded50a6b0a827e6a38eff9c7925e240416c04fbc06047541627844ad7c70e3",
+      "f284f400c52f151aca9070b4a082f9010e728f4384a70ea21a04c1f8cc3a61c7",
+      "3778de56f67324f662c3af7e94ee62ee2434c1fa101357a7f1abf129ff7d565b",
+      "8ed3a3f991eeab223eb9e8ac1ee97bdc096418832f37b92c01caa1bc6d77695a",
+      "d8cd4f5dc9968effdec0d2ea0f3befbbe041e05482edb0db8879c71ed82c6305",
+      "565fd99197ce660e2c5c0fae89a2ac28019728c355b7162b9b9b4eae26123bcc",
+      "09cc3db4186182d241798778039915cf18fa7435f8aa58d2946759d3f81042e4",
+      "9e5e30095d631599567aa9401b036b91947ee52ef00bfb5697ec82729b7854eb"
+    ]
+  },
+  "evidence": {
+    "task_digest": "4832a6cfd6bf35d619f77078d93997073139e771b00879b326535fdec2ffe93d",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a0254c-f714-7070-b3e0-0447c425b296",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Preserved `minimal -> simple`, added `severe -> complex`, and added case-insensitive tests for both aliases. Apex Forge run completed and reconciled consistently.",
+      "tests": [
+        {
+          "command": "pnpm --dir understand-codebase-plugin --filter @understand-codebase/core test -- src/__tests__/normalize-graph.test.ts",
+          "status": "fail",
+          "detail": "Expected RED: severe returned moderate; 671 passed, 1 failed."
+        },
+        {
+          "command": "pnpm --dir understand-codebase-plugin --filter @understand-codebase/core test -- src/__tests__/normalize-graph.test.ts",
+          "status": "pass",
+          "detail": "Implementation workspace: 670 tests passed."
+        },
+        {
+          "command": "pnpm --dir understand-codebase-plugin --filter @understand-codebase/core test -- src/__tests__/normalize-graph.test.ts",
+          "status": "fail",
+          "detail": "Initial Kernel verification hit an EPERM Vite cache error before collection."
+        },
+        {
+          "command": "pnpm --dir understand-codebase-plugin --filter @understand-codebase/core test -- src/__tests__/normalize-graph.test.ts",
+          "status": "pass",
+          "detail": "Kernel retry: 670 tests passed."
+        },
+        {
+          "command": "pnpm --dir understand-codebase-plugin --filter @understand-codebase/core test -- src/__tests__/normalize-graph.test.ts",
+          "status": "pass",
+          "detail": "Final integrated workspace: 672 tests passed."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "artifact-mt3eh5dt-87f0120e",
+        "artifact-mt3eh61e-8d407263",
+        "artifact-mt3eh6p1-e9373699",
+        "reconcile-mt3ei4v4-2af9dce9"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "pnpm --dir understand-codebase-plugin --filter @understand-codebase/core test -- src/__tests__/normalize-graph.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 1551,
+        "stdout_tail": "\n> @understand-codebase/core@0.1.0 test /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--interrupted--plugin-kernel/workspace/understand-codebase-plugin/packages/core\n> vitest run -- src/__tests__/normalize-graph.test.ts\n\n\n RUN  v3.2.4 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--interrupted--plugin-kernel/workspace/understand-codebase-plugin/packages/core\n\n ✓ src/plugins/extractors/__tests__/rust-extractor.test.ts (30 tests) 32ms\n ✓ src/plugins/extractors/__tests__/php-extractor.test.ts (30 tests) 49ms\n ✓ src/plugins/extractors/__tests__/python-extractor.test.ts (31 tests) 51ms\n ✓ src/plugins/extractors/__tests__/ruby-extractor.test.ts (32 tests) 53ms\n ✓ src/plugins/extractors/__tests__/cpp-extractor.test.ts (28 tests) 58ms\n ✓ src/plugins/extractors/__tests__/csharp-extractor.test.ts (27 tests) 71ms\n ✓ src/__tests__/ignore-generator.test.ts (19 tests) 106ms\n ✓ src/__tests__/ignore-filter.test.ts (17 tests) 111ms\n ✓ src/plugins/tree-sitter-plugin.test.ts (14 tests) 41ms\n ✓ src/plugins/extractors/__tests__/java-extractor.test.ts (25 tests) 22ms\n ✓ src/plugins/extractors/__tests__/go-extractor.test.ts (25 tests) 27ms\n ✓ src/__tests__/schema.test.ts (59 tests) 11ms\n ✓ src/__tests__/domain-persistence.test.ts (3 tests) 8ms\n ✓ src/persistence/persistence.test.ts (14 tests) 23ms\n ✓ src/__tests__/domain-types.test.ts (7 tests) 3ms\n ✓ src/__tests__/search.test.ts (10 tests) 7ms\n ✓ src/__tests__/fingerprint.test.ts (23 tests) 4ms\n ✓ src/__tests__/staleness.test.ts (8 tests) 3ms\n ✓ src/__tests__/language-registry.test.ts (18 tests) 11ms\n ✓ src/__tests__/normalize-graph.test.ts (38 tests) 10ms\n ✓ src/analyzer/graph-builder.test.ts (18 tests) 16ms\n ✓ src/__tests__/parsers.test.ts (61 tests) 15ms\n ✓ src/__tests__/plugin-registry.test.ts (19 tests) 20ms\n ✓ src/__tests__/embedding-search.test.ts (12 tests) 5ms\n ✓ src/__tests__/tour-generator.test.ts (16 tests) 5ms\n ✓ src/__tests__/layer-detector.test.ts (10 tests) 15ms\n ✓ src/analyzer/llm-analyzer.test.ts (16 tests) 3ms\n ✓ src/types.test.ts (10 tests) 4ms\n ✓ src/__tests__/language-lesson.test.ts (10 tests) 3ms\n ✓ src/__tests__/change-classifier.test.ts (13 tests) 4ms\n ✓ src/__tests__/domain-normalize.test.ts (5 tests) 2ms\n ✓ src/__tests__/framework-registry.test.ts (14 tests) 3ms\n ✓ src/__tests__/plugin-discovery.test.ts (10 tests) 3ms\n\n Test Files  33 passed (33)\n      Tests  672 passed (672)\n   Start at  04:28:17\n   Duration  1.12s (transform 960ms, setup 0ms, collect 2.88s, tests 799ms, environment 3ms, prepare 1.45s)\n\n",
+        "stderr_tail": "stderr | src/__tests__/parsers.test.ts > YAMLConfigParser > handles invalid YAML gracefully\n[yaml-parser] YAML parse failed, falling back to regex extraction: Nested mappings are not allowed in compact mappings at line 1, column 10:\n\ninvalid: yaml: content: [[[\n         ^\n\n\nstderr | src/__tests__/parsers.test.ts > JSONConfigParser > handles invalid JSON gracefully\n[json-parser] Failed to parse JSON: Unexpected token 'o', \"not json at all\" is not valid JSON\n\n"
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "pnpm --dir understand-codebase-plugin --filter @understand-codebase/core test -- src/__tests__/normalize-graph.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 1542,
+        "stdout_tail": "\n> @understand-codebase/core@0.1.0 test /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--interrupted--plugin-kernel/workspace/understand-codebase-plugin/packages/core\n> vitest run -- src/__tests__/normalize-graph.test.ts\n\n\n RUN  v3.2.4 /Users/admin/Documents/AI/Apex-forge/v2/benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/understand-codebase--interrupted--plugin-kernel/workspace/understand-codebase-plugin/packages/core\n\n ✓ src/plugins/extractors/__tests__/python-extractor.test.ts (31 tests) 25ms\n ✓ src/plugins/extractors/__tests__/csharp-extractor.test.ts (27 tests) 42ms\n ✓ src/plugins/extractors/__tests__/cpp-extractor.test.ts (28 tests) 40ms\n ✓ src/plugins/extractors/__tests__/php-extractor.test.ts (30 tests) 46ms\n ✓ src/plugins/extractors/__tests__/ruby-extractor.test.ts (32 tests) 66ms\n ✓ src/plugins/extractors/__tests__/rust-extractor.test.ts (30 tests) 49ms\n ✓ src/__tests__/ignore-generator.test.ts (19 tests) 87ms\n ✓ src/__tests__/ignore-filter.test.ts (17 tests) 127ms\n ✓ src/plugins/tree-sitter-plugin.test.ts (14 tests) 58ms\n ✓ src/__tests__/layer-detector.test.ts (10 tests) 3ms\n ✓ src/plugins/extractors/__tests__/go-extractor.test.ts (25 tests) 37ms\n ✓ src/plugins/extractors/__tests__/java-extractor.test.ts (25 tests) 29ms\n ✓ src/__tests__/schema.test.ts (59 tests) 13ms\n ✓ src/persistence/persistence.test.ts (14 tests) 30ms\n ✓ src/__tests__/search.test.ts (10 tests) 9ms\n ✓ src/__tests__/domain-persistence.test.ts (3 tests) 9ms\n ✓ src/__tests__/normalize-graph.test.ts (38 tests) 5ms\n ✓ src/__tests__/tour-generator.test.ts (16 tests) 3ms\n ✓ src/__tests__/embedding-search.test.ts (12 tests) 2ms\n ✓ src/__tests__/parsers.test.ts (61 tests) 20ms\n ✓ src/__tests__/language-registry.test.ts (18 tests) 45ms\n ✓ src/analyzer/graph-builder.test.ts (18 tests) 53ms\n ✓ src/__tests__/plugin-registry.test.ts (19 tests) 12ms\n ✓ src/types.test.ts (10 tests) 5ms\n ✓ src/__tests__/fingerprint.test.ts (23 tests) 5ms\n ✓ src/__tests__/change-classifier.test.ts (13 tests) 6ms\n ✓ src/__tests__/plugin-discovery.test.ts (10 tests) 4ms\n ✓ src/__tests__/domain-types.test.ts (7 tests) 5ms\n ✓ src/__tests__/language-lesson.test.ts (10 tests) 2ms\n ✓ src/__tests__/staleness.test.ts (8 tests) 3ms\n ✓ src/analyzer/llm-analyzer.test.ts (16 tests) 3ms\n ✓ src/__tests__/domain-normalize.test.ts (5 tests) 2ms\n ✓ src/__tests__/framework-registry.test.ts (14 tests) 5ms\n\n Test Files  33 passed (33)\n      Tests  672 passed (672)\n   Start at  04:28:18\n   Duration  1.13s (transform 806ms, setup 0ms, collect 2.99s, tests 849ms, environment 3ms, prepare 1.53s)\n\n",
+        "stderr_tail": "stderr | src/__tests__/parsers.test.ts > YAMLConfigParser > handles invalid YAML gracefully\n[yaml-parser] YAML parse failed, falling back to regex extraction: Nested mappings are not allowed in compact mappings at line 1, column 10:\n\ninvalid: yaml: content: [[[\n         ^\n\n\nstderr | src/__tests__/parsers.test.ts > JSONConfigParser > handles invalid JSON gracefully\n[json-parser] Failed to parse JSON: Unexpected token 'o', \"not json at all\" is not valid JSON\n\n"
+      },
+      {
+        "command": "test -n \"$(git diff --name-only -- understand-codebase-plugin/packages/core/src/analyzer/normalize-graph.ts)\" && test -n \"$(git diff --name-only -- understand-codebase-plugin/packages/core/src/__tests__/normalize-graph.test.ts)\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 37,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "understand-codebase-plugin/packages/core/src/__tests__/normalize-graph.test.ts",
+        "understand-codebase-plugin/packages/core/src/analyzer/normalize-graph.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": true,
+      "evidence_score": 1,
+      "run_ids": [
+        "run-mt37fw0c-35b31889"
+      ],
+      "done_run_ids": [
+        "run-mt37fw0c-35b31889"
+      ],
+      "fully_closed_run_ids": [
+        "run-mt37fw0c-35b31889"
+      ],
+      "active_runs": [],
+      "candidate_chain_equal": true,
+      "verification_ref": ".apex-v2/runs/run-mt37fw0c-35b31889/verification-report.json",
+      "review_ref": ".apex-v2/runs/run-mt37fw0c-35b31889/review-report.json",
+      "integration_ref": ".apex-v2/runs/run-mt37fw0c-35b31889/integration-report.json",
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "0802bbf3c0d77722124e66c0879e6babb363fb8aca609b1e7cbcf7332708c59b",
+        "replay_hash": "0802bbf3c0d77722124e66c0879e6babb363fb8aca609b1e7cbcf7332708c59b",
+        "hash_equal": true
+      }
+    }
+  }
+}

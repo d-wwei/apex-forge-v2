@@ -30,6 +30,60 @@
     "affected_area": { "type": "string" },
     "generated_at": { "type": "string" },
     "profile": { "type": "string", "enum": ["full", "quick"] },
+    "method_pack": {
+      "type": "object",
+      "required": ["id", "version", "workflow", "selection_reason", "quality_gates"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "workflow": {
+          "type": "string",
+          "enum": ["quick", "disciplined", "phase_context", "governed"]
+        },
+        "selection_reason": { "type": "string", "minLength": 1 },
+        "quality_gates": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "capability_plan": {
+      "type": "object",
+      "required": [
+        "registry_version",
+        "enforcement_mode",
+        "router_mode",
+        "required",
+        "optional",
+        "advisory"
+      ],
+      "properties": {
+        "registry_version": { "type": "string", "minLength": 1 },
+        "enforcement_mode": {
+          "type": "string",
+          "enum": ["shadow", "enforce"]
+        },
+        "router_mode": {
+          "type": "string",
+          "enum": ["enabled", "disabled"]
+        },
+        "required": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/capabilityBinding" }
+        },
+        "optional": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/capabilityBinding" }
+        },
+        "advisory": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/capabilityBinding" }
+        }
+      },
+      "additionalProperties": false
+    },
     "strategy": { "type": "string" },
     "planning_basis": { "type": "array", "items": { "type": "string" } },
     "quality_bar": { "type": "array", "items": { "type": "string" } },
@@ -66,6 +120,15 @@
           "verification": { "type": "array", "items": { "type": "string" } },
           "merge_strategy": { "type": "string" },
           "adapter": { "type": "string", "minLength": 1 },
+          "method_pack_id": { "type": "string", "minLength": 1 },
+          "capability_bindings": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/capabilityBinding" }
+          },
+          "capability_enforcement": {
+            "type": "string",
+            "enum": ["shadow", "enforce"]
+          },
           "execution_class": {
             "type": "string",
             "enum": ["cognitive", "workspace_patch", "deterministic_check", "human_decision"]
@@ -135,6 +198,57 @@
     "evidence_policy": { "type": "object" },
     "project_knowledge_version": { "type": "integer", "minimum": 0 },
     "project_name": { "type": "string" }
+  },
+  "$defs": {
+    "capabilityBinding": {
+      "type": "object",
+      "required": [
+        "capability_id",
+        "capability_version",
+        "category",
+        "mode",
+        "required",
+        "priority",
+        "target_node_id",
+        "execution_class",
+        "required_host_capabilities",
+        "input_contract",
+        "output_contract",
+        "protocol_ref",
+        "availability",
+        "certification"
+      ],
+      "properties": {
+        "capability_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "capability_version": { "type": "string", "minLength": 1 },
+        "category": { "type": "string", "enum": ["core", "conditional", "evolution"] },
+        "mode": { "type": "string", "enum": ["required", "optional", "advisory"] },
+        "required": { "type": "boolean" },
+        "priority": { "type": "integer", "minimum": 0 },
+        "target_node_id": { "type": "string", "minLength": 1 },
+        "execution_class": {
+          "type": "string",
+          "enum": ["cognitive", "workspace_patch", "deterministic_check", "human_decision"]
+        },
+        "required_host_capabilities": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+          "uniqueItems": true
+        },
+        "input_contract": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "output_contract": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "protocol_ref": { "type": "string", "minLength": 1 },
+        "availability": {
+          "type": "string",
+          "enum": ["portable", "host_dependent", "environment_dependent"]
+        },
+        "certification": {
+          "type": "string",
+          "enum": ["planned", "bundled", "conformant", "live_verified", "portable_verified"]
+        }
+      },
+      "additionalProperties": false
+    }
   },
   "additionalProperties": false
 }

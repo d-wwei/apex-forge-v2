@@ -16,13 +16,17 @@ const args = process.argv.slice(2);
 const schemaDir = cli === packagedCandidate
   ? resolve(scriptDir, "../runtime/schemas")
   : resolve(dirname(cli || ""), "../schemas");
+const capabilityDir = cli === packagedCandidate
+  ? resolve(scriptDir, "../runtime/capabilities")
+  : resolve(dirname(cli || ""), "../capabilities");
 
 const result = cli
   ? spawnSync(process.execPath, [cli, ...args], {
     stdio: "inherit",
     env: {
       ...process.env,
-      APEX_V2_SCHEMA_DIR: schemaDir
+      APEX_V2_SCHEMA_DIR: schemaDir,
+      APEX_V2_CAPABILITY_DIR: capabilityDir
     }
   })
   : spawnSync("apex-v2", args, { stdio: "inherit" });

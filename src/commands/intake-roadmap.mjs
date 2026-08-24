@@ -1,6 +1,7 @@
 import { required } from "../lib/common.mjs";
 import { projectRoot, requireStore } from "../core/store.mjs";
 import { addIntakeItem, listIntakeItems, promoteRoadmapNode, triageIntakeItem } from "../core/intake-roadmap.mjs";
+import { normalizeSpecSource } from "../core/spec-adapter.mjs";
 
 export function handleIntakeCommand(subcommand, args) {
   if (subcommand === "add") {
@@ -15,7 +16,34 @@ export function handleIntakeCommand(subcommand, args) {
     triageIntake(args);
     return;
   }
+  if (subcommand === "import-spec") {
+    importSpec(args);
+    return;
+  }
   throw new Error(`未知 intake 子命令：${subcommand || "(空)"}`);
+}
+
+function importSpec(args) {
+  const projectDir = projectRoot(args);
+  const root = requireStore(projectDir);
+  const normalized = normalizeSpecSource(projectDir, {
+    format: args.format || "auto",
+    path: required(args, "path")
+  });
+  const item = addIntakeItem(root, {
+    source: normalized.source,
+    type: args.type || normalized.type,
+    title: args.title || normalized.title,
+    description: normalized.description,
+    priority: args.priority || normalized.priority,
+    risk: args.risk || normalized.risk,
+    area: normalized.affected_area,
+    "method-pack": args["method-pack"],
+    "acceptance-json": JSON.stringify(normalized.acceptance_commands),
+    evidence: normalized.evidence_refs.join(","),
+    source_spec: normalized.source_spec
+  });
+  console.log(JSON.stringify(item, null, 2));
 }
 
 function addIntake(args) {
@@ -52,4 +80,3 @@ function promoteRoadmap(args) {
   const node = promoteRoadmapNode(root, intakeId, args);
   console.log(JSON.stringify(node, null, 2));
 }
-

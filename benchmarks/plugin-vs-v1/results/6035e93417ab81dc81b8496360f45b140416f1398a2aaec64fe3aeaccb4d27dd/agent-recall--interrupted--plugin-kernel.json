@@ -1,0 +1,164 @@
+{
+  "task_id": "agent-recall--interrupted",
+  "task_digest": "365c62f82cbae3b8a6d22caff7c761e81b88cd80fc5920b8f7fc23d779b863ec",
+  "repository": "agent-recall",
+  "scenario": "interrupted",
+  "mode": "plugin-kernel",
+  "candidate_digest": "6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd",
+  "attempt": 1,
+  "metrics": {
+    "completion": 1,
+    "user_actions": 0,
+    "recovery": 1,
+    "evidence": 1,
+    "wall_ms": 945110,
+    "cost": 5820058,
+    "safety": 1,
+    "hidden_acceptance": 1,
+    "defect_detection": 1,
+    "false_positive": 0,
+    "durable_closure": 1,
+    "false_completion_claim": false
+  },
+  "provenance": {
+    "source_commit": "362bd78657a4f346af7218a571ab2698303ffb2a",
+    "runtime_hash": "528e8b02a687efafd5236ab0db47910b4b782885fd3facc93f7df7678ff12ea1",
+    "model": "gpt-5.6-sol",
+    "provider": "codexThirdPartyProvider",
+    "reasoning_effort": "medium",
+    "runner_version": "codex-cli 0.146.0",
+    "execution_config_fingerprint": "9d60c1e5fdad16116ca8f2ba5362388b24ab0186cceba13cea684f9ea03da757",
+    "environment_fingerprint": "d00d8aca26505e91e5fb87e8f2a97cfffe4e24aaae5b9242a39b1015f12d87fd",
+    "raw_log_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--interrupted--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--interrupted--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--interrupted--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--interrupted--plugin-kernel/codex-home/sessions/2026/08/21/rollout-2026-08-21T22-41-52-01a024c5-6885-7350-b75b-c81758f74d3c.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--interrupted--plugin-kernel/execution-2.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--interrupted--plugin-kernel/process-2.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--interrupted--plugin-kernel/process-2.stderr.log"
+    ],
+    "artifact_refs": [
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--interrupted--plugin-kernel/execution-1.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--interrupted--plugin-kernel/process-1.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--interrupted--plugin-kernel/process-1.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--interrupted--plugin-kernel/codex-home/sessions/2026/08/21/rollout-2026-08-21T22-41-52-01a024c5-6885-7350-b75b-c81758f74d3c.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--interrupted--plugin-kernel/execution-2.json",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--interrupted--plugin-kernel/process-2.jsonl",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--interrupted--plugin-kernel/process-2.stderr.log",
+      "benchmarks/plugin-vs-v1/workspaces/runs/6035e93417ab81dc81b8496360f45b140416f1398a2aaec64fe3aeaccb4d27dd/runs/agent-recall--interrupted--plugin-kernel/agent-output-2.json"
+    ],
+    "artifact_hashes": [
+      "44afe0e45a8af5980ff5e290440b40c6fe7a83f4a2550a9216a411b2b7df0419",
+      "4a7d1fbc1ea1531bf5712163602ac1900e1f9ab18c39ac6c65297c426fdf0921",
+      "9784d444982a97250dac234b3c8cace0a14319101ada58610e6864efcf8b5c82",
+      "7e45e6e74d55f61b6659652882dc19ad146ad3921fa0f4740a31d297f9bbb29d",
+      "b5ddd9bd79c7a3b292a5145738c99a14d2929a4d4d7b5aa00dd0c1e1b4d87d41",
+      "c16126b727b1c77a2912713c0e5b522ffa52f0a96302e7108e4922ab1269f68a",
+      "b272c39e9a8ec490d61df99231d61b8e983562ff5874360357be9e061eca5d2d",
+      "cb26add843306f53577281f503acb00e64f75d733b57231c5a55dff647b30cea"
+    ]
+  },
+  "evidence": {
+    "task_digest": "365c62f82cbae3b8a6d22caff7c761e81b88cd80fc5920b8f7fc23d779b863ec",
+    "agent_exit_code": 0,
+    "agent_timed_out": false,
+    "agent_session_id": "01a024c5-6885-7350-b75b-c81758f74d3c",
+    "agent_output": {
+      "verdict": "pass",
+      "summary": "Normalized project filters before no-filter checks and exact matching. Added focused coverage for trimmed, whitespace-only, exact, and non-matching filters. Apex run completed and integrated.",
+      "tests": [
+        {
+          "command": "bun test tests/worker/search/search-orchestrator.test.ts",
+          "status": "fail",
+          "detail": "Expected RED: 20 passed, 2 normalization cases failed."
+        },
+        {
+          "command": "bun test tests/worker/search/search-orchestrator.test.ts",
+          "status": "pass",
+          "detail": "Kernel staged candidate: 22 passed, 0 failed."
+        },
+        {
+          "command": "bun test tests/worker/search/search-orchestrator.test.ts",
+          "status": "pass",
+          "detail": "Final integrated workspace: 22 passed, 0 failed."
+        }
+      ],
+      "risks": [],
+      "evidence_refs": [
+        "patch-mt3cxwvs-9d0e98d6",
+        "patch-mt3czcf8-0907bd52",
+        "artifact-mt3d6mda-4c9b1d47",
+        "artifact-mt3d7nbd-52170858",
+        "reconcile-mt3d7yoy-c04f2163"
+      ],
+      "review": null
+    },
+    "acceptance": [
+      {
+        "command": "bun test tests/worker/search/search-orchestrator.test.ts",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 54,
+        "stdout_tail": "bun test v1.3.11 (af24e281)\n",
+        "stderr_tail": "\ntests/worker/search/search-orchestrator.test.ts:\n(pass) ProjectFilter > should trim project filters before matching\n(pass) ProjectFilter > should preserve all results for whitespace-only filters [0.24ms]\n(pass) ProjectFilter > should match exact project names\n(pass) ProjectFilter > should reject non-matching project names\n(pass) SearchOrchestrator > search > should select SQLite strategy for filter-only queries (no query text) [0.09ms]\n(pass) SearchOrchestrator > search > should use SQLite for query search (vector search handled externally) [0.23ms]\n(pass) SearchOrchestrator > search > should normalize comma-separated concepts [0.03ms]\n(pass) SearchOrchestrator > search > should normalize comma-separated files [0.07ms]\n(pass) SearchOrchestrator > search > should normalize dateStart/dateEnd into dateRange object [0.03ms]\n(pass) SearchOrchestrator > search > should map type to searchType for observations/sessions/prompts [0.03ms]\n(pass) SearchOrchestrator > findByConcept > should use SQLite strategy [0.03ms]\n(pass) SearchOrchestrator > findByConcept > should return observations matching concept [0.05ms]\n(pass) SearchOrchestrator > findByType > should use SQLite strategy [0.03ms]\n(pass) SearchOrchestrator > findByType > should handle array of types [0.05ms]\n(pass) SearchOrchestrator > findByFile > should return observations and sessions for file [0.03ms]\n(pass) SearchOrchestrator > findByFile > should include usedVector in result [0.04ms]\n(pass) SearchOrchestrator > formatSearchResults > should format results as markdown [5.94ms]\n(pass) SearchOrchestrator > formatSearchResults > should handle empty results [0.02ms]\n(pass) SearchOrchestrator > formatSearchResults > should indicate vector failure when vectorFailed is true [0.02ms]\n(pass) SearchOrchestrator > parameter normalization > should parse obs_type into obsType array [0.05ms]\n(pass) SearchOrchestrator > parameter normalization > should handle already-array concepts [0.04ms]\n(pass) SearchOrchestrator > parameter normalization > should handle empty string filters [0.03ms]\n\n 22 pass\n 0 fail\n 34 expect() calls\nRan 22 tests across 1 file. [25.00ms]\n"
+      }
+    ],
+    "hidden_checks": [
+      {
+        "command": "bun -e \"import { filterResultsByProject } from './src/services/worker/search/filters/ProjectFilter.ts'; const rows=[{project:'alpha'},{project:'beta'}]; if(filterResultsByProject(rows,' alpha ').length!==1||filterResultsByProject(rows,'   ').length!==2) process.exit(1);\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 30,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      },
+      {
+        "command": "test -n \"$(git diff --name-only -- src/services/worker/search/filters/ProjectFilter.ts)\" && test -n \"$(git diff --name-only -- tests/worker/search/search-orchestrator.test.ts)\"",
+        "status": "PASS",
+        "exit_code": 0,
+        "duration_ms": 35,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      }
+    ],
+    "changed_files": {
+      "safe": true,
+      "files": [
+        "src/services/worker/search/filters/ProjectFilter.ts",
+        "tests/worker/search/search-orchestrator.test.ts"
+      ],
+      "outside_scope": [],
+      "symlinks": []
+    },
+    "durable_closure": {
+      "closed": true,
+      "evidence_score": 1,
+      "run_ids": [
+        "run-mt325h5c-052042c1"
+      ],
+      "done_run_ids": [
+        "run-mt325h5c-052042c1"
+      ],
+      "fully_closed_run_ids": [
+        "run-mt325h5c-052042c1"
+      ],
+      "active_runs": [],
+      "candidate_chain_equal": true,
+      "verification_ref": ".apex-v2/runs/run-mt325h5c-052042c1/verification-report.json",
+      "review_ref": ".apex-v2/runs/run-mt325h5c-052042c1/review-report.json",
+      "integration_ref": ".apex-v2/runs/run-mt325h5c-052042c1/integration-report.json",
+      "reconcile": {
+        "consistent": true,
+        "status": "CONSISTENT",
+        "applied": true,
+        "pre_status": "CONSISTENT",
+        "post_status": "CONSISTENT",
+        "issue_count": 0,
+        "operational_hash": "a099fc4fa6abb07393e333138bc8bc20ccd7896efd250a799a7a5e851c3218c2",
+        "replay_hash": "a099fc4fa6abb07393e333138bc8bc20ccd7896efd250a799a7a5e851c3218c2",
+        "hash_equal": true
+      }
+    }
+  }
+}

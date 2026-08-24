@@ -123,6 +123,7 @@ import {
   handleIntakeCommand,
   handleRoadmapCommand
 } from "./commands/intake-roadmap.mjs";
+import { handleCapabilityCommand } from "./commands/capability.mjs";
 import { handleHostCommand } from "./commands/host.mjs";
 import {
   evaluateAdapterCapabilityDrift,
@@ -146,6 +147,7 @@ import {
   status,
   validateProject
 } from "./commands/project-workspace.mjs";
+import { handleGitDeliveryCommand } from "./commands/git-delivery.mjs";
 import {
   defaultExecutionPolicy,
   defaultGatePolicy,
@@ -236,6 +238,11 @@ function main() {
 
     if (command === "roadmap") {
       handleRoadmapCommand(subcommand, parseArgs(rest));
+      return;
+    }
+
+    if (command === "capability") {
+      handleCapabilityCommand(subcommand, parseArgs(rest));
       return;
     }
 
@@ -483,6 +490,10 @@ function applyLearning(args) {
 }
 
 function handleProject(subcommand, args) {
+  if (subcommand === "git") {
+    handleGitDeliveryCommand(args._[0], args);
+    return;
+  }
   if (subcommand === "tick") {
     projectTick(args);
     return;

@@ -72,7 +72,18 @@ test("concurrent worker processes preserve isolated patches and ProjectState", a
   file(project, "contracts/stage-contracts-v0.md", "# contracts\n");
   file(project, "research/source-inventory.md", "# sources\n");
   run(["init", "--project", project]);
-  const intake = run(["intake", "add", "--project", project, "--title", "concurrent delivery", "--affected-area", "src/"]);
+  const intake = run([
+    "intake",
+    "add",
+    "--project",
+    project,
+    "--title",
+    "concurrent delivery",
+    "--area",
+    "src/,tests/",
+    "--method-pack",
+    "governed"
+  ]);
   run(["intake", "triage", "--project", project, "--id", intake.id, "--decision", "accepted"]);
   const roadmap = run(["roadmap", "promote", "--project", project, "--intake-id", intake.id]);
   const delivery = run(["run", "create", "--project", project, "--roadmap-id", roadmap.id]);

@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/benchmark-controller.schema.json",
+  "title": "Apex Forge Product Benchmark Controller State",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "revision",
+    "controller_id",
+    "release_candidate_digest",
+    "task_set_digest",
+    "status",
+    "created_at",
+    "updated_at",
+    "runs"
+  ],
+  "properties": {
+    "schema_version": { "const": "v0" },
+    "revision": { "type": "integer", "minimum": 0 },
+    "controller_id": { "type": "string", "minLength": 1 },
+    "release_candidate_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "task_set_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "running", "complete", "blocked"]
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "runs": {
+      "type": "array",
+      "minItems": 90,
+      "maxItems": 90,
+      "items": {
+        "type": "object",
+        "required": [
+          "run_key",
+          "task_id",
+          "task_digest",
+          "repository",
+          "scenario",
+          "mode",
+          "status",
+          "official_attempt",
+          "process_attempt",
+          "recovery_count",
+          "fencing_token",
+          "workspace_path",
+          "raw_log_refs"
+        ],
+        "properties": {
+          "run_key": { "type": "string", "minLength": 1 },
+          "task_id": { "type": "string", "minLength": 1 },
+          "task_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "repository": { "type": "string", "minLength": 1 },
+          "scenario": { "type": "string", "minLength": 1 },
+          "mode": {
+            "type": "string",
+            "enum": ["v1-skill", "cli-kernel", "plugin-kernel"]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "running",
+              "interrupted",
+              "completed",
+              "failed",
+              "invalid"
+            ]
+          },
+          "official_attempt": { "type": "integer", "minimum": 1, "maximum": 1 },
+          "process_attempt": { "type": "integer", "minimum": 0 },
+          "recovery_count": { "type": "integer", "minimum": 0 },
+          "fencing_token": { "type": "integer", "minimum": 0 },
+          "lease_id": { "type": ["string", "null"], "minLength": 1 },
+          "lease_owner": { "type": ["string", "null"], "minLength": 1 },
+          "lease_expires_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "heartbeat_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "attempt_id": { "type": ["string", "null"], "minLength": 1 },
+          "workspace_path": { "type": "string" },
+          "controller_pid": { "type": ["integer", "null"], "minimum": 1 },
+          "child_pid": { "type": ["integer", "null"], "minimum": 1 },
+          "session_id": { "type": ["string", "null"] },
+          "started_at": { "type": ["string", "null"], "format": "date-time" },
+          "completed_at": { "type": ["string", "null"], "format": "date-time" },
+          "raw_log_refs": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "result_ref": { "type": ["string", "null"] },
+          "result_sha256": {
+            "type": ["string", "null"],
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "failure": { "type": ["string", "null"] }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

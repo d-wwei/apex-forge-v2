@@ -14,6 +14,7 @@ import { runAdapterSmoke } from "../core/adapter-smoke.mjs";
 import { buildAdapterTrend, recordAdapterObservation, recordAdapterSmokeReport } from "../core/adapter-observability.mjs";
 import { assertSafeRelativePath, dirnameForPath, ensureDir, normalizeEnum, now, readJson, required, shortId, splitList, tail, writeJson, writeTextIfMissing } from "../lib/common.mjs";
 import { withProjectTransaction } from "../core/project-transaction.mjs";
+import { claimCheckout, releaseCheckout } from "../core/git-delivery.mjs";
 
 export function handleWorkerCommand(subcommand, args) {
   if (subcommand === "create") {
@@ -121,6 +122,12 @@ export function initializeWorkerSandbox(root, worker, requestedType) {
   const existingDir = worker.sandbox?.path ? resolve(projectDir, worker.sandbox.path) : null;
   if (worker.sandbox?.status === "ready" && existingDir && existsSync(existingDir)) {
     const manifest = readJson(join(existingDir, "sandbox.json"), null);
+    if (worker.sandbox.type === "worktree" && worker.sandbox.checkout_claim_token) {
+      const claim = claimCheckout(existingDir, checkoutOwner(worker));
+      if (claim.claim_token !== worker.sandbox.checkout_claim_token) {
+        throw new Error(`worktree checkout claim token 漂移：${worker.worker_id}`);
+      }
+    }
     return { worker, manifest };
   }
   const gitRoot = findGitRoot(projectDir);
@@ -142,6 +149,18 @@ export function initializeWorkerSandbox(root, worker, requestedType) {
   copyProjectContextSnapshot(projectDir, dir);
   const actualType = useWorktree ? "worktree" : "scratch";
   const fallbackReason = requestedType === "worktree" && !gitRoot ? "当前项目不是 git repository，降级为 scratch sandbox。" : "";
+  let checkoutClaim = null;
+  if (useWorktree) {
+    try {
+      checkoutClaim = claimCheckout(dir, checkoutOwner(worker));
+    } catch (error) {
+      spawnSync("git", ["worktree", "remove", dir, "--force"], {
+        cwd: gitRoot,
+        encoding: "utf8"
+      });
+      throw error;
+    }
+  }
   const manifest = {
     schema_version: SCHEMA_VERSION,
     worker_id: worker.worker_id,
@@ -150,6 +169,8 @@ export function initializeWorkerSandbox(root, worker, requestedType) {
     requested_type: requestedType,
     type: actualType,
     fallback_reason: fallbackReason,
+    checkout_owner_id: checkoutClaim?.owner.owner_id || null,
+    checkout_claim_token: checkoutClaim?.claim_token || null,
     created_at: now(),
     read_scope: worker.read_scope,
     write_scope: worker.write_scope,
@@ -171,7 +192,9 @@ export function initializeWorkerSandbox(root, worker, requestedType) {
     type: actualType,
     path: `${worker.namespace}/sandbox`,
     status: "ready",
-    fallback_reason: fallbackReason
+    fallback_reason: fallbackReason,
+    checkout_owner_id: checkoutClaim?.owner.owner_id || null,
+    checkout_claim_token: checkoutClaim?.claim_token || null
   };
   worker.updated_at = now();
   writeJson(join(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
@@ -416,8 +439,37 @@ function execWorkerShell(args) {
     throw new Error(`worker 当前状态不可执行 shell adapter：${worker.status}`);
   }
   const command = required(args, "cmd");
-  const result = executeWorkerShell(root, worker, command, "manual");
+  const result = executeWorkerShell(
+    root,
+    worker,
+    command,
+    "manual",
+    parseCapabilityEvidence(args)
+  );
   console.log(JSON.stringify({ result: result.adapterResult, artifact_id: result.artifact.artifact_id }, null, 2));
+}
+
+function parseCapabilityEvidence(args) {
+  const inline = args["capability-evidence-json"];
+  const file = args["capability-evidence-file"];
+  if (!inline && !file) return [];
+  if (inline && file) {
+    throw new Error(
+      "只能指定 --capability-evidence-json 或 --capability-evidence-file 之一"
+    );
+  }
+  let value;
+  try {
+    value = JSON.parse(
+      file ? readFileSync(resolve(String(file)), "utf8") : String(inline)
+    );
+  } catch (error) {
+    throw new Error(`capability evidence JSON 无效：${error.message}`);
+  }
+  if (!Array.isArray(value)) {
+    throw new Error("capability evidence JSON 必须是数组");
+  }
+  return value;
 }
 
 function execWorkerAgent(args) {
@@ -429,7 +481,8 @@ function execWorkerAgent(args) {
   const plan = loadPlanGraph(root, worker.run_id);
   const planNode = getPlanNode(plan, worker.plan_node_id);
   const requestedTimeoutMs = Number(args["timeout-ms"] || 30 * 60 * 1000);
-  const timeoutMs = effectiveAgentTimeout(root, requestedTimeoutMs);
+  const route = readJson(join(workerDir(root, worker.run_id, worker.worker_id), "execution-route.json"), null);
+  const timeoutMs = effectiveAgentTimeout(root, requestedTimeoutMs, route?.cost_budget);
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
     throw new Error("--timeout-ms 必须是正整数");
   }
@@ -649,6 +702,12 @@ function resetWorkerSandbox(root, worker) {
   const projectDir = resolve(root, "..");
   const sandboxDir = resolve(projectDir, worker.sandbox.path);
   if (existsSync(sandboxDir) && worker.sandbox.type === "worktree") {
+    if (worker.sandbox.checkout_claim_token) {
+      releaseCheckout(sandboxDir, {
+        ...checkoutOwner(worker),
+        claim_token: worker.sandbox.checkout_claim_token
+      });
+    }
     spawnSync("git", ["worktree", "remove", sandboxDir, "--force"], {
       cwd: projectDir,
       encoding: "utf8"
@@ -659,6 +718,14 @@ function resetWorkerSandbox(root, worker) {
     type: "none",
     path: "",
     status: "missing"
+  };
+}
+
+function checkoutOwner(worker) {
+  return {
+    owner_id: `apex-v2-worker:${worker.worker_id}`,
+    run_id: worker.run_id,
+    worker_id: worker.worker_id
   };
 }
 

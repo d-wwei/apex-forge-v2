@@ -13,6 +13,19 @@ const codexPlugin = join(repoRoot, "plugins", "codex", "apex-forge-v2");
 const claudePlugin = join(repoRoot, "plugins", "claude-code", "apex-forge-v2");
 const codexManifest = JSON.parse(readFileSync(join(codexPlugin, ".codex-plugin", "plugin.json"), "utf8"));
 const claudeManifest = JSON.parse(readFileSync(join(claudePlugin, ".claude-plugin", "plugin.json"), "utf8"));
+const includeCompatibilityAliases = ["1", "true"].includes(
+  String(process.env.APEX_PLUGIN_COMPAT_ALIASES || "").toLowerCase()
+);
+const expectedSkillNames = includeCompatibilityAliases
+  ? [
+      "apex-forge-execute",
+      "apex-forge-plan",
+      "apex-forge-review",
+      "apex-forge-ship",
+      "apex-forge-status",
+      "using-apex-forge"
+    ]
+  : ["using-apex-forge"];
 const evidencePath = join(
   repoRoot,
   ".product-audit",
@@ -119,6 +132,7 @@ function verifyPackage(id, pluginPath, version) {
   for (const file of ["LICENSE", "THIRD_PARTY_NOTICES", "SBOM.json", "PROVENANCE.json", "CHECKSUMS.sha256"]) {
     if (!existsSync(join(pluginPath, file))) errors.push(`missing ${file}`);
   }
+  verifySkillSurface(pluginPath, errors);
   const runtimePath = join(pluginPath, "runtime", "runtime.json");
   if (!existsSync(runtimePath)) {
     errors.push("missing runtime/runtime.json");
@@ -131,6 +145,12 @@ function verifyPackage(id, pluginPath, version) {
     if (runtime.schemas_sha256 !== treeHash(join(pluginPath, "runtime", "schemas"))) {
       errors.push("schemas hash mismatch");
     }
+    if (
+      runtime.capabilities_sha256
+      !== treeHash(join(pluginPath, "runtime", "capabilities"))
+    ) {
+      errors.push("capabilities hash mismatch");
+    }
   }
   return {
     id,
@@ -141,12 +161,46 @@ function verifyPackage(id, pluginPath, version) {
   };
 }
 
+function verifySkillSurface(pluginPath, errors) {
+  const skillsRoot = join(pluginPath, "skills");
+  if (!existsSync(skillsRoot)) {
+    errors.push("missing skills");
+    return;
+  }
+  const skillNames = readdirSync(skillsRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && existsSync(join(skillsRoot, entry.name, "SKILL.md")))
+    .map((entry) => entry.name)
+    .sort();
+  if (JSON.stringify(skillNames) !== JSON.stringify(expectedSkillNames)) {
+    errors.push(`skill discovery mismatch: ${skillNames.join(",")}`);
+  }
+  const usingRoot = join(skillsRoot, "using-apex-forge");
+  for (const route of ["plan", "execute", "review", "ship", "status"]) {
+    if (!existsSync(join(usingRoot, "references", "workflows", `${route}.md`))) {
+      errors.push(`missing internal workflow ${route}`);
+    }
+  }
+  const skillManifests = listFiles(skillsRoot)
+    .filter((path) => path.endsWith("/SKILL.md"));
+  if (skillManifests.length !== expectedSkillNames.length) {
+    errors.push(`unexpected nested Skill manifests: ${skillManifests.length}`);
+  }
+}
+
 function verifyInstalledRuntime(installedPath, sourcePlugin) {
   if (!installedPath || !existsSync(installedPath)) return false;
   for (const relativePath of [
     "runtime/apex-v2.mjs",
     "runtime/capability-runner.mjs",
     "runtime/runtime.json",
+    "runtime/capabilities/registry.json",
+    "runtime/capabilities/capability-lock.json",
+    "skills/using-apex-forge/SKILL.md",
+    "skills/using-apex-forge/references/workflows/plan.md",
+    "skills/using-apex-forge/references/workflows/execute.md",
+    "skills/using-apex-forge/references/workflows/review.md",
+    "skills/using-apex-forge/references/workflows/ship.md",
+    "skills/using-apex-forge/references/workflows/status.md",
     "PROVENANCE.json"
   ]) {
     const installed = join(installedPath, relativePath);
@@ -154,6 +208,9 @@ function verifyInstalledRuntime(installedPath, sourcePlugin) {
     if (!existsSync(installed) || !existsSync(source)) return false;
     if (fileHash(installed) !== fileHash(source)) return false;
   }
+  const installedErrors = [];
+  verifySkillSurface(installedPath, installedErrors);
+  if (installedErrors.length > 0) return false;
   return true;
 }
 

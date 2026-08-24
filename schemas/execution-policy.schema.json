@@ -26,7 +26,6 @@
     "execution_router": {
       "type": "object",
       "required": [
-        "factory_min_duration_minutes",
         "force_factory_risks",
         "factory_on_isolation",
         "factory_on_resume",
@@ -34,7 +33,11 @@
         "factory_on_parallel_execution"
       ],
       "properties": {
-        "factory_min_duration_minutes": { "type": "integer", "minimum": 1 },
+        "factory_min_duration_minutes": {
+          "type": "integer",
+          "minimum": 1,
+          "deprecated": true
+        },
         "force_factory_risks": {
           "type": "array",
           "items": { "type": "string", "enum": ["low", "medium", "high", "critical"] }
@@ -43,6 +46,20 @@
         "factory_on_resume": { "type": "boolean" },
         "factory_on_background": { "type": "boolean" },
         "factory_on_parallel_execution": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "cost_governor": {
+      "type": "object",
+      "required": ["enabled", "unknown_usage", "default_budget", "method_pack_budgets"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "unknown_usage": { "type": "string", "enum": ["record", "fail"] },
+        "default_budget": { "$ref": "#/$defs/routeBudget" },
+        "method_pack_budgets": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/routeBudget" }
+        }
       },
       "additionalProperties": false
     },
@@ -83,6 +100,26 @@
           },
           "additionalProperties": false
         }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "routeBudget": {
+      "type": "object",
+      "required": [
+        "max_wall_minutes",
+        "max_agent_turns",
+        "max_tool_calls",
+        "max_input_tokens",
+        "max_output_tokens"
+      ],
+      "properties": {
+        "max_wall_minutes": { "type": "number", "exclusiveMinimum": 0 },
+        "max_agent_turns": { "type": "integer", "minimum": 1 },
+        "max_tool_calls": { "type": "integer", "minimum": 1 },
+        "max_input_tokens": { "type": "integer", "minimum": 1 },
+        "max_output_tokens": { "type": "integer", "minimum": 1 }
       },
       "additionalProperties": false
     }

@@ -14,8 +14,10 @@ export function addIntakeItem(root, args) {
     priority: normalizeEnum(args.priority || "P2", ["P0", "P1", "P2", "P3"], "priority"),
     risk: normalizeEnum(args.risk || "medium", ["low", "medium", "high", "critical"], "risk"),
     affected_area: String(args.area || "unknown"),
+    method_pack_id: args["method-pack"] ? String(args["method-pack"]) : null,
     acceptance_commands: parseAcceptanceCommands(args),
     evidence_refs: splitList(args.evidence),
+    source_spec: args.source_spec || null,
     triage: {
       status: "new",
       decision: null,

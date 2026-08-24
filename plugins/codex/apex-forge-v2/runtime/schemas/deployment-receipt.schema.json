@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/deployment-receipt.schema.json",
+  "title": "Deployment Receipt Output",
+  "type": "object",
+  "required": ["candidate_digest", "environment", "approval", "deployment_id", "started_at", "completed_at", "health_checks", "canary_results", "rollback_token"],
+  "properties": {
+    "candidate_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "environment": { "type": "string", "minLength": 1 },
+    "approval": { "type": ["string", "object"] },
+    "deployment_id": { "type": "string", "minLength": 1 },
+    "started_at": { "type": "string", "minLength": 1 },
+    "completed_at": { "type": "string", "minLength": 1 },
+    "health_checks": { "type": "array", "items": { "type": "object" }, "minItems": 1 },
+    "canary_results": { "type": "array", "items": { "type": "object" }, "minItems": 1 },
+    "rollback_token": { "type": "string", "minLength": 1 },
+    "external_refs": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+  },
+  "additionalProperties": true
+}

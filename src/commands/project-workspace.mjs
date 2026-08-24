@@ -3,6 +3,7 @@ import { basename, join } from "node:path";
 import { ensureDir, now, readJson, shortId, writeJson, writeTextIfMissing } from "../lib/common.mjs";
 import { appendEvent, projectRoot, requireStore, SCHEMA_VERSION, storeRoot, updateProject } from "../core/store.mjs";
 import { defaultExecutionPolicy, defaultGatePolicy, defaultQualityPolicy, defaultRetryPolicy } from "../core/policy-defaults.mjs";
+import { defaultMethodPackRegistry } from "../core/method-packs.mjs";
 import { defaultNotificationPolicy, migrateNotificationState } from "../core/notifications.mjs";
 import { migrateApprovalRecords } from "../core/governance.mjs";
 import { scanProjectContracts } from "../core/contracts.mjs";
@@ -69,6 +70,7 @@ export function initProject(args) {
     writeJson(join(root, "policies", "gates.json"), defaultGatePolicy(timestamp));
     writeJson(join(root, "policies", "retry.json"), defaultRetryPolicy(timestamp));
     writeJson(join(root, "policies", "execution.json"), defaultExecutionPolicy(timestamp));
+    writeJson(join(root, "policies", "method-packs.json"), defaultMethodPackRegistry(timestamp));
     writeJson(join(root, "policies", "quality.json"), defaultQualityPolicy(timestamp));
     writeJson(join(root, "policies", "notifications.json"), defaultNotificationPolicy(timestamp));
     writeJson(join(root, "approvals", "items.json"), []);
@@ -101,6 +103,10 @@ export function initProject(args) {
       executionPolicy.execution_router = defaultExecutionPolicy(timestamp).execution_router;
       executionPolicy.updated_at = timestamp;
     }
+    if (!executionPolicy.cost_governor) {
+      executionPolicy.cost_governor = defaultExecutionPolicy(timestamp).cost_governor;
+      executionPolicy.updated_at = timestamp;
+    }
     if (!executionPolicy.permissions.adapter_fallback_order) {
       executionPolicy.permissions.allowed_adapters = Array.from(new Set(["host", ...executionPolicy.permissions.allowed_adapters, "claude", "gemini", "deepseek-runner"]));
       executionPolicy.permissions.adapter_fallback_order = ["codex", "claude", "gemini"];
@@ -121,6 +127,9 @@ export function initProject(args) {
       executionPolicy.updated_at = timestamp;
     }
     writeJson(join(root, "policies", "execution.json"), executionPolicy);
+  }
+  if (!existsSync(join(root, "policies", "method-packs.json"))) {
+    writeJson(join(root, "policies", "method-packs.json"), defaultMethodPackRegistry(timestamp));
   }
   if (!existsSync(join(root, "policies", "quality.json"))) {
     writeJson(join(root, "policies", "quality.json"), defaultQualityPolicy(timestamp));

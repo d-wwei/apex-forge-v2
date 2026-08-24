@@ -24,6 +24,8 @@
     "requested_type": { "type": "string", "enum": ["scratch", "worktree"] },
     "type": { "type": "string", "enum": ["scratch", "worktree"] },
     "fallback_reason": { "type": "string" },
+    "checkout_owner_id": { "type": ["string", "null"] },
+    "checkout_claim_token": { "type": ["string", "null"] },
     "created_at": { "type": "string" },
     "read_scope": { "type": "array", "items": { "type": "string" } },
     "write_scope": { "type": "array", "items": { "type": "string" } },

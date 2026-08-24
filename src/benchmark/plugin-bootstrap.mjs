@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 
 export function resolvePluginBenchmarkBootstrap({
@@ -362,6 +362,7 @@ function runRuntime(runtimePath, schemaDir, args, extraEnv = {}) {
     env: {
       ...process.env,
       APEX_V2_SCHEMA_DIR: schemaDir,
+      APEX_V2_CAPABILITY_DIR: join(dirname(schemaDir), "capabilities"),
       ...extraEnv
     }
   });

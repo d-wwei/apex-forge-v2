@@ -1,0 +1,939 @@
+{
+  "schema_version": "v0",
+  "registry_version": "1.0.0",
+  "public_skill_id": "using-apex-forge",
+  "enforcement_mode": "shadow",
+  "previous_versions": {},
+  "capabilities": [
+    {
+      "capability_id": "engineering-spec",
+      "version": "1.0.0",
+      "category": "core",
+      "title": "Engineering Spec",
+      "description": "Create a bounded implementation contract for ambiguous engineering work.",
+      "protocol_ref": "capabilities/core/engineering-spec/PROTOCOL.md",
+      "input_contract": "engineering-spec-request",
+      "output_contract": "engineering-spec-evidence",
+      "execution_class": "cognitive",
+      "required_host_capabilities": ["structured_output"],
+      "allowed_tools": ["read", "search"],
+      "forbidden_actions": ["merge", "push", "approval_decide"],
+      "default_budget": {
+        "max_wall_minutes": 15,
+        "max_agent_turns": 6,
+        "max_tool_calls": 30
+      },
+      "availability": "portable",
+      "certification": "bundled",
+      "enabled": true,
+      "provenance": {
+        "source_name": "dev-spec-lite",
+        "source_sha256": "cd24dfb81a0ce2a8691ee1c94e6b76fcfddad1185057d8a335685beebebe5d94",
+        "license": "clean-room-no-copy",
+        "absorption_policy": "REWRITE_ONLY"
+      }
+    },
+    {
+      "capability_id": "source-grounding",
+      "version": "1.0.0",
+      "category": "core",
+      "title": "Source Grounding",
+      "description": "Ground version-sensitive implementation in authoritative sources.",
+      "protocol_ref": "capabilities/core/source-grounding/PROTOCOL.md",
+      "input_contract": "source-grounding-request",
+      "output_contract": "source-grounding-evidence",
+      "execution_class": "cognitive",
+      "required_host_capabilities": ["structured_output", "tool_use"],
+      "allowed_tools": ["read", "search", "web_search"],
+      "forbidden_actions": ["merge", "push", "approval_decide"],
+      "default_budget": {
+        "max_wall_minutes": 20,
+        "max_agent_turns": 8,
+        "max_tool_calls": 50
+      },
+      "availability": "host_dependent",
+      "certification": "bundled",
+      "enabled": true,
+      "provenance": {
+        "source_name": "dev-source-driven",
+        "source_sha256": "12c77f69d5e27a965387a5b0124e5b1a8f6cf07eb384111d985ee0edb38b5bb5",
+        "license": "clean-room-no-copy",
+        "absorption_policy": "REWRITE_ONLY"
+      }
+    },
+    {
+      "capability_id": "architecture-design",
+      "version": "1.0.0",
+      "category": "core",
+      "title": "Architecture Design",
+      "description": "Define minimal technical architecture, ownership, failure, and rollback boundaries.",
+      "protocol_ref": "capabilities/core/architecture-design/PROTOCOL.md",
+      "input_contract": "architecture-design-request",
+      "output_contract": "architecture-design-evidence",
+      "execution_class": "cognitive",
+      "required_host_capabilities": ["structured_output"],
+      "allowed_tools": ["read", "search"],
+      "forbidden_actions": ["merge", "push", "approval_decide"],
+      "default_budget": {
+        "max_wall_minutes": 30,
+        "max_agent_turns": 12,
+        "max_tool_calls": 70
+      },
+      "availability": "portable",
+      "certification": "bundled",
+      "enabled": true,
+      "provenance": {
+        "source_name": "Apex Forge V1 Design Consultation",
+        "source_sha256": "059d8e07cd13093383bbcffd39b5594e51f03b6d9507c4b0c72022ddad12f1ac",
+        "license": "MIT",
+        "absorption_policy": "MIT"
+      }
+    },
+    {
+      "capability_id": "systematic-debugging",
+      "version": "1.0.0",
+      "category": "core",
+      "title": "Systematic Debugging",
+      "description": "Reproduce, localize, prove root cause, and guard a defect.",
+      "protocol_ref": "capabilities/core/systematic-debugging/PROTOCOL.md",
+      "input_contract": "debug-request",
+      "output_contract": "root-cause-evidence",
+      "execution_class": "cognitive",
+      "required_host_capabilities": ["structured_output", "tool_use"],
+      "allowed_tools": ["read", "search", "shell_test"],
+      "forbidden_actions": ["merge", "push", "approval_decide"],
+      "default_budget": {
+        "max_wall_minutes": 30,
+        "max_agent_turns": 12,
+        "max_tool_calls": 80
+      },
+      "availability": "portable",
+      "certification": "bundled",
+      "enabled": true,
+      "provenance": {
+        "source_name": "dev-debug",
+        "source_sha256": "01aa489a4c8e4699db24bea79a663f60d30d43ffcfc94b83f2f94a5d7e9342ad",
+        "license": "clean-room-no-copy",
+        "absorption_policy": "REWRITE_ONLY"
+      }
+    },
+    {
+      "capability_id": "tdd-negative-control",
+      "version": "1.0.0",
+      "category": "core",
+      "title": "TDD And Negative Control",
+      "description": "Prove a regression guard fails on the old behavior and passes on the candidate.",
+      "protocol_ref": "capabilities/core/tdd-negative-control/PROTOCOL.md",
+      "input_contract": "negative-control-request",
+      "output_contract": "negative-control-evidence",
+      "execution_class": "cognitive",
+      "required_host_capabilities": ["structured_output", "tool_use"],
+      "allowed_tools": ["read", "search", "shell_test"],
+      "forbidden_actions": ["merge", "push", "approval_decide"],
+      "default_budget": {
+        "max_wall_minutes": 25,
+        "max_agent_turns": 10,
+        "max_tool_calls": 70
+      },
+      "availability": "portable",
+      "certification": "bundled",
+      "enabled": true,
+      "provenance": {
+        "source_name": "dev-tdd",
+        "source_sha256": "d0df1ec352b95fcc543f014fb5f79042f71a9692d894fd7fde10ee4ec8307126",
+        "license": "clean-room-no-copy",
+        "absorption_policy": "REWRITE_ONLY"
+      }
+    },
+    {
+      "capability_id": "incremental-delivery",
+      "version": "1.0.0",
+      "category": "core",
+      "title": "Incremental Delivery",
+      "description": "Split multi-file implementation into coherent verified slices.",
+      "protocol_ref": "capabilities/core/incremental-delivery/PROTOCOL.md",
+      "input_contract": "incremental-delivery-request",
+      "output_contract": "incremental-plan-evidence",
+      "execution_class": "cognitive",
+      "required_host_capabilities": ["structured_output"],
+      "allowed_tools": ["read", "search"],
+      "forbidden_actions": ["merge", "push", "approval_decide"],
+      "default_budget": {
+        "max_wall_minutes": 20,
+        "max_agent_turns": 8,
+        "max_tool_calls": 50
+      },
+      "availability": "portable",
+      "certification": "bundled",
+      "enabled": true,
+      "provenance": {
+        "source_name": "dev-incremental",
+        "source_sha256": "aaf68453632487e65f70e818787584a56636611cc1cac3f81029c4fad9b73b75",
+        "license": "clean-room-no-copy",
+        "absorption_policy": "REWRITE_ONLY"
+      }
+    },
+    {
+      "capability_id": "code-review",
+      "version": "1.0.0",
+      "category": "core",
+      "title": "Code Review",
+      "description": "Review the current candidate for correctness, regressions, and merge readiness.",
+      "protocol_ref": "capabilities/core/code-review/PROTOCOL.md",
+      "input_contract": "code-review-request",
+      "output_contract": "code-review-evidence",
+      "execution_class": "cognitive",
+      "required_host_capabilities": ["structured_output"],
+      "allowed_tools": ["read", "search"],
+      "forbidden_actions": ["merge", "push", "approval_decide"],
+      "default_budget": {
+        "max_wall_minutes": 25,
+        "max_agent_turns": 10,
+        "max_tool_calls": 60
+      },
+      "availability": "portable",
+      "certification": "bundled",
+      "enabled": true,
+      "provenance": {
+        "source_name": "dev-review",
+        "source_sha256": "e47bda782958de17b8a79d5b879f3d70736821393c80b5d8313e7bbc44c5b028",
+        "license": "clean-room-no-copy",
+        "absorption_policy": "REWRITE_ONLY"
+      }
+    },
+    {
+      "capability_id": "security-audit",
+      "version": "1.0.0",
+      "category": "core",
+      "title": "Security Audit",
+      "description": "Inspect security-sensitive changes with evidence-backed findings.",
+      "protocol_ref": "capabilities/core/security-audit/PROTOCOL.md",
+      "input_contract": "security-audit-request",
+      "output_contract": "security-audit-evidence",
+      "execution_class": "cognitive",
+      "required_host_capabilities": ["structured_output", "tool_use"],
+      "allowed_tools": ["read", "search", "shell_audit"],
+      "forbidden_actions": ["merge", "push", "approval_decide"],
+      "default_budget": {
+        "max_wall_minutes": 30,
+        "max_agent_turns": 12,
+        "max_tool_calls": 80
+      },
+      "availability": "portable",
+      "certification": "bundled",
+      "enabled": true,
+      "provenance": {
+        "source_name": "Apex Forge V1 Security Audit",
+        "source_sha256": "442604e5d109ebb8f61b7062b774f98bd7fa81d80e0403a63e5e0260f1e90228",
+        "license": "MIT",
+        "absorption_policy": "MIT"
+      }
+    },
+    {
+      "capability_id": "high-risk-review",
+      "version": "1.0.0",
+      "category": "core",
+      "title": "High Risk Review",
+      "description": "Challenge expensive, irreversible, concurrent, or authorization-sensitive decisions.",
+      "protocol_ref": "capabilities/core/high-risk-review/PROTOCOL.md",
+      "input_contract": "high-risk-review-request",
+      "output_contract": "high-risk-evidence",
+      "execution_class": "cognitive",
+      "required_host_capabilities": ["structured_output"],
+      "allowed_tools": ["read", "search"],
+      "forbidden_actions": ["merge", "push", "approval_decide"],
+      "default_budget": {
+        "max_wall_minutes": 25,
+        "max_agent_turns": 10,
+        "max_tool_calls": 60
+      },
+      "availability": "portable",
+      "certification": "bundled",
+      "enabled": true,
+      "provenance": {
+        "source_name": "dev-doubt",
+        "source_sha256": "5711043f2bc8b74498a95c8b5d8a3dd697e2ca3d08543d33c4e3c56737e3f640",
+        "license": "clean-room-no-copy",
+        "absorption_policy": "REWRITE_ONLY"
+      }
+    },
+    {
+      "capability_id": "test-strategy",
+      "version": "1.0.0",
+      "category": "core",
+      "title": "Test Strategy",
+      "description": "Select credible test groups from changed surfaces and risks.",
+      "protocol_ref": "capabilities/core/test-strategy/PROTOCOL.md",
+      "input_contract": "test-strategy-request",
+      "output_contract": "test-strategy-evidence",
+      "execution_class": "cognitive",
+      "required_host_capabilities": ["structured_output"],
+      "allowed_tools": ["read", "search"],
+      "forbidden_actions": ["merge", "push", "approval_decide"],
+      "default_budget": {
+        "max_wall_minutes": 15,
+        "max_agent_turns": 6,
+        "max_tool_calls": 35
+      },
+      "availability": "portable",
+      "certification": "bundled",
+      "enabled": true,
+      "provenance": {
+        "source_name": "Better Test",
+        "source_sha256": "19ea139b641c2acf8dcd5a545e588bceb2767d4283f79a25d9c1b5567ac11697",
+        "license": "MIT",
+        "absorption_policy": "MIT"
+      }
+    },
+    {
+      "capability_id": "documentation-sync",
+      "version": "1.0.0",
+      "category": "core",
+      "title": "Documentation Sync",
+      "description": "Keep documentation aligned with observable candidate behavior.",
+      "protocol_ref": "capabilities/core/documentation-sync/PROTOCOL.md",
+      "input_contract": "documentation-sync-request",
+      "output_contract": "documentation-sync-evidence",
+      "execution_class": "cognitive",
+      "required_host_capabilities": ["structured_output"],
+      "allowed_tools": ["read", "search"],
+      "forbidden_actions": ["merge", "push", "approval_decide"],
+      "default_budget": {
+        "max_wall_minutes": 15,
+        "max_agent_turns": 6,
+        "max_tool_calls": 30
+      },
+      "availability": "portable",
+      "certification": "bundled",
+      "enabled": true,
+      "provenance": {
+        "source_name": "Apex Forge V1 Document Release",
+        "source_sha256": "5ee992ca0f4737a2c0c2f07545d91e3733ebc3b6ce12294e900cdd35b77980be",
+        "license": "MIT",
+        "absorption_policy": "MIT"
+      }
+    },
+    {
+      "capability_id": "frontend-design",
+      "version": "1.0.0",
+      "category": "conditional",
+      "title": "Frontend Design",
+      "description": "Create an implementable visual and interaction specification.",
+      "protocol_ref": "capabilities/conditional/frontend-design/PROTOCOL.md",
+      "input_contract": "frontend-design-request",
+      "output_contract": "frontend-design-evidence",
+      "execution_class": "cognitive",
+      "required_host_capabilities": ["structured_output"],
+      "allowed_tools": ["read", "search"],
+      "forbidden_actions": ["merge", "push", "approval_decide"],
+      "default_budget": {
+        "max_wall_minutes": 45,
+        "max_agent_turns": 16,
+        "max_tool_calls": 100
+      },
+      "availability": "portable",
+      "certification": "bundled",
+      "enabled": true,
+      "provenance": {
+        "source_name": "Tasteful Frontend method rewrite",
+        "source_sha256": "2ca11212ea652632856d8b018ee23ba39a69f87685b56aefdbf4f07334bb6938",
+        "license": "clean-room-no-copy",
+        "absorption_policy": "REWRITE_ONLY"
+      }
+    },
+    {
+      "capability_id": "design-to-code",
+      "version": "1.0.0",
+      "category": "conditional",
+      "title": "Design To Code",
+      "description": "Implement approved design artifacts without silent substitution.",
+      "protocol_ref": "capabilities/conditional/design-to-code/PROTOCOL.md",
+      "input_contract": "design-to-code-request",
+      "output_contract": "design-to-code-evidence",
+      "execution_class": "workspace_patch",
+      "required_host_capabilities": ["structured_output", "tool_use", "workspace_write"],
+      "allowed_tools": ["read", "search", "write", "shell_test"],
+      "forbidden_actions": ["merge", "push", "approval_decide"],
+      "default_budget": {
+        "max_wall_minutes": 45,
+        "max_agent_turns": 16,
+        "max_tool_calls": 120
+      },
+      "availability": "portable",
+      "certification": "bundled",
+      "enabled": true,
+      "provenance": {
+        "source_name": "Design-to-Code Runner",
+        "source_sha256": "88cd972e8311f27c4ba7a7048e36b47d9d566b4b2ea58cad61093fc8e71c4a1e",
+        "license": "MIT",
+        "absorption_policy": "MIT"
+      }
+    },
+    {
+      "capability_id": "browser-qa",
+      "version": "1.0.0",
+      "category": "conditional",
+      "title": "Browser QA",
+      "description": "Validate real web behavior, screenshots, console, and network evidence.",
+      "protocol_ref": "capabilities/conditional/browser-qa/PROTOCOL.md",
+      "input_contract": "browser-qa-request",
+      "output_contract": "browser-qa-evidence",
+      "execution_class": "deterministic_check",
+      "required_host_capabilities": ["structured_output", "tool_use"],
+      "allowed_tools": ["browser", "read"],
+      "forbidden_actions": ["merge", "push", "approval_decide"],
+      "default_budget": {
+        "max_wall_minutes": 30,
+        "max_agent_turns": 10,
+        "max_tool_calls": 80
+      },
+      "availability": "host_dependent",
+      "certification": "bundled",
+      "enabled": true,
+      "provenance": {
+        "source_name": "Apex Forge V1 QA",
+        "source_sha256": "dee1d51e48801f3b0e036e3d7c183aad94b720bad4799a21f2ac3b99ffca4dfa",
+        "license": "MIT",
+        "absorption_policy": "MIT"
+      }
+    },
+    {
+      "capability_id": "mobile-qa",
+      "version": "1.0.0",
+      "category": "conditional",
+      "title": "Mobile QA",
+      "description": "Validate mobile behavior on a declared simulator, emulator, or device.",
+      "protocol_ref": "capabilities/conditional/mobile-qa/PROTOCOL.md",
+      "input_contract": "mobile-qa-request",
+      "output_contract": "mobile-qa-evidence",
+      "execution_class": "deterministic_check",
+      "required_host_capabilities": ["structured_output", "tool_use"],
+      "allowed_tools": ["mobile", "read", "shell_test"],
+      "forbidden_actions": ["merge", "push", "approval_decide"],
+      "default_budget": {
+        "max_wall_minutes": 45,
+        "max_agent_turns": 10,
+        "max_tool_calls": 100
+      },
+      "availability": "environment_dependent",
+      "certification": "bundled",
+      "enabled": true,
+      "provenance": {
+        "source_name": "Apex Forge V1 Mobile Test",
+        "source_sha256": "8500dc85d58e318bc97a79db64d886f3250bc663f8f944d4864945cc26460be6",
+        "license": "MIT",
+        "absorption_policy": "MIT"
+      }
+    },
+    {
+      "capability_id": "performance-validation",
+      "version": "1.0.0",
+      "category": "conditional",
+      "title": "Performance Validation",
+      "description": "Detect performance regressions using comparable environments and distributions.",
+      "protocol_ref": "capabilities/conditional/performance-validation/PROTOCOL.md",
+      "input_contract": "performance-validation-request",
+      "output_contract": "performance-evidence",
+      "execution_class": "deterministic_check",
+      "required_host_capabilities": ["structured_output", "tool_use"],
+      "allowed_tools": ["read", "shell_test"],
+      "forbidden_actions": ["merge", "push", "approval_decide"],
+      "default_budget": {
+        "max_wall_minutes": 45,
+        "max_agent_turns": 8,
+        "max_tool_calls": 80
+      },
+      "availability": "environment_dependent",
+      "certification": "bundled",
+      "enabled": true,
+      "provenance": {
+        "source_name": "Apex Forge first-party",
+        "source_sha256": "8511f5f53d46de7cd30e69636669b41999beadf0bdcf264ccb996f48b3f5611a",
+        "license": "MIT",
+        "absorption_policy": "OWNED"
+      }
+    },
+    {
+      "capability_id": "migration-safety",
+      "version": "1.0.0",
+      "category": "conditional",
+      "title": "Migration Safety",
+      "description": "Make data, schema, state, and compatibility migrations reversible and replayable.",
+      "protocol_ref": "capabilities/conditional/migration-safety/PROTOCOL.md",
+      "input_contract": "migration-safety-request",
+      "output_contract": "migration-safety-evidence",
+      "execution_class": "cognitive",
+      "required_host_capabilities": ["structured_output", "tool_use"],
+      "allowed_tools": ["read", "search", "shell_test"],
+      "forbidden_actions": ["merge", "push", "approval_decide", "destructive_execute"],
+      "default_budget": {
+        "max_wall_minutes": 45,
+        "max_agent_turns": 14,
+        "max_tool_calls": 100
+      },
+      "availability": "portable",
+      "certification": "bundled",
+      "enabled": true,
+      "provenance": {
+        "source_name": "Apex Forge migration safety rewrite",
+        "source_sha256": "5711043f2bc8b74498a95c8b5d8a3dd697e2ca3d08543d33c4e3c56737e3f640",
+        "license": "clean-room-no-copy",
+        "absorption_policy": "REWRITE_ONLY"
+      }
+    },
+    {
+      "capability_id": "deploy-release",
+      "version": "1.0.0",
+      "category": "conditional",
+      "title": "Deploy Release",
+      "description": "Deploy an approved candidate with health and rollback evidence.",
+      "protocol_ref": "capabilities/conditional/deploy-release/PROTOCOL.md",
+      "input_contract": "deploy-release-request",
+      "output_contract": "deployment-receipt",
+      "execution_class": "deterministic_check",
+      "required_host_capabilities": ["structured_output", "tool_use"],
+      "allowed_tools": ["deploy", "read", "shell_test"],
+      "forbidden_actions": ["approval_decide"],
+      "default_budget": {
+        "max_wall_minutes": 60,
+        "max_agent_turns": 10,
+        "max_tool_calls": 120
+      },
+      "availability": "environment_dependent",
+      "certification": "bundled",
+      "enabled": true,
+      "provenance": {
+        "source_name": "Apex Forge V1 Land and Deploy",
+        "source_sha256": "f053ef28b15fcaf30559996fecbcf198ae2b8bbd66f068d1dea51354542a8fec",
+        "license": "MIT",
+        "absorption_policy": "MIT"
+      }
+    },
+    {
+      "capability_id": "project-audit",
+      "version": "1.0.0",
+      "category": "evolution",
+      "title": "Project Audit",
+      "description": "Audit project behavior against explicit commitments and evidence.",
+      "protocol_ref": "capabilities/evolution/project-audit/PROTOCOL.md",
+      "input_contract": "project-audit-request",
+      "output_contract": "project-audit-evidence",
+      "execution_class": "cognitive",
+      "required_host_capabilities": ["structured_output", "tool_use"],
+      "allowed_tools": ["read", "search", "shell_test"],
+      "forbidden_actions": ["merge", "push", "approval_decide"],
+      "default_budget": {
+        "max_wall_minutes": 60,
+        "max_agent_turns": 20,
+        "max_tool_calls": 150
+      },
+      "availability": "portable",
+      "certification": "bundled",
+      "enabled": true,
+      "provenance": {
+        "source_name": "Product Goal-Based Audit",
+        "source_sha256": "fed198af79686aa47a2a26777e9aca1c76d08623248b228ddaa8565a4e9fb537",
+        "license": "MIT",
+        "absorption_policy": "MIT"
+      }
+    },
+    {
+      "capability_id": "postmortem",
+      "version": "1.0.0",
+      "category": "evolution",
+      "title": "Postmortem",
+      "description": "Turn escaped defects and failed controls into verified prevention.",
+      "protocol_ref": "capabilities/evolution/postmortem/PROTOCOL.md",
+      "input_contract": "postmortem-request",
+      "output_contract": "postmortem-evidence",
+      "execution_class": "cognitive",
+      "required_host_capabilities": ["structured_output"],
+      "allowed_tools": ["read", "search"],
+      "forbidden_actions": ["merge", "push", "approval_decide"],
+      "default_budget": {
+        "max_wall_minutes": 45,
+        "max_agent_turns": 16,
+        "max_tool_calls": 100
+      },
+      "availability": "portable",
+      "certification": "bundled",
+      "enabled": true,
+      "provenance": {
+        "source_name": "Apex Forge V1 Retro",
+        "source_sha256": "e0e34fcd82d267053d503c699fc9861d2f792a7b7537185ccdca41326c051387",
+        "license": "MIT",
+        "absorption_policy": "MIT"
+      }
+    },
+    {
+      "capability_id": "simplification",
+      "version": "1.0.0",
+      "category": "evolution",
+      "title": "Simplification",
+      "description": "Find and remove unused, duplicate, obsolete, or speculative complexity.",
+      "protocol_ref": "capabilities/evolution/simplification/PROTOCOL.md",
+      "input_contract": "simplification-request",
+      "output_contract": "simplification-evidence",
+      "execution_class": "cognitive",
+      "required_host_capabilities": ["structured_output"],
+      "allowed_tools": ["read", "search"],
+      "forbidden_actions": ["merge", "push", "approval_decide"],
+      "default_budget": {
+        "max_wall_minutes": 30,
+        "max_agent_turns": 12,
+        "max_tool_calls": 80
+      },
+      "availability": "portable",
+      "certification": "bundled",
+      "enabled": true,
+      "provenance": {
+        "source_name": "DeepSeek Harness simplification discipline rewrite",
+        "source_sha256": "5781c3ba63f237f63ed8894a1cfc77d4ddc4ef50ff5aebc0de2f05acef70670e",
+        "license": "design-reference-only",
+        "absorption_policy": "REWRITE_ONLY"
+      }
+    }
+  ],
+  "bindings": [
+    {
+      "binding_id": "engineering-work-to-spec",
+      "capability_id": "engineering-spec",
+      "priority": 100,
+      "mode": "required",
+      "enabled": true,
+      "conditions": {
+        "match": "any",
+        "intake_types": ["feature", "bug", "test_failure", "review_feedback", "tech_debt", "risk", "idea"],
+        "risk_levels": ["high", "critical"]
+      },
+      "plan_insertion": {
+        "target_node_id": "delivery-design",
+        "required": true
+      }
+    },
+    {
+      "binding_id": "version-sensitive-to-source",
+      "capability_id": "source-grounding",
+      "priority": 95,
+      "mode": "required",
+      "enabled": true,
+      "conditions": {
+        "match": "any",
+        "title_patterns": ["\\b(api|sdk|cli|protocol|framework|latest|current|official)\\b"],
+        "description_patterns": ["\\b(api|sdk|cli|protocol|framework|latest|current|official)\\b"],
+        "affected_area_patterns": ["(^|,)(schemas/|.*\\.proto|.*lock\\.json)"]
+      },
+      "plan_insertion": {
+        "target_node_id": "delivery-design",
+        "required": true
+      }
+    },
+    {
+      "binding_id": "high-risk-to-architecture",
+      "capability_id": "architecture-design",
+      "priority": 90,
+      "mode": "required",
+      "enabled": true,
+      "conditions": {
+        "match": "any",
+        "risk_levels": ["high", "critical"],
+        "title_patterns": ["\\b(architecture|state machine|persistence|concurrency|migration|public api)\\b"],
+        "description_patterns": ["\\b(architecture|state machine|persistence|concurrency|migration|public api)\\b"]
+      },
+      "plan_insertion": {
+        "target_node_id": "delivery-design",
+        "required": true
+      }
+    },
+    {
+      "binding_id": "defect-to-debug",
+      "capability_id": "systematic-debugging",
+      "priority": 85,
+      "mode": "required",
+      "enabled": true,
+      "conditions": {
+        "match": "any",
+        "intake_types": ["bug", "test_failure"]
+      },
+      "plan_insertion": {
+        "target_node_id": "delivery-design",
+        "required": true
+      }
+    },
+    {
+      "binding_id": "behavior-to-tdd",
+      "capability_id": "tdd-negative-control",
+      "priority": 80,
+      "mode": "required",
+      "enabled": true,
+      "conditions": {
+        "match": "any",
+        "intake_types": ["feature", "bug", "test_failure", "review_feedback"]
+      },
+      "plan_insertion": {
+        "target_node_id": "delivery-implementation",
+        "required": true
+      }
+    },
+    {
+      "binding_id": "large-change-to-incremental",
+      "capability_id": "incremental-delivery",
+      "priority": 75,
+      "mode": "required",
+      "enabled": true,
+      "conditions": {
+        "match": "any",
+        "title_patterns": ["\\b(refactor|multi-file|multi-step|cross-module)\\b"],
+        "description_patterns": ["\\b(refactor|multi-file|multi-step|cross-module|multiple modules)\\b"],
+        "affected_area_patterns": ["\\*/|(^|,)[^,]+/,[^,]+/"]
+      },
+      "plan_insertion": {
+        "target_node_id": "delivery-design",
+        "required": true
+      }
+    },
+    {
+      "binding_id": "candidate-to-review",
+      "capability_id": "code-review",
+      "priority": 60,
+      "mode": "required",
+      "enabled": true,
+      "conditions": {
+        "match": "any",
+        "intake_types": ["feature", "bug", "test_failure", "review_feedback", "tech_debt", "risk"]
+      },
+      "plan_insertion": {
+        "target_node_id": "delivery-review",
+        "required": true
+      }
+    },
+    {
+      "binding_id": "sensitive-change-to-security",
+      "capability_id": "security-audit",
+      "priority": 78,
+      "mode": "required",
+      "enabled": true,
+      "conditions": {
+        "match": "any",
+        "title_patterns": ["\\b(security|auth|authorization|permission|secret|credential|token|payment|account)\\b"],
+        "description_patterns": ["\\b(security|auth|authorization|permission|secret|credential|token|payment|account)\\b"],
+        "affected_area_patterns": ["(^|,)(\\.github/|infra/|deploy/|auth/|security/)"]
+      },
+      "plan_insertion": {
+        "target_node_id": "delivery-review",
+        "required": true
+      }
+    },
+    {
+      "binding_id": "high-risk-to-doubt",
+      "capability_id": "high-risk-review",
+      "priority": 72,
+      "mode": "required",
+      "enabled": true,
+      "conditions": {
+        "match": "any",
+        "risk_levels": ["high", "critical"],
+        "title_patterns": ["\\b(delete|irreversible|production|trading|payment|migration)\\b"]
+      },
+      "plan_insertion": {
+        "target_node_id": "delivery-review",
+        "required": true
+      }
+    },
+    {
+      "binding_id": "change-to-test-strategy",
+      "capability_id": "test-strategy",
+      "priority": 68,
+      "mode": "required",
+      "enabled": true,
+      "conditions": {
+        "match": "any",
+        "intake_types": ["feature", "bug", "test_failure", "review_feedback", "tech_debt", "risk"]
+      },
+      "plan_insertion": {
+        "target_node_id": "delivery-verification",
+        "required": true
+      }
+    },
+    {
+      "binding_id": "public-doc-change-to-doc-sync",
+      "capability_id": "documentation-sync",
+      "priority": 50,
+      "mode": "required",
+      "enabled": true,
+      "conditions": {
+        "match": "any",
+        "title_patterns": ["\\b(readme|documentation|docs|changelog|public api|cli help)\\b"],
+        "description_patterns": ["\\b(readme|documentation|docs|changelog|public api|cli help)\\b"],
+        "affected_area_patterns": ["(^|,)(README|docs/|.*\\.md|CHANGELOG)"]
+      },
+      "plan_insertion": {
+        "target_node_id": "delivery-review",
+        "required": true
+      }
+    },
+    {
+      "binding_id": "frontend-to-design",
+      "capability_id": "frontend-design",
+      "priority": 65,
+      "mode": "optional",
+      "enabled": true,
+      "conditions": {
+        "match": "any",
+        "title_patterns": ["\\b(frontend|ui|page|layout|design system|visual)\\b"],
+        "description_patterns": ["\\b(frontend|ui|page|layout|design system|visual)\\b"],
+        "affected_area_patterns": ["(^|,)(frontend/|src/components/|src/pages/|.*\\.css|.*\\.tsx)"]
+      },
+      "plan_insertion": {
+        "target_node_id": "delivery-design",
+        "required": false
+      }
+    },
+    {
+      "binding_id": "approved-design-to-code",
+      "capability_id": "design-to-code",
+      "priority": 64,
+      "mode": "required",
+      "enabled": true,
+      "conditions": {
+        "match": "any",
+        "title_patterns": ["\\b(design-to-code|implement design|figma|component map)\\b"],
+        "description_patterns": ["\\b(design-to-code|implement design|figma|component map)\\b"]
+      },
+      "plan_insertion": {
+        "target_node_id": "delivery-implementation",
+        "required": true
+      }
+    },
+    {
+      "binding_id": "web-acceptance-to-browser",
+      "capability_id": "browser-qa",
+      "priority": 62,
+      "mode": "required",
+      "enabled": true,
+      "conditions": {
+        "match": "any",
+        "title_patterns": ["\\b(browser|web ui|responsive|dom|console|network)\\b"],
+        "description_patterns": ["\\b(browser|web ui|responsive|dom|console|network|url)\\b"]
+      },
+      "plan_insertion": {
+        "target_node_id": "delivery-verification",
+        "required": true
+      }
+    },
+    {
+      "binding_id": "mobile-acceptance-to-mobile",
+      "capability_id": "mobile-qa",
+      "priority": 62,
+      "mode": "required",
+      "enabled": true,
+      "conditions": {
+        "match": "any",
+        "title_patterns": ["\\b(mobile|ios|android|simulator|emulator|apk)\\b"],
+        "description_patterns": ["\\b(mobile|ios|android|simulator|emulator|apk)\\b"]
+      },
+      "plan_insertion": {
+        "target_node_id": "delivery-verification",
+        "required": true
+      }
+    },
+    {
+      "binding_id": "performance-change-to-validation",
+      "capability_id": "performance-validation",
+      "priority": 61,
+      "mode": "required",
+      "enabled": true,
+      "conditions": {
+        "match": "any",
+        "title_patterns": ["\\b(performance|latency|throughput|memory|cpu|startup)\\b"],
+        "description_patterns": ["\\b(performance|latency|throughput|memory|cpu|startup|benchmark)\\b"]
+      },
+      "plan_insertion": {
+        "target_node_id": "delivery-verification",
+        "required": true
+      }
+    },
+    {
+      "binding_id": "migration-change-to-safety",
+      "capability_id": "migration-safety",
+      "priority": 84,
+      "mode": "required",
+      "enabled": true,
+      "conditions": {
+        "match": "any",
+        "title_patterns": ["\\b(migration|backfill|schema change|compatibility removal)\\b"],
+        "description_patterns": ["\\b(migration|backfill|schema change|compatibility removal|data transform)\\b"],
+        "affected_area_patterns": ["(^|,)(migrations/|schema/|schemas/)"]
+      },
+      "plan_insertion": {
+        "target_node_id": "delivery-design",
+        "required": true
+      }
+    },
+    {
+      "binding_id": "release-request-to-deploy",
+      "capability_id": "deploy-release",
+      "priority": 55,
+      "mode": "required",
+      "enabled": true,
+      "conditions": {
+        "match": "any",
+        "title_patterns": ["\\b(deploy|release|production|rollout|canary)\\b"],
+        "description_patterns": ["\\b(deploy|release|production|rollout|canary)\\b"]
+      },
+      "plan_insertion": {
+        "target_node_id": "delivery-review",
+        "required": true
+      }
+    },
+    {
+      "binding_id": "audit-request-to-project-audit",
+      "capability_id": "project-audit",
+      "priority": 40,
+      "mode": "advisory",
+      "enabled": true,
+      "conditions": {
+        "match": "any",
+        "title_patterns": ["\\b(audit|pre-release review|health check)\\b"],
+        "description_patterns": ["\\b(audit|pre-release review|health check)\\b"]
+      },
+      "plan_insertion": {
+        "target_node_id": "delivery-review",
+        "required": false
+      }
+    },
+    {
+      "binding_id": "incident-to-postmortem",
+      "capability_id": "postmortem",
+      "priority": 45,
+      "mode": "required",
+      "enabled": true,
+      "conditions": {
+        "match": "any",
+        "title_patterns": ["\\b(incident|postmortem|escaped defect|false completion)\\b"],
+        "description_patterns": ["\\b(incident|postmortem|escaped defect|false completion|gate bypass)\\b"]
+      },
+      "plan_insertion": {
+        "target_node_id": "delivery-review",
+        "required": true
+      }
+    },
+    {
+      "binding_id": "complexity-debt-to-simplification",
+      "capability_id": "simplification",
+      "priority": 30,
+      "mode": "advisory",
+      "enabled": true,
+      "conditions": {
+        "match": "any",
+        "intake_types": ["tech_debt"],
+        "title_patterns": ["\\b(simplify|unused|duplicate|dead code|speculative)\\b"],
+        "description_patterns": ["\\b(simplify|unused|duplicate|dead code|speculative)\\b"]
+      },
+      "plan_insertion": {
+        "target_node_id": "delivery-review",
+        "required": false
+      }
+    }
+  ]
+}
