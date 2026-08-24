@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
+import { runChecks } from "./result-evaluator.mjs";
 
 export function resolvePluginBenchmarkBootstrap({
   runRoot,
@@ -204,6 +205,12 @@ export function closePluginBenchmarkProject({
     "--summary",
     agentOutput.summary
   ]);
+  if (!implementation.patch_id || implementation.queue_status !== "queued") {
+    throw new Error(
+      `plugin quick closeout failed to queue implementation patch: `
+      + `${implementation.patch_id || "(missing)"}=${implementation.queue_status || "(missing)"}`
+    );
+  }
   runRuntime(runtimePath, schemaDir, [
     "project",
     "tick",
@@ -304,12 +311,94 @@ export function closePluginBenchmarkProject({
   if (status.active_runs.length !== 0) {
     throw new Error(`plugin quick closeout left active runs: ${status.active_runs.join(",")}`);
   }
+  const landing = assertQuickCloseoutLanded({
+    workspace,
+    task,
+    bootstrap,
+    implementation
+  });
   return {
     implementation,
     review_submission: reviewSubmission,
     closeout,
     status,
+    landing,
     candidate_digest: reviewAction.candidate_digest
+  };
+}
+
+export function assertQuickCloseoutLanded({
+  workspace,
+  task,
+  bootstrap,
+  implementation
+}) {
+  const runRoot = join(workspace, ".apex-v2", "runs", bootstrap.run_id);
+  const queue = JSON.parse(readFileSync(
+    join(runRoot, "merge-queue.json"),
+    "utf8"
+  ));
+  const item = queue.items.find((entry) =>
+    entry.patch_id === implementation.patch_id
+  );
+  if (!item || item.status !== "merged") {
+    throw new Error(
+      `plugin quick closeout patch 未落地：`
+      + `${implementation.patch_id}=${item?.status || "missing"}`
+    );
+  }
+  const integration = JSON.parse(readFileSync(
+    join(runRoot, "integration-report.json"),
+    "utf8"
+  ));
+  if (
+    integration.status !== "MERGED"
+    || !integration.merged_patches.includes(implementation.patch_id)
+  ) {
+    throw new Error(
+      `plugin quick closeout integration 未确认 patch：${implementation.patch_id}`
+    );
+  }
+  const patch = JSON.parse(readFileSync(
+    join(
+      runRoot,
+      "workers",
+      bootstrap.fast_path.worker_id,
+      "patches",
+      implementation.patch_id,
+      "patch-bundle.json"
+    ),
+    "utf8"
+  ));
+  for (const operation of patch.operations || []) {
+    const target = join(workspace, operation.path);
+    const actual = existsSync(target) ? readFileSync(target, "utf8") : null;
+    const expected = operation.op === "replace_text"
+      ? operation.new_text
+      : operation.op === "write_text"
+        ? operation.content
+        : null;
+    if (expected == null || actual !== expected) {
+      throw new Error(
+        `plugin quick closeout 文件未落地：${operation.path}`
+      );
+    }
+  }
+  const publicChecks = runChecks(workspace, task.acceptance_commands || []);
+  const failed = publicChecks.filter((check) => check.status !== "PASS");
+  if (failed.length > 0) {
+    throw new Error(
+      `plugin quick closeout 根目录验收失败：`
+      + failed.map((check) => check.command).join("; ")
+    );
+  }
+  return {
+    status: "PASS",
+    patch_id: implementation.patch_id,
+    queue_status: item.status,
+    integration_status: integration.status,
+    applied_files: integration.applied_files,
+    public_checks: publicChecks
   };
 }
 

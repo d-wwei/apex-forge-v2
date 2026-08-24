@@ -37,6 +37,13 @@ When `plan-graph.json` has `profile: quick`:
 4. Continue directly to the ready `delivery-review` action; do not create
    context, risk, design, test, or verification workers that are absent from
    the quick plan.
+5. Before reporting completion, verify all four landing conditions:
+   - the implementation patch is `merged` in `merge-queue.json`;
+   - `integration-report.json` is `MERGED` and names that patch;
+   - the public acceptance commands pass again in the project root;
+   - `status.active_runs` is empty.
+6. If any landing condition fails, report `BLOCKED` with the queued patch and
+   failed condition. Never treat an ActionWorkspace-local PASS as delivery.
 
 Do not claim implementation and test patch actions concurrently in the same
 project. Submit the first action, then claim the next action.

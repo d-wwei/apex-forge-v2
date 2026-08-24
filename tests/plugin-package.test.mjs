@@ -117,6 +117,26 @@ test("ship Skill requires durable run closure before claiming completion", () =>
   assert.match(source, /Never claim end-to-end completion while the durable run remains active/);
 });
 
+test("quick execute workflow requires patch landing before completion", () => {
+  const source = readFileSync(
+    join(
+      PLUGIN,
+      "skills",
+      "using-apex-forge",
+      "references",
+      "workflows",
+      "execute.md"
+    ),
+    "utf8"
+  );
+
+  assert.match(source, /merge-queue\.json/);
+  assert.match(source, /integration-report\.json/);
+  assert.match(source, /public acceptance commands pass again in the project root/);
+  assert.match(source, /status\.active_runs/);
+  assert.match(source, /Never treat an ActionWorkspace-local PASS as delivery/);
+});
+
 test("plugin validation resolves Codex tooling without a machine-specific home path", () => {
   const source = readFileSync(VALIDATE_PLUGINS, "utf8");
 

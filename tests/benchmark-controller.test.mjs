@@ -11,6 +11,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 import {
+  assertQuickCloseoutLanded,
   bootstrapCliBenchmarkProject,
   bootstrapPluginBenchmarkProject,
   closePluginBenchmarkProject,
@@ -497,6 +498,9 @@ test("Plugin Host fast path preclaims one scoped quick run and closes it determi
     }
   });
   assert.equal(closeout.status.active_runs.length, 0);
+  assert.equal(closeout.landing.status, "PASS");
+  assert.equal(closeout.landing.queue_status, "merged");
+  assert.equal(closeout.landing.integration_status, "MERGED");
   assert.equal(readFileSync(join(workspace, "src", "value.mjs"), "utf8"), "export const value = 2;\n");
   assert.equal(
     JSON.parse(readFileSync(join(
@@ -507,6 +511,18 @@ test("Plugin Host fast path preclaims one scoped quick run and closes it determi
       "verification-report.json"
     ))).status,
     "PASS"
+  );
+  writeFileSync(join(workspace, "src", "value.mjs"), "export const value = 1;\n");
+  assert.throws(
+    () => assertQuickCloseoutLanded({
+      workspace,
+      task: {
+        acceptance_commands: ["npm test", "npm run typecheck"]
+      },
+      bootstrap: result,
+      implementation: closeout.implementation
+    }),
+    /文件未落地/
   );
 
   const multiWorkspace = mkdtempSync(join(tmpdir(), "apex-plugin-full-route-"));

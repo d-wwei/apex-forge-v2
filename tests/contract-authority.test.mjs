@@ -85,6 +85,33 @@ test("immutable release bundles are validated by the release candidate gate, not
   assert.equal(result.json_files, 0);
 });
 
+test("action workspace payloads are excluded from runtime contract scans", () => {
+  const project = mkdtempSync(join(tmpdir(), "apex-action-workspace-contract-scan-"));
+  const workspaceRoot = join(
+    project,
+    ".apex-v2",
+    "runs",
+    "run-1",
+    "workers",
+    "worker-1",
+    "action-workspace"
+  );
+  mkdirSync(join(workspaceRoot, "base", "hooks", "fixtures"), { recursive: true });
+  mkdirSync(join(workspaceRoot, "workspace", "hooks", "fixtures"), { recursive: true });
+  writeFileSync(
+    join(workspaceRoot, "base", "hooks", "fixtures", "results-v3-nonfinite.json"),
+    "{\"coverage\":{\"pct\":NaN}}\n"
+  );
+  writeFileSync(
+    join(workspaceRoot, "workspace", "hooks", "fixtures", "results-v3-nonfinite.json"),
+    "{\"coverage\":{\"pct\":NaN}}\n"
+  );
+
+  const result = scanProjectContracts(project);
+  assert.equal(result.errors.length, 0);
+  assert.equal(result.json_files, 0);
+});
+
 test("contract migration failpoint rolls back every file before retry", () => {
   const project = mkdtempSync(join(tmpdir(), "apex-contract-migration-"));
   const root = join(project, ".apex-v2");

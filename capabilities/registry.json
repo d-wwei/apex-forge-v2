@@ -878,8 +878,8 @@
       "enabled": true,
       "conditions": {
         "match": "any",
-        "title_patterns": ["\\b(deploy|release|production|rollout|canary)\\b"],
-        "description_patterns": ["\\b(deploy|release|production|rollout|canary)\\b"]
+        "title_patterns": ["\\b(deploy|release|roll[ -]?out|canary)\\b"],
+        "description_patterns": ["\\b(deploy|release|roll[ -]?out|canary)\\b"]
       },
       "plan_insertion": {
         "target_node_id": "delivery-review",

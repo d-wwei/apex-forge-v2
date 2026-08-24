@@ -396,6 +396,24 @@ test("quick graph moves overflow capabilities to review without dropping them", 
   assert.ok(review.every((item) => item.target_node_id === "delivery-review"));
 });
 
+test("production behavior wording does not imply a deploy request", () => {
+  const routed = routeCapabilities(capabilityRegistry(), {
+    type: "bug",
+    risk: "low",
+    title: "Restore environment-aware secure cookie behavior",
+    description: [
+      "Restore production-only secure cookies.",
+      "Retain the explicit COOKIE_SECURE=false override."
+    ].join(" "),
+    affected_area: "src/lib/cookie-utils.ts,src/lib/__tests__/cookie-utils.test.ts"
+  });
+  assert.equal(
+    [...routed.required, ...routed.optional, ...routed.advisory]
+      .some((item) => item.capability_id === "deploy-release"),
+    false
+  );
+});
+
 test("environment-dependent capabilities require an explicit certified provider declaration", () => {
   const browser = {
     capability_id: "browser-qa",

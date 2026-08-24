@@ -2193,6 +2193,80 @@ test("明确低风险少文件任务使用 quick PlanGraph 单 patch 路由", ()
   assert.equal(route.cost_budget.max_wall_minutes, 12);
 });
 
+test("显式 quick 在 capability 预算不足时自动升级 governed", () => {
+  const project = tempProject();
+  seedProjectFiles(project);
+  run(["init", "--project", project, "--name", "Quick Escalation"]);
+  const intake = JSON.parse(run([
+    "intake",
+    "add",
+    "--project",
+    project,
+    "--type",
+    "bug",
+    "--title",
+    "Fix security credential handling in the current CLI",
+    "--description",
+    "Diagnose an authentication defect, preserve the public API, and add tests.",
+    "--area",
+    "src/apex-v2.mjs,tests/apex-v2.test.mjs",
+    "--risk",
+    "high",
+    "--method-pack",
+    "quick"
+  ]).stdout);
+  run([
+    "intake",
+    "triage",
+    "--project",
+    project,
+    "--id",
+    intake.id,
+    "--decision",
+    "accepted"
+  ]);
+  const roadmap = JSON.parse(run([
+    "roadmap",
+    "promote",
+    "--project",
+    project,
+    "--intake-id",
+    intake.id
+  ]).stdout);
+  const deliveryRun = JSON.parse(run([
+    "run",
+    "create",
+    "--project",
+    project,
+    "--roadmap-id",
+    roadmap.id
+  ]).stdout);
+  passNode(project, deliveryRun.run_id, "mandate");
+  passNode(project, deliveryRun.run_id, "context");
+
+  const generated = JSON.parse(run([
+    "run",
+    "plan",
+    "generate",
+    "--project",
+    project,
+    "--run-id",
+    deliveryRun.run_id
+  ]).stdout);
+  assert.equal(generated.validation.status, "PASS");
+  assert.equal(generated.plan.profile, "full");
+  assert.equal(generated.plan.method_pack.id, "governed");
+  assert.equal(generated.plan.method_pack.workflow, "governed");
+  assert.match(
+    generated.plan.method_pack.selection_reason,
+    /auto_escalated_from=quick.*context budget exceeded/i
+  );
+  assert.equal(generated.plan.nodes.length, 7);
+  assert.ok(
+    generated.plan.nodes.every((node) => node.method_pack_id === "governed")
+  );
+});
+
 test("显式 phase-context Method Pack 生成五节点阶段上下文路线", () => {
   const project = tempProject();
   seedProjectFiles(project);

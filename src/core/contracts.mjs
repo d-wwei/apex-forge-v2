@@ -480,6 +480,13 @@ function listJsonFiles(root) {
       }
       if (
         entry.isDirectory()
+        && entry.name === "action-workspace"
+        && path.replaceAll("\\", "/").includes("/workers/")
+      ) {
+        continue;
+      }
+      if (
+        entry.isDirectory()
         && entry.name === "sandbox"
         && path.replaceAll("\\", "/").includes("/workers/")
       ) {

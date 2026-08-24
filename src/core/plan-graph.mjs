@@ -22,7 +22,8 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
     defaultMethodPackRegistry(timestamp)
   );
   const methodPackResolution = resolveMethodPack(methodPackRegistry, intake, inventory);
-  const methodPack = methodPackResolution.pack;
+  let methodPack = methodPackResolution.pack;
+  let methodPackSelectionReason = methodPackResolution.reason;
   const routedCapabilities = routeCapabilities(capabilityRegistry(), intake);
 
   const planId = shortId("plan");
@@ -181,28 +182,54 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
     })
   ];
 
-  const profile = methodPack.workflow === "quick" ? "quick" : "full";
   const quickNodes = buildQuickPlanNodes({
-        roadmapNode,
-        intake,
-        scopes,
-        verificationCommands: taskVerificationCommands,
-        contextRefs,
-        runArtifactScope
-      });
-  const selectedNodes = selectMethodPackNodes(methodPack.workflow, {
+    roadmapNode,
+    intake,
+    scopes,
+    verificationCommands: taskVerificationCommands,
+    contextRefs,
+    runArtifactScope
+  });
+  const availableNodes = {
     quickNodes,
     fullNodes,
     roadmapNode,
     scopes
-  }).map((node) => ({
-    ...node,
-    method_pack_id: methodPack.id
-  }));
-  const capabilityApplication = applyCapabilityBindings(
-    selectedNodes,
-    routedCapabilities
-  );
+  };
+  let capabilityApplication;
+  try {
+    capabilityApplication = bindMethodPackCapabilities(
+      methodPack,
+      availableNodes,
+      routedCapabilities
+    );
+  } catch (error) {
+    if (
+      methodPack.workflow !== "quick"
+      || !isCapabilityPlanEscalationError(error)
+    ) {
+      throw error;
+    }
+    const governed = methodPackRegistry.packs.find((pack) =>
+      pack.enabled !== false && pack.workflow === "governed"
+    );
+    if (!governed) {
+      throw new Error(
+        `${error.message}；Quick 自动升级失败：Method Pack registry 缺少 governed pack`
+      );
+    }
+    methodPack = governed;
+    methodPackSelectionReason = [
+      `auto_escalated_from=${methodPackResolution.pack.id}`,
+      error.message
+    ].join("; ");
+    capabilityApplication = bindMethodPackCapabilities(
+      methodPack,
+      availableNodes,
+      routedCapabilities
+    );
+  }
+  const profile = methodPack.workflow === "quick" ? "quick" : "full";
   const nodes = capabilityApplication.nodes;
   const parallelLanes = buildParallelLanes(methodPack.workflow);
   const mergeOrder = parallelLanes.map((lane) => lane.id);
@@ -225,7 +252,7 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
       id: methodPack.id,
       version: methodPack.version,
       workflow: methodPack.workflow,
-      selection_reason: methodPackResolution.reason,
+      selection_reason: methodPackSelectionReason,
       quality_gates: methodPack.quality_gates
     },
     capability_plan: capabilityApplication.capability_plan,
@@ -279,6 +306,22 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
     project_knowledge_version: project.knowledge_version,
     project_name: project.project_name
   };
+}
+
+function bindMethodPackCapabilities(methodPack, availableNodes, routedCapabilities) {
+  const selectedNodes = selectMethodPackNodes(
+    methodPack.workflow,
+    availableNodes
+  ).map((node) => ({
+    ...node,
+    method_pack_id: methodPack.id
+  }));
+  return applyCapabilityBindings(selectedNodes, routedCapabilities);
+}
+
+function isCapabilityPlanEscalationError(error) {
+  return /Capability (?:context budget exceeded|execution class unavailable)/i
+    .test(String(error?.message || error));
 }
 
 export function applyCapabilityBindings(nodes, routedCapabilities) {
@@ -341,10 +384,21 @@ function selectCapabilityNode(capability, nodes) {
     nodes
   );
   const targetIndex = nodes.findIndex((node) => node.id === targetId);
-  const candidates = [
-    nodes[targetIndex],
-    ...nodes.slice(targetIndex + 1)
+  const ordered = [
+    ...nodes.slice(targetIndex),
+    ...nodes.slice(0, targetIndex).reverse()
   ].filter(Boolean);
+  const preferredCandidates = capability.execution_class === "deterministic_check"
+    ? ordered.filter((node) => node.execution_class === "deterministic_check")
+    : capability.execution_class === "workspace_patch"
+      ? ordered.filter((node) => node.execution_class === "workspace_patch")
+      : ordered;
+  const candidates = preferredCandidates.length > 0
+    ? [
+        ...preferredCandidates,
+        ...ordered.filter((node) => !preferredCandidates.includes(node))
+      ]
+    : ordered;
   for (const node of candidates) {
     try {
       assertCapabilityContextBudget([
