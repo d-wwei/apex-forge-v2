@@ -41,6 +41,8 @@ test("cognitive worker prompt states exact binding rules", () => {
   assert.match(prompt, /candidate_digest.*exactly/i);
   assert.match(prompt, /acceptance_mapping.*evidence_ref.*source_refs.*exactly/i);
   assert.match(prompt, /src\/value\.mjs/);
+  assert.match(prompt, /verdict to "pass".*analysis.*complete/i);
+  assert.match(prompt, /merge_posture/);
 });
 
 test("provider-only semantic fields are removed before canonical validation", () => {

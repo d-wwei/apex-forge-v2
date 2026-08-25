@@ -560,6 +560,14 @@ ${capabilityProtocols(planNode.capability_bindings || [])}
 ${lines(worker.capability_invocation_refs || [])}
 
 ${semanticEvidence}
+${options.semanticEvidenceType
+    ? `## Cognitive Verdict Semantics
+
+- Set top-level verdict to "pass" when the requested analysis and typed evidence are complete, even when the analysis discovers defects or recommends blocking a merge.
+- Put product risks and defects in claims, findings, residual_risks, and merge_posture.
+- Set top-level verdict to "fail" only when you cannot complete the requested analysis or cannot produce valid evidence.
+`
+    : ""}
 ## Verification
 
 ${lines(worker.verification)}
