@@ -11105,6 +11105,9 @@ function buildTaskPlanGraph(root, run, timestamp, inventory) {
   const taskVerificationCommands = declaredVerificationCommands.length > 0 ? declaredVerificationCommands.slice(0, 5) : verificationCommands;
   const runArtifactScope = `.apex-v2/runs/${run.run_id}/workers/`;
   const contextRefs = unique([
+    `.apex-v2/intake/items.json`,
+    `.apex-v2/roadmap/graph.json`,
+    `.apex-v2/runs/${run.run_id}/plan-graph.json`,
     ".apex-v2/knowledge/index.md",
     ".apex-v2/knowledge/task-to-file-map.md",
     ".apex-v2/knowledge/danger-zones.md",
