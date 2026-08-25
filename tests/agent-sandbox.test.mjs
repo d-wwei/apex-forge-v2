@@ -388,3 +388,29 @@ test("Codex executor avoids the user-local mode-switch wrapper", () => {
     false
   );
 });
+
+test("Codex executor rejects a mode-switch wrapper regardless of HOME", () => {
+  const root = tempDir("apex-codex-wrapper-");
+  const wrapperDir = join(root, "wrapper");
+  const safeDir = join(root, "safe");
+  mkdirSync(wrapperDir, { recursive: true });
+  mkdirSync(safeDir, { recursive: true });
+  const wrapper = join(wrapperDir, "codex");
+  const safeBinary = join(safeDir, "codex");
+  writeFileSync(
+    wrapper,
+    "#!/bin/sh\nCODEX_WRAPPER_PATH=\"$0\" exec \"$HOME/.codex/tools/codex_mode.py\" dispatch-codex -- \"$@\"\n"
+  );
+  writeFileSync(safeBinary, "#!/bin/sh\nexit 0\n");
+  chmodSync(wrapper, 0o755);
+  chmodSync(safeBinary, 0o755);
+
+  assert.equal(
+    resolveCodexExecutable("codex", {
+      ...process.env,
+      HOME: join(root, "isolated-home"),
+      PATH: `${wrapperDir}:${safeDir}`
+    }, []),
+    safeBinary
+  );
+});

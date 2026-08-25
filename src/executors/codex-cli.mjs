@@ -107,11 +107,21 @@ export function resolveCodexExecutable(
       : resolve(candidate);
     if (!denied.some((root) =>
       resolvedCandidate === root || resolvedCandidate.startsWith(`${root}${sep}`)
-    )) {
+    ) && !isModeSwitchWrapper(candidate)) {
       return candidate;
     }
   }
   return executable;
+}
+
+function isModeSwitchWrapper(path) {
+  try {
+    const content = readFileSync(path, "utf8").slice(0, 16 * 1024);
+    return content.includes("codex_mode.py")
+      || content.includes("CODEX_WRAPPER_PATH");
+  } catch {
+    return false;
+  }
 }
 
 function prepareIsolatedCodexHome(workspaceDir, profile) {
