@@ -57,6 +57,7 @@ const IGNORED_WORKSPACE_NAMES = new Set([
   ".apex-agent",
   ".apex-v2",
   ".apex-v2.lock",
+  ".apex-v2.scheduler-lock",
   ".apex-v2.transaction-backups",
   "node_modules",
   "sandbox.json"
