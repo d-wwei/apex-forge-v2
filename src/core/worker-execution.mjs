@@ -59,6 +59,7 @@ const IGNORED_WORKSPACE_NAMES = new Set([
   `.${["co", "dex"].join("")}`,
   `.${["cl", "aude"].join("")}`,
   `.${["ge", "mini"].join("")}`,
+  `.${["n", "pm"].join("")}`,
   ".apex-v2",
   ".apex-v2.lock",
   ".apex-v2.scheduler-lock",

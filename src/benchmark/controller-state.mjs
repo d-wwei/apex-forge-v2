@@ -343,7 +343,21 @@ function initializeWorkspaceGit(workspace) {
   const excludePath = join(workspace, ".git", "info", "exclude");
   writeFileSync(
     excludePath,
-    "node_modules\nnode_modules/\n**/node_modules\n**/node_modules/\n.apex-v2/\n.apex-v2.lock/\n"
+    [
+      "node_modules",
+      "node_modules/",
+      "**/node_modules",
+      "**/node_modules/",
+      ".apex-v2/",
+      ".apex-v2.lock/",
+      ".apex-v2.scheduler-lock/",
+      ".apex-agent/",
+      ".apex-host-home/",
+      ".claude/",
+      ".codex/",
+      ".gemini/",
+      ".npm/"
+    ].join("\n") + "\n"
   );
   runGit(workspace, ["add", "-A"]);
   runGit(workspace, ["commit", "-q", "-m", "Benchmark injected baseline"], {

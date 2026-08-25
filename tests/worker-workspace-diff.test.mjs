@@ -32,7 +32,7 @@ test("worker diff ignores executor-owned metadata directories", () => {
   mkdirSync(join(workspace, "src"), { recursive: true });
   writeFileSync(join(project, "src", "value.mjs"), "export const value = 1;\n");
   writeFileSync(join(workspace, "src", "value.mjs"), "export const value = 1;\n");
-  for (const directory of [".codex", ".claude", ".gemini"]) {
+  for (const directory of [".codex", ".claude", ".gemini", ".npm"]) {
     mkdirSync(join(workspace, directory), { recursive: true });
     writeFileSync(join(workspace, directory, "state.json"), "{}\n");
   }
