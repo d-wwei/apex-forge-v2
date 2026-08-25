@@ -2352,6 +2352,12 @@ test("governed PlanGraph 用三个 barrier 编排七项职责和模型档位", (
   assert.deepEqual(byId.get("delivery-design").write_scope, []);
   assert.equal(byId.get("delivery-context").model_tier, "cheap");
   assert.equal(byId.get("delivery-risk").model_tier, "cheap");
+  assert.ok(byId.get("delivery-context").read_scope.includes(
+    ".apex-v2/intake/items.json"
+  ));
+  assert.ok(byId.get("delivery-risk").read_scope.includes(
+    ".apex-v2/roadmap/graph.json"
+  ));
   assert.equal(byId.get("delivery-design").model_tier, "standard");
   assert.equal(byId.get("delivery-implementation").model_tier, "standard");
   assert.equal(byId.get("delivery-tests").model_tier, "cheap");
