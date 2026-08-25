@@ -16,6 +16,11 @@
 Candidate 仍属于旧候选；本次版本需要在提交后重新冻结 Candidate，正式重跑后才能
 声称真实 token 或 wall-time 改善。
 
+后续 DSH 能力分批计划见：
+`planning/dsh-capability-followup-plan-v1.md`。该计划明确把 Negative Control、
+Decision、Postmortem、Review Learning、Simplification 和 Durable Team 与当前
+吞吐架构、成本 Gate 及单一事实源边界对齐。
+
 - 日期：2026-08-20
 - 计划：`planning/plugin-upgrade-plan.md`
 - 总体状态：`COMPLETE`
