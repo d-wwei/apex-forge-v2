@@ -112,6 +112,7 @@ test("benchmark sandbox denies hidden controller inputs and only exposes agent I
     benchmarkRoot: "/repo/benchmarks/plugin-vs-v1",
     controllerRoot: "/private/tmp/controller",
     repositoryRoot: "/repo",
+    candidateRoot: "/repo/.apex-v2/releases/candidates/candidate",
     extraDeniedReadPaths: ["/private/hidden"]
   });
   assert.deepEqual(policy.writablePaths, [
@@ -122,6 +123,9 @@ test("benchmark sandbox denies hidden controller inputs and only exposes agent I
   assert.ok(policy.deniedReadPaths.includes("/repo/benchmarks/plugin-vs-v1/results"));
   assert.ok(policy.deniedReadPaths.includes("/private/tmp/controller/controller.json"));
   assert.ok(policy.deniedReadPaths.includes("/repo/.git"));
+  assert.ok(policy.deniedReadPaths.includes(
+    "/repo/.apex-v2/releases/candidates/candidate/source.tar"
+  ));
   assert.ok(policy.deniedReadPaths.includes("/private/hidden"));
   assert.ok(!policy.writablePaths.includes("/private/tmp/controller/run"));
 });

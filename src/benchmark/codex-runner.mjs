@@ -86,6 +86,7 @@ export function executeCodexBenchmarkRun({
     benchmarkRoot,
     controllerRoot,
     repositoryRoot,
+    candidateRoot,
     extraDeniedReadPaths: deniedReadPaths
   });
   const result = spawnCapabilityProcess("codex", args, {
@@ -157,6 +158,7 @@ export function benchmarkSandboxPolicy({
   benchmarkRoot = null,
   controllerRoot = null,
   repositoryRoot = null,
+  candidateRoot = null,
   extraDeniedReadPaths = []
 }) {
   const denied = [
@@ -176,6 +178,7 @@ export function benchmarkSandboxPolicy({
       join(repositoryRoot, ".git"),
       join(dirname(repositoryRoot), "benchmark-runs")
     ] : []),
+    ...(candidateRoot ? [join(candidateRoot, "source.tar")] : []),
     ...extraDeniedReadPaths
   ].filter(Boolean).map((path) => resolve(path));
   return {
