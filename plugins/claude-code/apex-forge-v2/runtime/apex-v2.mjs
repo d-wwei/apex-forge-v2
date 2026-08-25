@@ -12756,7 +12756,7 @@ function resolveCodexExecutable(executable = "codex", environment = process.env,
     env: environment
   });
   if (result.status !== 0) return executable;
-  const denied = deniedRoots.map(
+  const denied = [...deniedRoots, join16(homedir4(), ".local", "bin")].map(
     (path) => existsSync12(path) ? realpathSync3(path) : resolve9(path)
   );
   const candidates = result.stdout.split("\n").map((path) => path.trim()).filter(Boolean);
