@@ -73,6 +73,8 @@ test("Codex plugin package contains validated Skills and a self-contained runtim
   assert.equal(existsSync(join(PLUGIN, "runtime", "apex-v2.mjs")), true);
   assert.equal(existsSync(join(PLUGIN, "runtime", "capability-runner.mjs")), true);
   assert.equal(existsSync(join(PLUGIN, "runtime", "schemas", "project-state.schema.json")), true);
+  assert.equal(existsSync(join(PLUGIN, "runtime", "schemas", "decision-note.schema.json")), true);
+  assert.equal(existsSync(join(PLUGIN, "runtime", "schemas", "negative-control-record.schema.json")), true);
   assert.equal(existsSync(join(PLUGIN, "runtime", "capabilities", "registry.json")), true);
   assert.equal(
     existsSync(join(
@@ -116,6 +118,7 @@ test("ship Skill requires durable run closure before claiming completion", () =>
   assert.match(source, /project\.active_runs/);
   assert.match(source, /reconcile is `CONSISTENT`/);
   assert.match(source, /Never claim end-to-end completion while the durable run remains active/);
+  assert.match(source, /Negative Control enforce mode/);
 });
 
 test("quick execute workflow requires patch landing before completion", () => {
@@ -136,6 +139,28 @@ test("quick execute workflow requires patch landing before completion", () => {
   assert.match(source, /public acceptance commands pass again in the project root/);
   assert.match(source, /status\.active_runs/);
   assert.match(source, /Never treat an ActionWorkspace-local PASS as delivery/);
+});
+
+test("plan and review workflows expose DSH R1 shadow controls", () => {
+  const plan = readFileSync(join(
+    PLUGIN,
+    "skills",
+    "using-apex-forge",
+    "references",
+    "workflows",
+    "plan.md"
+  ), "utf8");
+  const review = readFileSync(join(
+    PLUGIN,
+    "skills",
+    "using-apex-forge",
+    "references",
+    "workflows",
+    "review.md"
+  ), "utf8");
+  assert.match(plan, /negative-control\.json/);
+  assert.match(plan, /Decision Note/);
+  assert.match(review, /matching RED failure\s+signature/);
 });
 
 test("plugin validation resolves Codex tooling without a machine-specific home path", () => {

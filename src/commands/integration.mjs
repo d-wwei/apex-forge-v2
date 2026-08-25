@@ -24,6 +24,7 @@ import { scanProjectContracts } from "../core/contracts.mjs";
 import { withProjectTransaction } from "../core/project-transaction.mjs";
 import { buildCandidateSet, persistCandidateSet } from "../core/candidate.mjs";
 import { spawnManagedProcess } from "../core/capability-sandbox.mjs";
+import { inspectNegativeControlGate } from "../core/negative-control.mjs";
 
 export function handleMergeCommand(subcommand, args) {
   if (subcommand === "enqueue") {
@@ -185,6 +186,16 @@ export function applyMergeInternal(root, run) {
   const reviewNode = getRunNode(run, "review");
   if (reviewNode.status !== "passed") {
     throw new Error(`merge apply 前必须先 PASS review 节点，当前状态：${reviewNode.status}`);
+  }
+  const negativeControl = inspectNegativeControlGate(root, run.run_id);
+  if (
+    negativeControl.required
+    && negativeControl.mode === "enforce"
+    && !negativeControl.ready
+  ) {
+    throw new Error(
+      `merge apply 被 Negative Control Gate 阻断：${negativeControl.message}`
+    );
   }
 
   const queue = readMergeQueue(root, run.run_id);
@@ -714,6 +725,7 @@ export function generateReviewInternal(root, run) {
   const candidate = buildCandidateSet(root, run, queue, resolve(root, ".."));
   const verification = readJson(join(root, "runs", run.run_id, "verification-report.json"), null);
   const verifyStatus = getRunNode(run, "verify").status;
+  const negativeControl = inspectNegativeControlGate(root, run.run_id);
   return withProjectTransaction(resolve(root, ".."), {
     kind: "review-generate",
     idempotencyKey: [
@@ -721,7 +733,8 @@ export function generateReviewInternal(root, run) {
       run.run_id,
       verifyStatus,
       verification?.report_id || "none",
-      candidate.candidate_digest
+      candidate.candidate_digest,
+      negativeControl.fingerprint
     ].join(":")
   }, () => generateReviewTransaction(root, run)).result;
 }
@@ -738,6 +751,7 @@ function generateReviewTransaction(root, run) {
   const verification = readJson(join(root, "runs", run.run_id, "verification-report.json"), null);
   const blocking = [];
   const nonBlocking = [];
+  const negativeControl = inspectNegativeControlGate(root, run.run_id);
 
   if (getRunNode(run, "verify").status !== "passed") {
     blocking.push("verify 节点尚未 PASS。");
@@ -759,6 +773,15 @@ function generateReviewTransaction(root, run) {
   }
   if (queue.items.some((item) => item.status !== "queued")) {
     nonBlocking.push("merge queue 中存在非 queued 状态 item，需要 coordinator 留意。");
+  }
+  if (negativeControl.required && !negativeControl.ready) {
+    if (negativeControl.mode === "enforce") {
+      blocking.push(negativeControl.message);
+    } else if (negativeControl.mode === "shadow") {
+      nonBlocking.push(
+        `Negative Control shadow gap：${negativeControl.message}`
+      );
+    }
   }
 
   const report = {

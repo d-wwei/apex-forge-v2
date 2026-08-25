@@ -179,6 +179,58 @@ export function inspectOperationalIntegrity(root) {
       ));
     }
   }
+  for (const run of state.runs) {
+    const record = run.negative_control;
+    if (!record) continue;
+    if (record.run_id !== run.run_id) {
+      issues.push(issue(
+        "negative-control-run-mismatch",
+        `.apex-v2/runs/${run.run_id}/negative-control.json`,
+        `${record.run_id} != ${run.run_id}`
+      ));
+    }
+    if (
+      record.status === "restored"
+      && (
+        record.red_evidence_refs.length === 0
+        || record.green_evidence_refs.length === 0
+        || record.restoration_evidence_refs.length === 0
+      )
+    ) {
+      issues.push(issue(
+        "negative-control-incomplete-restoration",
+        `.apex-v2/runs/${run.run_id}/negative-control.json`,
+        record.record_id
+      ));
+    }
+  }
+  for (const decision of state.decisions) {
+    const artifactPath = join(
+      root,
+      "artifacts",
+      decision.run_id,
+      `${decision.artifact_id}.json`
+    );
+    const artifact = readJson(artifactPath, null);
+    if (!artifact) {
+      issues.push(issue(
+        "decision-artifact-missing",
+        ".apex-v2/decisions/index.json",
+        decision.decision_id
+      ));
+      continue;
+    }
+    const actualHash = createHash("sha256")
+      .update(JSON.stringify(artifact))
+      .digest("hex");
+    if (actualHash !== decision.artifact_sha256) {
+      issues.push(issue(
+        "decision-artifact-hash-mismatch",
+        ".apex-v2/decisions/index.json",
+        decision.decision_id
+      ));
+    }
+  }
   const receiptsById = new Map(
     state.learning.receipts.map((receipt) => [receipt.receipt_id, receipt])
   );
@@ -252,6 +304,20 @@ export function buildOperationalState(root) {
         action_hash: approval.action_hash
       }))
       .sort(byId),
+    decisions: readJson(join(root, "decisions", "index.json"), [])
+      .map((decision) => ({
+        decision_id: decision.decision_id,
+        run_id: decision.run_id,
+        status: decision.status,
+        mode: decision.mode,
+        revision: decision.revision,
+        artifact_id: decision.artifact_id,
+        artifact_sha256: decision.artifact_sha256,
+        candidate_digest: decision.candidate_digest || null
+      }))
+      .sort((left, right) =>
+        left.decision_id.localeCompare(right.decision_id)
+      ),
     learning: {
       proposals: readJson(join(root, "learning", "proposals.json"), [])
         .map((proposal) => ({
@@ -323,12 +389,30 @@ function readRuns(root) {
         verification: reportSummary(readJson(join(runDir, "verification-report.json"), null)),
         review: reportSummary(readJson(join(runDir, "review-report.json"), null)),
         integration: reportSummary(readJson(join(runDir, "integration-report.json"), null)),
+        negative_control: negativeControlSummary(
+          readJson(join(runDir, "negative-control.json"), null)
+        ),
         candidates: readJsonFiles(join(runDir, "candidates")).sort((left, right) =>
           left.candidate_digest.localeCompare(right.candidate_digest)
         )
       };
     })
     .sort((left, right) => left.run_id.localeCompare(right.run_id));
+}
+
+function negativeControlSummary(record) {
+  if (!record) return null;
+  return {
+    record_id: record.record_id,
+    run_id: record.run_id,
+    mode: record.mode,
+    status: record.status,
+    revision: record.revision,
+    red_evidence_refs: record.red_evidence_refs || [],
+    green_evidence_refs: record.green_evidence_refs || [],
+    restoration_evidence_refs: record.restoration_evidence_refs || [],
+    waiver: record.waiver || null
+  };
 }
 
 function readWorkers(runDir) {

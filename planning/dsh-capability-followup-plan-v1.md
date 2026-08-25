@@ -5,7 +5,7 @@
 - 基线提交：`ce8ca6a`
 - 基线 Candidate：
   `72a8dad710edb47b682fb51715625e85494370786346ba733bafa1dfacdafbd7`
-- 状态：`READY_FOR_EXECUTION_AFTER_BENCHMARK_CHECKPOINT`
+- 状态：`R1_IMPLEMENTED_SHADOW`
 - 范围：仅 Apex Forge 软件研发 Loop/Graph
 - 不包含：Product Graph、Test Graph、DSH Cordis 源码或 private Agent Teams API
 
@@ -690,3 +690,28 @@ Assignment: pending|claimed|completed|cancelled
 
 > DSH 后续能力已完成规划；各能力按批次进入 shadow、enforce 和 Candidate 验证，
 > 不以原子 capability 的存在替代完整产品生命周期。
+
+## 18. R1 实施记录
+
+2026-08-25 已完成：
+
+- shared lifecycle transition helper；
+- `negative-control-record.schema.json`；
+- Bug/Test Failure 自动创建 Negative Control record；
+- RED failure signature、GREEN 和 restoration transition；
+- Review shadow warning；
+- Negative Control enforce 模式下 Review 与 Merge 双重阻断；
+- `decision-note.schema.json`；
+- High/Critical Governed 自动 Decision proposal；
+- Decision list/show/manual propose；
+- Decision Artifact hash 与 Negative Control restoration 的 operational
+  integrity 检查；
+- source/plugin workflow 提示。
+- 完整回归：`637/637 PASS`。
+
+R1 当前边界：
+
+- Negative Control 默认仍为 `shadow`；
+- Decision Note 仅开放 proposal/read path；
+- waiver、Decision accept/implement/supersede、Postmortem、Review Learning、
+  Simplification 和 Durable Team 尚未启用。

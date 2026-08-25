@@ -24,6 +24,7 @@ export function initProject(args) {
     join(root, "risks"),
     join(root, "runs"),
     join(root, "artifacts"),
+    join(root, "decisions"),
     join(root, "derived"),
     join(root, "policies"),
     join(root, "learning"),
@@ -68,6 +69,7 @@ export function initProject(args) {
       }
     });
     writeJson(join(root, "risks", "register.json"), []);
+    writeJson(join(root, "decisions", "index.json"), []);
     writeJson(join(root, "policies", "gates.json"), defaultGatePolicy(timestamp));
     writeJson(join(root, "policies", "retry.json"), defaultRetryPolicy(timestamp));
     writeJson(join(root, "policies", "execution.json"), defaultExecutionPolicy(timestamp));
@@ -82,7 +84,20 @@ export function initProject(args) {
   if (!existsSync(join(root, "learning", "jobs.json"))) {
     writeJson(join(root, "learning", "jobs.json"), []);
   }
+  if (!existsSync(join(root, "decisions", "index.json"))) {
+    writeJson(join(root, "decisions", "index.json"), []);
+  }
   ensureDir(join(root, "learning", "receipts"));
+  if (!existsSync(join(root, "policies", "gates.json"))) {
+    writeJson(join(root, "policies", "gates.json"), defaultGatePolicy(timestamp));
+  } else {
+    const gatePolicy = readJson(join(root, "policies", "gates.json"));
+    if (!gatePolicy.dsh_lifecycle) {
+      gatePolicy.dsh_lifecycle = defaultGatePolicy(timestamp).dsh_lifecycle;
+      gatePolicy.updated_at = timestamp;
+      writeJson(join(root, "policies", "gates.json"), gatePolicy);
+    }
+  }
   if (!existsSync(join(root, "policies", "retry.json"))) {
     writeJson(join(root, "policies", "retry.json"), defaultRetryPolicy(timestamp));
   } else {
@@ -271,6 +286,7 @@ export function status(args) {
   const roadmap = readJson(join(root, "roadmap", "graph.json"));
   const risks = readJson(join(root, "risks", "register.json"), []);
   const learning = readJson(join(root, "learning", "proposals.json"), []);
+  const decisions = readJson(join(root, "decisions", "index.json"), []);
 
   console.log(JSON.stringify({
     project: project.project_name,
@@ -289,7 +305,11 @@ export function status(args) {
     },
     risks: risks.length,
     active_runs: project.active_runs,
-    learning_proposals: learning.length
+    learning_proposals: learning.length,
+    decisions: {
+      total: decisions.length,
+      proposed: decisions.filter((item) => item.status === "proposed").length
+    }
   }, null, 2));
 }
 

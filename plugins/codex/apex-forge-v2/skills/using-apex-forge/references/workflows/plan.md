@@ -27,6 +27,11 @@ discoverable Skill.
 8. Stop when implementation/test actions are ready or when a typed blocker
    requires the user.
 
+When the source intake is `bug` or `test_failure`, inspect the generated
+`negative-control.json`. In shadow mode, preserve the gap without claiming RED
+or GREEN evidence that was not executed. For high/critical Governed plans,
+inspect the generated proposed Decision Note before implementation.
+
 ## Quality Bar
 
 - Context names affected files, constraints, unknowns, and acceptance criteria.

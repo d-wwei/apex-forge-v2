@@ -6,6 +6,7 @@ import {
   readFileSync,
   writeFileSync
 } from "node:fs";
+import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import {
@@ -95,6 +96,85 @@ test("operational integrity rejects drifted latest patch alias", () => {
 
   const inspection = inspectOperationalIntegrity(fixture.root);
   assert.ok(inspection.issues.some((item) => item.kind === "patch-alias-drift"));
+});
+
+test("operational integrity verifies Decision artifacts and Negative Control closure", () => {
+  const fixture = operationalFixture();
+  const artifact = {
+    schema_version: "v0",
+    artifact_id: "artifact-decision",
+    run_id: "run-1",
+    node_id: "plan_graph",
+    type: "decision",
+    title: "Decision",
+    body: "Choose option A",
+    refs: [],
+    created_at: "2026-08-25T00:00:00.000Z",
+    updated_at: "2026-08-25T00:00:00.000Z"
+  };
+  writeJson(join(
+    fixture.root,
+    "artifacts",
+    "run-1",
+    "artifact-decision.json"
+  ), artifact);
+  writeJson(join(fixture.root, "decisions", "index.json"), [{
+    decision_id: "decision-1",
+    run_id: "run-1",
+    status: "proposed",
+    mode: "shadow",
+    revision: 1,
+    artifact_id: artifact.artifact_id,
+    artifact_sha256: createHash("sha256")
+      .update(JSON.stringify(artifact))
+      .digest("hex"),
+    candidate_digest: null
+  }]);
+  writeJson(join(fixture.runDir, "negative-control.json"), {
+    record_id: "negative-control-1",
+    run_id: "run-1",
+    mode: "enforce",
+    status: "restored",
+    revision: 4,
+    red_evidence_refs: ["red"],
+    green_evidence_refs: ["green"],
+    restoration_evidence_refs: ["restored"],
+    waiver: null
+  });
+
+  assert.equal(
+    inspectOperationalIntegrity(fixture.root).issues.some((item) =>
+      item.kind.startsWith("decision-")
+      || item.kind.startsWith("negative-control-")
+    ),
+    false
+  );
+
+  artifact.body = "mutated";
+  writeJson(join(
+    fixture.root,
+    "artifacts",
+    "run-1",
+    "artifact-decision.json"
+  ), artifact);
+  writeJson(join(fixture.runDir, "negative-control.json"), {
+    record_id: "negative-control-1",
+    run_id: "run-1",
+    mode: "enforce",
+    status: "restored",
+    revision: 4,
+    red_evidence_refs: [],
+    green_evidence_refs: ["green"],
+    restoration_evidence_refs: ["restored"],
+    waiver: null
+  });
+  const inspection = inspectOperationalIntegrity(fixture.root);
+  assert.ok(inspection.issues.some((item) =>
+    item.kind === "decision-artifact-hash-mismatch"
+  ));
+  assert.ok(inspection.issues.some((item) =>
+    item.kind === "negative-control-incomplete-restoration"
+  ));
 });
 
 function operationalFixture() {

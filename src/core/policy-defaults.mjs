@@ -5,7 +5,19 @@ export function defaultGatePolicy(timestamp) {
     schema_version: "v0",
     updated_at: timestamp,
     human_gates: ["production_change", "destructive_operation", "external_api_side_effect", "security_sensitive_change", "knowledge_governance"],
-    automatic_gates: ["schema_valid", "required_evidence_present", "no_untriaged_execution", "derived_views_not_worker_written"]
+    automatic_gates: ["schema_valid", "required_evidence_present", "no_untriaged_execution", "derived_views_not_worker_written"],
+    dsh_lifecycle: {
+      negative_control: {
+        mode: "shadow",
+        intake_types: ["bug", "test_failure"]
+      },
+      decision_note: {
+        mode: "shadow",
+        auto_propose: true,
+        risk_levels: ["high", "critical"],
+        workflows: ["governed"]
+      }
+    }
   };
 }
 

@@ -131,6 +131,10 @@ import {
 import { handleCapabilityCommand } from "./commands/capability.mjs";
 import { handleHostCommand } from "./commands/host.mjs";
 import {
+  handleDecisionCommand,
+  handleNegativeControlCommand
+} from "./commands/dsh-lifecycle.mjs";
+import {
   evaluateAdapterCapabilityDrift,
   fallbackWorkerInternal,
   handleWorkerCommand,
@@ -275,6 +279,14 @@ async function main() {
 
     if (command === "host") {
       handleHostCommand(subcommand, parseArgs(rest));
+      return;
+    }
+    if (command === "decision") {
+      handleDecisionCommand(subcommand, parseArgs(rest));
+      return;
+    }
+    if (command === "negative-control") {
+      handleNegativeControlCommand(subcommand, parseArgs(rest));
       return;
     }
 

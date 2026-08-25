@@ -9,6 +9,8 @@ import { buildProjectInventory } from "./knowledge.mjs";
 import { KNOWLEDGE_FILES } from "../core/knowledge-constants.mjs";
 import { syncCarryRisk } from "../core/risks.mjs";
 import { withProjectTransaction } from "../core/project-transaction.mjs";
+import { ensureNegativeControlRecord } from "../core/negative-control.mjs";
+import { ensureDecisionNoteProposal } from "../core/decision-notes.mjs";
 
 export function handleRunCommand(subcommand, args) {
   if (subcommand === "create") {
@@ -87,19 +89,25 @@ export function generateRunPlanInternal(root, run) {
     ],
     timestamp
   });
+  const negativeControl = ensureNegativeControlRecord(root, run, plan);
+  const decisionNote = ensureDecisionNoteProposal(root, run, plan);
 
   const event = appendEvent(root, "run.plan.generated", "apex-v2", {
     run_id: run.run_id,
     plan_id: plan.plan_id,
     artifact_id: artifact.artifact_id,
-    node_count: plan.nodes.length
+    node_count: plan.nodes.length,
+    negative_control_record_id: negativeControl?.record_id || null,
+    decision_id: decisionNote?.decision_id || null
   });
   updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
 
   return {
     plan,
     artifact_id: artifact.artifact_id,
-    validation
+    validation,
+    negative_control: negativeControl,
+    decision_note: decisionNote
   };
 }
 

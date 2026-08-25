@@ -199,8 +199,13 @@ function seedProjectFiles(project) {
 
 function createAcceptedRun(project, options = {}) {
   run(["init", "--project", project, "--name", "Factory"]);
-  const intakeArgs = ["intake", "add", "--project", project, "--title", "交付节点状态机"];
+  const intakeArgs = [
+    "intake", "add", "--project", project,
+    "--title", options.title || "交付节点状态机"
+  ];
   if (options.methodPack) intakeArgs.push("--method-pack", options.methodPack);
+  if (options.type) intakeArgs.push("--type", options.type);
+  if (options.risk) intakeArgs.push("--risk", options.risk);
   const intake = JSON.parse(run(intakeArgs).stdout);
   run(["intake", "triage", "--project", project, "--id", intake.id, "--decision", "accepted"]);
   const roadmapNode = JSON.parse(run(["roadmap", "promote", "--project", project, "--intake-id", intake.id]).stdout);
@@ -244,9 +249,12 @@ function passNode(project, runId, nodeId, title = `${nodeId} evidence`) {
   return artifact;
 }
 
-function createRunWithPlanGraph(project) {
+function createRunWithPlanGraph(project, options = {}) {
   seedProjectFiles(project);
-  const { deliveryRun } = createAcceptedRun(project, { methodPack: "governed" });
+  const { deliveryRun } = createAcceptedRun(project, {
+    ...options,
+    methodPack: options.methodPack || "governed"
+  });
   passNode(project, deliveryRun.run_id, "mandate", "目标已明确");
   run(["knowledge", "refresh", "--project", project]);
   passNode(project, deliveryRun.run_id, "context", "Context Fabric 已刷新");
@@ -498,8 +506,8 @@ writeFileSync(output, JSON.stringify({
   return path;
 }
 
-function createRunWithQueuedPatches(project) {
-  const { deliveryRun } = createRunWithPlanGraph(project);
+function createRunWithQueuedPatches(project, options = {}) {
+  const { deliveryRun } = createRunWithPlanGraph(project, options);
   const workerA = JSON.parse(run([
     "worker",
     "create",
@@ -608,7 +616,13 @@ test("init 创建项目级 .apex-v2 工作区和共享知识库，并且可重�
   assert.ok(existsSync(join(root, "knowledge", "module-map.md")));
   assert.ok(existsSync(join(root, "knowledge", "test-map.md")));
   assert.ok(existsSync(join(root, "knowledge", "decisions.md")));
+  assert.ok(existsSync(join(root, "decisions", "index.json")));
   assert.ok(existsSync(join(root, "policies", "retry.json")));
+  assert.equal(
+    readJson(join(root, "policies", "gates.json"))
+      .dsh_lifecycle.negative_control.mode,
+    "shadow"
+  );
 
   const projectState = readJson(join(root, "project.json"));
   assert.equal(projectState.project_name, "Demo");
@@ -2195,6 +2209,20 @@ test("明确低风险少文件任务使用 quick PlanGraph 单 patch 路由", ()
   );
   assert.equal(implementation.execution_hints.estimated_duration_minutes, 8);
   assert.deepEqual(generated.plan.nodes[1].dependencies, ["delivery-implementation"]);
+  assert.equal(
+    existsSync(join(
+      project,
+      ".apex-v2",
+      "runs",
+      deliveryRun.run_id,
+      "negative-control.json"
+    )),
+    false
+  );
+  assert.deepEqual(JSON.parse(run([
+    "decision", "list", "--project", project,
+    "--run-id", deliveryRun.run_id
+  ]).stdout), []);
   passNodeWithEvidence(
     project,
     deliveryRun.run_id,
@@ -2332,6 +2360,58 @@ test("governed PlanGraph 用三个 barrier 编排七项职责和模型档位", (
   assert.equal(byId.get("delivery-design").delegation.main_agent_required, true);
   assert.equal(byId.get("delivery-review").delegation.default, false);
   assert.equal(byId.get("delivery-review").delegation.main_agent_required, true);
+});
+
+test("high-risk governed plan 自动生成幂等 Decision Note proposal", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithPlanGraph(project, {
+    risk: "high",
+    title: "选择持久化架构"
+  });
+
+  const decisions = JSON.parse(run([
+    "decision", "list", "--project", project,
+    "--run-id", deliveryRun.run_id
+  ]).stdout);
+  assert.equal(decisions.length, 1);
+  assert.equal(decisions[0].status, "proposed");
+  assert.equal(decisions[0].mode, "shadow");
+  assert.equal(decisions[0].run_id, deliveryRun.run_id);
+  assert.match(decisions[0].artifact_id, /^artifact-/);
+
+  const shown = JSON.parse(run([
+    "decision", "show", "--project", project,
+    "--id", decisions[0].decision_id
+  ]).stdout);
+  assert.equal(shown.decision_id, decisions[0].decision_id);
+
+  run([
+    "run", "plan", "generate", "--project", project,
+    "--run-id", deliveryRun.run_id
+  ]);
+  const afterReplay = JSON.parse(run([
+    "decision", "list", "--project", project,
+    "--run-id", deliveryRun.run_id
+  ]).stdout);
+  assert.equal(afterReplay.length, 1);
+
+  const manualArgs = [
+    "decision", "propose", "--project", project,
+    "--run-id", deliveryRun.run_id,
+    "--title", "选择兼容策略",
+    "--scope", "src/",
+    "--rationale", "需要在兼容性和简化之间做取舍。",
+    "--options", "保持兼容,移除兼容层",
+    "--proposed-option", "option-1"
+  ];
+  const manual = JSON.parse(run(manualArgs).stdout);
+  const manualReplay = JSON.parse(run(manualArgs).stdout);
+  assert.equal(manual.trigger, "manual");
+  assert.equal(manualReplay.decision_id, manual.decision_id);
+  assert.equal(JSON.parse(run([
+    "decision", "list", "--project", project,
+    "--run-id", deliveryRun.run_id
+  ]).stdout).length, 2);
 });
 
 test("显式 phase-context Method Pack 生成五节点阶段上下文路线", () => {
@@ -3822,6 +3902,156 @@ test("review generate 在验证未通过或 merge queue 冲突时阻断，在条
   assert.equal(review.report.candidate_digest, verified.report.candidate_digest);
   assert.ok(JSON.parse(run(["risk", "list", "--project", project, "--status", "mitigated"]).stdout).some((risk) => risk.source === "review"));
   passNodeWithEvidence(project, deliveryRun.run_id, "review", review.artifact_id);
+});
+
+test("Bug Negative Control shadow 告警，enforce 阻断，RED/GREEN/restore 后恢复", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithQueuedPatches(project, {
+    type: "bug",
+    risk: "medium",
+    title: "修复 parser 回归"
+  });
+  const root = join(project, ".apex-v2");
+  const recordPath = join(
+    root,
+    "runs",
+    deliveryRun.run_id,
+    "negative-control.json"
+  );
+  assert.equal(existsSync(recordPath), true);
+  const initial = JSON.parse(run([
+    "negative-control", "show", "--project", project,
+    "--run-id", deliveryRun.run_id
+  ]).stdout);
+  assert.equal(initial.status, "required");
+  assert.equal(initial.mode, "shadow");
+
+  const verified = JSON.parse(run([
+    "verify", "run", "--project", project,
+    "--run-id", deliveryRun.run_id
+  ]).stdout);
+  passNodeWithEvidence(project, deliveryRun.run_id, "verify", verified.artifact_id);
+  const shadowReview = JSON.parse(run([
+    "review", "generate", "--project", project,
+    "--run-id", deliveryRun.run_id
+  ]).stdout);
+  assert.equal(shadowReview.report.status, "PASS");
+  assert.ok(shadowReview.report.non_blocking_findings.some((finding) =>
+    finding.includes("Negative Control shadow")
+  ));
+  passNodeWithEvidence(
+    project,
+    deliveryRun.run_id,
+    "review",
+    shadowReview.artifact_id
+  );
+
+  const gatePath = join(root, "policies", "gates.json");
+  const gatePolicy = readJson(gatePath);
+  gatePolicy.dsh_lifecycle.negative_control.mode = "enforce";
+  writeFileSync(gatePath, `${JSON.stringify(gatePolicy, null, 2)}\n`);
+
+  const blockedReview = JSON.parse(run([
+    "review", "generate", "--project", project,
+    "--run-id", deliveryRun.run_id
+  ]).stdout);
+  assert.equal(blockedReview.report.status, "BLOCKED");
+  assert.ok(blockedReview.report.blocking_findings.some((finding) =>
+    finding.includes("Negative Control")
+  ));
+  const mergeBlocked = run([
+    "merge", "apply", "--project", project,
+    "--run-id", deliveryRun.run_id
+  ], { expectFailure: true });
+  assert.match(mergeBlocked.stderr, /Negative Control Gate/);
+
+  const red = JSON.parse(run([
+    "artifact", "submit", "--project", project,
+    "--run-id", deliveryRun.run_id,
+    "--node-id", "execute",
+    "--type", "test",
+    "--title", "negative control RED"
+  ]).stdout);
+  const mismatch = run([
+    "negative-control", "record-red", "--project", project,
+    "--run-id", deliveryRun.run_id,
+    "--command", "node --test tests/parser.test.mjs",
+    "--fault-model", "parser rejects an invalid token",
+    "--expected-signature", "SyntaxError",
+    "--observed-signature", "AssertionError",
+    "--evidence", red.artifact_id
+  ], { expectFailure: true });
+  assert.match(mismatch.stderr, /failure signature/);
+
+  run([
+    "negative-control", "record-red", "--project", project,
+    "--run-id", deliveryRun.run_id,
+    "--command", "node --test tests/parser.test.mjs",
+    "--fault-model", "parser rejects an invalid token",
+    "--expected-signature", "SyntaxError",
+    "--observed-signature", "SyntaxError: unexpected token",
+    "--evidence", red.artifact_id
+  ]);
+  const green = JSON.parse(run([
+    "artifact", "submit", "--project", project,
+    "--run-id", deliveryRun.run_id,
+    "--node-id", "verify",
+    "--type", "test",
+    "--title", "negative control GREEN"
+  ]).stdout);
+  const wrongGreen = run([
+    "negative-control", "record-green", "--project", project,
+    "--run-id", deliveryRun.run_id,
+    "--command", "node --test tests/other.test.mjs",
+    "--evidence", green.artifact_id
+  ], { expectFailure: true });
+  assert.match(wrongGreen.stderr, /GREEN 必须复用 RED command/);
+  run([
+    "negative-control", "record-green", "--project", project,
+    "--run-id", deliveryRun.run_id,
+    "--command", "node --test tests/parser.test.mjs",
+    "--evidence", green.artifact_id
+  ]);
+  const restoration = JSON.parse(run([
+    "artifact", "submit", "--project", project,
+    "--run-id", deliveryRun.run_id,
+    "--node-id", "verify",
+    "--type", "evidence",
+    "--title", "negative control restoration"
+  ]).stdout);
+  const restored = JSON.parse(run([
+    "negative-control", "restore", "--project", project,
+    "--run-id", deliveryRun.run_id,
+    "--evidence", restoration.artifact_id
+  ]).stdout);
+  assert.equal(restored.status, "restored");
+  const regenerated = JSON.parse(run([
+    "run", "plan", "generate", "--project", project,
+    "--run-id", deliveryRun.run_id
+  ]).stdout);
+  assert.equal(regenerated.negative_control.status, "restored");
+  const reverified = JSON.parse(run([
+    "verify", "run", "--project", project,
+    "--run-id", deliveryRun.run_id
+  ]).stdout);
+  assert.equal(reverified.report.status, "PASS");
+
+  const finalReview = JSON.parse(run([
+    "review", "generate", "--project", project,
+    "--run-id", deliveryRun.run_id
+  ]).stdout);
+  assert.equal(finalReview.report.status, "PASS");
+  assert.equal(
+    finalReview.report.blocking_findings.some((finding) =>
+      finding.includes("Negative Control")
+    ),
+    false
+  );
+  const merged = JSON.parse(run([
+    "merge", "apply", "--project", project,
+    "--run-id", deliveryRun.run_id
+  ]).stdout);
+  assert.equal(merged.report.status, "MERGED");
 });
 
 test("patch 内容在 verification 后变化会使 review BLOCKED", () => {

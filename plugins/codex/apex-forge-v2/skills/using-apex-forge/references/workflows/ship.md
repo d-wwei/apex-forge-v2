@@ -10,6 +10,8 @@ discoverable Skill.
 2. Complete execute collection and run candidate-bound staged verification.
 3. Confirm semantic review evidence binds the same candidate digest.
 4. Inspect merge conflicts and candidate-bound approvals.
+   In Negative Control enforce mode, confirm the Bug record is `restored` or
+   covered by a valid approved waiver.
 5. Ask the user only for a real policy approval or ambiguity decision.
 6. Apply merge only when verification, review, approval, and merge recompute the
    same candidate digest.

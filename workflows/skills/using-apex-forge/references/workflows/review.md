@@ -18,6 +18,8 @@ discoverable Skill.
 5. If blocking findings exist, return the run to implementation.
 6. Only after semantic Host review may deterministic `review generate`
    aggregate queue, candidate, and verification state.
+7. For Bug/Test Failure runs, inspect Negative Control status. Shadow gaps stay
+   visible as non-blocking findings; enforce gaps must block review.
 
 For a `profile: quick` plan, submit the single `delivery-review` evidence and
 then run one consolidated closeout tick:
@@ -32,3 +34,5 @@ verification already records them.
 - A passing test suite alone is not a semantic review.
 - A PASS names the requirement, candidate digest, diff, and verification evidence.
 - Unknown or skipped checks remain visible.
+- A Bug cannot claim Negative Control completion without matching RED failure
+  signature, GREEN evidence, and restoration evidence.

@@ -21,6 +21,10 @@ Candidate 仍属于旧候选；本次版本需要在提交后重新冻结 Candid
 Decision、Postmortem、Review Learning、Simplification 和 Durable Team 与当前
 吞吐架构、成本 Gate 及单一事实源边界对齐。
 
+2026-08-25：R1 Shadow 已实现，包括 Shared Lifecycle、Bug Negative Control
+record/Review/Merge Gate，以及 High/Critical Governed Decision proposal/read
+path；完整回归 `637/637 PASS`。后续状态迁移和其余四项能力继续按分批计划推进。
+
 - 日期：2026-08-20
 - 计划：`planning/plugin-upgrade-plan.md`
 - 总体状态：`COMPLETE`

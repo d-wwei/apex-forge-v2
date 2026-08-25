@@ -2976,7 +2976,7 @@ var require_compile = __commonJS({
       const schOrFunc = root.refs[ref];
       if (schOrFunc)
         return schOrFunc;
-      let _sch = resolve24.call(this, root, ref);
+      let _sch = resolve27.call(this, root, ref);
       if (_sch === void 0) {
         const schema = (_a = root.localRefs) === null || _a === void 0 ? void 0 : _a[ref];
         const { schemaId } = this.opts;
@@ -3003,7 +3003,7 @@ var require_compile = __commonJS({
     function sameSchemaEnv(s1, s2) {
       return s1.schema === s2.schema && s1.root === s2.root && s1.baseId === s2.baseId;
     }
-    function resolve24(root, ref) {
+    function resolve27(root, ref) {
       let sch;
       while (typeof (sch = this.refs[ref]) == "string")
         ref = sch;
@@ -3634,7 +3634,7 @@ var require_fast_uri = __commonJS({
       }
       return uri;
     }
-    function resolve24(baseURI, relativeURI, options) {
+    function resolve27(baseURI, relativeURI, options) {
       const schemelessOptions = options ? Object.assign({ scheme: "null" }, options) : { scheme: "null" };
       const { parsed: baseParsed, malformedAuthorityOrPort: baseMalformed } = parseWithStatus(baseURI, schemelessOptions);
       const { parsed: relativeParsed, malformedAuthorityOrPort: relativeMalformed } = parseWithStatus(relativeURI, schemelessOptions);
@@ -3918,7 +3918,7 @@ var require_fast_uri = __commonJS({
     var fastUri = {
       SCHEMES,
       normalize: normalize2,
-      resolve: resolve24,
+      resolve: resolve27,
       resolveComponent,
       equal,
       serialize,
@@ -7176,8 +7176,8 @@ import {
   symlinkSync as symlinkSync4,
   writeFileSync as writeFileSync16
 } from "node:fs";
-import { createHash as createHash14 } from "node:crypto";
-import { basename as basename9, join as join45, resolve as resolve23 } from "node:path";
+import { createHash as createHash15 } from "node:crypto";
+import { basename as basename9, join as join47, resolve as resolve26 } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // src/cli/args.mjs
@@ -7221,6 +7221,8 @@ function printHelp() {
   apex-v2 host actions|claim|submit|cancel --project <dir> --host-id <id>
     host submit accepts --semantic-evidence-json|--semantic-evidence-file and
     --capability-evidence-json|--capability-evidence-file
+  apex-v2 decision list|show|propose --project <dir>
+  apex-v2 negative-control show|record-red|record-green|restore --project <dir>
   apex-v2 merge enqueue|status|resolve|apply --project <dir>
   apex-v2 verify run --project <dir> --run-id <id>
   apex-v2 review generate --project <dir> --run-id <id>
@@ -8185,7 +8187,9 @@ function contractTargets(path, value) {
   else if (name === "review-report.json") push("review-report.schema.json");
   else if (name === "integration-report.json") push("integration-report.schema.json");
   else if (name === "learning-report.json") push("learning-report.schema.json");
-  else if (name.startsWith("receipt-") && normalized.includes("/learning/receipts/")) {
+  else if (name === "negative-control.json") {
+    push("negative-control-record.schema.json");
+  } else if (name.startsWith("receipt-") && normalized.includes("/learning/receipts/")) {
     push("learning-apply-receipt.schema.json");
   } else if (name === "retry.json" && normalized.includes("/policies/")) push("retry-policy.schema.json");
   else if (name === "execution.json" && normalized.includes("/policies/")) push("execution-policy.schema.json");
@@ -8224,6 +8228,8 @@ function contractTargets(path, value) {
     for (const [index, item] of value.entries()) push("learning-proposal.schema.json", item, `#${index}`);
   } else if (name === "jobs.json" && normalized.includes("/learning/")) {
     for (const [index, item] of value.entries()) push("learning-apply-job.schema.json", item, `#${index}`);
+  } else if (name === "index.json" && normalized.includes("/decisions/")) {
+    for (const [index, item] of value.entries()) push("decision-note.schema.json", item, `#${index}`);
   } else if (name === "items.json" && normalized.includes("/approvals/")) {
     for (const [index, item] of value.entries()) push("approval-request.schema.json", item, `#${index}`);
   }
@@ -13099,7 +13105,7 @@ function createWorkerExecutorRegistry(initialExecutors = []) {
   function inspectAll() {
     return [...executors.keys()].map((id) => inspect(id));
   }
-  function resolve24(options = {}) {
+  function resolve27(options = {}) {
     const {
       preferred,
       fallbackOrder = [],
@@ -13129,7 +13135,7 @@ function createWorkerExecutorRegistry(initialExecutors = []) {
     inspect,
     inspectAll,
     register,
-    resolve: resolve24
+    resolve: resolve27
   };
 }
 var DEFAULT_REGISTRY = createWorkerExecutorRegistry(BUILTIN_EXECUTORS);
@@ -14394,6 +14400,49 @@ function inspectOperationalIntegrity(root) {
       ));
     }
   }
+  for (const run of state.runs) {
+    const record = run.negative_control;
+    if (!record) continue;
+    if (record.run_id !== run.run_id) {
+      issues.push(issue(
+        "negative-control-run-mismatch",
+        `.apex-v2/runs/${run.run_id}/negative-control.json`,
+        `${record.run_id} != ${run.run_id}`
+      ));
+    }
+    if (record.status === "restored" && (record.red_evidence_refs.length === 0 || record.green_evidence_refs.length === 0 || record.restoration_evidence_refs.length === 0)) {
+      issues.push(issue(
+        "negative-control-incomplete-restoration",
+        `.apex-v2/runs/${run.run_id}/negative-control.json`,
+        record.record_id
+      ));
+    }
+  }
+  for (const decision of state.decisions) {
+    const artifactPath = join22(
+      root,
+      "artifacts",
+      decision.run_id,
+      `${decision.artifact_id}.json`
+    );
+    const artifact = readJson(artifactPath, null);
+    if (!artifact) {
+      issues.push(issue(
+        "decision-artifact-missing",
+        ".apex-v2/decisions/index.json",
+        decision.decision_id
+      ));
+      continue;
+    }
+    const actualHash = createHash8("sha256").update(JSON.stringify(artifact)).digest("hex");
+    if (actualHash !== decision.artifact_sha256) {
+      issues.push(issue(
+        "decision-artifact-hash-mismatch",
+        ".apex-v2/decisions/index.json",
+        decision.decision_id
+      ));
+    }
+  }
   const receiptsById = new Map(
     state.learning.receipts.map((receipt) => [receipt.receipt_id, receipt])
   );
@@ -14458,6 +14507,18 @@ function buildOperationalState(root) {
       candidate_digest: approval.candidate_digest ?? null,
       action_hash: approval.action_hash
     })).sort(byId),
+    decisions: readJson(join22(root, "decisions", "index.json"), []).map((decision) => ({
+      decision_id: decision.decision_id,
+      run_id: decision.run_id,
+      status: decision.status,
+      mode: decision.mode,
+      revision: decision.revision,
+      artifact_id: decision.artifact_id,
+      artifact_sha256: decision.artifact_sha256,
+      candidate_digest: decision.candidate_digest || null
+    })).sort(
+      (left, right) => left.decision_id.localeCompare(right.decision_id)
+    ),
     learning: {
       proposals: readJson(join22(root, "learning", "proposals.json"), []).map((proposal) => ({
         id: proposal.id,
@@ -14515,11 +14576,28 @@ function readRuns(root) {
       verification: reportSummary(readJson(join22(runDir, "verification-report.json"), null)),
       review: reportSummary(readJson(join22(runDir, "review-report.json"), null)),
       integration: reportSummary(readJson(join22(runDir, "integration-report.json"), null)),
+      negative_control: negativeControlSummary(
+        readJson(join22(runDir, "negative-control.json"), null)
+      ),
       candidates: readJsonFiles(join22(runDir, "candidates")).sort(
         (left, right) => left.candidate_digest.localeCompare(right.candidate_digest)
       )
     };
   }).sort((left, right) => left.run_id.localeCompare(right.run_id));
+}
+function negativeControlSummary(record) {
+  if (!record) return null;
+  return {
+    record_id: record.record_id,
+    run_id: record.run_id,
+    mode: record.mode,
+    status: record.status,
+    revision: record.revision,
+    red_evidence_refs: record.red_evidence_refs || [],
+    green_evidence_refs: record.green_evidence_refs || [],
+    restoration_evidence_refs: record.restoration_evidence_refs || [],
+    waiver: record.waiver || null
+  };
 }
 function readWorkers(runDir) {
   const workersDir = join22(runDir, "workers");
@@ -16086,7 +16164,393 @@ function refreshActiveRunContextSnapshots(root, knowledgeVersion) {
 
 // src/commands/run.mjs
 import { writeFileSync as writeFileSync11 } from "node:fs";
+import { join as join33, resolve as resolve15 } from "node:path";
+
+// src/core/negative-control.mjs
 import { join as join31, resolve as resolve13 } from "node:path";
+
+// src/core/lifecycle.mjs
+function initializeLifecycleRecord(record, timestamp = now()) {
+  return {
+    ...record,
+    revision: 1,
+    last_event_id: null,
+    created_at: timestamp,
+    updated_at: timestamp
+  };
+}
+function transitionLifecycleRecord(record, nextStatus, transitions, timestamp = now()) {
+  const allowed = transitions[record.status] || [];
+  if (!allowed.includes(nextStatus)) {
+    throw new Error(
+      `\u975E\u6CD5 lifecycle transition\uFF1A${record.status} -> ${nextStatus}`
+    );
+  }
+  record.status = nextStatus;
+  record.revision = Number(record.revision || 0) + 1;
+  record.updated_at = timestamp;
+  return record;
+}
+function bindLifecycleEvent(record, event) {
+  record.last_event_id = event.event_id;
+  record.updated_at = event.timestamp;
+  return record;
+}
+
+// src/core/negative-control.mjs
+var TRANSITIONS = {
+  required: ["red_verified", "waived"],
+  red_verified: ["green_verified", "waived"],
+  green_verified: ["restored", "waived"],
+  restored: [],
+  waived: []
+};
+function ensureNegativeControlRecord(root, run, plan) {
+  const policy = negativeControlPolicy(root);
+  if (policy.mode === "off" || !policy.intake_types.includes(plan.source_intake_type)) {
+    return null;
+  }
+  return withProjectLock(resolve13(root, ".."), () => {
+    const existing = readNegativeControlRecord(root, run.run_id);
+    if (existing) return existing;
+    const timestamp = now();
+    const record = initializeLifecycleRecord({
+      schema_version: SCHEMA_VERSION,
+      record_id: shortId("negative-control"),
+      run_id: run.run_id,
+      source_intake_id: plan.source_intake_id,
+      mode: policy.mode,
+      status: "required",
+      fault_model: "",
+      red_command: null,
+      expected_failure_signature: null,
+      observed_failure_signature: null,
+      red_evidence_refs: [],
+      green_command: null,
+      green_evidence_refs: [],
+      restoration_evidence_refs: [],
+      waiver: null
+    }, timestamp);
+    const event = appendEvent(root, "negative-control.required", "apex-v2", {
+      run_id: run.run_id,
+      record_id: record.record_id,
+      source_intake_id: plan.source_intake_id,
+      mode: record.mode
+    });
+    bindLifecycleEvent(record, event);
+    writeNegativeControlRecord(root, record);
+    updateProject(root, {
+      last_event_id: event.event_id,
+      updated_at: event.timestamp
+    });
+    return record;
+  });
+}
+function readNegativeControlRecord(root, runId) {
+  return readJson(
+    join31(root, "runs", runId, "negative-control.json"),
+    null
+  );
+}
+function recordNegativeControlRed(root, run, input) {
+  const record = requireNegativeControlRecord(root, run.run_id);
+  if (!input.faultModel) {
+    throw new Error("Negative Control RED \u5FC5\u987B\u58F0\u660E fault model");
+  }
+  if (!input.expectedFailureSignature) {
+    throw new Error("Negative Control RED \u5FC5\u987B\u58F0\u660E expected failure signature");
+  }
+  if (!input.observedFailureSignature.includes(input.expectedFailureSignature)) {
+    throw new Error(
+      `Negative Control failure signature \u4E0D\u5339\u914D\uFF1A${input.observedFailureSignature} !~ ${input.expectedFailureSignature}`
+    );
+  }
+  const evidenceRefs = assertRunEvidence(
+    root,
+    run.run_id,
+    input.evidenceRefs
+  );
+  transitionLifecycleRecord(record, "red_verified", TRANSITIONS);
+  record.fault_model = input.faultModel;
+  record.red_command = input.command;
+  record.expected_failure_signature = input.expectedFailureSignature;
+  record.observed_failure_signature = input.observedFailureSignature;
+  record.red_evidence_refs = evidenceRefs;
+  return persistNegativeControlTransition(
+    root,
+    record,
+    "negative-control.red-verified",
+    {
+      command: input.command,
+      expected_failure_signature: input.expectedFailureSignature,
+      observed_failure_signature: input.observedFailureSignature,
+      evidence_refs: evidenceRefs
+    }
+  );
+}
+function recordNegativeControlGreen(root, run, input) {
+  const record = requireNegativeControlRecord(root, run.run_id);
+  if (input.command !== record.red_command) {
+    throw new Error(
+      `Negative Control GREEN \u5FC5\u987B\u590D\u7528 RED command\uFF1A${input.command} != ${record.red_command}`
+    );
+  }
+  const evidenceRefs = assertRunEvidence(
+    root,
+    run.run_id,
+    input.evidenceRefs
+  );
+  transitionLifecycleRecord(record, "green_verified", TRANSITIONS);
+  record.green_command = input.command;
+  record.green_evidence_refs = evidenceRefs;
+  return persistNegativeControlTransition(
+    root,
+    record,
+    "negative-control.green-verified",
+    { command: input.command, evidence_refs: evidenceRefs }
+  );
+}
+function restoreNegativeControl(root, run, input) {
+  const record = requireNegativeControlRecord(root, run.run_id);
+  const evidenceRefs = assertRunEvidence(
+    root,
+    run.run_id,
+    input.evidenceRefs
+  );
+  transitionLifecycleRecord(record, "restored", TRANSITIONS);
+  record.restoration_evidence_refs = evidenceRefs;
+  return persistNegativeControlTransition(
+    root,
+    record,
+    "negative-control.restored",
+    { evidence_refs: evidenceRefs }
+  );
+}
+function inspectNegativeControlGate(root, runId) {
+  const policy = negativeControlPolicy(root);
+  const record = readNegativeControlRecord(root, runId);
+  if (policy.mode === "off") {
+    return {
+      required: false,
+      mode: "off",
+      status: "not_required",
+      ready: true,
+      fingerprint: "off",
+      message: ""
+    };
+  }
+  if (!record) {
+    return {
+      required: true,
+      mode: policy.mode,
+      status: "missing",
+      ready: false,
+      fingerprint: `missing:${policy.mode}`,
+      message: "Negative Control record \u7F3A\u5931"
+    };
+  }
+  const ready = record.status === "restored" || record.status === "waived" && record.waiver && Date.parse(record.waiver.expires_at) > Date.now();
+  return {
+    required: true,
+    mode: policy.mode,
+    status: record.status,
+    ready,
+    revision: record.revision,
+    fingerprint: [
+      record.record_id,
+      record.revision,
+      policy.mode,
+      record.status
+    ].join(":"),
+    message: ready ? "" : `Negative Control \u672A\u95ED\u5408\uFF1Astatus=${record.status}`
+  };
+}
+function negativeControlPolicy(root) {
+  const gates = readJson(join31(root, "policies", "gates.json"), {});
+  return {
+    mode: gates.dsh_lifecycle?.negative_control?.mode || "shadow",
+    intake_types: gates.dsh_lifecycle?.negative_control?.intake_types || ["bug", "test_failure"]
+  };
+}
+function requireNegativeControlRecord(root, runId) {
+  const record = readNegativeControlRecord(root, runId);
+  if (!record) {
+    throw new Error(`run \u672A\u8981\u6C42 Negative Control\uFF1A${runId}`);
+  }
+  return record;
+}
+function assertRunEvidence(root, runId, evidenceRefs = []) {
+  const refs = Array.from(new Set(evidenceRefs.filter(Boolean)));
+  if (refs.length === 0) {
+    throw new Error("Negative Control transition \u5FC5\u987B\u63D0\u4F9B evidence");
+  }
+  const artifacts = new Set(
+    listArtifactsForRun(root, runId).map((artifact) => artifact.artifact_id)
+  );
+  for (const ref of refs) {
+    if (!artifacts.has(ref)) {
+      throw new Error(`Negative Control evidence \u4E0D\u5C5E\u4E8E\u5F53\u524D run\uFF1A${ref}`);
+    }
+  }
+  return refs;
+}
+function persistNegativeControlTransition(root, record, eventType, payload) {
+  const event = appendEvent(root, eventType, "apex-v2", {
+    run_id: record.run_id,
+    record_id: record.record_id,
+    revision: record.revision,
+    status: record.status,
+    ...payload
+  });
+  bindLifecycleEvent(record, event);
+  writeNegativeControlRecord(root, record);
+  updateProject(root, {
+    last_event_id: event.event_id,
+    updated_at: event.timestamp
+  });
+  return record;
+}
+function writeNegativeControlRecord(root, record) {
+  writeJson(
+    join31(root, "runs", record.run_id, "negative-control.json"),
+    record
+  );
+}
+
+// src/core/decision-notes.mjs
+import { createHash as createHash9 } from "node:crypto";
+import { join as join32, resolve as resolve14 } from "node:path";
+function listDecisionNotes(root, filters = {}) {
+  return readJson(join32(root, "decisions", "index.json"), []).filter((note) => !filters.runId || note.run_id === filters.runId).filter((note) => !filters.status || note.status === filters.status).sort(
+    (left, right) => String(left.created_at).localeCompare(String(right.created_at))
+  );
+}
+function getDecisionNote(root, decisionId) {
+  const note = listDecisionNotes(root).find(
+    (item) => item.decision_id === decisionId
+  );
+  if (!note) throw new Error(`\u627E\u4E0D\u5230 Decision Note\uFF1A${decisionId}`);
+  return note;
+}
+function ensureDecisionNoteProposal(root, run, plan) {
+  const policy = decisionNotePolicy(root);
+  if (policy.mode === "off" || policy.auto_propose !== true || !policy.workflows.includes(plan.method_pack?.workflow) || !policy.risk_levels.includes(maxPlanRisk(plan))) {
+    return null;
+  }
+  return withProjectLock(resolve14(root, ".."), () => {
+    const existing = listDecisionNotes(root, { runId: run.run_id }).find((note) => note.trigger === "high_risk_plan");
+    if (existing) return existing;
+    return proposeDecisionNote(root, run, {
+      mode: policy.mode,
+      trigger: "high_risk_plan",
+      sourceIntakeId: plan.source_intake_id,
+      title: `Decision\uFF1A${plan.source_title}`,
+      scope: plan.affected_area || "project",
+      rationale: plan.strategy,
+      options: [
+        {
+          option_id: "generated-plan",
+          summary: "\u6309\u5F53\u524D PlanGraph \u548C Method Pack \u5B9E\u65BD\u3002",
+          tradeoffs: ["\u4FDD\u7559\u5F53\u524D evidence\u3001verification \u548C rollback \u8FB9\u754C\u3002"]
+        },
+        {
+          option_id: "replan",
+          summary: "\u6682\u505C\u6267\u884C\u5E76\u91CD\u65B0\u89C4\u5212\u3002",
+          tradeoffs: ["\u589E\u52A0\u4E00\u6B21\u89C4\u5212\u5F80\u8FD4\uFF0C\u4F46\u907F\u514D\u9AD8\u98CE\u9669\u65B9\u6848\u76F4\u63A5\u8FDB\u5165\u5B9E\u73B0\u3002"]
+        }
+      ],
+      proposedOption: "generated-plan",
+      refs: [
+        `.apex-v2/runs/${run.run_id}/plan-graph.json`,
+        `.apex-v2/intake/items.json#${plan.source_intake_id}`
+      ]
+    });
+  });
+}
+function proposeDecisionNote(root, run, input) {
+  const timestamp = now();
+  const artifact = createArtifact(root, run, "plan_graph", {
+    type: "decision",
+    title: input.title,
+    body: renderDecisionBody(input),
+    refs: input.refs || [],
+    timestamp
+  });
+  const note = initializeLifecycleRecord({
+    schema_version: SCHEMA_VERSION,
+    decision_id: shortId("decision"),
+    run_id: run.run_id,
+    source_intake_id: input.sourceIntakeId || null,
+    mode: (input.mode || decisionNotePolicy(root).mode) === "enforce" ? "enforce" : "shadow",
+    trigger: input.trigger || "manual",
+    status: "proposed",
+    title: input.title,
+    scope: input.scope,
+    rationale: input.rationale,
+    options: input.options,
+    proposed_option: input.proposedOption,
+    artifact_id: artifact.artifact_id,
+    artifact_sha256: createHash9("sha256").update(JSON.stringify(artifact)).digest("hex"),
+    accepted_by: null,
+    accepted_at: null,
+    approval_id: null,
+    supersedes: null,
+    superseded_by: null,
+    implementation_refs: [],
+    candidate_digest: null,
+    verification_refs: [],
+    archived_at: null
+  }, timestamp);
+  const event = appendEvent(root, "decision.proposed", "apex-v2", {
+    decision_id: note.decision_id,
+    run_id: note.run_id,
+    artifact_id: note.artifact_id,
+    mode: note.mode,
+    trigger: note.trigger
+  });
+  bindLifecycleEvent(note, event);
+  const path = join32(root, "decisions", "index.json");
+  ensureDir(join32(root, "decisions"));
+  const notes = readJson(path, []);
+  notes.push(note);
+  writeJson(path, notes);
+  updateProject(root, {
+    last_event_id: event.event_id,
+    updated_at: event.timestamp
+  });
+  return note;
+}
+function decisionNotePolicy(root) {
+  const gates = readJson(join32(root, "policies", "gates.json"), {});
+  return {
+    mode: gates.dsh_lifecycle?.decision_note?.mode || "shadow",
+    auto_propose: gates.dsh_lifecycle?.decision_note?.auto_propose !== false,
+    risk_levels: gates.dsh_lifecycle?.decision_note?.risk_levels || ["high", "critical"],
+    workflows: gates.dsh_lifecycle?.decision_note?.workflows || ["governed"]
+  };
+}
+function maxPlanRisk(plan) {
+  const order = ["low", "medium", "high", "critical"];
+  return (plan.nodes || []).reduce(
+    (highest, node) => order.indexOf(node.risk) > order.indexOf(highest) ? node.risk : highest,
+    "low"
+  );
+}
+function renderDecisionBody(input) {
+  return [
+    input.rationale,
+    "",
+    "## Options",
+    ...input.options.flatMap((option) => [
+      `### ${option.option_id}: ${option.summary}`,
+      ...option.tradeoffs.map((item) => `- ${item}`)
+    ]),
+    "",
+    `Proposed option: ${input.proposedOption}`
+  ].join("\n");
+}
+
+// src/commands/run.mjs
 function handleRunCommand(subcommand, args) {
   if (subcommand === "create") {
     createRun(args);
@@ -16136,16 +16600,16 @@ function generateRunPlanInternal(root, run) {
   requirePassedNode(run, "mandate");
   requirePassedNode(run, "context");
   const timestamp = now();
-  const projectDir = resolve13(root, "..");
+  const projectDir = resolve15(root, "..");
   const inventory = buildProjectInventory(projectDir);
   const plan = buildTaskPlanGraph(root, run, timestamp, inventory);
   const validation = validatePlanGraph(plan);
   if (validation.errors.length > 0) {
     throw new Error(`\u751F\u6210\u7684 plan graph \u65E0\u6548\uFF1A${validation.errors.join("; ")}`);
   }
-  const runDir = join31(root, "runs", run.run_id);
-  writeJson(join31(runDir, "plan-graph.json"), plan);
-  writeFileSync11(join31(runDir, "PLAN_GRAPH.md"), renderPlanGraphMarkdown(plan));
+  const runDir = join33(root, "runs", run.run_id);
+  writeJson(join33(runDir, "plan-graph.json"), plan);
+  writeFileSync11(join33(runDir, "PLAN_GRAPH.md"), renderPlanGraphMarkdown(plan));
   const artifact = createArtifact(root, run, "plan_graph", {
     type: "plan",
     title: `PlanGraph\uFF1A${plan.source_title}`,
@@ -16159,30 +16623,36 @@ function generateRunPlanInternal(root, run) {
     ],
     timestamp
   });
+  const negativeControl = ensureNegativeControlRecord(root, run, plan);
+  const decisionNote = ensureDecisionNoteProposal(root, run, plan);
   const event = appendEvent(root, "run.plan.generated", "apex-v2", {
     run_id: run.run_id,
     plan_id: plan.plan_id,
     artifact_id: artifact.artifact_id,
-    node_count: plan.nodes.length
+    node_count: plan.nodes.length,
+    negative_control_record_id: negativeControl?.record_id || null,
+    decision_id: decisionNote?.decision_id || null
   });
   updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
   return {
     plan,
     artifact_id: artifact.artifact_id,
-    validation
+    validation,
+    negative_control: negativeControl,
+    decision_note: decisionNote
   };
 }
 function showRunPlan(args) {
   const root = requireStore(projectRoot(args));
   const runId = required(args, "run-id");
-  const plan = readJson(join31(root, "runs", runId, "plan-graph.json"), null);
+  const plan = readJson(join33(root, "runs", runId, "plan-graph.json"), null);
   if (!plan) throw new Error(`\u627E\u4E0D\u5230 plan graph\uFF1A${runId}`);
   console.log(JSON.stringify(plan, null, 2));
 }
 function validateRunPlanCommand(args) {
   const root = requireStore(projectRoot(args));
   const runId = required(args, "run-id");
-  const plan = readJson(join31(root, "runs", runId, "plan-graph.json"), null);
+  const plan = readJson(join33(root, "runs", runId, "plan-graph.json"), null);
   if (!plan) throw new Error(`\u627E\u4E0D\u5230 plan graph\uFF1A${runId}`);
   const validation = validatePlanGraph(plan);
   if (validation.errors.length > 0) {
@@ -16198,28 +16668,28 @@ function createRun(args) {
   console.log(JSON.stringify(run, null, 2));
 }
 function createRunForRoadmapNode(root, roadmapId, timestamp) {
-  return withProjectTransaction(resolve13(root, ".."), {
+  return withProjectTransaction(resolve15(root, ".."), {
     kind: "run-create",
     idempotencyKey: `run-create:${roadmapId}`
   }, () => createRunForRoadmapNodeTransaction(root, roadmapId, timestamp)).result;
 }
 function createRunForRoadmapNodeTransaction(root, roadmapId, timestamp) {
-  const roadmapPath = join31(root, "roadmap", "graph.json");
+  const roadmapPath = join33(root, "roadmap", "graph.json");
   const graph = readJson(roadmapPath);
   const node = graph.nodes.find((entry) => entry.id === roadmapId);
   if (!node) throw new Error(`\u627E\u4E0D\u5230 roadmap node\uFF1A${roadmapId}`);
   if (!["ready", "active"].includes(node.status)) {
     throw new Error(`roadmap node \u5F53\u524D\u72B6\u6001\u4E0D\u53EF\u521B\u5EFA run\uFF1A${node.status}`);
   }
-  const projectPath = join31(root, "project.json");
+  const projectPath = join33(root, "project.json");
   const project = readJson(projectPath);
   if (project.active_runs.length >= project.wip_limits.active_runs) {
     throw new Error(`active run \u6570\u91CF\u5DF2\u8FBE\u5230 WIP \u9650\u5236\uFF1A${project.wip_limits.active_runs}`);
   }
   const runId = shortId("run");
-  const runDir = join31(root, "runs", runId);
+  const runDir = join33(root, "runs", runId);
   ensureDir(runDir);
-  ensureDir(join31(root, "artifacts", runId));
+  ensureDir(join33(root, "artifacts", runId));
   const run = {
     schema_version: SCHEMA_VERSION,
     run_id: runId,
@@ -16248,8 +16718,8 @@ function createRunForRoadmapNodeTransaction(root, roadmapId, timestamp) {
     created_at: timestamp,
     updated_at: timestamp
   };
-  writeJson(join31(runDir, "run.json"), run);
-  writeTextIfMissing(join31(runDir, "HANDOFF.md"), runHandoffTemplate(run));
+  writeJson(join33(runDir, "run.json"), run);
+  writeTextIfMissing(join33(runDir, "HANDOFF.md"), runHandoffTemplate(run));
   node.status = "active";
   node.updated_at = timestamp;
   graph.updated_at = timestamp;
@@ -16509,7 +16979,7 @@ function listArtifacts(args) {
 }
 
 // src/commands/governance.mjs
-import { join as join32, resolve as resolve14 } from "node:path";
+import { join as join34, resolve as resolve16 } from "node:path";
 function handleContractsCommand(subcommand, args) {
   const projectDir = projectRoot(args);
   requireStore(projectDir);
@@ -16530,15 +17000,15 @@ function handleApprovalCommand(subcommand, args) {
   const projectDir = projectRoot(args);
   const root = requireStore(projectDir);
   if (subcommand === "list") {
-    console.log(JSON.stringify(readJson(join32(root, "approvals", "items.json"), []), null, 2));
+    console.log(JSON.stringify(readJson(join34(root, "approvals", "items.json"), []), null, 2));
     return;
   }
   if (subcommand === "decide") {
     const decision = normalizeEnum(required(args, "decision"), ["approved", "rejected"], "decision");
     const approvalId = required(args, "id");
-    const approvalItem = readJson(join32(root, "approvals", "items.json"), []).find((item) => item.id === approvalId);
+    const approvalItem = readJson(join34(root, "approvals", "items.json"), []).find((item) => item.id === approvalId);
     if (!approvalItem) throw new Error(`\u627E\u4E0D\u5230 approval\uFF1A${approvalId}`);
-    const approval = withProjectTransaction(resolve14(projectDir), {
+    const approval = withProjectTransaction(resolve16(projectDir), {
       kind: "approval-decide",
       idempotencyKey: `approval-decide:${approvalId}:${decision}:${approvalItem.revision || 1}`
     }, () => {
@@ -16619,15 +17089,15 @@ import {
   realpathSync as realpathSync3,
   statSync as statSync4
 } from "node:fs";
-import { createHash as createHash9 } from "node:crypto";
+import { createHash as createHash10 } from "node:crypto";
 import {
   basename as basename5,
   dirname as dirname8,
   extname,
   isAbsolute,
-  join as join33,
+  join as join35,
   relative as relative6,
-  resolve as resolve15,
+  resolve as resolve17,
   sep as sep2
 } from "node:path";
 var SUPPORTED_FORMATS = /* @__PURE__ */ new Set(["native", "openspec", "spec-kit"]);
@@ -16724,7 +17194,7 @@ function normalizeSpecSource(projectDir, input = {}) {
   };
 }
 function resolveExistingProjectRoot(projectDir) {
-  const path = resolve15(String(projectDir || "."));
+  const path = resolve17(String(projectDir || "."));
   if (!existsSync23(path)) throw new Error(`\u9879\u76EE\u6839\u76EE\u5F55\u4E0D\u5B58\u5728\uFF1A${path}`);
   const real = realpathSync3(path);
   if (!statSync4(real).isDirectory()) throw new Error(`\u9879\u76EE\u6839\u76EE\u5F55\u4E0D\u662F\u76EE\u5F55\uFF1A${path}`);
@@ -16740,7 +17210,7 @@ function normalizeFormat(value) {
   return normalized;
 }
 function resolveSourcePath(projectRoot2, requestedPath) {
-  const lexicalPath = isAbsolute(requestedPath) ? resolve15(requestedPath) : resolve15(projectRoot2, requestedPath);
+  const lexicalPath = isAbsolute(requestedPath) ? resolve17(requestedPath) : resolve17(projectRoot2, requestedPath);
   assertInsideProject(projectRoot2, lexicalPath);
   if (!existsSync23(lexicalPath)) throw new Error(`Spec source \u4E0D\u5B58\u5728\uFF1A${requestedPath}`);
   const realPath = realpathSync3(lexicalPath);
@@ -16767,7 +17237,7 @@ function collectMarkdownDirectory(projectRoot2, sourcePath) {
     visited.add(realDirectory);
     for (const entry of readdirSync14(realDirectory, { withFileTypes: true })) {
       if (entry.isDirectory() && IGNORED_DIRECTORIES.has(entry.name)) continue;
-      const entryPath = join33(realDirectory, entry.name);
+      const entryPath = join35(realDirectory, entry.name);
       const realEntry = realpathSync3(entryPath);
       assertInsideProject(projectRoot2, realEntry);
       const stats = statSync4(realEntry);
@@ -17005,7 +17475,7 @@ function normalizeEvidenceRef(projectRoot2, documentDir, value) {
   if (markdownLink) ref = markdownLink[1].trim();
   if (!ref || ref.startsWith("#")) return "";
   if (/^[a-z][a-z0-9+.-]*:/i.test(ref)) return ref;
-  const candidate = isAbsolute(ref) ? resolve15(ref) : ref.startsWith(".") ? resolve15(documentDir, ref) : resolve15(projectRoot2, ref);
+  const candidate = isAbsolute(ref) ? resolve17(ref) : ref.startsWith(".") ? resolve17(documentDir, ref) : resolve17(projectRoot2, ref);
   assertInsideProject(projectRoot2, candidate);
   return projectRelative(projectRoot2, candidate);
 }
@@ -17032,7 +17502,7 @@ function valuesFromSection(body, preserveMarkdownLinks = false) {
   return values;
 }
 function checksumFiles(projectRoot2, files) {
-  const hash = createHash9("sha256");
+  const hash = createHash10("sha256");
   for (const path of [...files].sort((left, right) => projectRelative(projectRoot2, left).localeCompare(projectRelative(projectRoot2, right)))) {
     const contents = readFileSync17(path);
     hash.update(projectRelative(projectRoot2, path));
@@ -17232,7 +17702,7 @@ function publicDefinition(definition) {
 
 // src/commands/host.mjs
 import { readFileSync as readFileSync19 } from "node:fs";
-import { join as join35, resolve as resolve17 } from "node:path";
+import { join as join37, resolve as resolve19 } from "node:path";
 
 // src/commands/integration.mjs
 import {
@@ -17246,9 +17716,9 @@ import {
   symlinkSync as symlinkSync2,
   writeFileSync as writeFileSync12
 } from "node:fs";
-import { createHash as createHash10 } from "node:crypto";
+import { createHash as createHash11 } from "node:crypto";
 import { tmpdir as tmpdir3 } from "node:os";
-import { basename as basename6, join as join34, relative as relative7, resolve as resolve16, sep as sep3 } from "node:path";
+import { basename as basename6, join as join36, relative as relative7, resolve as resolve18, sep as sep3 } from "node:path";
 import { spawnSync as spawnSync10 } from "node:child_process";
 function handleMergeCommand(subcommand, args) {
   if (subcommand === "enqueue") {
@@ -17278,7 +17748,7 @@ function enqueueMerge(args) {
   console.log(JSON.stringify(queue, null, 2));
 }
 function enqueuePatchInternal(root, run, patch) {
-  return withProjectTransaction(resolve16(root, ".."), {
+  return withProjectTransaction(resolve18(root, ".."), {
     kind: "merge-enqueue",
     idempotencyKey: `merge-enqueue:${run.run_id}:${patch.patch_id}`
   }, () => enqueuePatchTransaction(root, run, patch)).result;
@@ -17318,7 +17788,7 @@ function resolveMerge(args) {
   const run = loadRun(root, required(args, "run-id"));
   const keepPatchId = required(args, "keep-patch-id");
   const reason = String(args.reason || "coordinator selected one patch to resolve conflict");
-  const result = withProjectTransaction(resolve16(root, ".."), {
+  const result = withProjectTransaction(resolve18(root, ".."), {
     kind: "merge-resolve",
     idempotencyKey: `merge-resolve:${run.run_id}:${keepPatchId}:${stableTransitionHash(reason)}`
   }, () => resolveMergeTransaction(root, run, keepPatchId, reason)).result;
@@ -17346,7 +17816,7 @@ function resolveMergeTransaction(root, run, keepPatchId, reason) {
     const worker = findWorker(root, item.worker_id);
     worker.status = "dropped";
     worker.updated_at = now();
-    writeJson(join34(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
+    writeJson(join36(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
   }
   const resolution = {
     schema_version: SCHEMA_VERSION,
@@ -17357,8 +17827,8 @@ function resolveMergeTransaction(root, run, keepPatchId, reason) {
     dropped_patch_ids: droppedPatchIds,
     reason
   };
-  ensureDir(join34(root, "runs", run.run_id, "resolutions"));
-  writeJson(join34(root, "runs", run.run_id, "resolutions", `${resolution.resolution_id}.json`), resolution);
+  ensureDir(join36(root, "runs", run.run_id, "resolutions"));
+  writeJson(join36(root, "runs", run.run_id, "resolutions", `${resolution.resolution_id}.json`), resolution);
   queue.resolutions = [...queue.resolutions || [], {
     resolution_id: resolution.resolution_id,
     kept_patch_id: keepPatchId,
@@ -17403,14 +17873,20 @@ function applyMergeInternal(root, run) {
   if (reviewNode.status !== "passed") {
     throw new Error(`merge apply \u524D\u5FC5\u987B\u5148 PASS review \u8282\u70B9\uFF0C\u5F53\u524D\u72B6\u6001\uFF1A${reviewNode.status}`);
   }
+  const negativeControl = inspectNegativeControlGate(root, run.run_id);
+  if (negativeControl.required && negativeControl.mode === "enforce" && !negativeControl.ready) {
+    throw new Error(
+      `merge apply \u88AB Negative Control Gate \u963B\u65AD\uFF1A${negativeControl.message}`
+    );
+  }
   const queue = readMergeQueue(root, run.run_id);
   recomputeMergeConflicts(root, queue);
   const currentCandidate = persistCandidateSet(
     root,
-    buildCandidateSet(root, run, queue, resolve16(root, ".."))
+    buildCandidateSet(root, run, queue, resolve18(root, ".."))
   );
-  const verification = readJson(join34(root, "runs", run.run_id, "verification-report.json"), null);
-  const review = readJson(join34(root, "runs", run.run_id, "review-report.json"), null);
+  const verification = readJson(join36(root, "runs", run.run_id, "verification-report.json"), null);
+  const review = readJson(join36(root, "runs", run.run_id, "review-report.json"), null);
   if (!verification || verification.status !== "PASS" || verification.candidate_digest !== currentCandidate.candidate.candidate_digest) {
     throw new Error("merge apply \u62D2\u7EDD\u672A\u7ED1\u5B9A\u5F53\u524D candidate \u7684 verification PASS");
   }
@@ -17486,7 +17962,7 @@ function applyMergeInternal(root, run) {
   }
   const mergeItems = queue.items.filter((item) => item.status !== "dropped");
   const changedFiles = Array.from(new Set(mergeItems.flatMap((item) => item.changed_files))).sort();
-  return withProjectTransaction(resolve16(root, ".."), {
+  return withProjectTransaction(resolve18(root, ".."), {
     kind: "merge-apply",
     idempotencyKey: `merge-apply:${run.run_id}:${currentCandidate.candidate.candidate_digest}`,
     extraPaths: changedFiles
@@ -17505,14 +17981,14 @@ function applyMergeTransaction(root, run, queue, candidateDigest) {
     item.status = "merged";
     mergedPatches.push(item.patch_id);
     const patchInfo = findPatchWithPath(root, run.run_id, item.patch_id);
-    appliedFiles.push(...applyPatchOperations(resolve16(root, ".."), patchInfo.patch));
+    appliedFiles.push(...applyPatchOperations(resolve18(root, ".."), patchInfo.patch));
     patchInfo.patch.status = "merged";
     patchInfo.patch.updated_at = now();
     updatePatchBundle(root, patchInfo.patch);
     const worker = findWorker(root, item.worker_id);
     worker.status = "merged";
     worker.updated_at = now();
-    writeJson(join34(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
+    writeJson(join36(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
   }
   writeMergeQueue(root, queue);
   const report = writeIntegrationReport(
@@ -17558,7 +18034,7 @@ function runVerification(args) {
 }
 function runVerificationInternal(root, run, projectDir) {
   requirePassedNode(run, "execute");
-  if (existsSync24(join34(root, "runs", run.run_id, "integration-report.json"))) {
+  if (existsSync24(join36(root, "runs", run.run_id, "integration-report.json"))) {
     throw new Error("integration \u540E verification \u5DF2\u51BB\u7ED3\uFF0C\u4E0D\u80FD\u8986\u76D6 candidate chain");
   }
   const timestamp = now();
@@ -17626,7 +18102,7 @@ function runVerificationInternal(root, run, projectDir) {
 }
 function commitVerification(root, run, report, candidate, timestamp) {
   persistCandidateSet(root, candidate);
-  writeJson(join34(root, "runs", run.run_id, "verification-report.json"), report);
+  writeJson(join36(root, "runs", run.run_id, "verification-report.json"), report);
   syncVerificationRisk(root, run.run_id, report);
   const artifact = createArtifact(root, run, "verify", {
     type: "test",
@@ -17679,13 +18155,13 @@ function prepareVerificationWorkspace(root, run, projectDir) {
       }
     };
   }
-  const tempRoot = mkdtempSync3(join34(
+  const tempRoot = mkdtempSync3(join36(
     verificationTempBase(projectDir),
     `apex-v2-verify-${run.run_id}-`
   ));
-  const workspaceDir = join34(tempRoot, "project");
-  const verificationHome = join34(tempRoot, "home");
-  const verificationTmp = join34(tempRoot, "tmp");
+  const workspaceDir = join36(tempRoot, "project");
+  const verificationHome = join36(tempRoot, "home");
+  const verificationTmp = join36(tempRoot, "tmp");
   ensureDir(verificationHome);
   ensureDir(verificationTmp);
   try {
@@ -17735,8 +18211,8 @@ function prepareVerificationWorkspace(root, run, projectDir) {
     environment: {
       HOME: verificationHome,
       TMPDIR: verificationTmp,
-      XDG_CACHE_HOME: join34(verificationHome, ".cache"),
-      XDG_CONFIG_HOME: join34(verificationHome, ".config")
+      XDG_CACHE_HOME: join36(verificationHome, ".cache"),
+      XDG_CONFIG_HOME: join36(verificationHome, ".config")
     },
     metadata,
     materializationCheck: verificationCheck(
@@ -17781,7 +18257,7 @@ function initializeVerificationRepository(workspaceDir) {
     }
   }
   writeFileSync12(
-    join34(workspaceDir, ".git", "info", "exclude"),
+    join36(workspaceDir, ".git", "info", "exclude"),
     "node_modules\nnode_modules/\n**/node_modules\n**/node_modules/\n.apex-v2/\n"
   );
   for (const args of [
@@ -17806,9 +18282,9 @@ function linkVerificationDependencies(projectDir, workspaceDir) {
   const visit = (directory) => {
     for (const entry of readdirSync15(directory, { withFileTypes: true })) {
       if ([".git", ".apex-v2"].includes(entry.name)) continue;
-      const source = join34(directory, entry.name);
+      const source = join36(directory, entry.name);
       if (entry.name === "node_modules") {
-        const target = join34(workspaceDir, relative7(projectDir, source));
+        const target = join36(workspaceDir, relative7(projectDir, source));
         createWritableVerificationDependencyShell(source, target);
       } else if (entry.isDirectory()) {
         visit(source);
@@ -17821,8 +18297,8 @@ function createWritableVerificationDependencyShell(source, target) {
   if (existsSync24(target)) return;
   ensureDir(target);
   for (const entry of readdirSync15(source, { withFileTypes: true })) {
-    const dependency = join34(source, entry.name);
-    const linked = join34(target, entry.name);
+    const dependency = join36(source, entry.name);
+    const linked = join36(target, entry.name);
     if ([".cache", ".tmp", ".vite", ".vite-temp"].includes(entry.name)) {
       ensureDir(linked);
       continue;
@@ -17897,17 +18373,19 @@ function generateReview(args) {
 function generateReviewInternal(root, run) {
   const queue = readMergeQueue(root, run.run_id);
   recomputeMergeConflicts(root, queue);
-  const candidate = buildCandidateSet(root, run, queue, resolve16(root, ".."));
-  const verification = readJson(join34(root, "runs", run.run_id, "verification-report.json"), null);
+  const candidate = buildCandidateSet(root, run, queue, resolve18(root, ".."));
+  const verification = readJson(join36(root, "runs", run.run_id, "verification-report.json"), null);
   const verifyStatus = getRunNode(run, "verify").status;
-  return withProjectTransaction(resolve16(root, ".."), {
+  const negativeControl = inspectNegativeControlGate(root, run.run_id);
+  return withProjectTransaction(resolve18(root, ".."), {
     kind: "review-generate",
     idempotencyKey: [
       "review-generate",
       run.run_id,
       verifyStatus,
       verification?.report_id || "none",
-      candidate.candidate_digest
+      candidate.candidate_digest,
+      negativeControl.fingerprint
     ].join(":")
   }, () => generateReviewTransaction(root, run)).result;
 }
@@ -17918,11 +18396,12 @@ function generateReviewTransaction(root, run) {
   writeMergeQueue(root, queue);
   const candidate = persistCandidateSet(
     root,
-    buildCandidateSet(root, run, queue, resolve16(root, ".."))
+    buildCandidateSet(root, run, queue, resolve18(root, ".."))
   );
-  const verification = readJson(join34(root, "runs", run.run_id, "verification-report.json"), null);
+  const verification = readJson(join36(root, "runs", run.run_id, "verification-report.json"), null);
   const blocking = [];
   const nonBlocking = [];
+  const negativeControl = inspectNegativeControlGate(root, run.run_id);
   if (getRunNode(run, "verify").status !== "passed") {
     blocking.push("verify \u8282\u70B9\u5C1A\u672A PASS\u3002");
   }
@@ -17944,6 +18423,15 @@ function generateReviewTransaction(root, run) {
   if (queue.items.some((item) => item.status !== "queued")) {
     nonBlocking.push("merge queue \u4E2D\u5B58\u5728\u975E queued \u72B6\u6001 item\uFF0C\u9700\u8981 coordinator \u7559\u610F\u3002");
   }
+  if (negativeControl.required && !negativeControl.ready) {
+    if (negativeControl.mode === "enforce") {
+      blocking.push(negativeControl.message);
+    } else if (negativeControl.mode === "shadow") {
+      nonBlocking.push(
+        `Negative Control shadow gap\uFF1A${negativeControl.message}`
+      );
+    }
+  }
   const report = {
     schema_version: SCHEMA_VERSION,
     report_id: shortId("review"),
@@ -17955,7 +18443,7 @@ function generateReviewTransaction(root, run) {
     blocking_findings: blocking,
     non_blocking_findings: nonBlocking
   };
-  writeJson(join34(root, "runs", run.run_id, "review-report.json"), report);
+  writeJson(join36(root, "runs", run.run_id, "review-report.json"), report);
   syncReviewRisk(root, run.run_id, report);
   const artifact = createArtifact(root, run, "review", {
     type: "review",
@@ -17979,11 +18467,11 @@ function generateReviewTransaction(root, run) {
   return { report, artifact_id: artifact.artifact_id };
 }
 function isNoopIntegrationRun(root, runId) {
-  const workersDir = join34(root, "runs", runId, "workers");
+  const workersDir = join36(root, "runs", runId, "workers");
   if (existsSync24(workersDir)) {
     for (const workerEntry of readdirSync15(workersDir, { withFileTypes: true })) {
       if (!workerEntry.isDirectory()) continue;
-      if (existsSync24(join34(workersDir, workerEntry.name, "patch-bundle.json"))) return false;
+      if (existsSync24(join36(workersDir, workerEntry.name, "patch-bundle.json"))) return false;
     }
   }
   const run = loadRun(root, runId);
@@ -17991,12 +18479,12 @@ function isNoopIntegrationRun(root, runId) {
   if (executeNode.status !== "passed" || executeNode.evidence_refs.length === 0) return false;
   const queue = readDecisionQueue(root, runId);
   return queue.items.length > 0 || executeNode.evidence_refs.some((artifactId) => {
-    const artifact = readJson(join34(root, "artifacts", runId, `${artifactId}.json`), null);
+    const artifact = readJson(join36(root, "artifacts", runId, `${artifactId}.json`), null);
     return artifact && ["evidence", "decision"].includes(artifact.type);
   });
 }
 function readMergeQueue(root, runId) {
-  const path = join34(root, "runs", runId, "merge-queue.json");
+  const path = join36(root, "runs", runId, "merge-queue.json");
   return readJson(path, {
     schema_version: SCHEMA_VERSION,
     run_id: runId,
@@ -18008,7 +18496,7 @@ function readMergeQueue(root, runId) {
 }
 function writeMergeQueue(root, queue) {
   queue.updated_at = now();
-  writeJson(join34(root, "runs", queue.run_id, "merge-queue.json"), queue);
+  writeJson(join36(root, "runs", queue.run_id, "merge-queue.json"), queue);
 }
 function recomputeMergeConflicts(root, queue) {
   const owners = /* @__PURE__ */ new Map();
@@ -18078,7 +18566,7 @@ function syncWorkerStatusesFromMergeQueue(root, queue) {
     const worker = findWorker(root, workerId);
     worker.status = workerStatusForMergeItems(items);
     worker.updated_at = queue.updated_at;
-    writeJson(join34(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
+    writeJson(join36(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
   }
 }
 function writeIntegrationReport(root, run, status2, mergedPatches, conflicts, appliedFiles = [], candidateDigest = null) {
@@ -18093,17 +18581,17 @@ function writeIntegrationReport(root, run, status2, mergedPatches, conflicts, ap
     applied_files: appliedFiles,
     conflicts
   };
-  writeJson(join34(root, "runs", run.run_id, "integration-report.json"), report);
+  writeJson(join36(root, "runs", run.run_id, "integration-report.json"), report);
   return report;
 }
 function stableTransitionHash(value) {
-  return createHash10("sha256").update(String(value)).digest("hex");
+  return createHash11("sha256").update(String(value)).digest("hex");
 }
 function readDecisionQueue(root, runId) {
-  return readJson(join34(root, "runs", runId, "decision-queue.json"), { schema_version: SCHEMA_VERSION, run_id: runId, updated_at: now(), items: [] });
+  return readJson(join36(root, "runs", runId, "decision-queue.json"), { schema_version: SCHEMA_VERSION, run_id: runId, updated_at: now(), items: [] });
 }
 function loadPlanGraph(root, runId) {
-  const plan = readJson(join34(root, "runs", runId, "plan-graph.json"), null);
+  const plan = readJson(join36(root, "runs", runId, "plan-graph.json"), null);
   if (!plan) throw new Error(`\u627E\u4E0D\u5230 plan graph\uFF1A${runId}`);
   return plan;
 }
@@ -18150,7 +18638,7 @@ function handleHostCommand(subcommand, args) {
   throw new Error(`\u672A\u77E5 host \u5B50\u547D\u4EE4\uFF1A${subcommand || "(\u7A7A)"}`);
 }
 function listHostActions(root) {
-  const project = readJson(join35(root, "project.json"));
+  const project = readJson(join37(root, "project.json"));
   const workspacePatchEnabled = interactiveWorkspacePatchEnabled(root);
   return project.active_runs.flatMap(
     (runId) => getWorkers(root, runId).filter(
@@ -18176,7 +18664,7 @@ function listHostActions(root) {
       fencing_token: worker.fencing_token || 0,
       claim_expired: worker.status === "claimed" && claimExpired(worker),
       workspace_path: readJson(
-        join35(workerDir(root, worker.run_id, worker.worker_id), "action-workspace.json"),
+        join37(workerDir(root, worker.run_id, worker.worker_id), "action-workspace.json"),
         null
       )?.workspace_path || null
     }))
@@ -18185,7 +18673,7 @@ function listHostActions(root) {
 function reviewCandidateDigest(root, worker) {
   if (!worker.plan_node_id.endsWith("review")) return null;
   const run = loadRun(root, worker.run_id);
-  const queue = readJson(join35(root, "runs", worker.run_id, "merge-queue.json"), {
+  const queue = readJson(join37(root, "runs", worker.run_id, "merge-queue.json"), {
     schema_version: SCHEMA_VERSION,
     run_id: worker.run_id,
     updated_at: now(),
@@ -18193,7 +18681,7 @@ function reviewCandidateDigest(root, worker) {
     conflicts: [],
     resolutions: []
   });
-  return buildCandidateSet(root, run, queue, resolve17(root, "..")).candidate_digest;
+  return buildCandidateSet(root, run, queue, resolve19(root, "..")).candidate_digest;
 }
 function claimHostAction(root, workerId, hostId) {
   const worker = findWorker(root, workerId);
@@ -18201,7 +18689,7 @@ function claimHostAction(root, workerId, hostId) {
     return existingHostClaim(root, worker);
   }
   const nextFencingToken = Number(worker.fencing_token || 0) + 1;
-  return withProjectTransaction(resolve17(root, ".."), {
+  return withProjectTransaction(resolve19(root, ".."), {
     kind: "host-claim",
     idempotencyKey: `host-claim:${workerId}:${hostId}:${nextFencingToken}`
   }, () => claimHostActionTransaction(root, workerId, hostId)).result;
@@ -18232,9 +18720,9 @@ function claimHostActionTransaction(root, workerId, hostId) {
       throw new Error(`\u5DF2\u6709 workspace_patch action \u88AB claim\uFF1A${claimedPatch.worker_id}`);
     }
   }
-  const project = readJson(join35(root, "project.json"));
+  const project = readJson(join37(root, "project.json"));
   const timestamp = now();
-  const leaseSeconds = readJson(join35(root, "policies", "execution.json")).interactive_host_claim?.lease_seconds || 1800;
+  const leaseSeconds = readJson(join37(root, "policies", "execution.json")).interactive_host_claim?.lease_seconds || 1800;
   const claimToken = shortId("claim");
   const fencingToken = Number(worker.fencing_token || 0) + 1;
   const leaseExpiresAt = new Date(Date.parse(timestamp) + leaseSeconds * 1e3).toISOString();
@@ -18268,7 +18756,7 @@ function claimHostActionTransaction(root, workerId, hostId) {
   }
   const validation = validateContract("host-action.schema.json", action, `${worker.namespace}/host-action.json`);
   if (!validation.valid) {
-    if (workspace) discardActionWorkspace(resolve17(root, ".."), workspace, "failed");
+    if (workspace) discardActionWorkspace(resolve19(root, ".."), workspace, "failed");
     throw new Error(`host action contract \u65E0\u6548\uFF1A${JSON.stringify(validation.errors)}`);
   }
   if (worker.adapter !== "host") {
@@ -18283,8 +18771,8 @@ function claimHostActionTransaction(root, workerId, hostId) {
   worker.claim_expires_at = leaseExpiresAt;
   worker.fencing_token = fencingToken;
   worker.updated_at = timestamp;
-  writeJson(join35(dir, "host-action.json"), action);
-  writeJson(join35(dir, "worker.json"), worker);
+  writeJson(join37(dir, "host-action.json"), action);
+  writeJson(join37(dir, "worker.json"), worker);
   const event = appendEvent(root, "worker.host.claimed", hostId, {
     run_id: worker.run_id,
     worker_id: worker.worker_id,
@@ -18308,11 +18796,11 @@ function capabilityProtocols2(bindings) {
 function submitHostResult(root, workerId, hostId, input) {
   const worker = findWorker(root, workerId);
   const action = readJson(
-    join35(workerDir(root, worker.run_id, worker.worker_id), "host-action.json"),
+    join37(workerDir(root, worker.run_id, worker.worker_id), "host-action.json"),
     null
   );
   if (!action) throw new Error(`Host action \u7F3A\u5931\uFF1A${worker.worker_id}`);
-  return withProjectTransaction(resolve17(root, ".."), {
+  return withProjectTransaction(resolve19(root, ".."), {
     kind: "host-submit",
     idempotencyKey: `host-submit:${action.action_id}:${input.claimToken}`
   }, () => submitHostResultTransaction(root, workerId, hostId, input)).result;
@@ -18325,7 +18813,7 @@ function submitHostResultTransaction(root, workerId, hostId, input) {
   if (worker.status !== "claimed" || worker.claimed_by !== hostId) {
     throw new Error(`worker \u5FC5\u987B\u7531\u5F53\u524D host claim \u540E\u624D\u80FD submit\uFF1A${worker.worker_id}`);
   }
-  const action = readJson(join35(workerDir(root, worker.run_id, worker.worker_id), "host-action.json"));
+  const action = readJson(join37(workerDir(root, worker.run_id, worker.worker_id), "host-action.json"));
   assertActiveClaim(worker, action, input.claimToken);
   const timestamp = now();
   const dir = workerDir(root, worker.run_id, worker.worker_id);
@@ -18352,7 +18840,7 @@ function submitHostResultTransaction(root, workerId, hostId, input) {
       input.semanticEvidence
     );
     semanticEvidenceRef = `${worker.namespace}/cognitive-evidence.json`;
-    writeJson(join35(dir, "cognitive-evidence.json"), semanticEvidence);
+    writeJson(join37(dir, "cognitive-evidence.json"), semanticEvidence);
   }
   const result = {
     schema_version: SCHEMA_VERSION,
@@ -18378,7 +18866,7 @@ function submitHostResultTransaction(root, workerId, hostId, input) {
   };
   const validation = validateContract("host-result.schema.json", result, `${worker.namespace}/host-result.json`);
   if (!validation.valid) throw new Error(`host result contract \u65E0\u6548\uFF1A${JSON.stringify(validation.errors)}`);
-  writeJson(join35(dir, "host-result.json"), result);
+  writeJson(join37(dir, "host-result.json"), result);
   const run = loadRun(root, worker.run_id);
   let artifact;
   if (patch) {
@@ -18397,7 +18885,7 @@ function submitHostResultTransaction(root, workerId, hostId, input) {
     });
     worker.status = "patch_submitted";
     worker.updated_at = timestamp;
-    writeJson(join35(dir, "worker.json"), worker);
+    writeJson(join37(dir, "worker.json"), worker);
     const queue = enqueuePatchInternal(root, run, patch);
     queueStatus = queue.conflicts.length > 0 ? "blocked_conflict" : "queued";
   } else {
@@ -18415,7 +18903,7 @@ function submitHostResultTransaction(root, workerId, hostId, input) {
     });
     worker.status = "evidence_submitted";
     worker.updated_at = timestamp;
-    writeJson(join35(dir, "worker.json"), worker);
+    writeJson(join37(dir, "worker.json"), worker);
   }
   const event = appendEvent(root, "worker.host.submitted", hostId, {
     run_id: worker.run_id,
@@ -18435,18 +18923,18 @@ function submitHostResultTransaction(root, workerId, hostId, input) {
 function persistCapabilityEvidence2(dir, namespace, evidenceItems) {
   return evidenceItems.map((evidence) => {
     const name = `capability-evidence-${evidence.capability_id}.json`;
-    writeJson(join35(dir, name), evidence);
+    writeJson(join37(dir, name), evidence);
     return `${namespace}/${name}`;
   });
 }
 function cancelHostAction(root, workerId, hostId, claimToken, reason) {
   const worker = findWorker(root, workerId);
   const action = readJson(
-    join35(workerDir(root, worker.run_id, worker.worker_id), "host-action.json"),
+    join37(workerDir(root, worker.run_id, worker.worker_id), "host-action.json"),
     null
   );
   if (!action) throw new Error(`Host action \u7F3A\u5931\uFF1A${worker.worker_id}`);
-  return withProjectTransaction(resolve17(root, ".."), {
+  return withProjectTransaction(resolve19(root, ".."), {
     kind: "host-cancel",
     idempotencyKey: `host-cancel:${action.action_id}:${claimToken}`
   }, () => cancelHostActionTransaction(
@@ -18463,10 +18951,10 @@ function cancelHostActionTransaction(root, workerId, hostId, claimToken, reason)
     throw new Error(`worker \u5FC5\u987B\u7531\u5F53\u524D host claim \u540E\u624D\u80FD cancel\uFF1A${worker.worker_id}`);
   }
   const dir = workerDir(root, worker.run_id, worker.worker_id);
-  const action = readJson(join35(dir, "host-action.json"));
+  const action = readJson(join37(dir, "host-action.json"));
   assertActiveClaim(worker, action, claimToken);
-  const workspace = readJson(join35(dir, "action-workspace.json"), null);
-  if (workspace) discardActionWorkspace(resolve17(root, ".."), workspace, "cancelled");
+  const workspace = readJson(join37(dir, "action-workspace.json"), null);
+  if (workspace) discardActionWorkspace(resolve19(root, ".."), workspace, "cancelled");
   const timestamp = now();
   const result = {
     schema_version: SCHEMA_VERSION,
@@ -18478,10 +18966,10 @@ function cancelHostActionTransaction(root, workerId, hostId, claimToken, reason)
     error: null,
     created_at: timestamp
   };
-  writeJson(join35(dir, "host-result.json"), result);
+  writeJson(join37(dir, "host-result.json"), result);
   worker.status = "cancelled";
   worker.updated_at = timestamp;
-  writeJson(join35(dir, "worker.json"), worker);
+  writeJson(join37(dir, "worker.json"), worker);
   const event = appendEvent(root, "worker.host.cancelled", hostId, {
     run_id: worker.run_id,
     worker_id: worker.worker_id,
@@ -18492,8 +18980,8 @@ function cancelHostActionTransaction(root, workerId, hostId, claimToken, reason)
   return { result, worker };
 }
 function buildHostPatch(root, worker, summary, timestamp) {
-  const projectDir = resolve17(root, "..");
-  const manifestPath = join35(workerDir(root, worker.run_id, worker.worker_id), "action-workspace.json");
+  const projectDir = resolve19(root, "..");
+  const manifestPath = join37(workerDir(root, worker.run_id, worker.worker_id), "action-workspace.json");
   const workspace = readJson(manifestPath, null);
   if (!workspace) throw new Error(`ActionWorkspace \u7F3A\u5931\uFF1A${worker.worker_id}`);
   const changes = collectActionWorkspaceChanges(projectDir, workspace);
@@ -18526,17 +19014,17 @@ function buildHostPatch(root, worker, summary, timestamp) {
   return patch;
 }
 function interactiveWorkspacePatchEnabled(root) {
-  const policy = readJson(join35(root, "policies", "execution.json"), {});
+  const policy = readJson(join37(root, "policies", "execution.json"), {});
   return policy.interactive_workspace_patch?.enabled === true;
 }
 function existingHostClaim(root, worker) {
   const dir = workerDir(root, worker.run_id, worker.worker_id);
-  const existingAction = readJson(join35(dir, "host-action.json"), null);
+  const existingAction = readJson(join37(dir, "host-action.json"), null);
   if (!existingAction) throw new Error(`\u5DF2 claim worker \u7F3A\u5C11 host action\uFF1A${worker.worker_id}`);
   return {
     action: existingAction,
     worker,
-    workspace: readJson(join35(dir, "action-workspace.json"), null)
+    workspace: readJson(join37(dir, "action-workspace.json"), null)
   };
 }
 function parseSemanticEvidence(args) {
@@ -18545,7 +19033,7 @@ function parseSemanticEvidence(args) {
   if (!inline2 && !file) return null;
   if (inline2 && file) throw new Error("\u53EA\u80FD\u6307\u5B9A --evidence-json \u6216 --evidence-file \u4E4B\u4E00");
   try {
-    return JSON.parse(file ? readFileSync19(resolve17(String(file)), "utf8") : String(inline2));
+    return JSON.parse(file ? readFileSync19(resolve19(String(file)), "utf8") : String(inline2));
   } catch (error) {
     throw new Error(`semantic evidence JSON \u65E0\u6548\uFF1A${error.message}`);
   }
@@ -18562,7 +19050,7 @@ function parseCapabilityEvidence(args) {
   let value;
   try {
     value = JSON.parse(
-      file ? readFileSync19(resolve17(String(file)), "utf8") : String(inline2)
+      file ? readFileSync19(resolve19(String(file)), "utf8") : String(inline2)
     );
   } catch (error) {
     throw new Error(`capability evidence JSON \u65E0\u6548\uFF1A${error.message}`);
@@ -18587,19 +19075,120 @@ function claimExpired(worker) {
   return !worker.claim_expires_at || Date.parse(worker.claim_expires_at) <= Date.now();
 }
 
+// src/commands/dsh-lifecycle.mjs
+import { resolve as resolve20 } from "node:path";
+function handleDecisionCommand(subcommand, args) {
+  const root = requireStore(projectRoot(args));
+  if (subcommand === "list") {
+    console.log(JSON.stringify(listDecisionNotes(root, {
+      runId: args["run-id"] ? String(args["run-id"]) : null,
+      status: args.status ? String(args.status) : null
+    }), null, 2));
+    return;
+  }
+  if (subcommand === "show") {
+    console.log(JSON.stringify(
+      getDecisionNote(root, required(args, "id")),
+      null,
+      2
+    ));
+    return;
+  }
+  if (subcommand === "propose") {
+    const run = loadRun(root, required(args, "run-id"));
+    const options = splitList(args.options).map((summary, index) => ({
+      option_id: `option-${index + 1}`,
+      summary,
+      tradeoffs: []
+    }));
+    if (options.length < 2) {
+      throw new Error("Decision propose \u5FC5\u987B\u63D0\u4F9B\u81F3\u5C11\u4E24\u4E2A --options");
+    }
+    const proposedOption = String(args["proposed-option"] || options[0].option_id);
+    if (!options.some((option) => option.option_id === proposedOption)) {
+      throw new Error(`Decision proposed option \u4E0D\u5B58\u5728\uFF1A${proposedOption}`);
+    }
+    const note = withProjectTransaction(resolve20(root, ".."), {
+      kind: "decision-propose",
+      idempotencyKey: [
+        "decision-propose",
+        run.run_id,
+        required(args, "title"),
+        proposedOption
+      ].join(":")
+    }, () => proposeDecisionNote(root, run, {
+      trigger: "manual",
+      title: required(args, "title"),
+      scope: String(args.scope || "project"),
+      rationale: required(args, "rationale"),
+      options,
+      proposedOption,
+      refs: splitList(args.refs)
+    })).result;
+    console.log(JSON.stringify(note, null, 2));
+    return;
+  }
+  throw new Error(`\u672A\u77E5 decision \u5B50\u547D\u4EE4\uFF1A${subcommand || "(\u7A7A)"}`);
+}
+function handleNegativeControlCommand(subcommand, args) {
+  const root = requireStore(projectRoot(args));
+  const run = loadRun(root, required(args, "run-id"));
+  if (subcommand === "show") {
+    const record = readNegativeControlRecord(root, run.run_id);
+    if (!record) throw new Error(`run \u672A\u8981\u6C42 Negative Control\uFF1A${run.run_id}`);
+    console.log(JSON.stringify(record, null, 2));
+    return;
+  }
+  const transition = withProjectTransaction(resolve20(root, ".."), {
+    kind: `negative-control-${subcommand}`,
+    idempotencyKey: [
+      "negative-control",
+      subcommand,
+      run.run_id,
+      String(args.command || ""),
+      String(args.evidence || "")
+    ].join(":")
+  }, () => {
+    if (subcommand === "record-red") {
+      return recordNegativeControlRed(root, run, {
+        command: required(args, "command"),
+        faultModel: required(args, "fault-model"),
+        expectedFailureSignature: required(args, "expected-signature"),
+        observedFailureSignature: required(args, "observed-signature"),
+        evidenceRefs: splitList(args.evidence)
+      });
+    }
+    if (subcommand === "record-green") {
+      return recordNegativeControlGreen(root, run, {
+        command: required(args, "command"),
+        evidenceRefs: splitList(args.evidence)
+      });
+    }
+    if (subcommand === "restore") {
+      return restoreNegativeControl(root, run, {
+        evidenceRefs: splitList(args.evidence)
+      });
+    }
+    throw new Error(
+      `\u672A\u77E5 negative-control \u5B50\u547D\u4EE4\uFF1A${subcommand || "(\u7A7A)"}`
+    );
+  }).result;
+  console.log(JSON.stringify(transition, null, 2));
+}
+
 // src/commands/worker.mjs
 import { cpSync as cpSync3, existsSync as existsSync27, readFileSync as readFileSync21, readdirSync as readdirSync17, rmSync as rmSync9, symlinkSync as symlinkSync3, writeFileSync as writeFileSync14 } from "node:fs";
-import { createHash as createHash12 } from "node:crypto";
-import { join as join38, resolve as resolve19 } from "node:path";
+import { createHash as createHash13 } from "node:crypto";
+import { join as join40, resolve as resolve22 } from "node:path";
 import { spawnSync as spawnSync12 } from "node:child_process";
 
 // src/core/worker-results.mjs
 import { existsSync as existsSync25, readdirSync as readdirSync16 } from "node:fs";
-import { join as join36 } from "node:path";
+import { join as join38 } from "node:path";
 function buildWorkerSummary(root, worker, record = false) {
   const dir = workerDir(root, worker.run_id, worker.worker_id);
-  const results = existsSync25(dir) ? readdirSync16(dir).filter((file) => file.startsWith("adapter-result-") && file.endsWith(".json")).map((file) => readJson(join36(dir, file))).sort((left, right) => left.created_at.localeCompare(right.created_at)) : [];
-  const patch = readJson(join36(dir, "patch-bundle.json"), null);
+  const results = existsSync25(dir) ? readdirSync16(dir).filter((file) => file.startsWith("adapter-result-") && file.endsWith(".json")).map((file) => readJson(join38(dir, file))).sort((left, right) => left.created_at.localeCompare(right.created_at)) : [];
+  const patch = readJson(join38(dir, "patch-bundle.json"), null);
   const summary = {
     schema_version: "v0",
     summary_id: shortId("worker-summary"),
@@ -18649,7 +19238,7 @@ function buildWorkerSummary(root, worker, record = false) {
       duration_ms: 0
     })
   };
-  if (record) writeJson(join36(dir, "worker-summary.json"), summary);
+  if (record) writeJson(join38(dir, "worker-summary.json"), summary);
   return summary;
 }
 function addNullable(left, right) {
@@ -18671,8 +19260,8 @@ import {
   statSync as statSync5,
   writeFileSync as writeFileSync13
 } from "node:fs";
-import { createHash as createHash11, randomUUID as randomUUID4 } from "node:crypto";
-import { basename as basename7, isAbsolute as isAbsolute2, join as join37, resolve as resolve18 } from "node:path";
+import { createHash as createHash12, randomUUID as randomUUID4 } from "node:crypto";
+import { basename as basename7, isAbsolute as isAbsolute2, join as join39, resolve as resolve21 } from "node:path";
 import { spawnSync as spawnSync11 } from "node:child_process";
 var DEFAULT_PROTECTED_BRANCHES = Object.freeze([
   "main",
@@ -18920,7 +19509,7 @@ function discoverRepository(repositoryPath) {
   const headOid = tryGit(rootPath, ["rev-parse", "--verify", "HEAD"]);
   return {
     kind: "repository",
-    repository_id: createHash11("sha256").update(commonDir).digest("hex"),
+    repository_id: createHash12("sha256").update(commonDir).digest("hex"),
     name: basename7(rootPath),
     root_path: rootPath,
     git_dir: gitDir,
@@ -18969,7 +19558,7 @@ function discoverWorktrees(repositoryRoot) {
   }
   if (current.worktree) records.push(current);
   return records.map((record) => {
-    const checkoutPath = existsSync26(record.worktree) ? realpathSync5(record.worktree) : resolve18(record.worktree);
+    const checkoutPath = existsSync26(record.worktree) ? realpathSync5(record.worktree) : resolve21(record.worktree);
     return {
       kind: "checkout",
       checkout_path: checkoutPath,
@@ -19105,17 +19694,17 @@ function assertSameOwner(existingOwner, requestedOwner) {
   }
 }
 function checkoutClaimPaths(repository) {
-  const key = createHash11("sha256").update(repository.root_path).digest("hex");
-  const parent = join37(repository.common_dir, "apex-forge", "checkout-claims");
-  const claimDir = join37(parent, `${key}.claim`);
+  const key = createHash12("sha256").update(repository.root_path).digest("hex");
+  const parent = join39(repository.common_dir, "apex-forge", "checkout-claims");
+  const claimDir = join39(parent, `${key}.claim`);
   return {
     parent,
     claim_dir: claimDir,
-    owner_path: join37(claimDir, "owner.json")
+    owner_path: join39(claimDir, "owner.json")
   };
 }
 function readClaimRecord(claimDir, repository) {
-  const ownerPath = join37(claimDir, "owner.json");
+  const ownerPath = join39(claimDir, "owner.json");
   let claim;
   try {
     claim = JSON.parse(readFileSync20(ownerPath, "utf8"));
@@ -19382,10 +19971,10 @@ function initWorkerSandbox(args) {
   console.log(JSON.stringify(initialized, null, 2));
 }
 function initializeWorkerSandbox(root, worker, requestedType) {
-  const projectDir = resolve19(root, "..");
-  const existingDir = worker.sandbox?.path ? resolve19(projectDir, worker.sandbox.path) : null;
+  const projectDir = resolve22(root, "..");
+  const existingDir = worker.sandbox?.path ? resolve22(projectDir, worker.sandbox.path) : null;
   if (worker.sandbox?.status === "ready" && existingDir && existsSync27(existingDir)) {
-    const manifest2 = readJson(join38(existingDir, "sandbox.json"), null);
+    const manifest2 = readJson(join40(existingDir, "sandbox.json"), null);
     if (worker.sandbox.type === "worktree" && worker.sandbox.checkout_claim_token) {
       const claim = claimCheckout(existingDir, checkoutOwner(worker));
       if (claim.claim_token !== worker.sandbox.checkout_claim_token) {
@@ -19396,7 +19985,7 @@ function initializeWorkerSandbox(root, worker, requestedType) {
   }
   const gitRoot = findGitRoot(projectDir);
   const useWorktree = requestedType === "worktree" && gitRoot;
-  const dir = join38(workerDir(root, worker.run_id, worker.worker_id), "sandbox");
+  const dir = join40(workerDir(root, worker.run_id, worker.worker_id), "sandbox");
   if (useWorktree) {
     ensureDir(dirnameForPath(dir));
     const result = spawnSync12("git", ["worktree", "add", "--detach", dir, "HEAD"], {
@@ -19440,9 +20029,9 @@ function initializeWorkerSandbox(root, worker, requestedType) {
     write_scope: worker.write_scope,
     verification: worker.verification
   };
-  writeJson(join38(dir, "sandbox.json"), manifest);
-  ensureDir(join38(dir, ".apex-agent"));
-  writeTextIfMissing(join38(dir, ".apex-agent", "README.md"), `# Worker Sandbox
+  writeJson(join40(dir, "sandbox.json"), manifest);
+  ensureDir(join40(dir, ".apex-agent"));
+  writeTextIfMissing(join40(dir, ".apex-agent", "README.md"), `# Worker Sandbox
 
 \u672C\u76EE\u5F55\u662F worker \u7684\u9694\u79BB ${actualType} sandbox\u3002
 
@@ -19461,7 +20050,7 @@ function initializeWorkerSandbox(root, worker, requestedType) {
     checkout_claim_token: checkoutClaim?.claim_token || null
   };
   worker.updated_at = now();
-  writeJson(join38(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
+  writeJson(join40(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
   const event = appendEvent(root, "worker.sandbox.initialized", "apex-v2", {
     run_id: worker.run_id,
     worker_id: worker.worker_id,
@@ -19481,21 +20070,21 @@ function copyProjectIntoScratchSandbox(projectDir, sandboxDir) {
   ]);
   for (const entry of readdirSync17(projectDir, { withFileTypes: true })) {
     if (ignored.has(entry.name)) continue;
-    cpSync3(join38(projectDir, entry.name), join38(sandboxDir, entry.name), {
+    cpSync3(join40(projectDir, entry.name), join40(sandboxDir, entry.name), {
       recursive: true,
       force: true
     });
   }
-  const nodeModules = join38(projectDir, "node_modules");
-  const sandboxNodeModules = join38(sandboxDir, "node_modules");
+  const nodeModules = join40(projectDir, "node_modules");
+  const sandboxNodeModules = join40(sandboxDir, "node_modules");
   if (existsSync27(nodeModules) && !existsSync27(sandboxNodeModules)) {
     symlinkSync3(nodeModules, sandboxNodeModules, "dir");
   }
 }
 function copyProjectContextSnapshot(projectDir, sandboxDir) {
-  const sourceRoot = join38(projectDir, ".apex-v2");
+  const sourceRoot = join40(projectDir, ".apex-v2");
   if (!existsSync27(sourceRoot)) return;
-  const targetRoot = join38(sandboxDir, ".apex-v2");
+  const targetRoot = join40(sandboxDir, ".apex-v2");
   ensureDir(targetRoot);
   for (const relativePath of [
     "project.json",
@@ -19509,9 +20098,9 @@ function copyProjectContextSnapshot(projectDir, sandboxDir) {
     "approvals",
     "metrics"
   ]) {
-    const source = join38(sourceRoot, relativePath);
+    const source = join40(sourceRoot, relativePath);
     if (!existsSync27(source)) continue;
-    cpSync3(source, join38(targetRoot, relativePath), {
+    cpSync3(source, join40(targetRoot, relativePath), {
       recursive: true,
       force: true
     });
@@ -19523,7 +20112,7 @@ function writeWorkerSandbox(args) {
   ensureWorkerSandboxReady(worker);
   const sandboxPath = required(args, "path");
   assertSafeRelativePath(sandboxPath);
-  const target = resolve19(root, "..", worker.sandbox.path, sandboxPath);
+  const target = resolve22(root, "..", worker.sandbox.path, sandboxPath);
   ensureDir(dirnameForPath(target));
   writeFileSync14(target, required(args, "content"));
   const event = appendEvent(root, "worker.sandbox.written", "apex-v2", {
@@ -19540,7 +20129,7 @@ function promoteWorkerSandbox(args) {
   const sandboxPath = required(args, "sandbox-path");
   const targetFile = required(args, "target-file");
   const summary = required(args, "summary");
-  const result = withProjectTransaction(resolve19(root, ".."), {
+  const result = withProjectTransaction(resolve22(root, ".."), {
     kind: "worker-promote-sandbox",
     idempotencyKey: transitionKey("worker-promote-sandbox", {
       worker_id: worker.worker_id,
@@ -19565,7 +20154,7 @@ function promoteWorkerSandboxTransaction(root, worker, sandboxPath, targetFile, 
   if (!isFileAllowedByScope(targetFile, worker.write_scope)) {
     throw new Error(`sandbox promote \u76EE\u6807\u8D85\u51FA worker write_scope\uFF1A${targetFile}`);
   }
-  const source = resolve19(root, "..", worker.sandbox.path, sandboxPath);
+  const source = resolve22(root, "..", worker.sandbox.path, sandboxPath);
   if (!existsSync27(source)) throw new Error(`sandbox \u6587\u4EF6\u4E0D\u5B58\u5728\uFF1A${sandboxPath}`);
   const content = readFileSync21(source, "utf8");
   const run = loadRun(root, worker.run_id);
@@ -19588,7 +20177,7 @@ function promoteWorkerSandboxTransaction(root, worker, sandboxPath, targetFile, 
   persistPatchBundle(root, patch);
   worker.status = "patch_submitted";
   worker.updated_at = timestamp;
-  writeJson(join38(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
+  writeJson(join40(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
   const artifact = createArtifact(root, run, "execute", {
     type: "patch",
     title: `SandboxPatch\uFF1A${worker.plan_node_id}`,
@@ -19614,7 +20203,7 @@ function submitWorkerPatch(args) {
   const root = requireStore(projectRoot(args));
   const workerId = required(args, "worker-id");
   const worker = findWorker(root, workerId);
-  const result = withProjectTransaction(resolve19(root, ".."), {
+  const result = withProjectTransaction(resolve22(root, ".."), {
     kind: "worker-submit-patch",
     idempotencyKey: transitionKey("worker-submit-patch", {
       worker_id: workerId,
@@ -19663,7 +20252,7 @@ function submitWorkerPatchTransaction(root, worker, args) {
   persistPatchBundle(root, patch);
   worker.status = "patch_submitted";
   worker.updated_at = timestamp;
-  writeJson(join38(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
+  writeJson(join40(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
   const artifact = createArtifact(root, run, "execute", {
     type: "patch",
     title: `PatchBundle\uFF1A${worker.plan_node_id}`,
@@ -19713,7 +20302,7 @@ function parseCapabilityEvidence2(args) {
   let value;
   try {
     value = JSON.parse(
-      file ? readFileSync21(resolve19(String(file)), "utf8") : String(inline2)
+      file ? readFileSync21(resolve22(String(file)), "utf8") : String(inline2)
     );
   } catch (error) {
     throw new Error(`capability evidence JSON \u65E0\u6548\uFF1A${error.message}`);
@@ -19732,7 +20321,7 @@ function execWorkerAgent(args) {
   const plan = loadPlanGraph2(root, worker.run_id);
   const planNode2 = getPlanNode(plan, worker.plan_node_id);
   const requestedTimeoutMs = Number(args["timeout-ms"] || 30 * 60 * 1e3);
-  const route = readJson(join38(workerDir(root, worker.run_id, worker.worker_id), "execution-route.json"), null);
+  const route = readJson(join40(workerDir(root, worker.run_id, worker.worker_id), "execution-route.json"), null);
   const timeoutMs = effectiveAgentTimeout(root, requestedTimeoutMs, route?.cost_budget);
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
     throw new Error("--timeout-ms \u5FC5\u987B\u662F\u6B63\u6574\u6570");
@@ -19797,8 +20386,8 @@ function listWorkerAdapters(args) {
       }
       throw new Error(`adapter baseline approval required\uFF1A${approval.approval.id}=${approval.approval.decision || "pending"}`);
     }
-    ensureDir(join38(root, "adapters"));
-    writeJson(join38(root, "adapters", "capabilities.json"), {
+    ensureDir(join40(root, "adapters"));
+    writeJson(join40(root, "adapters", "capabilities.json"), {
       schema_version: SCHEMA_VERSION,
       generated_at: now(),
       adapters
@@ -19813,7 +20402,7 @@ function evaluateAdapterCapabilityDrift(root, adapters = null) {
     { adapter: "human", available: true, mode: "structured decision" },
     ...inspectWorkerExecutors().map((item) => ({ ...item, mode: "isolated coding agent" }))
   ];
-  const baseline = readJson(join38(root, "adapters", "capabilities.json"), null);
+  const baseline = readJson(join40(root, "adapters", "capabilities.json"), null);
   const previous = new Map((baseline?.adapters || []).map((item) => [item.adapter, item]));
   const changes = [];
   for (const current of currentAdapters) {
@@ -19874,7 +20463,7 @@ function fallbackWorkerInternal(root, worker, via) {
   if (worker.status !== "blocked") throw new Error(`\u53EA\u6709 blocked worker \u53EF\u4EE5 fallback\uFF1A${worker.status}`);
   const latest = latestWorkerAdapterResult(root, worker);
   const failureKind = latest?.failure_kind || "unknown";
-  const policy = readJson(join38(root, "policies", "execution.json"));
+  const policy = readJson(join40(root, "policies", "execution.json"));
   if (!policy.permissions.adapter_fallback_failure_kinds.includes(failureKind)) {
     throw new Error(`failure_kind \u4E0D\u5141\u8BB8 adapter fallback\uFF1A${failureKind}`);
   }
@@ -19894,7 +20483,7 @@ function fallbackWorkerInternal(root, worker, via) {
   worker.execution_claimed_at = null;
   worker.execution_claim_expires_at = null;
   worker.updated_at = now();
-  writeJson(join38(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
+  writeJson(join40(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
   const event = appendEvent(root, "worker.adapter.fallback", "apex-v2", {
     run_id: worker.run_id,
     worker_id: worker.worker_id,
@@ -19910,7 +20499,7 @@ function retryWorkerInternal(root, worker, via) {
   if (worker.status !== "blocked") {
     throw new Error(`\u53EA\u6709 blocked worker \u53EF\u4EE5 retry\uFF0C\u5F53\u524D\u72B6\u6001\uFF1A${worker.status}`);
   }
-  const policy = readJson(join38(root, "policies", "retry.json"));
+  const policy = readJson(join40(root, "policies", "retry.json"));
   const adapter = worker.last_adapter || worker.adapter || "shell";
   const maxAttempts = Number(policy.max_attempts?.[adapter] || 1);
   const latestResult = latestWorkerAdapterResult(root, worker);
@@ -19927,7 +20516,7 @@ function retryWorkerInternal(root, worker, via) {
   worker.execution_claimed_at = null;
   worker.execution_claim_expires_at = null;
   worker.updated_at = now();
-  writeJson(join38(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
+  writeJson(join40(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
   const event = appendEvent(root, "worker.retry.requested", "apex-v2", {
     run_id: worker.run_id,
     worker_id: worker.worker_id,
@@ -19949,8 +20538,8 @@ function retryWorkerInternal(root, worker, via) {
 }
 function resetWorkerSandbox(root, worker) {
   if (!worker.sandbox?.path) return;
-  const projectDir = resolve19(root, "..");
-  const sandboxDir = resolve19(projectDir, worker.sandbox.path);
+  const projectDir = resolve22(root, "..");
+  const sandboxDir = resolve22(projectDir, worker.sandbox.path);
   if (existsSync27(sandboxDir) && worker.sandbox.type === "worktree") {
     if (worker.sandbox.checkout_claim_token) {
       releaseCheckout(sandboxDir, {
@@ -19980,7 +20569,7 @@ function checkoutOwner(worker) {
 function latestWorkerAdapterResult(root, worker) {
   const dir = workerDir(root, worker.run_id, worker.worker_id);
   if (!existsSync27(dir)) return null;
-  return readdirSync17(dir).filter((file) => file.startsWith("adapter-result-") && file.endsWith(".json")).map((file) => readJson(join38(dir, file))).sort((left, right) => right.created_at.localeCompare(left.created_at))[0] || null;
+  return readdirSync17(dir).filter((file) => file.startsWith("adapter-result-") && file.endsWith(".json")).map((file) => readJson(join40(dir, file))).sort((left, right) => right.created_at.localeCompare(left.created_at))[0] || null;
 }
 function decideWorker(args) {
   const root = requireStore(projectRoot(args));
@@ -20003,10 +20592,10 @@ function decideWorker(args) {
     created_at: timestamp
   };
   const file = `adapter-result-${adapterResult.result_id}.json`;
-  writeJson(join38(workerDir(root, worker.run_id, worker.worker_id), file), adapterResult);
+  writeJson(join40(workerDir(root, worker.run_id, worker.worker_id), file), adapterResult);
   worker.status = "decision_submitted";
   worker.updated_at = timestamp;
-  writeJson(join38(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
+  writeJson(join40(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
   const run = loadRun(root, worker.run_id);
   const artifact = createArtifact(root, run, "execute", {
     type: "decision",
@@ -20046,10 +20635,10 @@ function buildPatchOperations(args) {
   return operations;
 }
 function transitionKey(kind, value) {
-  return `${kind}:${createHash12("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `${kind}:${createHash13("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function loadPlanGraph2(root, runId) {
-  const plan = readJson(join38(root, "runs", runId, "plan-graph.json"), null);
+  const plan = readJson(join40(root, "runs", runId, "plan-graph.json"), null);
   if (!plan) throw new Error(`\u627E\u4E0D\u5230 plan graph\uFF1A${runId}`);
   return plan;
 }
@@ -20061,7 +20650,7 @@ function getPlanNode(plan, id) {
 
 // src/commands/project-workspace.mjs
 import { existsSync as existsSync28, readFileSync as readFileSync22 } from "node:fs";
-import { basename as basename8, join as join39 } from "node:path";
+import { basename as basename8, join as join41 } from "node:path";
 
 // src/core/policy-defaults.mjs
 function defaultGatePolicy(timestamp) {
@@ -20069,7 +20658,19 @@ function defaultGatePolicy(timestamp) {
     schema_version: "v0",
     updated_at: timestamp,
     human_gates: ["production_change", "destructive_operation", "external_api_side_effect", "security_sensitive_change", "knowledge_governance"],
-    automatic_gates: ["schema_valid", "required_evidence_present", "no_untriaged_execution", "derived_views_not_worker_written"]
+    automatic_gates: ["schema_valid", "required_evidence_present", "no_untriaged_execution", "derived_views_not_worker_written"],
+    dsh_lifecycle: {
+      negative_control: {
+        mode: "shadow",
+        intake_types: ["bug", "test_failure"]
+      },
+      decision_note: {
+        mode: "shadow",
+        auto_propose: true,
+        risk_levels: ["high", "critical"],
+        workflows: ["governed"]
+      }
+    }
   };
 }
 function defaultRetryPolicy(timestamp) {
@@ -20169,30 +20770,31 @@ function initProject(args) {
   const projectDir = projectRoot(args);
   const root = storeRoot(projectDir);
   const timestamp = now();
-  const firstInit = !existsSync28(join39(root, "project.json"));
+  const firstInit = !existsSync28(join41(root, "project.json"));
   const projectName = String(args.name || basename8(projectDir) || "apex-v2-project");
   for (const dir of [
     root,
-    join39(root, "intake"),
-    join39(root, "roadmap"),
-    join39(root, "knowledge"),
-    join39(root, "risks"),
-    join39(root, "runs"),
-    join39(root, "artifacts"),
-    join39(root, "derived"),
-    join39(root, "policies"),
-    join39(root, "learning"),
-    join39(root, "learning", "receipts"),
-    join39(root, "approvals"),
-    join39(root, "metrics"),
-    join39(root, "adapters"),
-    join39(root, "adapters", "history"),
-    join39(root, "notifications")
+    join41(root, "intake"),
+    join41(root, "roadmap"),
+    join41(root, "knowledge"),
+    join41(root, "risks"),
+    join41(root, "runs"),
+    join41(root, "artifacts"),
+    join41(root, "decisions"),
+    join41(root, "derived"),
+    join41(root, "policies"),
+    join41(root, "learning"),
+    join41(root, "learning", "receipts"),
+    join41(root, "approvals"),
+    join41(root, "metrics"),
+    join41(root, "adapters"),
+    join41(root, "adapters", "history"),
+    join41(root, "notifications")
   ]) {
     ensureDir(dir);
   }
   if (firstInit) {
-    writeJson(join39(root, "project.json"), {
+    writeJson(join41(root, "project.json"), {
       schema_version: SCHEMA_VERSION,
       format_version: 1,
       revision: 0,
@@ -20209,8 +20811,8 @@ function initProject(args) {
         parallel_workers: 6
       }
     });
-    writeJson(join39(root, "intake", "items.json"), []);
-    writeJson(join39(root, "roadmap", "graph.json"), {
+    writeJson(join41(root, "intake", "items.json"), []);
+    writeJson(join41(root, "roadmap", "graph.json"), {
       schema_version: SCHEMA_VERSION,
       updated_at: timestamp,
       milestones: [],
@@ -20220,36 +20822,50 @@ function initProject(args) {
         active_nodes: 5
       }
     });
-    writeJson(join39(root, "risks", "register.json"), []);
-    writeJson(join39(root, "policies", "gates.json"), defaultGatePolicy(timestamp));
-    writeJson(join39(root, "policies", "retry.json"), defaultRetryPolicy(timestamp));
-    writeJson(join39(root, "policies", "execution.json"), defaultExecutionPolicy(timestamp));
-    writeJson(join39(root, "policies", "method-packs.json"), defaultMethodPackRegistry(timestamp));
-    writeJson(join39(root, "policies", "quality.json"), defaultQualityPolicy(timestamp));
-    writeJson(join39(root, "policies", "notifications.json"), defaultNotificationPolicy(timestamp));
-    writeJson(join39(root, "approvals", "items.json"), []);
-    writeJson(join39(root, "learning", "proposals.json"), []);
-    writeJson(join39(root, "learning", "jobs.json"), []);
-    writeJson(join39(root, "notifications", "outbox.json"), []);
+    writeJson(join41(root, "risks", "register.json"), []);
+    writeJson(join41(root, "decisions", "index.json"), []);
+    writeJson(join41(root, "policies", "gates.json"), defaultGatePolicy(timestamp));
+    writeJson(join41(root, "policies", "retry.json"), defaultRetryPolicy(timestamp));
+    writeJson(join41(root, "policies", "execution.json"), defaultExecutionPolicy(timestamp));
+    writeJson(join41(root, "policies", "method-packs.json"), defaultMethodPackRegistry(timestamp));
+    writeJson(join41(root, "policies", "quality.json"), defaultQualityPolicy(timestamp));
+    writeJson(join41(root, "policies", "notifications.json"), defaultNotificationPolicy(timestamp));
+    writeJson(join41(root, "approvals", "items.json"), []);
+    writeJson(join41(root, "learning", "proposals.json"), []);
+    writeJson(join41(root, "learning", "jobs.json"), []);
+    writeJson(join41(root, "notifications", "outbox.json"), []);
   }
-  if (!existsSync28(join39(root, "learning", "jobs.json"))) {
-    writeJson(join39(root, "learning", "jobs.json"), []);
+  if (!existsSync28(join41(root, "learning", "jobs.json"))) {
+    writeJson(join41(root, "learning", "jobs.json"), []);
   }
-  ensureDir(join39(root, "learning", "receipts"));
-  if (!existsSync28(join39(root, "policies", "retry.json"))) {
-    writeJson(join39(root, "policies", "retry.json"), defaultRetryPolicy(timestamp));
+  if (!existsSync28(join41(root, "decisions", "index.json"))) {
+    writeJson(join41(root, "decisions", "index.json"), []);
+  }
+  ensureDir(join41(root, "learning", "receipts"));
+  if (!existsSync28(join41(root, "policies", "gates.json"))) {
+    writeJson(join41(root, "policies", "gates.json"), defaultGatePolicy(timestamp));
   } else {
-    const retryPolicy = readJson(join39(root, "policies", "retry.json"));
+    const gatePolicy = readJson(join41(root, "policies", "gates.json"));
+    if (!gatePolicy.dsh_lifecycle) {
+      gatePolicy.dsh_lifecycle = defaultGatePolicy(timestamp).dsh_lifecycle;
+      gatePolicy.updated_at = timestamp;
+      writeJson(join41(root, "policies", "gates.json"), gatePolicy);
+    }
+  }
+  if (!existsSync28(join41(root, "policies", "retry.json"))) {
+    writeJson(join41(root, "policies", "retry.json"), defaultRetryPolicy(timestamp));
+  } else {
+    const retryPolicy = readJson(join41(root, "policies", "retry.json"));
     retryPolicy.max_attempts.claude = retryPolicy.max_attempts.claude || 3;
     retryPolicy.max_attempts.gemini = retryPolicy.max_attempts.gemini || 3;
     retryPolicy.max_attempts.host = retryPolicy.max_attempts.host || 1;
     retryPolicy.max_attempts["deepseek-runner"] = retryPolicy.max_attempts["deepseek-runner"] || 3;
-    writeJson(join39(root, "policies", "retry.json"), retryPolicy);
+    writeJson(join41(root, "policies", "retry.json"), retryPolicy);
   }
-  if (!existsSync28(join39(root, "policies", "execution.json"))) {
-    writeJson(join39(root, "policies", "execution.json"), defaultExecutionPolicy(timestamp));
+  if (!existsSync28(join41(root, "policies", "execution.json"))) {
+    writeJson(join41(root, "policies", "execution.json"), defaultExecutionPolicy(timestamp));
   } else {
-    const executionPolicy = readJson(join39(root, "policies", "execution.json"));
+    const executionPolicy = readJson(join41(root, "policies", "execution.json"));
     if (!executionPolicy.interactive_workspace_patch) {
       executionPolicy.interactive_workspace_patch = { enabled: true };
       executionPolicy.updated_at = timestamp;
@@ -20289,15 +20905,15 @@ function initProject(args) {
       };
       executionPolicy.updated_at = timestamp;
     }
-    writeJson(join39(root, "policies", "execution.json"), executionPolicy);
+    writeJson(join41(root, "policies", "execution.json"), executionPolicy);
   }
-  if (!existsSync28(join39(root, "policies", "method-packs.json"))) {
-    writeJson(join39(root, "policies", "method-packs.json"), defaultMethodPackRegistry(timestamp));
+  if (!existsSync28(join41(root, "policies", "method-packs.json"))) {
+    writeJson(join41(root, "policies", "method-packs.json"), defaultMethodPackRegistry(timestamp));
   }
-  if (!existsSync28(join39(root, "policies", "quality.json"))) {
-    writeJson(join39(root, "policies", "quality.json"), defaultQualityPolicy(timestamp));
+  if (!existsSync28(join41(root, "policies", "quality.json"))) {
+    writeJson(join41(root, "policies", "quality.json"), defaultQualityPolicy(timestamp));
   } else {
-    const qualityPolicy = readJson(join39(root, "policies", "quality.json"));
+    const qualityPolicy = readJson(join41(root, "policies", "quality.json"));
     if (qualityPolicy.block_new_runs_on_smoke_failure == null) {
       qualityPolicy.block_new_runs_on_smoke_failure = true;
       qualityPolicy.updated_at = timestamp;
@@ -20326,20 +20942,20 @@ function initProject(args) {
       qualityPolicy.rolling_run_count = 20;
       qualityPolicy.updated_at = timestamp;
     }
-    writeJson(join39(root, "policies", "quality.json"), qualityPolicy);
+    writeJson(join41(root, "policies", "quality.json"), qualityPolicy);
   }
-  if (!existsSync28(join39(root, "approvals", "items.json"))) writeJson(join39(root, "approvals", "items.json"), []);
+  if (!existsSync28(join41(root, "approvals", "items.json"))) writeJson(join41(root, "approvals", "items.json"), []);
   migrateApprovalRecords(root);
-  if (!existsSync28(join39(root, "policies", "notifications.json"))) {
-    writeJson(join39(root, "policies", "notifications.json"), defaultNotificationPolicy(timestamp));
+  if (!existsSync28(join41(root, "policies", "notifications.json"))) {
+    writeJson(join41(root, "policies", "notifications.json"), defaultNotificationPolicy(timestamp));
   }
-  if (!existsSync28(join39(root, "notifications", "outbox.json"))) {
-    writeJson(join39(root, "notifications", "outbox.json"), []);
+  if (!existsSync28(join41(root, "notifications", "outbox.json"))) {
+    writeJson(join41(root, "notifications", "outbox.json"), []);
   }
   migrateNotificationState(root, timestamp);
   writeKnowledgeBase(root, timestamp);
-  writeTextIfMissing(join39(root, "derived", "README.md"), derivedReadme());
-  writeTextIfMissing(join39(root, "events.jsonl"), "");
+  writeTextIfMissing(join41(root, "derived", "README.md"), derivedReadme());
+  writeTextIfMissing(join41(root, "events.jsonl"), "");
   if (firstInit) {
     const event = appendEvent(root, "project.initialized", "apex-v2", {
       project_name: projectName
@@ -20349,13 +20965,13 @@ function initProject(args) {
   console.log(`\u5DF2\u521D\u59CB\u5316\u9879\u76EE\u7EA7\u5DE5\u4F5C\u533A\uFF1A${root}`);
 }
 function writeKnowledgeBase(root, timestamp) {
-  const knowledgeDir = join39(root, "knowledge");
-  const manifestPath = join39(knowledgeDir, "manifest.json");
+  const knowledgeDir = join41(root, "knowledge");
+  const manifestPath = join41(knowledgeDir, "manifest.json");
   const existing = readJson(manifestPath, null);
   const staleAfter = new Date(Date.parse(timestamp) + 7 * 864e5).toISOString();
   const files = [];
   for (const [name, purpose] of KNOWLEDGE_FILES) {
-    const filePath = join39(knowledgeDir, name);
+    const filePath = join41(knowledgeDir, name);
     writeTextIfMissing(filePath, knowledgeTemplate(name, purpose));
     files.push({
       path: `knowledge/${name}`,
@@ -20409,11 +21025,12 @@ function derivedReadme() {
 function status(args) {
   const projectDir = projectRoot(args);
   const root = requireStore(projectDir);
-  const project = readJson(join39(root, "project.json"));
-  const intake = readJson(join39(root, "intake", "items.json"), []);
-  const roadmap = readJson(join39(root, "roadmap", "graph.json"));
-  const risks = readJson(join39(root, "risks", "register.json"), []);
-  const learning = readJson(join39(root, "learning", "proposals.json"), []);
+  const project = readJson(join41(root, "project.json"));
+  const intake = readJson(join41(root, "intake", "items.json"), []);
+  const roadmap = readJson(join41(root, "roadmap", "graph.json"));
+  const risks = readJson(join41(root, "risks", "register.json"), []);
+  const learning = readJson(join41(root, "learning", "proposals.json"), []);
+  const decisions = readJson(join41(root, "decisions", "index.json"), []);
   console.log(JSON.stringify({
     project: project.project_name,
     project_id: project.project_id,
@@ -20431,7 +21048,11 @@ function status(args) {
     },
     risks: risks.length,
     active_runs: project.active_runs,
-    learning_proposals: learning.length
+    learning_proposals: learning.length,
+    decisions: {
+      total: decisions.length,
+      proposed: decisions.filter((item) => item.status === "proposed").length
+    }
   }, null, 2));
 }
 function validateProject(args) {
@@ -20453,7 +21074,7 @@ function validateProject(args) {
     "learning/proposals.json"
   ];
   for (const file of requiredFiles) {
-    const path = join39(root, file);
+    const path = join41(root, file);
     if (!existsSync28(path)) {
       errors.push(`\u7F3A\u5C11\u6587\u4EF6\uFF1A${file}`);
       continue;
@@ -20467,21 +21088,21 @@ function validateProject(args) {
     }
   }
   for (const [name] of KNOWLEDGE_FILES) {
-    if (!existsSync28(join39(root, "knowledge", name))) {
+    if (!existsSync28(join41(root, "knowledge", name))) {
       errors.push(`\u7F3A\u5C11\u77E5\u8BC6\u6587\u4EF6\uFF1Aknowledge/${name}`);
     }
   }
-  const intake = readJson(join39(root, "intake", "items.json"), []);
-  const roadmap = readJson(join39(root, "roadmap", "graph.json"), null);
-  const project = readJson(join39(root, "project.json"), null);
+  const intake = readJson(join41(root, "intake", "items.json"), []);
+  const roadmap = readJson(join41(root, "roadmap", "graph.json"), null);
+  const project = readJson(join41(root, "project.json"), null);
   if (!Array.isArray(intake)) errors.push("intake/items.json \u5FC5\u987B\u662F\u6570\u7EC4");
   if (!roadmap || !Array.isArray(roadmap.nodes) || !Array.isArray(roadmap.edges)) {
     errors.push("roadmap/graph.json \u5FC5\u987B\u5305\u542B nodes \u548C edges \u6570\u7EC4");
   }
   if (!project?.project_id) errors.push("project.json \u7F3A\u5C11 project_id");
   if (args["strict-knowledge"]) {
-    const manifest = readJson(join39(root, "knowledge", "manifest.json"), null);
-    const index = existsSync28(join39(root, "knowledge", "index.md")) ? readFileSync22(join39(root, "knowledge", "index.md"), "utf8") : "";
+    const manifest = readJson(join41(root, "knowledge", "manifest.json"), null);
+    const index = existsSync28(join41(root, "knowledge", "index.md")) ? readFileSync22(join41(root, "knowledge", "index.md"), "utf8") : "";
     if (!manifest || manifest.version < 1) {
       errors.push("strict-knowledge \u8981\u6C42 knowledge/manifest.json version >= 1");
     }
@@ -20504,15 +21125,15 @@ function validateProject(args) {
 }
 
 // src/commands/git-delivery.mjs
-import { join as join40 } from "node:path";
+import { join as join42 } from "node:path";
 function handleGitDeliveryCommand(action, args) {
   const projectDir = projectRoot(args);
   const root = requireStore(projectDir);
   if (action === "discover") {
     const delivery = discoverGitDelivery(projectDir, discoveryOptions(args));
     if (args.record) {
-      ensureDir(join40(root, "delivery"));
-      writeJson(join40(root, "delivery", "git.json"), delivery);
+      ensureDir(join42(root, "delivery"));
+      writeJson(join42(root, "delivery", "git.json"), delivery);
       recordEvent(root, "git.delivery.discovered", {
         repository_id: delivery.repository.repository_id,
         branch: delivery.current_branch.name,
@@ -20523,7 +21144,7 @@ function handleGitDeliveryCommand(action, args) {
     return;
   }
   if (action === "guard") {
-    const delivery = args.recorded ? readJson(join40(root, "delivery", "git.json"), null) : discoverGitDelivery(projectDir, discoveryOptions(args));
+    const delivery = args.recorded ? readJson(join42(root, "delivery", "git.json"), null) : discoverGitDelivery(projectDir, discoveryOptions(args));
     if (!delivery) throw new Error("\u627E\u4E0D\u5230 recorded Git Delivery context");
     console.log(JSON.stringify(assertGitDeliveryGuards(delivery, {
       allowProtectedBranch: Boolean(args["allow-protected-branch"]),
@@ -20608,32 +21229,32 @@ function recordEvent(root, type, payload) {
 }
 
 // src/core/heartbeat-scheduler.mjs
-import { createHash as createHash13 } from "node:crypto";
+import { createHash as createHash14 } from "node:crypto";
 import { chmodSync as chmodSync4, existsSync as existsSync29, mkdirSync as mkdirSync8 } from "node:fs";
 import { homedir as homedir6 } from "node:os";
-import { join as join41, resolve as resolve20 } from "node:path";
+import { join as join43, resolve as resolve23 } from "node:path";
 import { spawnSync as spawnSync13 } from "node:child_process";
 function heartbeatJobId(projectDir) {
-  const suffix = createHash13("sha256").update(resolve20(projectDir)).digest("hex").slice(0, 12);
+  const suffix = createHash14("sha256").update(resolve23(projectDir)).digest("hex").slice(0, 12);
   return `com.apex-forge-v2.heartbeat.${suffix}`;
 }
 function installHeartbeatScheduler(projectDir, options = {}) {
-  const resolvedProject = resolve20(projectDir);
-  const root = join41(resolvedProject, ".apex-v2");
-  if (!existsSync29(join41(root, "project.json"))) throw new Error(`\u9879\u76EE\u5C1A\u672A\u521D\u59CB\u5316\uFF1A${root}`);
+  const resolvedProject = resolve23(projectDir);
+  const root = join43(resolvedProject, ".apex-v2");
+  if (!existsSync29(join43(root, "project.json"))) throw new Error(`\u9879\u76EE\u5C1A\u672A\u521D\u59CB\u5316\uFF1A${root}`);
   const intervalMinutes = Number(options.intervalMinutes || 60);
   if (!Number.isInteger(intervalMinutes) || intervalMinutes < 1) {
     throw new Error("heartbeat intervalMinutes \u5FC5\u987B\u662F\u6B63\u6574\u6570");
   }
   const home = options.homeDir || homedir6();
-  const stateDir = join41(root, "heartbeat");
-  const logDir = join41(stateDir, "logs");
+  const stateDir = join43(root, "heartbeat");
+  const logDir = join43(stateDir, "logs");
   mkdirSync8(logDir, { recursive: true });
   const label = heartbeatJobId(resolvedProject);
-  const runnerPath = join41(stateDir, "run.zsh");
-  const statePlistPath = join41(stateDir, `${label}.plist`);
-  const launchAgentsDir = join41(home, "Library", "LaunchAgents");
-  const installedPlistPath = join41(launchAgentsDir, `${label}.plist`);
+  const runnerPath = join43(stateDir, "run.zsh");
+  const statePlistPath = join43(stateDir, `${label}.plist`);
+  const launchAgentsDir = join43(home, "Library", "LaunchAgents");
+  const installedPlistPath = join43(launchAgentsDir, `${label}.plist`);
   mkdirSync8(launchAgentsDir, { recursive: true });
   const envFile = options.envFile || defaultEnvFile(home);
   atomicWriteFile(runnerPath, renderHeartbeatRunner({
@@ -20648,8 +21269,8 @@ function installHeartbeatScheduler(projectDir, options = {}) {
     runnerPath,
     projectDir: resolvedProject,
     intervalSeconds: intervalMinutes * 60,
-    stdoutPath: join41(logDir, "stdout.log"),
-    stderrPath: join41(logDir, "stderr.log")
+    stdoutPath: join43(logDir, "stdout.log"),
+    stderrPath: join43(logDir, "stderr.log")
   });
   atomicWriteFile(statePlistPath, plist);
   atomicWriteFile(installedPlistPath, plist);
@@ -20733,7 +21354,7 @@ ${source}exec ${shell(options.nodePath)} ${shell(options.cliPath)} project heart
 `;
 }
 function defaultEnvFile(home) {
-  const candidate = join41(home, ".codex", "provider-modes", "third-party.env");
+  const candidate = join43(home, ".codex", "provider-modes", "third-party.env");
   return existsSync29(candidate) ? candidate : null;
 }
 function xml(value) {
@@ -20749,21 +21370,21 @@ function numberFrom(value, pattern) {
 
 // src/core/heartbeat-daemon-control.mjs
 import { closeSync as closeSync3, openSync as openSync3 } from "node:fs";
-import { join as join42, resolve as resolve21 } from "node:path";
+import { join as join44, resolve as resolve24 } from "node:path";
 import { spawn, spawnSync as spawnSync14 } from "node:child_process";
 var DAEMON = new URL("./heartbeat-daemon.mjs", import.meta.url).pathname;
 function startHeartbeatDaemon(projectDir, options = {}) {
-  const resolvedProject = resolve21(projectDir);
-  const root = join42(resolvedProject, ".apex-v2");
-  const statePath = join42(root, "heartbeat", "daemon.json");
+  const resolvedProject = resolve24(projectDir);
+  const root = join44(resolvedProject, ".apex-v2");
+  const statePath = join44(root, "heartbeat", "daemon.json");
   const current = readJson(statePath, null);
   if (current && processAlive2(current.pid)) return { ...current, already_running: true };
   const intervalMinutes = Number(options.intervalMinutes || 60);
   if (!Number.isInteger(intervalMinutes) || intervalMinutes < 1) {
     throw new Error("heartbeat daemon intervalMinutes \u5FC5\u987B\u662F\u6B63\u6574\u6570");
   }
-  const stdoutFd = openSync3(join42(root, "heartbeat", "logs", "daemon-stdout.log"), "a");
-  const stderrFd = openSync3(join42(root, "heartbeat", "logs", "daemon-stderr.log"), "a");
+  const stdoutFd = openSync3(join44(root, "heartbeat", "logs", "daemon-stdout.log"), "a");
+  const stderrFd = openSync3(join44(root, "heartbeat", "logs", "daemon-stderr.log"), "a");
   const child = spawn(process.execPath, [options.daemonPath || DAEMON, resolvedProject, String(intervalMinutes * 6e4)], {
     cwd: resolvedProject,
     detached: true,
@@ -20783,7 +21404,7 @@ function startHeartbeatDaemon(projectDir, options = {}) {
   return { ...state, already_running: false };
 }
 function heartbeatDaemonStatus(projectDir) {
-  const state = readJson(join42(resolve21(projectDir), ".apex-v2", "heartbeat", "daemon.json"), null);
+  const state = readJson(join44(resolve24(projectDir), ".apex-v2", "heartbeat", "daemon.json"), null);
   return {
     configured: Boolean(state),
     running: Boolean(state && processAlive2(state.pid)),
@@ -20791,7 +21412,7 @@ function heartbeatDaemonStatus(projectDir) {
   };
 }
 function stopHeartbeatDaemon(projectDir) {
-  const state = readJson(join42(resolve21(projectDir), ".apex-v2", "heartbeat", "daemon.json"), null);
+  const state = readJson(join44(resolve24(projectDir), ".apex-v2", "heartbeat", "daemon.json"), null);
   if (!state || !processAlive2(state.pid)) return { stopped: false, reason: "not-running" };
   signalDaemon(state.pid, "SIGTERM");
   waitForExit(state.pid, 1e3);
@@ -20991,26 +21612,26 @@ ${JSON.stringify(report.summary, null, 2)}
 
 // src/audit/project-audit-summary.mjs
 import { readdirSync as readdirSync18 } from "node:fs";
-import { join as join43 } from "node:path";
+import { join as join45 } from "node:path";
 function buildAuditSummary(root, projectDir, testExecution, deps) {
   const { evaluateAdapterCapabilityDrift: evaluateAdapterCapabilityDrift2, findFilesByName: findFilesByName2, findRunFiles: findRunFiles2, getWorkers: getWorkers2, listRunStates: listRunStates2, workerSuccessfullyCompleted: workerSuccessfullyCompleted2 } = deps;
-  const project = readJson(join43(root, "project.json"));
-  const intake = readJson(join43(root, "intake", "items.json"), []);
-  const roadmap = readJson(join43(root, "roadmap", "graph.json"));
-  const learning = readJson(join43(root, "learning", "proposals.json"), []);
-  const approvals = readJson(join43(root, "approvals", "items.json"), []);
-  const risks = readJson(join43(root, "risks", "register.json"), []);
-  const latestMetrics = readJson(join43(root, "metrics", "latest.json"), null);
-  const latestAdapterSmoke = readJson(join43(root, "adapters", "latest-live-smoke.json"), null);
-  const qualityPolicy = readJson(join43(root, "policies", "quality.json"), null);
-  const notificationPolicy = readJson(join43(root, "policies", "notifications.json"), null);
-  const notifications = readJson(join43(root, "notifications", "outbox.json"), []);
-  const adapterTrend = readJson(join43(root, "adapters", "latest-trend.json"), buildAdapterTrend(root));
+  const project = readJson(join45(root, "project.json"));
+  const intake = readJson(join45(root, "intake", "items.json"), []);
+  const roadmap = readJson(join45(root, "roadmap", "graph.json"));
+  const learning = readJson(join45(root, "learning", "proposals.json"), []);
+  const approvals = readJson(join45(root, "approvals", "items.json"), []);
+  const risks = readJson(join45(root, "risks", "register.json"), []);
+  const latestMetrics = readJson(join45(root, "metrics", "latest.json"), null);
+  const latestAdapterSmoke = readJson(join45(root, "adapters", "latest-live-smoke.json"), null);
+  const qualityPolicy = readJson(join45(root, "policies", "quality.json"), null);
+  const notificationPolicy = readJson(join45(root, "policies", "notifications.json"), null);
+  const notifications = readJson(join45(root, "notifications", "outbox.json"), []);
+  const adapterTrend = readJson(join45(root, "adapters", "latest-trend.json"), buildAdapterTrend(root));
   const runs = listRunStates2(root);
   const carryForward = runs.flatMap((run) => run.carry_forward || []);
   const artifacts = listAllArtifacts(root);
-  const schemaCount = readdirSync18(join43(projectDir, "schemas")).filter((file) => file.endsWith(".json")).length;
-  const capabilities = readJson(join43(projectDir, "capabilities.json"), { groups: [] });
+  const schemaCount = readdirSync18(join45(projectDir, "schemas")).filter((file) => file.endsWith(".json")).length;
+  const capabilities = readJson(join45(projectDir, "capabilities.json"), { groups: [] });
   const capabilityCommandCount = (capabilities.groups || []).reduce((sum, group) => sum + (group.commands?.length || 0), 0);
   const verificationReports = findRunFiles2(root, "verification-report.json");
   const verificationReportData = verificationReports.map((file) => readJson(file));
@@ -21023,8 +21644,8 @@ function buildAuditSummary(root, projectDir, testExecution, deps) {
   const codexAdapter = inspectWorkerExecutor("codex");
   const agentAdapters = inspectWorkerExecutors();
   const adapterDrift = evaluateAdapterCapabilityDrift2(root);
-  const retryPolicy = readJson(join43(root, "policies", "retry.json"), null);
-  const eventLog = inspectEventLog(join43(root, "events.jsonl"));
+  const retryPolicy = readJson(join45(root, "policies", "retry.json"), null);
+  const eventLog = inspectEventLog(join45(root, "events.jsonl"));
   const reconciliationReports = findFilesByName2(root, (name) => name.startsWith("reconcile-") && name.endsWith(".json")).map((file) => readJson(file));
   const contractReport = scanProjectContracts(projectDir);
   const planGraphs = findRunFiles2(root, "plan-graph.json").map((file) => readJson(file));
@@ -21207,7 +21828,7 @@ var WorkerSupervisor = class {
     let nextIndex = 0;
     let completed = 0;
     try {
-      return await new Promise((resolve24) => {
+      return await new Promise((resolve27) => {
         const schedule = () => {
           if (this.stopReason != null) {
             while (nextIndex < normalizedJobs.length) {
@@ -21218,7 +21839,7 @@ var WorkerSupervisor = class {
               nextIndex += 1;
               completed += 1;
             }
-            if (completed === normalizedJobs.length) resolve24(results);
+            if (completed === normalizedJobs.length) resolve27(results);
             return;
           }
           while (nextIndex < normalizedJobs.length && this.active.size < this.maxConcurrency) {
@@ -21228,7 +21849,7 @@ var WorkerSupervisor = class {
               results[index] = result;
               completed += 1;
               if (completed === normalizedJobs.length) {
-                resolve24(results);
+                resolve27(results);
                 return;
               }
               schedule();
@@ -21281,8 +21902,8 @@ var WorkerSupervisor = class {
       killGraceMs: job.killGraceMs,
       done: null
     };
-    state.done = new Promise((resolve24) => {
-      state.resolve = resolve24;
+    state.done = new Promise((resolve27) => {
+      state.resolve = resolve27;
     });
     let child;
     try {
@@ -21595,12 +22216,12 @@ import {
   writeFileSync as writeFileSync15
 } from "node:fs";
 import { randomUUID as randomUUID5 } from "node:crypto";
-import { join as join44, resolve as resolve22 } from "node:path";
+import { join as join46, resolve as resolve25 } from "node:path";
 var SLEEP_BUFFER2 = new Int32Array(new SharedArrayBuffer(4));
 function acquireSchedulerLock(projectDir, options = {}) {
-  const root = resolve22(projectDir);
-  const lockPath = join44(root, ".apex-v2.scheduler-lock");
-  const ownerPath = join44(lockPath, "owner.json");
+  const root = resolve25(projectDir);
+  const lockPath = join46(root, ".apex-v2.scheduler-lock");
+  const ownerPath = join46(lockPath, "owner.json");
   const token = randomUUID5();
   const startedAt = Date.now();
   const timeoutMs = options.timeoutMs ?? 3e4;
@@ -21721,6 +22342,14 @@ async function main() {
       handleHostCommand(subcommand, parseArgs(rest));
       return;
     }
+    if (command === "decision") {
+      handleDecisionCommand(subcommand, parseArgs(rest));
+      return;
+    }
+    if (command === "negative-control") {
+      handleNegativeControlCommand(subcommand, parseArgs(rest));
+      return;
+    }
     if (command === "merge") {
       handleMergeCommand(subcommand, parseArgs(rest));
       return;
@@ -21791,9 +22420,9 @@ function proposeLearning(args) {
 function proposeLearningInternal(root, run) {
   requirePassedNode(run, "integrate");
   const timestamp = now();
-  const verification = readJson(join45(root, "runs", run.run_id, "verification-report.json"), null);
-  const review = readJson(join45(root, "runs", run.run_id, "review-report.json"), null);
-  const integration = readJson(join45(root, "runs", run.run_id, "integration-report.json"), null);
+  const verification = readJson(join47(root, "runs", run.run_id, "verification-report.json"), null);
+  const review = readJson(join47(root, "runs", run.run_id, "review-report.json"), null);
+  const integration = readJson(join47(root, "runs", run.run_id, "integration-report.json"), null);
   if (!verification || verification.status !== "PASS") throw new Error("\u7F3A\u5C11 PASS verification-report\uFF0C\u4E0D\u80FD\u751F\u6210 learning proposal");
   if (!review || review.status !== "PASS") throw new Error("\u7F3A\u5C11 PASS review-report\uFF0C\u4E0D\u80FD\u751F\u6210 learning proposal");
   if (!integration || !["MERGED", "NOOP"].includes(integration.status)) throw new Error("\u7F3A\u5C11 MERGED/NOOP integration-report\uFF0C\u4E0D\u80FD\u751F\u6210 learning proposal");
@@ -21822,8 +22451,8 @@ function proposeLearningInternal(root, run) {
       confidence: 0.9
     }
   ];
-  const proposalsPath = join45(root, "learning", "proposals.json");
-  const jobsPath = join45(root, "learning", "jobs.json");
+  const proposalsPath = join47(root, "learning", "proposals.json");
+  const jobsPath = join47(root, "learning", "jobs.json");
   const proposals = readJson(proposalsPath, []);
   const jobs = readJson(jobsPath, []);
   const created = [];
@@ -21876,7 +22505,7 @@ function proposeLearningInternal(root, run) {
   }
   writeJson(proposalsPath, proposals);
   writeJson(jobsPath, jobs);
-  const reportPath = join45(root, "runs", run.run_id, "learning-report.json");
+  const reportPath = join47(root, "runs", run.run_id, "learning-report.json");
   const report = {
     schema_version: SCHEMA_VERSION,
     report_id: shortId("learning-report"),
@@ -21914,14 +22543,14 @@ function proposeLearningInternal(root, run) {
 }
 function listLearning(args) {
   const root = requireStore(projectRoot(args));
-  const proposals = readJson(join45(root, "learning", "proposals.json"), []);
+  const proposals = readJson(join47(root, "learning", "proposals.json"), []);
   const status2 = args.status ? String(args.status) : null;
   console.log(JSON.stringify(status2 ? proposals.filter((proposal) => proposal.status === status2) : proposals, null, 2));
 }
 function approveLearning(args) {
   const root = requireStore(projectRoot(args));
   const id = required(args, "id");
-  const proposal = withProjectTransaction(resolve23(root, ".."), {
+  const proposal = withProjectTransaction(resolve26(root, ".."), {
     kind: "learning-approve",
     idempotencyKey: `learning-approve:${id}`
   }, () => {
@@ -22022,9 +22651,9 @@ function projectMetrics(args) {
   const root = requireStore(projectRoot(args));
   const snapshot = buildProjectMetrics(root);
   if (args.record) {
-    ensureDir(join45(root, "metrics"));
-    writeJson(join45(root, "metrics", `${snapshot.snapshot_id}.json`), snapshot);
-    writeJson(join45(root, "metrics", "latest.json"), snapshot);
+    ensureDir(join47(root, "metrics"));
+    writeJson(join47(root, "metrics", `${snapshot.snapshot_id}.json`), snapshot);
+    writeJson(join47(root, "metrics", "latest.json"), snapshot);
     const event = appendEvent(root, "project.metrics.recorded", "apex-v2", { snapshot_id: snapshot.snapshot_id });
     updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
   }
@@ -22034,7 +22663,7 @@ function projectQuality(args) {
   const action = args._[0];
   if (action !== "set") throw new Error(`\u672A\u77E5 project quality \u52A8\u4F5C\uFF1A${action || "(\u7A7A)"}`);
   const root = requireStore(projectRoot(args));
-  const path = join45(root, "policies", "quality.json");
+  const path = join47(root, "policies", "quality.json");
   const policy = readJson(path);
   const mappings = [
     ["max-open-risks", "max_open_risks"],
@@ -22123,18 +22752,18 @@ function reconcileProject(args) {
     report.applied = true;
     report.status = inspection.changes.length > 0 ? "REPAIRED" : "CONSISTENT";
     report.post_check = inspectProjectConsistency(root);
-    const reportDir = join45(root, "reconciliations");
+    const reportDir = join47(root, "reconciliations");
     ensureDir(reportDir);
-    writeJson(join45(reportDir, `${report.report_id}.json`), report);
+    writeJson(join47(reportDir, `${report.report_id}.json`), report);
   }
   console.log(JSON.stringify(report, null, 2));
 }
 async function projectTick(args) {
   const root = requireStore(projectRoot(args));
   const timestamp = now();
-  const intakePath = join45(root, "intake", "items.json");
-  const roadmapPath = join45(root, "roadmap", "graph.json");
-  const projectPath = join45(root, "project.json");
+  const intakePath = join47(root, "intake", "items.json");
+  const roadmapPath = join47(root, "roadmap", "graph.json");
+  const projectPath = join47(root, "project.json");
   const intake = readJson(intakePath, []);
   const roadmap = readJson(roadmapPath);
   const project = readJson(projectPath);
@@ -22176,8 +22805,8 @@ async function projectTick(args) {
   let activeRunSlots = Math.max(0, project.wip_limits.active_runs - project.active_runs.length);
   let activeNodeSlots = Math.max(0, roadmap.wip_limits.active_nodes - roadmap.nodes.filter((node) => node.status === "active").length);
   const readyNodes = roadmap.nodes.filter((node) => node.status === "ready").sort(compareRoadmapPriority);
-  const qualityPolicy = readJson(join45(root, "policies", "quality.json"));
-  const latestMetrics = readJson(join45(root, "metrics", "latest.json"), null);
+  const qualityPolicy = readJson(join47(root, "policies", "quality.json"));
+  const latestMetrics = readJson(join47(root, "metrics", "latest.json"), null);
   if (readyNodes.length > 0 && qualityPolicy.block_new_runs_on_failure && latestMetrics?.evaluation?.status === "FAIL") {
     throw new Error(`quality gate \u963B\u6B62\u521B\u5EFA\u65B0 run\uFF1A${latestMetrics.evaluation.failures.join(",")}`);
   }
@@ -22186,7 +22815,7 @@ async function projectTick(args) {
       trigger: "project.tick"
     });
   }
-  const latestSmoke = readJson(join45(root, "adapters", "latest-live-smoke.json"), null);
+  const latestSmoke = readJson(join47(root, "adapters", "latest-live-smoke.json"), null);
   if (readyNodes.length > 0 && qualityPolicy.block_new_runs_on_smoke_failure && latestSmoke?.status === "FAIL") {
     throw new Error(`adapter smoke gate \u963B\u6B62\u521B\u5EFA\u65B0 run\uFF1A${latestSmoke.results.filter((item) => item.status === "FAIL").map((item) => item.adapter).join(",")}`);
   }
@@ -22213,7 +22842,7 @@ async function projectTick(args) {
   }
   if (args["run-agents"]) {
     const limit = effectiveAgentLimit(root, Math.max(1, Number(args["agent-limit"] || 1)));
-    const releaseScheduler = acquireSchedulerLock(resolve23(root, ".."));
+    const releaseScheduler = acquireSchedulerLock(resolve26(root, ".."));
     try {
       agentScheduler = await runProjectAgentScheduler(root, limit, args);
     } finally {
@@ -22351,10 +22980,10 @@ function auditProject(args) {
     checks,
     summary
   };
-  const auditDir = join45(root, "audits");
+  const auditDir = join47(root, "audits");
   ensureDir(auditDir);
-  writeJson(join45(auditDir, `${report.audit_id}.json`), report);
-  writeFileSync16(join45(auditDir, `${report.audit_id}.md`), renderAuditMarkdown(report));
+  writeJson(join47(auditDir, `${report.audit_id}.json`), report);
+  writeFileSync16(join47(auditDir, `${report.audit_id}.md`), renderAuditMarkdown(report));
   const event = appendEvent(root, "project.audit", "apex-v2", {
     audit_id: report.audit_id,
     status: report.status
@@ -22368,7 +22997,7 @@ function auditProject(args) {
   console.log(JSON.stringify(report, null, 2));
 }
 function createIntakeFromAuditGaps(root, report) {
-  const path = join45(root, "intake", "items.json");
+  const path = join47(root, "intake", "items.json");
   const items = readJson(path, []);
   const created = [];
   for (const check2 of report.checks.filter((item) => item.status !== "PASS")) {
@@ -22466,7 +23095,7 @@ function learnReadyRuns(root, runIds) {
     const run = loadRun(root, runId);
     if (getRunNode(run, "integrate").status !== "passed") continue;
     if (getRunNode(run, "learn").status !== "pending") continue;
-    const transition = withProjectTransaction(resolve23(root, ".."), {
+    const transition = withProjectTransaction(resolve26(root, ".."), {
       kind: "learning-governance",
       idempotencyKey: `learning-governance-v2:${run.run_id}:proposal-queued`
     }, () => learnReadyRunTransaction(root, run)).result;
@@ -22498,7 +23127,7 @@ function learnReadyRunTransaction(root, run) {
   };
 }
 async function runProjectAgentScheduler(root, limit, args) {
-  const policy = readJson(join45(root, "policies", "execution.json"));
+  const policy = readJson(join47(root, "policies", "execution.json"));
   const configuredCycles = Number(
     args["agent-cycles"] || policy.budgets?.max_agent_cycles_per_tick || 12
   );
@@ -22521,7 +23150,7 @@ async function runProjectAgentScheduler(root, limit, args) {
   };
   let remainingAgentRuns = aggregate.max_agent_runs;
   for (let cycle = 1; cycle <= configuredCycles; cycle += 1) {
-    const runIds = readJson(join45(root, "project.json")).active_runs;
+    const runIds = readJson(join47(root, "project.json")).active_runs;
     if (runIds.length === 0) {
       aggregate.stop_reason = "no-active-runs";
       break;
@@ -22623,7 +23252,7 @@ function runReadyWorkerAdapters(root, runIds, limit) {
 }
 function retryBlockedWorkers(root, runIds, limit) {
   const out = [];
-  const policy = readJson(join45(root, "policies", "retry.json"));
+  const policy = readJson(join47(root, "policies", "retry.json"));
   if (!policy.auto_retry.enabled) return out;
   for (const runId of runIds) {
     if (out.length >= limit) break;
@@ -22724,7 +23353,7 @@ async function runReadyCodingAgents(root, runIds, limit, args) {
             id: initialized.worker_id,
             command: process.execPath,
             args: workerAgentChildArgs({
-              projectDir: resolve23(root, ".."),
+              projectDir: resolve26(root, ".."),
               worker: initialized,
               executorId,
               timeoutMs,
@@ -22733,7 +23362,7 @@ async function runReadyCodingAgents(root, runIds, limit, args) {
               agentModel: args["agent-model"],
               agentProfile: args["agent-profile"]
             }),
-            cwd: resolve23(root, ".."),
+            cwd: resolve26(root, ".."),
             timeoutMs: timeoutMs + 15e3,
             maxOutputBytes: 16 * 1024 * 1024
           }
@@ -22848,7 +23477,7 @@ function workerAgentChildArgs({
   return values;
 }
 function recordSupervisorFailure(root, selection, supervised) {
-  return withProjectTransaction(resolve23(root, ".."), {
+  return withProjectTransaction(resolve26(root, ".."), {
     kind: "worker-supervisor-failure",
     idempotencyKey: [
       "worker-supervisor-failure",
@@ -22938,7 +23567,7 @@ function recordSupervisorFailureTransaction(root, selection, supervised) {
     created_at: timestamp
   };
   writeJson(
-    join45(
+    join47(
       workerDir(root, worker.run_id, worker.worker_id),
       `adapter-result-${result.result_id}.json`
     ),
@@ -22951,7 +23580,7 @@ function recordSupervisorFailureTransaction(root, selection, supervised) {
   worker.execution_claimed_at = null;
   worker.execution_claim_expires_at = null;
   worker.updated_at = timestamp;
-  writeJson(join45(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
+  writeJson(join47(workerDir(root, worker.run_id, worker.worker_id), "worker.json"), worker);
   const event = appendEvent(root, "worker.supervisor.failed", "apex-v2", {
     run_id: worker.run_id,
     worker_id: worker.worker_id,
@@ -23043,7 +23672,7 @@ function completeReadyExecuteNodes(root, runIds) {
   return completed;
 }
 function readDecisionQueue2(root, runId) {
-  return readJson(join45(root, "runs", runId, "decision-queue.json"), {
+  return readJson(join47(root, "runs", runId, "decision-queue.json"), {
     schema_version: SCHEMA_VERSION,
     run_id: runId,
     updated_at: now(),
@@ -23052,18 +23681,18 @@ function readDecisionQueue2(root, runId) {
 }
 function writeDecisionQueue(root, queue) {
   queue.updated_at = now();
-  writeJson(join45(root, "runs", queue.run_id, "decision-queue.json"), queue);
+  writeJson(join47(root, "runs", queue.run_id, "decision-queue.json"), queue);
 }
 function findArtifactsForWorker(root, runId, worker) {
-  const artifactDir = join45(root, "artifacts", runId);
+  const artifactDir = join47(root, "artifacts", runId);
   if (!existsSync31(artifactDir)) return [];
-  return readDirectoryJsonFiles(artifactDir).map((file) => readJson(join45(artifactDir, file))).filter((artifact) => artifact.refs.some((ref) => ref.startsWith(`${worker.namespace}/`)));
+  return readDirectoryJsonFiles(artifactDir).map((file) => readJson(join47(artifactDir, file))).filter((artifact) => artifact.refs.some((ref) => ref.startsWith(`${worker.namespace}/`)));
 }
 function findAdapterResultsForWorker(root, worker) {
   const dir = workerDir(root, worker.run_id, worker.worker_id);
   if (!existsSync31(dir)) return [];
-  const results = readdirSync19(dir).filter((file) => file.startsWith("adapter-result-") && file.endsWith(".json")).map((file) => readJson(join45(dir, file)));
-  const hostResult = readJson(join45(dir, "host-result.json"), null);
+  const results = readdirSync19(dir).filter((file) => file.startsWith("adapter-result-") && file.endsWith(".json")).map((file) => readJson(join47(dir, file)));
+  const hostResult = readJson(join47(dir, "host-result.json"), null);
   if (hostResult) {
     results.push({
       result_id: hostResult.action_id,
@@ -23076,7 +23705,7 @@ function findAdapterResultsForWorker(root, worker) {
   return results;
 }
 function dispatchReadyWorkers(root, runIds, options = {}) {
-  const project = readJson(join45(root, "project.json"));
+  const project = readJson(join47(root, "project.json"));
   const dispatched = [];
   const requestedLimit = Number.isInteger(Number(options.limit)) ? Math.max(0, Number(options.limit)) : Number.POSITIVE_INFINITY;
   let available = Math.min(
@@ -23112,7 +23741,7 @@ function dispatchReadyWorkers(root, runIds, options = {}) {
   return dispatched;
 }
 function countOpenWorkers(root) {
-  const runsDir = join45(root, "runs");
+  const runsDir = join47(root, "runs");
   if (!existsSync31(runsDir)) return 0;
   let count = 0;
   for (const runEntry of readdirSync19(runsDir, { withFileTypes: true })) {
@@ -23189,8 +23818,8 @@ function passNode(root, runId, nodeId, artifactIds, reason) {
   recordRunClosure(root, run, "project.tick");
 }
 function renderAutoMandate(root, run) {
-  const roadmap = readJson(join45(root, "roadmap", "graph.json"));
-  const intake = readJson(join45(root, "intake", "items.json"), []);
+  const roadmap = readJson(join47(root, "roadmap", "graph.json"));
+  const intake = readJson(join47(root, "intake", "items.json"), []);
   const roadmapNode = roadmap.nodes.find((node) => node.id === run.roadmap_node_id);
   const intakeItem = intake.find((item) => item.id === roadmapNode?.source_intake_id);
   return `\u76EE\u6807\uFF1A${roadmapNode?.title || run.roadmap_node_id}
@@ -23205,7 +23834,7 @@ function renderAutoMandate(root, run) {
 \u6210\u529F\u6807\u51C6\uFF1A\u8FDB\u5165 plan_graph \u524D\uFF0C\u5FC5\u987B\u62E5\u6709 context snapshot \u548C\u53EF\u9A8C\u8BC1 PlanGraph\u3002`;
 }
 function updateLearningProposal(root, id, updater) {
-  const path = join45(root, "learning", "proposals.json");
+  const path = join47(root, "learning", "proposals.json");
   const proposals = readJson(path, []);
   const proposal = proposals.find((item) => item.id === id);
   if (!proposal) throw new Error(`\u627E\u4E0D\u5230 learning proposal\uFF1A${id}`);
@@ -23214,7 +23843,7 @@ function updateLearningProposal(root, id, updater) {
   return proposal;
 }
 function getLearningProposal(root, id) {
-  const proposals = readJson(join45(root, "learning", "proposals.json"), []);
+  const proposals = readJson(join47(root, "learning", "proposals.json"), []);
   const proposal = proposals.find((item) => item.id === id);
   if (!proposal) throw new Error(`\u627E\u4E0D\u5230 learning proposal\uFF1A${id}`);
   return proposal;
@@ -23223,7 +23852,7 @@ function approveLearningForRuns(root, transitions) {
   for (const proposalId of transitions.flatMap((item) => item.proposal_ids || [])) {
     const proposal = getLearningProposal(root, proposalId);
     if (proposal.status !== "proposed") continue;
-    withProjectTransaction(resolve23(root, ".."), {
+    withProjectTransaction(resolve26(root, ".."), {
       kind: "learning-auto-approve",
       idempotencyKey: `learning-auto-approve:${proposalId}`
     }, () => {
@@ -23245,7 +23874,7 @@ function approveLearningForRuns(root, transitions) {
   }
 }
 function queueApprovedLearningJob(root, proposal) {
-  const path = join45(root, "learning", "jobs.json");
+  const path = join47(root, "learning", "jobs.json");
   const jobs = readJson(path, []);
   let job = jobs.find(
     (item) => item.job_id === proposal.apply_job_id || item.proposal_id === proposal.id
@@ -23284,24 +23913,24 @@ function queueApprovedLearningJob(root, proposal) {
 }
 function processLearningJobs(root, options = {}) {
   const limit = Math.max(1, Number(options.limit || 1));
-  const snapshot = readJson(join45(root, "learning", "jobs.json"), []);
+  const snapshot = readJson(join47(root, "learning", "jobs.json"), []);
   const selected = snapshot.filter(
     (job) => (!options.jobId || job.job_id === options.jobId) && (job.status === "queued" || job.status === "failed" && Number(job.attempt || 0) < 3)
   ).slice(0, limit);
   const results = [];
   for (const selectedJob of selected) {
     try {
-      const result = withProjectTransaction(resolve23(root, ".."), {
+      const result = withProjectTransaction(resolve26(root, ".."), {
         kind: "learning-apply-job",
         idempotencyKey: selectedJob.idempotency_key
       }, () => applyLearningJobTransaction(root, selectedJob.job_id)).result;
       results.push(result);
     } catch (error) {
-      const failed = withProjectTransaction(resolve23(root, ".."), {
+      const failed = withProjectTransaction(resolve26(root, ".."), {
         kind: "learning-apply-job-failed",
         idempotencyKey: `learning-apply-job-failed:${selectedJob.job_id}:${shortId("attempt")}`
       }, () => {
-        const path = join45(root, "learning", "jobs.json");
+        const path = join47(root, "learning", "jobs.json");
         const jobs = readJson(path, []);
         const job = jobs.find((item) => item.job_id === selectedJob.job_id);
         if (!job || job.status === "applied") return job;
@@ -23336,7 +23965,7 @@ function processLearningJobs(root, options = {}) {
   return results;
 }
 function applyLearningJobTransaction(root, jobId) {
-  const jobsPath = join45(root, "learning", "jobs.json");
+  const jobsPath = join47(root, "learning", "jobs.json");
   const jobs = readJson(jobsPath, []);
   const job = jobs.find((item) => item.job_id === jobId);
   if (!job) throw new Error(`\u627E\u4E0D\u5230 learning apply job\uFF1A${jobId}`);
@@ -23362,7 +23991,7 @@ function applyLearningJobTransaction(root, jobId) {
   job.error = null;
   job.updated_at = timestamp;
   writeJson(jobsPath, jobs);
-  const project = readJson(join45(root, "project.json"));
+  const project = readJson(join47(root, "project.json"));
   const knowledgeVersionBefore = Number(project.knowledge_version || 0);
   const appliedFile = appendLearningToKnowledge(root, proposal);
   const knowledgeVersionAfter = bumpKnowledgeVersion(root);
@@ -23380,9 +24009,9 @@ function applyLearningJobTransaction(root, jobId) {
     evidence_refs: proposal.evidence_refs,
     applied_at: now()
   };
-  ensureDir(join45(root, "learning", "receipts"));
+  ensureDir(join47(root, "learning", "receipts"));
   writeJson(
-    join45(root, "learning", "receipts", `receipt-${receipt.receipt_id}.json`),
+    join47(root, "learning", "receipts", `receipt-${receipt.receipt_id}.json`),
     receipt
   );
   updateLearningProposal(root, proposal.id, (item) => {
@@ -23420,8 +24049,8 @@ function applyLearningJobTransaction(root, jobId) {
   };
 }
 function appendLearningToKnowledge(root, proposal) {
-  const target = join45(root, proposal.target_file);
-  if (!target.startsWith(join45(root, "knowledge"))) {
+  const target = join47(root, proposal.target_file);
+  if (!target.startsWith(join47(root, "knowledge"))) {
     throw new Error(`learning proposal \u53EA\u80FD\u5199\u5165 knowledge/\uFF1A${proposal.target_file}`);
   }
   const section = renderAppliedLearningSection(proposal);
@@ -23434,7 +24063,7 @@ ${section}
   }
   return {
     target_file: proposal.target_file,
-    content_sha256: createHash14("sha256").update(section).digest("hex"),
+    content_sha256: createHash15("sha256").update(section).digest("hex"),
     applied_content: section
   };
 }
@@ -23456,14 +24085,14 @@ ${bullet(proposal.evidence_refs)}
 `;
 }
 function appendAppliedLearning(root) {
-  const proposals = readJson(join45(root, "learning", "proposals.json"), []);
+  const proposals = readJson(join47(root, "learning", "proposals.json"), []);
   for (const proposal of proposals.filter((item) => item.status === "applied")) {
     appendLearningToKnowledge(root, proposal);
   }
 }
 function bumpKnowledgeVersion(root) {
   const timestamp = now();
-  const manifestPath = join45(root, "knowledge", "manifest.json");
+  const manifestPath = join47(root, "knowledge", "manifest.json");
   const manifest = readJson(manifestPath, { version: 0, files: [] });
   manifest.version = Number(manifest.version || 0) + 1;
   manifest.updated_at = timestamp;
@@ -23475,7 +24104,7 @@ function bumpKnowledgeVersion(root) {
   return manifest.version;
 }
 function loadPlanGraph3(root, runId) {
-  const plan = readJson(join45(root, "runs", runId, "plan-graph.json"), null);
+  const plan = readJson(join47(root, "runs", runId, "plan-graph.json"), null);
   if (!plan) throw new Error(`\u627E\u4E0D\u5230 plan graph\uFF1A${runId}`);
   return plan;
 }
@@ -23485,17 +24114,17 @@ function getPlanNode2(plan, planNodeId) {
   return node;
 }
 function listRunStates(root) {
-  const runsDir = join45(root, "runs");
+  const runsDir = join47(root, "runs");
   if (!existsSync31(runsDir)) return [];
-  return readdirSync19(runsDir, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => readJson(join45(runsDir, entry.name, "run.json"), null)).filter(Boolean);
+  return readdirSync19(runsDir, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => readJson(join47(runsDir, entry.name, "run.json"), null)).filter(Boolean);
 }
 function findRunFiles(root, name) {
-  const runsDir = join45(root, "runs");
+  const runsDir = join47(root, "runs");
   if (!existsSync31(runsDir)) return [];
   const out = [];
   for (const runEntry of readdirSync19(runsDir, { withFileTypes: true })) {
     if (!runEntry.isDirectory()) continue;
-    const file = join45(runsDir, runEntry.name, name);
+    const file = join47(runsDir, runEntry.name, name);
     if (existsSync31(file)) out.push(file);
   }
   return out;
@@ -23505,7 +24134,7 @@ function findFilesByName(root, predicate) {
   function walk(dir) {
     if (!existsSync31(dir)) return;
     for (const entry of readdirSync19(dir, { withFileTypes: true })) {
-      const path = join45(dir, entry.name);
+      const path = join47(dir, entry.name);
       if (entry.isDirectory()) {
         walk(path);
       } else if (entry.isFile() && predicate(entry.name)) {

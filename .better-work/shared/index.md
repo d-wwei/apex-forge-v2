@@ -33,10 +33,11 @@ Apex Forge V2 是 Node.js ESM 实现的 CLI/Agent orchestration platform，以 `
 11. 正式 benchmark 并发只能通过 controller lock + revision CAS + lease/fencing；同一 repository 保持串行，跨 repository 最多 3 个正式 worker。（source: `src/benchmark/controller-coordinator.mjs`, `scripts/product-benchmark-controller.mjs`）
 12. Factory scheduler 使用独立 scheduler lock；每个 Agent worker 在运行前取得 execution lease/fencing，陈旧结果不得覆盖新状态。（source: `src/core/scheduler-lock.mjs`, `src/core/worker.mjs`, `src/apex-v2.mjs`）
 13. Learning proposal 与 apply job 入队即可关闭 delivery；知识写回必须由独立 job 产生 receipt，且不重新打开已完成 run。（source: `src/apex-v2.mjs`, `src/core/run-state.mjs`, `schemas/learning-apply-*.schema.json`）
+14. Bug/Test Failure 的 Negative Control record 默认 shadow；enforce 时 Review 与 Merge 均 fail closed。High/Critical Governed 计划只自动生成 proposed Decision Note，不自动接受或实施。（source: `src/core/negative-control.mjs`, `src/core/decision-notes.mjs`, `src/commands/integration.mjs`）
 
 ## Testing
 
-- 全量：`npm test`，当前稳定基线 `630/630 PASS`。（source: `package.json`, `.better-work/shared/progress.md`）
+- 全量：`npm test`，当前稳定基线 `637/637 PASS`。（source: `package.json`, `.better-work/shared/progress.md`）
 - 吞吐架构：`npm run benchmark:throughput`，当前 `11/11 PASS`。（source: `package.json`, `tests/project-agent-scheduler.test.mjs`, `tests/throughput-benchmark.test.mjs`）
 - Contract：`npm run check:schemas`。（source: `package.json`）
 - Strict state：`npm run validate`。（source: `package.json`）
@@ -70,6 +71,7 @@ Apex Forge V2 是 Node.js ESM 实现的 CLI/Agent orchestration platform，以 `
 | 修改 WorkerExecutor | `src/contracts/worker-executor.mjs`, `src/executors/`, `tests/extension-boundaries.test.mjs` |
 | 修改 Factory scheduler / worker lease | `src/apex-v2.mjs`, `src/core/scheduler-lock.mjs`, `src/core/worker.mjs`, `tests/project-agent-scheduler.test.mjs` |
 | 修改异步 Learning | `src/apex-v2.mjs`, `src/core/run-state.mjs`, `src/core/operational-state.mjs`, `schemas/learning-apply-*.schema.json` |
+| 修改 DSH lifecycle R1 | `src/core/lifecycle.mjs`, `src/core/negative-control.mjs`, `src/core/decision-notes.mjs`, `src/commands/dsh-lifecycle.mjs` |
 | 修改 Product Gate | `src/benchmark/plugin-benchmark.mjs`, `src/benchmark/result-provenance.mjs`, `tests/benchmark-harness.test.mjs`, `tests/benchmark-result-provenance.test.mjs` |
 | 修改 benchmark 任务或 controller | `benchmarks/plugin-vs-v1/tasks/`, `src/benchmark/controller-state.mjs`, `scripts/product-benchmark-controller.mjs` |
 | 修改 release candidate | `src/release/candidate-bundle.mjs`, `scripts/freeze-release-candidate.mjs`, `tests/release-candidate.test.mjs` |

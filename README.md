@@ -165,6 +165,38 @@ APEX_CAPABILITY_PROVIDERS=browser-qa,performance-validation
 
 这不是 provider 安装命令，也不会把未验证平台升级成 `live_verified`。
 
+### DSH Lifecycle R1
+
+当前版本把两项 DSH 原子能力接入了真实 Kernel 生命周期：
+
+- Bug/Test Failure 在生成 PlanGraph 时创建 durable
+  `negative-control.json`。默认 `shadow` 只记录缺口；切换为 `enforce` 后，
+  Review 与 Merge 都要求匹配的 RED failure signature、GREEN evidence 和
+  restoration evidence。
+- High/Critical Governed 计划自动生成幂等的 proposed Decision Note。
+  Decision 正文存入 immutable Artifact，`decisions/index.json` 只保存状态与引用。
+
+Operator CLI：
+
+```bash
+apex-v2 decision list --project .
+apex-v2 decision show --project . --id <decision-id>
+apex-v2 decision propose --project . --run-id <run-id> \
+  --title "..." --rationale "..." --options "A,B"
+
+apex-v2 negative-control show --project . --run-id <run-id>
+apex-v2 negative-control record-red --project . --run-id <run-id> \
+  --command "..." --expected-signature "..." \
+  --observed-signature "..." --evidence <artifact-id>
+apex-v2 negative-control record-green --project . --run-id <run-id> \
+  --command "..." --evidence <artifact-id>
+apex-v2 negative-control restore --project . --run-id <run-id> \
+  --evidence <artifact-id>
+```
+
+Decision accept/implement/supersede、Postmortem routing、Review Learning、
+Simplification Queue 和 Durable Team 仍属于后续批次。
+
 ### 资源保护
 
 - TERM 到 KILL 的完整进程树回收；

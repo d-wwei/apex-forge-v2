@@ -59,6 +59,13 @@
 - **改之前做**：`rg -n "learning.proposed|learning.applied|run.closed|processLearningJobs|recordRunClosure" src tests schemas`
 - **必跑检查**：`node --test --test-name-pattern='project tick --learn|learn propose/approve/apply' tests/apex-v2.test.mjs && node --test tests/event-replay.test.mjs tests/operational-state.test.mjs`
 
+## DSH Lifecycle R1
+
+- **影响范围**：Bug Review/Ship、Decision proposal、Event 顺序、Artifact hash 和 operational state。
+- **为什么危险**：Shadow/Enforce 读取错误会让缺失 Negative Control 静默通过或错误阻断；Decision Artifact 漂移会破坏审计。
+- **改之前做**：`rg -n "Negative Control|decision\\.proposed|dsh_lifecycle|inspectNegativeControlGate" src tests schemas`
+- **必跑检查**：`node --test --test-name-pattern='Decision Note proposal|Bug Negative Control shadow' tests/apex-v2.test.mjs && node --test tests/dsh-lifecycle.test.mjs tests/operational-state.test.mjs`
+
 ## `src/benchmark/`、`scripts/product-benchmark-controller.mjs`
 
 - **入度**：Product Gate、release verify 和 90-run official records 依赖该边界。（source: `src/benchmark/`, `scripts/product-benchmark-controller.mjs`）

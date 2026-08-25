@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/decision-note.schema.json",
+  "title": "Apex Forge V2 Decision Note",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "decision_id",
+    "run_id",
+    "source_intake_id",
+    "mode",
+    "trigger",
+    "status",
+    "title",
+    "scope",
+    "rationale",
+    "options",
+    "proposed_option",
+    "artifact_id",
+    "artifact_sha256",
+    "accepted_by",
+    "accepted_at",
+    "approval_id",
+    "supersedes",
+    "superseded_by",
+    "implementation_refs",
+    "candidate_digest",
+    "verification_refs",
+    "archived_at",
+    "revision",
+    "last_event_id",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "decision_id": { "type": "string", "minLength": 1 },
+    "run_id": { "type": "string", "minLength": 1 },
+    "source_intake_id": { "type": ["string", "null"] },
+    "mode": { "type": "string", "enum": ["shadow", "enforce"] },
+    "trigger": { "type": "string", "enum": ["manual", "high_risk_plan"] },
+    "status": {
+      "type": "string",
+      "enum": [
+        "proposed",
+        "accepted",
+        "rejected",
+        "implemented",
+        "superseded",
+        "archived"
+      ]
+    },
+    "title": { "type": "string", "minLength": 1 },
+    "scope": { "type": "string", "minLength": 1 },
+    "rationale": { "type": "string", "minLength": 1 },
+    "options": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["option_id", "summary", "tradeoffs"],
+        "properties": {
+          "option_id": { "type": "string", "minLength": 1 },
+          "summary": { "type": "string", "minLength": 1 },
+          "tradeoffs": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "proposed_option": { "type": "string", "minLength": 1 },
+    "artifact_id": { "type": "string", "minLength": 1 },
+    "artifact_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "accepted_by": { "type": ["string", "null"] },
+    "accepted_at": { "type": ["string", "null"] },
+    "approval_id": { "type": ["string", "null"] },
+    "supersedes": { "type": ["string", "null"] },
+    "superseded_by": { "type": ["string", "null"] },
+    "implementation_refs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "candidate_digest": {
+      "type": ["string", "null"],
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "verification_refs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "archived_at": { "type": ["string", "null"] },
+    "revision": { "type": "integer", "minimum": 1 },
+    "last_event_id": { "type": ["string", "null"] },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" }
+  },
+  "additionalProperties": false
+}

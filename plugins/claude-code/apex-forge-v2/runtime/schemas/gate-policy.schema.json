@@ -8,7 +8,46 @@
     "schema_version": { "type": "string", "const": "v0" },
     "updated_at": { "type": "string" },
     "human_gates": { "type": "array", "items": { "type": "string" } },
-    "automatic_gates": { "type": "array", "items": { "type": "string" } }
+    "automatic_gates": { "type": "array", "items": { "type": "string" } },
+    "dsh_lifecycle": {
+      "type": "object",
+      "required": ["negative_control", "decision_note"],
+      "properties": {
+        "negative_control": {
+          "type": "object",
+          "required": ["mode", "intake_types"],
+          "properties": {
+            "mode": { "type": "string", "enum": ["off", "shadow", "enforce"] },
+            "intake_types": {
+              "type": "array",
+              "items": { "type": "string", "enum": ["bug", "test_failure"] },
+              "uniqueItems": true
+            }
+          },
+          "additionalProperties": false
+        },
+        "decision_note": {
+          "type": "object",
+          "required": ["mode", "auto_propose", "risk_levels", "workflows"],
+          "properties": {
+            "mode": { "type": "string", "enum": ["off", "shadow"] },
+            "auto_propose": { "type": "boolean" },
+            "risk_levels": {
+              "type": "array",
+              "items": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+              "uniqueItems": true
+            },
+            "workflows": {
+              "type": "array",
+              "items": { "type": "string", "enum": ["quick", "disciplined", "phase_context", "governed"] },
+              "uniqueItems": true
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
   },
   "additionalProperties": false
 }

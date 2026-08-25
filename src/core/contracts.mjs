@@ -428,6 +428,9 @@ function contractTargets(path, value) {
   else if (name === "review-report.json") push("review-report.schema.json");
   else if (name === "integration-report.json") push("integration-report.schema.json");
   else if (name === "learning-report.json") push("learning-report.schema.json");
+  else if (name === "negative-control.json") {
+    push("negative-control-record.schema.json");
+  }
   else if (name.startsWith("receipt-") && normalized.includes("/learning/receipts/")) {
     push("learning-apply-receipt.schema.json");
   }
@@ -468,6 +471,8 @@ function contractTargets(path, value) {
     for (const [index, item] of value.entries()) push("learning-proposal.schema.json", item, `#${index}`);
   } else if (name === "jobs.json" && normalized.includes("/learning/")) {
     for (const [index, item] of value.entries()) push("learning-apply-job.schema.json", item, `#${index}`);
+  } else if (name === "index.json" && normalized.includes("/decisions/")) {
+    for (const [index, item] of value.entries()) push("decision-note.schema.json", item, `#${index}`);
   } else if (name === "items.json" && normalized.includes("/approvals/")) {
     for (const [index, item] of value.entries()) push("approval-request.schema.json", item, `#${index}`);
   }
