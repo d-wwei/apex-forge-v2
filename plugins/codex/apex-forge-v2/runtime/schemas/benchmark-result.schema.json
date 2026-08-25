@@ -59,6 +59,8 @@
       "type": "object",
       "required": [
         "source_commit",
+        "source_tree",
+        "source_manifest_sha256",
         "runtime_hash",
         "model",
         "provider",
@@ -72,6 +74,11 @@
       ],
       "properties": {
         "source_commit": { "type": "string", "minLength": 7 },
+        "source_tree": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+        "source_manifest_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
         "runtime_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
         "model": { "type": "string", "minLength": 1 },
         "provider": { "type": "string", "minLength": 1 },

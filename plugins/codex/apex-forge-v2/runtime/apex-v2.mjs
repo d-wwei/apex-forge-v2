@@ -7177,7 +7177,7 @@ import {
   writeFileSync as writeFileSync16
 } from "node:fs";
 import { createHash as createHash15 } from "node:crypto";
-import { basename as basename9, join as join47, resolve as resolve26 } from "node:path";
+import { basename as basename10, join as join47, resolve as resolve26 } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // src/cli/args.mjs
@@ -12122,7 +12122,7 @@ import {
 } from "node:fs";
 import { randomUUID as randomUUID3 } from "node:crypto";
 import { homedir, tmpdir } from "node:os";
-import { dirname as dirname5, join as join14, resolve as resolve7 } from "node:path";
+import { basename as basename4, dirname as dirname5, join as join14, resolve as resolve7 } from "node:path";
 import { spawnSync as spawnSync4 } from "node:child_process";
 
 // src/core/process-guard.mjs
@@ -12315,7 +12315,7 @@ function sanitizeEnvironment(environment, allowedSecretNames = []) {
 }
 function buildMacSandboxProfile(options) {
   const writableRules = options.writablePaths.map((path) => `(subpath ${quote(path)})`).join(" ");
-  const deniedSecretPaths = [...defaultSecretPaths(), ...options.deniedReadPaths || []].map((path) => `(deny file-read* (subpath ${quote(path)}))`).join(" ");
+  const deniedSecretPaths = [...defaultSecretPaths(), ...options.deniedReadPaths || []].map(policyPath).map((path) => `(deny file-read* (subpath ${quote(path)}))`).join(" ");
   return [
     "(version 1)",
     "(allow default)",
@@ -12338,6 +12338,11 @@ function existingRealPath(path) {
   const resolved = resolve7(path);
   if (existsSync10(resolved)) return realpathSync2(resolved);
   return realpathSync2(dirname5(resolved));
+}
+function policyPath(path) {
+  const resolved = resolve7(path);
+  if (existsSync10(resolved)) return realpathSync2(resolved);
+  return join14(realpathSync2(dirname5(resolved)), basename4(resolved));
 }
 function quote(value) {
   return JSON.stringify(value);
@@ -12678,7 +12683,7 @@ import {
   writeFileSync as writeFileSync7
 } from "node:fs";
 import { homedir as homedir4 } from "node:os";
-import { basename as basename4, dirname as dirname6, join as join16 } from "node:path";
+import { basename as basename5, dirname as dirname6, join as join16 } from "node:path";
 function inspectCodexAdapter(executable = "codex") {
   const result = spawnSync6(executable, ["--version"], {
     encoding: "utf8",
@@ -12730,7 +12735,7 @@ function executeCodexAdapter(options) {
   });
   return {
     executable,
-    executable_name: basename4(executable),
+    executable_name: basename5(executable),
     args,
     command: [result.sandbox.executable, ...result.sandbox.args].join(" "),
     exit_code: result.status ?? 1,
@@ -13618,12 +13623,16 @@ function validateWorkerSemanticEvidence(root, worker, evidence) {
     );
   }
   if (evidence.objective !== worker.objective) {
-    throw new Error("cognitive evidence objective \u5FC5\u987B\u4E0E Worker objective \u4E00\u81F4");
+    throw new Error(
+      `cognitive evidence objective \u5FC5\u987B\u4E0E Worker objective \u9010\u5B57\u4E00\u81F4\uFF1Aexpected=${JSON.stringify(worker.objective)}`
+    );
   }
   if (expectedType === "review") {
     const expectedDigest = cognitiveEvidenceCandidateDigest(root, worker);
     if (evidence.candidate_digest !== expectedDigest) {
-      throw new Error("review evidence \u672A\u7ED1\u5B9A\u5F53\u524D candidate_digest");
+      throw new Error(
+        `review evidence \u672A\u7ED1\u5B9A\u5F53\u524D candidate_digest\uFF1Aexpected=${expectedDigest}`
+      );
     }
   }
   const validation = validateContract(
@@ -13662,6 +13671,7 @@ function cognitiveEvidenceType(planNodeId) {
 
 // src/core/worker-execution.mjs
 var AGENT_RESULT_SCHEMA = schemaPath("agent-result.schema.json");
+var PROVIDER_AGENT_RESULT_SCHEMA = schemaPath("agent-result-provider.schema.json");
 var IGNORED_WORKSPACE_NAMES = /* @__PURE__ */ new Set([
   ".git",
   ".apex-agent",
@@ -13732,7 +13742,7 @@ function executeWorkerExecutor(root, worker, planNode2, options = {}) {
     executable: options.command || resolved.name,
     workspaceDir,
     prompt,
-    outputSchemaPath: AGENT_RESULT_SCHEMA,
+    outputSchemaPath: PROVIDER_AGENT_RESULT_SCHEMA,
     outputPath,
     model: modelSelection.model_id,
     profile: options.profile,
@@ -14055,14 +14065,18 @@ function fileHash2(path) {
   return createHash7("sha256").update(readFileSync12(path)).digest("hex");
 }
 function buildWorkerAgentPrompt(worker, planNode2, options = {}) {
+  const allowedEvidenceRefs = options.allowedEvidenceRefs || worker.read_scope || [];
   const semanticEvidence = options.semanticEvidenceType ? `## Required Semantic Evidence
 
 Return a \`semantic_evidence\` object with:
 - evidence_type: ${options.semanticEvidenceType}
-- objective: exactly the Objective below
+- objective: copy the Objective exactly, character for character
 - source_refs, claims, uncertainties, and acceptance_mapping
-${options.candidateDigest ? `- candidate_digest: ${options.candidateDigest}` : ""}
-- every evidence ref must identify a source you actually inspected.
+${options.candidateDigest ? `- candidate_digest: copy exactly ${options.candidateDigest}` : ""}
+- acceptance_mapping[].evidence_ref must match one source_refs value exactly.
+- do not rewrite, normalize, shorten, or guess any evidence ref.
+- allowed evidence refs include:
+${lines(allowedEvidenceRefs)}
 ` : "";
   return `You are an isolated coding worker in Apex Forge V2.
 
@@ -14180,6 +14194,7 @@ function readAgentResult(path) {
   }
   try {
     const value = readJson(path);
+    if (value.semantic_evidence === null) delete value.semantic_evidence;
     const result = validateContract("agent-result.schema.json", value, path);
     return {
       valid: result.valid,
@@ -15279,6 +15294,7 @@ import { existsSync as existsSync19, mkdtempSync as mkdtempSync2, readFileSync a
 import { tmpdir as tmpdir2 } from "node:os";
 import { join as join26 } from "node:path";
 var RESULT_SCHEMA = schemaPath("agent-result.schema.json");
+var PROVIDER_RESULT_SCHEMA = schemaPath("agent-result-provider.schema.json");
 function runAdapterSmoke(options = {}) {
   const names = options.adapters || DEFAULT_SMOKE_EXECUTOR_IDS;
   const inspections = new Map(inspectWorkerExecutors().map((item) => [item.adapter, item]));
@@ -15307,14 +15323,14 @@ function runAdapterSmoke(options = {}) {
 function runLiveProbe(name, info, timeoutMs) {
   const workspace = mkdtempSync2(join26(tmpdir2(), `apex-adapter-smoke-${name}-`));
   const outputPath = join26(workspace, "result.json");
-  const prompt = 'Do not use tools or modify files. Return verdict "pass", summary "adapter smoke", tests [], risks [], evidence_refs [] using the required structured output.';
+  const prompt = 'Do not use tools or modify files. Return verdict "pass", summary "adapter smoke", tests [], risks [], evidence_refs [], semantic_evidence null, and capability_evidence [] using the required structured output.';
   try {
     const executor = getWorkerExecutor(name);
     const execution = executor.execute({
       executable: name,
       workspaceDir: workspace,
       prompt,
-      outputSchemaPath: RESULT_SCHEMA,
+      outputSchemaPath: name === "codex" ? PROVIDER_RESULT_SCHEMA : RESULT_SCHEMA,
       outputPath,
       timeoutMs,
       smoke: true
@@ -15323,6 +15339,7 @@ function runLiveProbe(name, info, timeoutMs) {
       return { adapter: name, status: "FAIL", mode: "live", version: info.version, session_id: execution.session_id || null, duration_ms: execution.duration_ms, errors: [execution.stderr_tail || "missing structured output"] };
     }
     const value = JSON.parse(readFileSync16(outputPath, "utf8"));
+    if (value.semantic_evidence === null) delete value.semantic_evidence;
     const contract = validateContract("agent-result.schema.json", value, `${name} smoke`);
     return {
       adapter: name,
@@ -15482,8 +15499,8 @@ function dispatchNotifications(root, options = {}) {
   return { delivered, failed, dead_letter: deadLetter };
 }
 function migrateNotificationState(root, timestamp = now()) {
-  const policyPath = join27(root, "policies", "notifications.json");
-  const policy = readJson(policyPath, defaultNotificationPolicy(timestamp));
+  const policyPath2 = join27(root, "policies", "notifications.json");
+  const policy = readJson(policyPath2, defaultNotificationPolicy(timestamp));
   if (policy.delivery?.mode === "outbox" || !policy.delivery?.max_attempts) {
     policy.delivery = {
       mode: "file",
@@ -15492,7 +15509,7 @@ function migrateNotificationState(root, timestamp = now()) {
       retry_backoff_seconds: 60
     };
     policy.updated_at = timestamp;
-    writeJson(policyPath, policy);
+    writeJson(policyPath2, policy);
   }
   const outboxPath = join27(root, "notifications", "outbox.json");
   const notifications = readJson(outboxPath, []);
@@ -17091,7 +17108,7 @@ import {
 } from "node:fs";
 import { createHash as createHash10 } from "node:crypto";
 import {
-  basename as basename5,
+  basename as basename6,
   dirname as dirname8,
   extname,
   isAbsolute,
@@ -17263,7 +17280,7 @@ function assertInsideProject(projectRoot2, target) {
 function detectFormat(projectRoot2, sourcePath, files) {
   const sourceRelative = projectRelative(projectRoot2, sourcePath).toLowerCase();
   const relativeFiles = files.map((path) => projectRelative(projectRoot2, path).toLowerCase());
-  const basenames = new Set(relativeFiles.map((path) => basename5(path)));
+  const basenames = new Set(relativeFiles.map((path) => basename6(path)));
   if (sourceRelative.split("/").some((part) => part === "openspec" || part === ".openspec") || relativeFiles.some((path) => path.split("/").some((part) => part === "openspec" || part === ".openspec")) || basenames.has("proposal.md")) {
     return "openspec";
   }
@@ -17276,7 +17293,7 @@ function assertFormatShape(format, projectRoot2, sourcePath, files) {
   if (format === "native") return;
   const sourceRelative = projectRelative(projectRoot2, sourcePath).toLowerCase();
   const relativeFiles = files.map((path) => projectRelative(projectRoot2, path).toLowerCase());
-  const basenames = new Set(relativeFiles.map((path) => basename5(path)));
+  const basenames = new Set(relativeFiles.map((path) => basename6(path)));
   if (format === "openspec") {
     const recognized = sourceRelative.split("/").some((part) => part === "openspec" || part === ".openspec") || ["proposal.md", "design.md", "tasks.md", "spec.md"].some((name) => basenames.has(name));
     if (!recognized) {
@@ -17401,7 +17418,7 @@ function selectPrimaryDocument(format, documents) {
   })[0];
 }
 function documentRank(document, priorities) {
-  const index = priorities.indexOf(basename5(document.path).toLowerCase());
+  const index = priorities.indexOf(basename6(document.path).toLowerCase());
   return index === -1 ? priorities.length : index;
 }
 function extractTitle(document) {
@@ -17409,7 +17426,7 @@ function extractTitle(document) {
   if (explicit) return cleanInline(explicit);
   const heading = document.sections.find((section) => section.level === 1)?.rawHeading;
   if (heading) return cleanInline(heading);
-  const stem = basename5(document.path, extname(document.path)).replace(/^\d+[-_]?/, "").replaceAll(/[-_]+/g, " ").trim();
+  const stem = basename6(document.path, extname(document.path)).replace(/^\d+[-_]?/, "").replaceAll(/[-_]+/g, " ").trim();
   return stem ? stem[0].toUpperCase() + stem.slice(1) : "Untitled spec";
 }
 function extractDescription(document) {
@@ -17718,7 +17735,7 @@ import {
 } from "node:fs";
 import { createHash as createHash11 } from "node:crypto";
 import { tmpdir as tmpdir3 } from "node:os";
-import { basename as basename6, join as join36, relative as relative7, resolve as resolve18, sep as sep3 } from "node:path";
+import { basename as basename7, join as join36, relative as relative7, resolve as resolve18, sep as sep3 } from "node:path";
 import { spawnSync as spawnSync10 } from "node:child_process";
 function handleMergeCommand(subcommand, args) {
   if (subcommand === "enqueue") {
@@ -18169,7 +18186,7 @@ function prepareVerificationWorkspace(root, run, projectDir) {
       recursive: true,
       filter(source) {
         if (source === projectDir) return true;
-        const name = basename6(source);
+        const name = basename7(source);
         return ![
           ".git",
           ".apex-v2",
@@ -19261,7 +19278,7 @@ import {
   writeFileSync as writeFileSync13
 } from "node:fs";
 import { createHash as createHash12, randomUUID as randomUUID4 } from "node:crypto";
-import { basename as basename7, isAbsolute as isAbsolute2, join as join39, resolve as resolve21 } from "node:path";
+import { basename as basename8, isAbsolute as isAbsolute2, join as join39, resolve as resolve21 } from "node:path";
 import { spawnSync as spawnSync11 } from "node:child_process";
 var DEFAULT_PROTECTED_BRANCHES = Object.freeze([
   "main",
@@ -19510,7 +19527,7 @@ function discoverRepository(repositoryPath) {
   return {
     kind: "repository",
     repository_id: createHash12("sha256").update(commonDir).digest("hex"),
-    name: basename7(rootPath),
+    name: basename8(rootPath),
     root_path: rootPath,
     git_dir: gitDir,
     common_dir: commonDir,
@@ -20650,7 +20667,7 @@ function getPlanNode(plan, id) {
 
 // src/commands/project-workspace.mjs
 import { existsSync as existsSync28, readFileSync as readFileSync22 } from "node:fs";
-import { basename as basename8, join as join41 } from "node:path";
+import { basename as basename9, join as join41 } from "node:path";
 
 // src/core/policy-defaults.mjs
 function defaultGatePolicy(timestamp) {
@@ -20771,7 +20788,7 @@ function initProject(args) {
   const root = storeRoot(projectDir);
   const timestamp = now();
   const firstInit = !existsSync28(join41(root, "project.json"));
-  const projectName = String(args.name || basename8(projectDir) || "apex-v2-project");
+  const projectName = String(args.name || basename9(projectDir) || "apex-v2-project");
   for (const dir of [
     root,
     join41(root, "intake"),
