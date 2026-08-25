@@ -6,7 +6,7 @@
     "component": {
       "type": "application",
       "name": "apex-forge-v2",
-      "version": "0.2.0-rc.1+codex.20260825192056"
+      "version": "0.2.0-rc.1+codex.20260825194250"
     }
   },
   "components": [
