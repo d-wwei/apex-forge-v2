@@ -51,6 +51,7 @@ import {
 } from "./semantic-evidence.mjs";
 
 const AGENT_RESULT_SCHEMA = schemaPath("agent-result.schema.json");
+const PROVIDER_AGENT_RESULT_SCHEMA = schemaPath("agent-result-provider.schema.json");
 const IGNORED_WORKSPACE_NAMES = new Set([
   ".git",
   ".apex-agent",
@@ -141,7 +142,7 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
     executable: options.command || resolved.name,
     workspaceDir,
     prompt,
-    outputSchemaPath: AGENT_RESULT_SCHEMA,
+    outputSchemaPath: PROVIDER_AGENT_RESULT_SCHEMA,
     outputPath,
     model: modelSelection.model_id,
     profile: options.profile,
@@ -506,17 +507,21 @@ function fileHash(path) {
 }
 
 export function buildWorkerAgentPrompt(worker, planNode, options = {}) {
+  const allowedEvidenceRefs = options.allowedEvidenceRefs || worker.read_scope || [];
   const semanticEvidence = options.semanticEvidenceType
     ? `## Required Semantic Evidence
 
 Return a \`semantic_evidence\` object with:
 - evidence_type: ${options.semanticEvidenceType}
-- objective: exactly the Objective below
+- objective: copy the Objective exactly, character for character
 - source_refs, claims, uncertainties, and acceptance_mapping
 ${options.candidateDigest
-    ? `- candidate_digest: ${options.candidateDigest}`
+    ? `- candidate_digest: copy exactly ${options.candidateDigest}`
     : ""}
-- every evidence ref must identify a source you actually inspected.
+- acceptance_mapping[].evidence_ref must match one source_refs value exactly.
+- do not rewrite, normalize, shorten, or guess any evidence ref.
+- allowed evidence refs include:
+${lines(allowedEvidenceRefs)}
 `
     : "";
   return `You are an isolated coding worker in Apex Forge V2.
@@ -641,6 +646,7 @@ function readAgentResult(path) {
   }
   try {
     const value = readJson(path);
+    if (value.semantic_evidence === null) delete value.semantic_evidence;
     const result = validateContract("agent-result.schema.json", value, path);
     return {
       valid: result.valid,

@@ -34,7 +34,7 @@ test("false completion is detected from hidden acceptance, not agent claim", () 
   assert.equal(metrics.completion, 1);
   assert.equal(metrics.hidden_acceptance, 0);
   assert.equal(metrics.false_completion_claim, true);
-  assert.equal(metrics.cost, 17);
+  assert.equal(metrics.cost, 15);
 });
 
 test("interrupted recovery requires a resumed successful process", () => {

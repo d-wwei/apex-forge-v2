@@ -8,6 +8,7 @@ import {
 } from "node:fs";
 import { basename, join, relative, resolve, sep } from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
+import { inspectPreparedSource } from "./prepared-source.mjs";
 
 const PLACEHOLDER_COMMAND = /^\s*(?:true|:|exit\s+0|echo(?:\s|$))/i;
 const STATIC_ONLY_COMMAND = /^\s*!?\s*(?:rg|grep|find|ls|cat|test)\b/;
@@ -80,7 +81,12 @@ export function validateBenchmarkTaskPlans({
     const { file, plan, planPath } = entry;
     const scenarioCounts = new Map();
     const workspace = resolve(workspaceRoot, repository.id);
-    validatePreparedSource({ repository, workspace, file, errors });
+    const preparedSource = validatePreparedSource({
+      repository,
+      workspace,
+      file,
+      errors
+    });
 
     for (const [index, task] of plan.tasks.entries()) {
       const location = `${file}#tasks[${index}]`;
@@ -102,10 +108,13 @@ export function validateBenchmarkTaskPlans({
         acceptance_commands: task.acceptance_commands,
         setup_operations: task.setup_operations,
         hidden_checks: task.hidden_checks,
+        source_tree: repository.source_tree,
+        source_manifest_sha256: preparedSource?.source_manifest_sha256 || "",
         task_digest: digest({
           repository_id: repository.id,
           source_commit: repository.source_commit,
           source_tree: repository.source_tree,
+          source_manifest_sha256: preparedSource?.source_manifest_sha256 || "",
           task
         }),
         task_plan_path: relative(resolve(taskDir, "..", "..", ".."), planPath)
@@ -147,19 +156,19 @@ export function validateBenchmarkTaskPlans({
 function validatePreparedSource({ repository, workspace, file, errors }) {
   if (!existsSync(workspace)) {
     errors.push(issue("workspace_missing", file, workspace));
-    return;
+    return null;
   }
   const sourcePath = join(workspace, ".benchmark-source.json");
   if (!existsSync(sourcePath)) {
     errors.push(issue("source_manifest_missing", file, sourcePath));
-    return;
+    return null;
   }
   let source;
   try {
     source = JSON.parse(readFileSync(sourcePath, "utf8"));
   } catch (error) {
     errors.push(issue("source_manifest_invalid", file, error.message));
-    return;
+    return null;
   }
   for (const field of ["id", "source_commit", "source_tree"]) {
     if (source[field] !== repository[field]) {
@@ -170,6 +179,26 @@ function validatePreparedSource({ repository, workspace, file, errors }) {
       ));
     }
   }
+  let observed;
+  try {
+    observed = inspectPreparedSource({ repository, workspace });
+  } catch (error) {
+    errors.push(issue("source_provenance_error", file, error.message));
+    return null;
+  }
+  for (const error of observed.errors) {
+    errors.push(issue(error.kind, file, error.detail));
+  }
+  for (const field of ["source_manifest_sha256", "source_file_count"]) {
+    if (source[field] !== observed[field]) {
+      errors.push(issue(
+        "source_manifest_mismatch",
+        file,
+        `${field} expected=${observed[field]} actual=${source[field]}`
+      ));
+    }
+  }
+  return observed;
 }
 
 function validateTask({ task, location, workspace, errors }) {

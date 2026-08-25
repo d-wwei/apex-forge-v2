@@ -12,6 +12,7 @@ import { spawnSync } from "node:child_process";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { benchmarkEnvironment } from "../src/benchmark/environment.mjs";
+import { inspectPreparedSource } from "../src/benchmark/prepared-source.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const benchmarkRoot = join(repoRoot, "benchmarks", "plugin-vs-v1");
@@ -68,6 +69,17 @@ for (const repository of selectedRepositories) {
   if (withDependencies) {
     manifest.dependencies = prepareDependencies(target, repository);
   }
+  const provenance = inspectPreparedSource({ repository, workspace: target });
+  if (provenance.status !== "PASS") {
+    throw new Error(
+      `prepared source provenance failed for ${repository.id}: `
+      + JSON.stringify(provenance.errors)
+    );
+  }
+  Object.assign(manifest, {
+    source_manifest_sha256: provenance.source_manifest_sha256,
+    source_file_count: provenance.source_file_count
+  });
   writeFileSync(join(target, ".benchmark-source.json"), `${JSON.stringify(manifest, null, 2)}\n`);
   initializeBaseRepository(target, repository);
   if (withDependencies) {

@@ -68,6 +68,8 @@ export function evaluateBenchmarkRun({
     metrics,
     provenance: {
       source_commit: repositoryManifest.source_commit,
+      source_tree: repositoryManifest.source_tree,
+      source_manifest_sha256: repositoryManifest.source_manifest_sha256,
       runtime_hash: candidateManifest.content.runtime_sha256,
       model: cohort.model || model || "",
       provider: cohort.provider || provider || "",
@@ -75,7 +77,6 @@ export function evaluateBenchmarkRun({
       runner_version: cohort.runner_version || "",
       execution_config_fingerprint: cohort.execution_config_fingerprint || "",
       environment_fingerprint: environmentFingerprint({
-        mode,
         candidateManifest,
         repositoryManifest,
         cohort
@@ -86,6 +87,7 @@ export function evaluateBenchmarkRun({
     },
     evidence: {
       task_digest: task.task_digest,
+      usage: normalizedUsage(execution.usage),
       agent_exit_code: execution.exit_code,
       agent_timed_out: execution.timed_out,
       agent_session_id: execution.session_id,
@@ -128,8 +130,7 @@ export function scoreBenchmarkMetrics({
   const claimedPass = execution.output?.verdict === "pass";
   const usage = execution.usage || {};
   const tokenCost = number(usage.input_tokens)
-    + number(usage.output_tokens)
-    + number(usage.reasoning_tokens);
+    + number(usage.output_tokens);
   return {
     completion: completed ? 1 : 0,
     user_actions: 0,
@@ -359,7 +360,6 @@ function resolveCandidateRoot(candidateManifest) {
 }
 
 function environmentFingerprint({
-  mode,
   candidateManifest,
   repositoryManifest,
   cohort
@@ -373,12 +373,35 @@ function environmentFingerprint({
     reasoning_effort: cohort.reasoning_effort || "",
     runner_version: cohort.runner_version || "",
     execution_config_fingerprint: cohort.execution_config_fingerprint || "",
-    mode,
     candidate_digest: candidateManifest.release_candidate_digest,
     repository: repositoryManifest.id,
     source_commit: repositoryManifest.source_commit,
+    source_tree: repositoryManifest.source_tree,
+    source_manifest_sha256: repositoryManifest.source_manifest_sha256,
     dependency_hash: repositoryManifest.dependencies?.dependency_hash || "unprepared"
   })).digest("hex");
+}
+
+function normalizedUsage(usage = {}) {
+  const inputTokens = number(usage.input_tokens);
+  const cachedInputTokens = Math.min(
+    inputTokens,
+    number(usage.cached_input_tokens)
+  );
+  const outputTokens = number(usage.output_tokens);
+  return {
+    accounting_version: "v1",
+    source: String(usage.source || "codex-rollout-total"),
+    scope: "run-cumulative",
+    input_tokens: inputTokens,
+    cached_input_tokens: cachedInputTokens,
+    uncached_input_tokens: inputTokens - cachedInputTokens,
+    output_tokens: outputTokens,
+    reasoning_tokens: number(usage.reasoning_tokens),
+    reasoning_included_in_output: true,
+    total_tokens: inputTokens + outputTokens,
+    estimated_cost_usd: null
+  };
 }
 
 function parseGitStatus(value) {

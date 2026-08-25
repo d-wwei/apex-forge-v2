@@ -153,6 +153,8 @@ function provenanceFixture() {
     },
     provenance: {
       source_commit: "1234567",
+      source_tree: "1".repeat(40),
+      source_manifest_sha256: "2".repeat(64),
       runtime_hash: RUNTIME_HASH,
       model: "fixture-model",
       provider: "fixture-provider",

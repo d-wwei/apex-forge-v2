@@ -7,8 +7,10 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { spawnSync } from "node:child_process";
 import test from "node:test";
 import { validateBenchmarkTaskPlans } from "../src/benchmark/task-plans.mjs";
+import { sourceManifestFromGit } from "../src/benchmark/prepared-source.mjs";
 
 const scenarios = [
   "simple",
@@ -108,11 +110,32 @@ function createFixture() {
   mkdirSync(taskDir, { recursive: true });
   mkdirSync(workspace, { recursive: true });
   writeFileSync(join(workspace, "source.txt"), "GOOD\n");
+  git(workspace, ["init", "-q"]);
+  git(workspace, ["config", "user.name", "Test"]);
+  git(workspace, ["config", "user.email", "test@example.com"]);
+  git(workspace, ["add", "-A"]);
+  git(workspace, ["commit", "-qm", "source"]);
+  const sourceCommit = git(workspace, ["rev-parse", "HEAD"]);
+  const sourceTree = git(workspace, ["rev-parse", "HEAD^{tree}"]);
   writeJson(join(workspace, ".benchmark-source.json"), {
     id: "repo",
-    source_commit: "abcdef0",
-    source_tree: "1234567"
+    source_commit: sourceCommit,
+    source_tree: sourceTree
   });
+  const repository = {
+    id: "repo",
+    source_path: workspace,
+    source_commit: sourceCommit,
+    source_tree: sourceTree,
+    prepare_outputs: []
+  };
+  const {
+    source_manifest_sha256,
+    source_file_count
+  } = sourceManifestFromGit(repository);
+  const source = readJson(join(workspace, ".benchmark-source.json"));
+  Object.assign(source, { source_manifest_sha256, source_file_count });
+  writeJson(join(workspace, ".benchmark-source.json"), source);
   const planPath = join(taskDir, "repo.json");
   writeJson(planPath, {
     repository_id: "repo",
@@ -144,15 +167,17 @@ function createFixture() {
     workspace,
     planPath,
     matrix: {
-      repositories: [{
-        id: "repo",
-        source_commit: "abcdef0",
-        source_tree: "1234567"
-      }],
+      repositories: [repository],
       scenarios: scenarios.map((id) => ({ id }))
     },
     schema: readJson(new URL("../schemas/benchmark-task-plan.schema.json", import.meta.url))
   };
+}
+
+function git(cwd, args) {
+  const result = spawnSync("git", args, { cwd, encoding: "utf8" });
+  assert.equal(result.status, 0, result.stderr);
+  return result.stdout.trim();
 }
 
 function validateFixture(fixture) {

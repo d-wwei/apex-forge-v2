@@ -130,6 +130,21 @@ test("benchmark rejects model, execution cohort, and environment drift", () => {
   ));
 });
 
+test("benchmark rejects cross-arm environment drift for the same task", () => {
+  const tasks = buildBenchmarkPlan({
+    repositories: ["repo"],
+    scenarios: ["simple"]
+  }).tasks;
+  const results = completeResults(tasks);
+  results.find((result) => result.mode === "plugin-kernel")
+    .provenance.environment_fingerprint = "different-environment";
+  const evaluation = evaluateBenchmark(tasks, results);
+  assert.equal(evaluation.status, "BLOCKED");
+  assert.ok(evaluation.validation_errors.some((error) =>
+    error.kind === "environment_drift"
+  ));
+});
+
 test("absolute gates fail closed when completion and safety are zero", () => {
   const tasks = buildBenchmarkPlan({
     repositories: ["repo"],
@@ -422,6 +437,8 @@ function record(task, mode, metrics) {
     metrics: structuredClone(metrics),
     provenance: {
       source_commit: "1234567",
+      source_tree: "1".repeat(40),
+      source_manifest_sha256: "2".repeat(64),
       runtime_hash: HASH,
       model: "fixture-model",
       provider: "fixture-provider",

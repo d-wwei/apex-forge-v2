@@ -46,6 +46,7 @@ import {
 } from "../src/core/process-guard.mjs";
 import { withProjectLock } from "../src/core/project-lock.mjs";
 import { benchmarkEnvironment } from "../src/benchmark/environment.mjs";
+import { inspectPreparedSource } from "../src/benchmark/prepared-source.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 Object.assign(process.env, benchmarkEnvironment(process.env));
@@ -156,6 +157,7 @@ async function runSelected(context, args) {
     const repository = context.matrix.repositories.find(
       (item) => item.id === run.repository
     );
+    assertPreparedRepository(context, repository);
     const runRoot = join(context.runWorkspaceRoot, safeName(run.run_key));
     mkdirSync(runRoot, { recursive: true });
     let finished = false;
@@ -240,7 +242,10 @@ async function runSelected(context, args) {
           || process.env.APEX_BENCHMARK_REASONING_EFFORT
           || null,
         profile: args.profile || process.env.APEX_BENCHMARK_CODEX_PROFILE || null,
-        pluginBootstrap
+        pluginBootstrap,
+        benchmarkRoot,
+        controllerRoot: context.controllerRoot,
+        repositoryRoot: repoRoot
       });
       let pluginCloseout = null;
       if (
@@ -345,6 +350,7 @@ async function runSelected(context, args) {
         );
       }
 
+      assertPreparedRepository(context, repository);
       const totalWallMs = sumProcessMetric(runRoot, "duration_ms")
         + Math.max(0, Date.now() - started - execution.duration_ms);
       const totalUsage = sumUsage(runRoot);
@@ -360,6 +366,7 @@ async function runSelected(context, args) {
         candidateManifest: context.candidate,
         repositoryManifest: {
           ...repository,
+          source_manifest_sha256: task.source_manifest_sha256,
           dependencies: readJson(
             join(context.baseRoot, run.repository, ".benchmark-dependencies.json"),
             null
@@ -867,6 +874,32 @@ function ensurePreparedDependencies(context) {
       throw new Error(`task baseline not verified: ${repository.id}`);
     }
   }
+}
+
+function assertPreparedRepository(context, repository) {
+  const root = join(context.baseRoot, repository.id);
+  const observed = inspectPreparedSource({ repository, workspace: root });
+  if (observed.status !== "PASS") {
+    throw Object.assign(
+      new Error(
+        `prepared source content mismatch: ${repository.id}: `
+        + JSON.stringify(observed.errors)
+      ),
+      { stopController: true }
+    );
+  }
+  const declared = readJson(join(root, ".benchmark-source.json"), null);
+  if (
+    !declared
+    || declared.source_manifest_sha256 !== observed.source_manifest_sha256
+    || declared.source_file_count !== observed.source_file_count
+  ) {
+    throw Object.assign(
+      new Error(`prepared source manifest mismatch: ${repository.id}`),
+      { stopController: true }
+    );
+  }
+  return observed;
 }
 
 function prepareModeInputs(context, runRoot, mode) {

@@ -11,6 +11,7 @@ import { validateContract } from "./contracts.mjs";
 import { schemaPath } from "./schema-paths.mjs";
 
 const RESULT_SCHEMA = schemaPath("agent-result.schema.json");
+const PROVIDER_RESULT_SCHEMA = schemaPath("agent-result-provider.schema.json");
 
 export function runAdapterSmoke(options = {}) {
   const names = options.adapters || DEFAULT_SMOKE_EXECUTOR_IDS;
@@ -41,14 +42,14 @@ export function runAdapterSmoke(options = {}) {
 function runLiveProbe(name, info, timeoutMs) {
   const workspace = mkdtempSync(join(tmpdir(), `apex-adapter-smoke-${name}-`));
   const outputPath = join(workspace, "result.json");
-  const prompt = 'Do not use tools or modify files. Return verdict "pass", summary "adapter smoke", tests [], risks [], evidence_refs [] using the required structured output.';
+  const prompt = 'Do not use tools or modify files. Return verdict "pass", summary "adapter smoke", tests [], risks [], evidence_refs [], semantic_evidence null, and capability_evidence [] using the required structured output.';
   try {
     const executor = getWorkerExecutor(name);
     const execution = executor.execute({
       executable: name,
       workspaceDir: workspace,
       prompt,
-      outputSchemaPath: RESULT_SCHEMA,
+      outputSchemaPath: name === "codex" ? PROVIDER_RESULT_SCHEMA : RESULT_SCHEMA,
       outputPath,
       timeoutMs,
       smoke: true
@@ -57,6 +58,7 @@ function runLiveProbe(name, info, timeoutMs) {
       return { adapter: name, status: "FAIL", mode: "live", version: info.version, session_id: execution.session_id || null, duration_ms: execution.duration_ms, errors: [execution.stderr_tail || "missing structured output"] };
     }
     const value = JSON.parse(readFileSync(outputPath, "utf8"));
+    if (value.semantic_evidence === null) delete value.semantic_evidence;
     const contract = validateContract("agent-result.schema.json", value, `${name} smoke`);
     return {
       adapter: name,

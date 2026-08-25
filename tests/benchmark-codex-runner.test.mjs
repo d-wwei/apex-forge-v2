@@ -4,6 +4,7 @@ import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import {
+  benchmarkSandboxPolicy,
   buildBenchmarkCodexArgs,
   buildBenchmarkPrompt,
   collectCodexUsage,
@@ -101,6 +102,28 @@ test("Plugin fast path keeps the Agent inside the claimed workspace and out of K
   assert.match(prompt, /already claimed[\s\S]*Do not read plugin Skill files/);
   assert.match(prompt, /Host Adapter will capture the patch/);
   assert.match(prompt, /include `review`/);
+});
+
+test("benchmark sandbox denies hidden controller inputs and only exposes agent IO for writes", () => {
+  const policy = benchmarkSandboxPolicy({
+    workspace: "/private/tmp/agent/workspace",
+    runRoot: "/private/tmp/controller/run",
+    codexHome: "/private/tmp/agent/codex-home",
+    benchmarkRoot: "/repo/benchmarks/plugin-vs-v1",
+    controllerRoot: "/private/tmp/controller",
+    repositoryRoot: "/repo",
+    extraDeniedReadPaths: ["/private/hidden"]
+  });
+  assert.deepEqual(policy.writablePaths, [
+    "/private/tmp/agent/codex-home",
+    "/private/tmp/controller/run/agent-io"
+  ]);
+  assert.ok(policy.deniedReadPaths.includes("/repo/benchmarks/plugin-vs-v1/tasks"));
+  assert.ok(policy.deniedReadPaths.includes("/repo/benchmarks/plugin-vs-v1/results"));
+  assert.ok(policy.deniedReadPaths.includes("/private/tmp/controller/controller.json"));
+  assert.ok(policy.deniedReadPaths.includes("/repo/.git"));
+  assert.ok(policy.deniedReadPaths.includes("/private/hidden"));
+  assert.ok(!policy.writablePaths.includes("/private/tmp/controller/run"));
 });
 
 test("Codex JSONL parsing captures session and usage", () => {

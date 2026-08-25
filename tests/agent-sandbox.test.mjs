@@ -53,6 +53,32 @@ console.log(JSON.stringify(result));
   assert.equal(existsSync(escaped), false);
 });
 
+test("agent OS sandbox denies explicitly protected benchmark inputs", {
+  skip: process.platform !== "darwin"
+}, () => {
+  const workspace = tempDir("apex-agent-hidden-workspace-");
+  const hidden = tempDir("apex-agent-hidden-controller-");
+  const hiddenFile = join(hidden, "task-private.json");
+  const script = join(workspace, "probe-read.mjs");
+  writeFileSync(hiddenFile, "{\"hidden\":true}\n");
+  writeFileSync(script, `
+import { readFileSync } from "node:fs";
+let readable = false;
+try {
+  readFileSync(process.argv[2], "utf8");
+  readable = true;
+} catch {}
+console.log(JSON.stringify({ readable }));
+`);
+  const execution = spawnCapabilityProcess(process.execPath, [script, hiddenFile], {
+    workspaceDir: workspace,
+    network: false,
+    deniedReadPaths: [hidden]
+  });
+  assert.equal(execution.status, 0, execution.stderr);
+  assert.deepEqual(JSON.parse(execution.stdout), { readable: false });
+});
+
 test("agent environment strips unapproved secrets", () => {
   const env = sanitizeEnvironment({
     PATH: "/bin",

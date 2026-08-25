@@ -8,7 +8,7 @@ import {
 } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { homedir, tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import {
   snapshotProcessIds,
@@ -120,6 +120,7 @@ function buildMacSandboxProfile(options) {
     .map((path) => `(subpath ${quote(path)})`)
     .join(" ");
   const deniedSecretPaths = [...defaultSecretPaths(), ...(options.deniedReadPaths || [])]
+    .map(policyPath)
     .map((path) => `(deny file-read* (subpath ${quote(path)}))`)
     .join(" ");
   return [
@@ -146,6 +147,12 @@ function existingRealPath(path) {
   const resolved = resolve(path);
   if (existsSync(resolved)) return realpathSync(resolved);
   return realpathSync(dirname(resolved));
+}
+
+function policyPath(path) {
+  const resolved = resolve(path);
+  if (existsSync(resolved)) return realpathSync(resolved);
+  return join(realpathSync(dirname(resolved)), basename(resolved));
 }
 
 function quote(value) {

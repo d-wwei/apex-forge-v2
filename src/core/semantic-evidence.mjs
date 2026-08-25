@@ -18,12 +18,18 @@ export function validateWorkerSemanticEvidence(root, worker, evidence) {
     );
   }
   if (evidence.objective !== worker.objective) {
-    throw new Error("cognitive evidence objective 必须与 Worker objective 一致");
+    throw new Error(
+      "cognitive evidence objective 必须与 Worker objective 逐字一致："
+      + `expected=${JSON.stringify(worker.objective)}`
+    );
   }
   if (expectedType === "review") {
     const expectedDigest = cognitiveEvidenceCandidateDigest(root, worker);
     if (evidence.candidate_digest !== expectedDigest) {
-      throw new Error("review evidence 未绑定当前 candidate_digest");
+      throw new Error(
+        "review evidence 未绑定当前 candidate_digest："
+        + `expected=${expectedDigest}`
+      );
     }
   }
   const validation = validateContract(

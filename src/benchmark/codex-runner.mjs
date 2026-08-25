@@ -10,7 +10,7 @@ import {
   writeFileSync
 } from "node:fs";
 import { homedir } from "node:os";
-import { basename, dirname, join } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { spawnCapabilityProcess } from "../core/capability-sandbox.mjs";
 import { providerSecretPaths } from "../executors/secret-boundaries.mjs";
@@ -27,7 +27,11 @@ export function executeCodexBenchmarkRun({
   model = process.env.APEX_BENCHMARK_MODEL || null,
   profile = process.env.APEX_BENCHMARK_CODEX_PROFILE || null,
   reasoningEffort = process.env.APEX_BENCHMARK_REASONING_EFFORT || null,
-  pluginBootstrap = null
+  pluginBootstrap = null,
+  benchmarkRoot = null,
+  controllerRoot = null,
+  repositoryRoot = null,
+  deniedReadPaths = []
 }) {
   const codexHome = prepareBenchmarkCodexHome({
     runRoot,
@@ -50,7 +54,9 @@ export function executeCodexBenchmarkRun({
     "benchmark-agent-output.schema.json"
   );
   const processNumber = nextProcessNumber(runRoot);
-  const outputPath = join(runRoot, `agent-output-${processNumber}.json`);
+  const agentIoRoot = join(runRoot, "agent-io");
+  mkdirSync(agentIoRoot, { recursive: true });
+  const outputPath = join(agentIoRoot, `agent-output-${processNumber}.json`);
   const stdoutPath = join(runRoot, `process-${processNumber}.jsonl`);
   const stderrPath = join(runRoot, `process-${processNumber}.stderr.log`);
   const executionWorkspace = pluginBootstrap?.fast_path?.workspace_path || workspace;
@@ -73,6 +79,15 @@ export function executeCodexBenchmarkRun({
     profile,
     reasoningEffort
   });
+  const sandboxPolicy = benchmarkSandboxPolicy({
+    workspace: executionWorkspace,
+    runRoot,
+    codexHome,
+    benchmarkRoot,
+    controllerRoot,
+    repositoryRoot,
+    extraDeniedReadPaths: deniedReadPaths
+  });
   const result = spawnCapabilityProcess("codex", args, {
     workspaceDir: executionWorkspace,
     input: prompt,
@@ -94,8 +109,8 @@ export function executeCodexBenchmarkRun({
       16 * 1024 * 1024
     ),
     network: true,
-    writablePaths: [runRoot],
-    deniedReadPaths: providerSecretPaths(),
+    writablePaths: sandboxPolicy.writablePaths,
+    deniedReadPaths: sandboxPolicy.deniedReadPaths,
     allowedSecretNames: ["OPENAI_API_KEY", "FUTU_LLM_PROXY_API_KEY"],
     env: {
       ...benchmarkEnvironment(process.env),
@@ -132,6 +147,46 @@ export function executeCodexBenchmarkRun({
     ],
     cohort,
     command: ["codex", ...args.slice(0, -1), "<prompt>"].join(" ")
+  };
+}
+
+export function benchmarkSandboxPolicy({
+  workspace,
+  runRoot,
+  codexHome,
+  benchmarkRoot = null,
+  controllerRoot = null,
+  repositoryRoot = null,
+  extraDeniedReadPaths = []
+}) {
+  const denied = [
+    ...providerSecretPaths(),
+    ...(benchmarkRoot ? [
+      join(benchmarkRoot, "tasks"),
+      join(benchmarkRoot, "results"),
+      join(benchmarkRoot, "evidence"),
+      join(benchmarkRoot, "benchmark-plan.json"),
+      join(benchmarkRoot, "results-manifest.json"),
+      join(benchmarkRoot, "latest-evaluation.json"),
+      join(benchmarkRoot, "task-preflight.json"),
+      join(benchmarkRoot, "workspaces", "base")
+    ] : []),
+    ...(controllerRoot ? [join(controllerRoot, "controller.json")] : []),
+    ...(repositoryRoot ? [
+      join(repositoryRoot, ".git"),
+      join(dirname(repositoryRoot), "benchmark-runs")
+    ] : []),
+    ...extraDeniedReadPaths
+  ].filter(Boolean).map((path) => resolve(path));
+  return {
+    writablePaths: [
+      resolve(codexHome),
+      resolve(runRoot, "agent-io")
+    ],
+    deniedReadPaths: [...new Set(denied)].filter((path) =>
+      path !== resolve(workspace)
+      && !resolve(workspace).startsWith(`${path}/`)
+    )
   };
 }
 

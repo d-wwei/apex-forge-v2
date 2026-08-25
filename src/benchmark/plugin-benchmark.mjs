@@ -38,6 +38,12 @@ export function buildBenchmarkPlan(matrix, taskDefinitions = []) {
           ...(definition?.task_digest ? { task_digest: definition.task_digest } : {}),
           ...(repositoryEntry?.source_commit
             ? { source_commit: repositoryEntry.source_commit }
+            : {}),
+          ...(definition?.source_tree
+            ? { source_tree: definition.source_tree }
+            : {}),
+          ...(definition?.source_manifest_sha256
+            ? { source_manifest_sha256: definition.source_manifest_sha256 }
             : {})
         };
       })
@@ -183,6 +189,25 @@ function validateResults(tasks, results) {
       });
       continue;
     }
+    if (task.source_tree && result.provenance.source_tree !== task.source_tree) {
+      errors.push({
+        kind: "source_tree_mismatch",
+        index,
+        detail: `${result.task_id}:${result.provenance.source_tree}`
+      });
+      continue;
+    }
+    if (
+      task.source_manifest_sha256
+      && result.provenance.source_manifest_sha256 !== task.source_manifest_sha256
+    ) {
+      errors.push({
+        kind: "source_manifest_mismatch",
+        index,
+        detail: `${result.task_id}:${result.provenance.source_manifest_sha256}`
+      });
+      continue;
+    }
     const fullKey = `${result.task_id}:${result.mode}:${result.candidate_digest}:${result.attempt}`;
     if (fullKeys.has(fullKey)) {
       errors.push({ kind: "duplicate_result", index, detail: fullKey });
@@ -220,7 +245,7 @@ function validateCohortConsistency(results, errors) {
   }
   const environmentGroups = new Map();
   for (const result of results) {
-    const key = `${result.repository}:${result.mode}`;
+    const key = result.task_id;
     if (!environmentGroups.has(key)) environmentGroups.set(key, new Set());
     environmentGroups.get(key).add(result.provenance.environment_fingerprint);
   }
