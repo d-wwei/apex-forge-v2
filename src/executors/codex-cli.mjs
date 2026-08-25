@@ -5,10 +5,11 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  realpathSync,
   writeFileSync
 } from "node:fs";
 import { homedir } from "node:os";
-import { basename, dirname, join } from "node:path";
+import { basename, dirname, join, resolve, sep } from "node:path";
 import { tail } from "../lib/common.mjs";
 import { spawnCapabilityProcess } from "../core/capability-sandbox.mjs";
 import { providerSecretPaths } from "./secret-boundaries.mjs";
@@ -19,13 +20,14 @@ import {
 } from "./lifecycle.mjs";
 
 export function inspectCodexAdapter(executable = "codex") {
-  const result = spawnSync(executable, ["--version"], {
+  const resolvedExecutable = resolveCodexExecutable(executable);
+  const result = spawnSync(resolvedExecutable, ["--version"], {
     encoding: "utf8",
     timeout: 5000
   });
   return {
     adapter: "codex",
-    executable,
+    executable: resolvedExecutable,
     available: result.status === 0,
     version: result.status === 0 ? result.stdout.trim() : "",
     capabilities: ["structured_output", "workspace_write", "tool_use", "ephemeral", "process_tree_cancel"],
@@ -44,6 +46,7 @@ export function executeCodexAdapter(options) {
     profile,
     timeoutMs = 30 * 60 * 1000
   } = options;
+  const resolvedExecutable = resolveCodexExecutable(executable);
   const args = buildCodexArgs({
     workspaceDir,
     outputSchemaPath,
@@ -53,7 +56,7 @@ export function executeCodexAdapter(options) {
     smoke: options.smoke
   });
   const codexHome = prepareIsolatedCodexHome(workspaceDir, profile);
-  const result = spawnCapabilityProcess(executable, args, {
+  const result = spawnCapabilityProcess(resolvedExecutable, args, {
     workspaceDir,
     input: prompt,
     timeoutMs,
@@ -70,8 +73,8 @@ export function executeCodexAdapter(options) {
   });
 
   return {
-    executable,
-    executable_name: basename(executable),
+    executable: resolvedExecutable,
+    executable_name: basename(resolvedExecutable),
     args,
     command: [result.sandbox.executable, ...result.sandbox.args].join(" "),
     exit_code: result.status ?? 1,
@@ -81,6 +84,34 @@ export function executeCodexAdapter(options) {
     stdout_tail: tail(result.stdout),
     stderr_tail: tail(result.stderr || result.error?.message || "")
   };
+}
+
+export function resolveCodexExecutable(
+  executable = "codex",
+  environment = process.env,
+  deniedRoots = providerSecretPaths()
+) {
+  if (String(executable).includes("/")) return resolve(String(executable));
+  const result = spawnSync("/usr/bin/which", ["-a", executable], {
+    encoding: "utf8",
+    env: environment
+  });
+  if (result.status !== 0) return executable;
+  const denied = deniedRoots.map((path) =>
+    existsSync(path) ? realpathSync(path) : resolve(path)
+  );
+  const candidates = result.stdout.split("\n").map((path) => path.trim()).filter(Boolean);
+  for (const candidate of candidates) {
+    const resolvedCandidate = existsSync(candidate)
+      ? realpathSync(candidate)
+      : resolve(candidate);
+    if (!denied.some((root) =>
+      resolvedCandidate === root || resolvedCandidate.startsWith(`${root}${sep}`)
+    )) {
+      return candidate;
+    }
+  }
+  return executable;
 }
 
 function prepareIsolatedCodexHome(workspaceDir, profile) {

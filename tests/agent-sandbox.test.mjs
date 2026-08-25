@@ -1,7 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  chmodSync,
   existsSync,
+  mkdirSync,
   mkdtempSync,
   readFileSync,
   rmSync,
@@ -17,6 +19,7 @@ import {
 import { terminateGuardTokenProcesses } from "../src/core/process-guard.mjs";
 import { buildClaudeArgs } from "../src/adapters/claude.mjs";
 import { buildCodexArgs } from "../src/adapters/codex.mjs";
+import { resolveCodexExecutable } from "../src/executors/codex-cli.mjs";
 import { buildGeminiArgs } from "../src/adapters/gemini.mjs";
 
 function tempDir(prefix) {
@@ -353,4 +356,26 @@ test("Codex disables its nested sandbox only behind the outer capability sandbox
   });
   assert.ok(args.includes("--dangerously-bypass-approvals-and-sandbox"));
   assert.equal(args.includes("workspace-write"), false);
+});
+
+test("Codex executor skips wrapper binaries inside denied configuration roots", () => {
+  const root = tempDir("apex-codex-resolution-");
+  const hidden = join(root, "hidden");
+  const safe = join(root, "safe");
+  mkdirSync(hidden, { recursive: true });
+  mkdirSync(safe, { recursive: true });
+  const hiddenBinary = join(hidden, "codex");
+  const safeBinary = join(safe, "codex");
+  writeFileSync(hiddenBinary, "#!/bin/sh\nexit 0\n");
+  writeFileSync(safeBinary, "#!/bin/sh\nexit 0\n");
+  chmodSync(hiddenBinary, 0o755);
+  chmodSync(safeBinary, 0o755);
+
+  assert.equal(
+    resolveCodexExecutable("codex", {
+      ...process.env,
+      PATH: `${hidden}:${safe}`
+    }, [hidden]),
+    safeBinary
+  );
 });
