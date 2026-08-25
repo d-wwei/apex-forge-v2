@@ -28,6 +28,7 @@ export function executeCodexBenchmarkRun({
   profile = process.env.APEX_BENCHMARK_CODEX_PROFILE || null,
   reasoningEffort = process.env.APEX_BENCHMARK_REASONING_EFFORT || null,
   pluginBootstrap = null,
+  v1SkillPath = null,
   benchmarkRoot = null,
   controllerRoot = null,
   repositoryRoot = null,
@@ -67,7 +68,8 @@ export function executeCodexBenchmarkRun({
         mode,
         candidateRoot,
         runRoot,
-        pluginBootstrap
+        pluginBootstrap,
+        v1SkillPath
       });
   const args = buildBenchmarkCodexArgs({
     mode,
@@ -234,7 +236,8 @@ export function buildBenchmarkPrompt({
   mode,
   candidateRoot,
   runRoot,
-  pluginBootstrap = null
+  pluginBootstrap = null,
+  v1SkillPath = null
 }) {
   const common = [
     "Complete the following software engineering task in the current workspace.",
@@ -249,7 +252,7 @@ export function buildBenchmarkPrompt({
   ];
   if (mode === "v1-skill") {
     common.unshift(
-      `Read and follow the frozen Apex Forge V1 skill at ${join(runRoot, "apex-forge-v1-SKILL.md")}.`
+      `Read and follow the frozen Apex Forge V1 skill at ${v1SkillPath || join(runRoot, "apex-forge-v1-SKILL.md")}.`
     );
   } else if (mode === "cli-kernel") {
     common.unshift(

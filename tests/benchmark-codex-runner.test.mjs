@@ -85,6 +85,21 @@ test("mode prompts expose public task but never hidden checks", () => {
   }), /already initialized exactly one durable intake\/run[\s\S]*profile `quick`/);
 });
 
+test("V1 prompt can use a skill path inside the Agent workspace", () => {
+  const prompt = buildBenchmarkPrompt({
+    task,
+    mode: "v1-skill",
+    candidateRoot: "/candidate",
+    runRoot: "/controller/run",
+    v1SkillPath: "/workspace/.benchmark-public/apex-forge-v1-SKILL.md"
+  });
+  assert.match(
+    prompt,
+    /\/workspace\/\.benchmark-public\/apex-forge-v1-SKILL\.md/
+  );
+  assert.doesNotMatch(prompt, /\/controller\/run\/apex-forge-v1-SKILL\.md/);
+});
+
 test("Plugin fast path keeps the Agent inside the claimed workspace and out of Kernel glue", () => {
   const prompt = buildBenchmarkPrompt({
     task,

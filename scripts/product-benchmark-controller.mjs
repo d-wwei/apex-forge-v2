@@ -162,7 +162,6 @@ async function runSelected(context, args) {
     mkdirSync(runRoot, { recursive: true });
     let finished = false;
     try {
-      prepareModeInputs(context, runRoot, run.mode);
       const prepared = prepareBenchmarkWorkspace({
         baseWorkspace: join(context.baseRoot, run.repository),
         runRoot,
@@ -170,6 +169,12 @@ async function runSelected(context, args) {
         candidateDigest: context.candidate.release_candidate_digest,
         reset: run.process_attempt === 1
       });
+      const modeInputs = prepareModeInputs(
+        context,
+        runRoot,
+        run.mode,
+        prepared.workspace
+      );
       let pluginBootstrap = null;
       if (run.mode === "plugin-kernel") {
         pluginBootstrap = resolvePluginBenchmarkBootstrap({
@@ -243,6 +248,7 @@ async function runSelected(context, args) {
           || null,
         profile: args.profile || process.env.APEX_BENCHMARK_CODEX_PROFILE || null,
         pluginBootstrap,
+        v1SkillPath: modeInputs.v1_skill_path,
         benchmarkRoot,
         controllerRoot: context.controllerRoot,
         repositoryRoot: repoRoot
@@ -902,12 +908,20 @@ function assertPreparedRepository(context, repository) {
   return observed;
 }
 
-function prepareModeInputs(context, runRoot, mode) {
-  if (mode !== "v1-skill") return;
-  const target = join(runRoot, "apex-forge-v1-SKILL.md");
+function prepareModeInputs(context, runRoot, mode, workspace) {
+  if (mode !== "v1-skill") return { v1_skill_path: null };
+  const publicRoot = join(workspace, ".benchmark-public");
+  mkdirSync(publicRoot, { recursive: true });
+  const target = join(publicRoot, "apex-forge-v1-SKILL.md");
   if (!existsSync(target)) {
     cpSync(join(context.baseRoot, "apex-forge-v1", "SKILL.md"), target);
+    const excludePath = join(workspace, ".git", "info", "exclude");
+    const existing = readFileSync(excludePath, "utf8");
+    if (!existing.includes(".benchmark-public/")) {
+      writeFileSync(excludePath, `${existing}.benchmark-public/\n`);
+    }
   }
+  return { v1_skill_path: target };
 }
 
 function sumProcessMetric(runRoot, field) {
