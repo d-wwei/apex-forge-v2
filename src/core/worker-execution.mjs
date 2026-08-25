@@ -650,8 +650,7 @@ function readAgentResult(path) {
     return { valid: false, value: null, error: "agent-result.json missing" };
   }
   try {
-    const value = readJson(path);
-    if (value.semantic_evidence === null) delete value.semantic_evidence;
+    const value = normalizeProviderAgentResult(readJson(path));
     const result = validateContract("agent-result.schema.json", value, path);
     return {
       valid: result.valid,
@@ -661,6 +660,40 @@ function readAgentResult(path) {
   } catch (error) {
     return { valid: false, value: null, error: error.message };
   }
+}
+
+export function normalizeProviderAgentResult(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+  const normalized = structuredClone(value);
+  if (normalized.semantic_evidence === null) {
+    delete normalized.semantic_evidence;
+    return normalized;
+  }
+  const evidence = normalized.semantic_evidence;
+  if (!evidence || typeof evidence !== "object" || Array.isArray(evidence)) {
+    return normalized;
+  }
+  const common = [
+    "schema_version",
+    "evidence_type",
+    "objective",
+    "source_refs",
+    "claims",
+    "uncertainties",
+    "acceptance_mapping",
+    "created_at"
+  ];
+  const specific = {
+    context: ["affected_files", "constraints", "unknowns"],
+    risk: ["failure_paths", "blast_radius", "mitigations", "rollback"],
+    design: ["slices", "dependencies", "verification", "rollback"],
+    review: ["candidate_digest", "findings", "residual_risks", "merge_posture"]
+  }[evidence.evidence_type] || [];
+  const allowed = new Set([...common, ...specific]);
+  for (const key of Object.keys(evidence)) {
+    if (!allowed.has(key)) delete evidence[key];
+  }
+  return normalized;
 }
 
 function classifyFailure(execution, structured, changes, worker) {
