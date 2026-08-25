@@ -1,5 +1,6 @@
 import {
   cpSync,
+  copyFileSync,
   existsSync,
   mkdirSync,
   readFileSync,
@@ -915,7 +916,7 @@ function prepareModeInputs(context, runRoot, mode, workspace) {
   mkdirSync(publicRoot, { recursive: true });
   const target = join(publicRoot, "apex-forge-v1-SKILL.md");
   if (!existsSync(target)) {
-    cpSync(join(context.baseRoot, "apex-forge-v1", "SKILL.md"), target);
+    copyFileSync(join(context.baseRoot, "apex-forge-v1", "SKILL.md"), target);
     const excludePath = join(workspace, ".git", "info", "exclude");
     const existing = readFileSync(excludePath, "utf8");
     if (!existing.includes(".benchmark-public/")) {

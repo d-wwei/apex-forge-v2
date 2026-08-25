@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {
   existsSync,
+  lstatSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -373,6 +374,7 @@ test("workspace applies setup before a clean Git baseline and keeps hidden check
   });
   assert.equal(readFileSync(join(result.workspace, "src", "value.txt"), "utf8"), "BAD\n");
   assert.equal(existsSync(join(result.workspace, "node_modules")), true);
+  assert.equal(lstatSync(join(result.workspace, "node_modules")).isSymbolicLink(), false);
   assert.equal(existsSync(join(result.workspace, ".benchmark-control")), false);
   const status = git(result.workspace, ["status", "--porcelain"]);
   assert.equal(status, "");

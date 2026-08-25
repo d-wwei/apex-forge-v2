@@ -292,7 +292,7 @@ export function prepareBenchmarkWorkspace({
   });
   applySetupOperations(workspace, task.setup_operations);
   initializeWorkspaceGit(workspace);
-  linkDependencyDirectories(baseWorkspace, workspace);
+  cloneDependencyDirectories(baseWorkspace, workspace);
   const publicTask = {
     task_id: `${task.repository}--${task.scenario}`,
     task_digest: task.task_digest,
@@ -352,7 +352,7 @@ function initializeWorkspaceGit(workspace) {
   });
 }
 
-function linkDependencyDirectories(baseWorkspace, workspace) {
+function cloneDependencyDirectories(baseWorkspace, workspace) {
   const visit = (directory) => {
     for (const entry of readdirSync(directory, { withFileTypes: true })) {
       const source = join(directory, entry.name);
@@ -360,13 +360,23 @@ function linkDependencyDirectories(baseWorkspace, workspace) {
       if (entry.isDirectory() && entry.name === "node_modules") {
         const target = join(workspace, path);
         mkdirSync(dirname(target), { recursive: true });
-        if (!existsSync(target)) symlinkSync(source, target, "dir");
+        if (!existsSync(target)) cloneDirectory(source, target);
       } else if (entry.isDirectory()) {
         visit(source);
       }
     }
   };
   visit(baseWorkspace);
+}
+
+function cloneDirectory(source, target) {
+  if (process.platform === "darwin") {
+    const cloned = spawnSync("cp", ["-cR", source, target], {
+      encoding: "utf8"
+    });
+    if (cloned.status === 0) return;
+  }
+  cpSync(source, target, { recursive: true });
 }
 
 function safeTarget(root, path) {
