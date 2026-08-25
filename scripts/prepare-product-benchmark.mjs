@@ -12,7 +12,10 @@ import { spawnSync } from "node:child_process";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { benchmarkEnvironment } from "../src/benchmark/environment.mjs";
-import { inspectPreparedSource } from "../src/benchmark/prepared-source.mjs";
+import {
+  inspectPreparedSource,
+  sourceManifestFromGit
+} from "../src/benchmark/prepared-source.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const benchmarkRoot = join(repoRoot, "benchmarks", "plugin-vs-v1");
@@ -88,6 +91,17 @@ for (const repository of selectedRepositories) {
       join(target, ".benchmark-baseline.json"),
       `${JSON.stringify(manifest.baseline, null, 2)}\n`
     );
+    cleanupBaselineArtifacts(target, repository);
+    const finalProvenance = inspectPreparedSource({
+      repository,
+      workspace: target
+    });
+    if (finalProvenance.status !== "PASS") {
+      throw new Error(
+        `baseline mutated prepared source for ${repository.id}: `
+        + JSON.stringify(finalProvenance.errors)
+      );
+    }
   }
   prepared.push(manifest);
 }
@@ -250,6 +264,28 @@ function prepareRepositoryArtifacts(target, repository, sourceBefore) {
       sha256: fileHash(join(target, path))
     }))
   };
+}
+
+function cleanupBaselineArtifacts(target, repository) {
+  const sourcePaths = new Set(
+    sourceManifestFromGit(repository).entries.map((entry) => entry.path)
+  );
+  for (const path of listFiles(target, { excludeNodeModules: true })) {
+    if (sourcePaths.has(path)) continue;
+    if ([
+      ".benchmark-source.json",
+      ".benchmark-dependencies.json",
+      ".benchmark-baseline.json"
+    ].includes(path)) {
+      continue;
+    }
+    if ((repository.prepare_outputs || []).some((prefix) =>
+      path === prefix || path.startsWith(`${prefix.replace(/\/+$/, "")}/`)
+    )) {
+      continue;
+    }
+    rmSync(join(target, path), { force: true });
+  }
 }
 
 function snapshotSource(root) {
