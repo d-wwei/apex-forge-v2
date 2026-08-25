@@ -439,3 +439,16 @@ test("Codex executor recovers structured output from JSONL when -o is absent", (
   ].join("\n");
   assert.equal(extractCodexStructuredOutput(output)?.summary, "recovered");
 });
+
+test("Codex executor recovers a direct structured stdout object", () => {
+  const output = JSON.stringify({
+    verdict: "pass",
+    summary: "direct",
+    tests: [],
+    risks: [],
+    evidence_refs: [],
+    semantic_evidence: null,
+    capability_evidence: []
+  });
+  assert.equal(extractCodexStructuredOutput(output)?.summary, "direct");
+});
