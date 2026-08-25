@@ -11122,7 +11122,7 @@ function buildTaskPlanGraph(root, run, timestamp, inventory) {
       objective: `\u56F4\u7ED5\u201C${roadmapNode.title}\u201D\u6838\u5BF9\u9700\u6C42\u8FB9\u754C\u3001\u53D7\u5F71\u54CD\u6A21\u5757\u3001\u5DF2\u6709\u51B3\u7B56\u548C\u53EF\u6267\u884C\u9A8C\u6536\u6807\u51C6\u3002`,
       dependencies: [],
       readScope: contextRefs,
-      writeScope: [`${runArtifactScope}context/`],
+      writeScope: [],
       deliverables: ["\u4EFB\u52A1\u4E0A\u4E0B\u6587\u6458\u8981", "\u9A8C\u6536\u6807\u51C6", "\u5DF2\u77E5\u4E0E\u672A\u77E5\u9879"],
       requiredEvidence: ["intake \u4E0E roadmap \u5F15\u7528", "\u76F8\u5173\u4EE3\u7801\u6216\u6587\u6863\u6765\u6E90", "\u53EF\u9A8C\u8BC1\u9A8C\u6536\u6807\u51C6"],
       verification: taskVerificationCommands.slice(0, 1),
@@ -11141,7 +11141,7 @@ function buildTaskPlanGraph(root, run, timestamp, inventory) {
       objective: `\u72EC\u7ACB\u68C0\u67E5\u201C${roadmapNode.title}\u201D\u7684\u5931\u8D25\u6A21\u5F0F\u3001\u56DE\u5F52\u9762\u3001\u51B2\u7A81\u98CE\u9669\u548C\u9700\u8981\u5347\u7EA7\u7684\u4EBA\u7C7B gate\u3002`,
       dependencies: [],
       readScope: contextRefs,
-      writeScope: [`${runArtifactScope}risk/`],
+      writeScope: [],
       deliverables: ["\u98CE\u9669\u6E05\u5355", "\u53CD\u8BC1\u4E0E\u66FF\u4EE3\u65B9\u6848", "\u56DE\u5F52\u68C0\u67E5\u8303\u56F4"],
       requiredEvidence: ["danger-zone \u5F15\u7528", "\u5931\u8D25\u8DEF\u5F84", "\u98CE\u9669\u5904\u7F6E\u5EFA\u8BAE"],
       verification: taskVerificationCommands.slice(0, 1),
@@ -11160,7 +11160,7 @@ function buildTaskPlanGraph(root, run, timestamp, inventory) {
       objective: `\u57FA\u4E8E\u4E0A\u4E0B\u6587\u548C\u98CE\u9669\u8BC1\u636E\uFF0C\u4E3A\u201C${roadmapNode.title}\u201D\u5F62\u6210\u6700\u5C0F\u53EF\u4EA4\u4ED8\u5207\u7247\u3001\u4F9D\u8D56\u987A\u5E8F\u548C\u56DE\u6EDA\u7B56\u7565\u3002`,
       dependencies: ["delivery-context", "delivery-risk"],
       readScope: contextRefs,
-      writeScope: [`${runArtifactScope}design/`],
+      writeScope: [],
       deliverables: ["\u5B9E\u65BD\u5207\u7247", "\u4F9D\u8D56\u4E0E\u5E76\u884C\u7B56\u7565", "\u56DE\u6EDA\u65B9\u6848"],
       requiredEvidence: ["\u4E0A\u4E0B\u6587 evidence", "\u98CE\u9669 evidence", "\u6BCF\u4E2A\u5207\u7247\u7684\u9A8C\u8BC1\u8DEF\u5F84"],
       verification: taskVerificationCommands.slice(0, 2),
@@ -11239,7 +11239,7 @@ function buildTaskPlanGraph(root, run, timestamp, inventory) {
       objective: `\u590D\u6838\u201C${roadmapNode.title}\u201D\u662F\u5426\u6EE1\u8DB3\u9700\u6C42\u3001\u8BC1\u636E\u548C\u56DE\u6EDA\u8981\u6C42\uFF1B\u53EA\u5141\u8BB8\u4FEE\u590D\u660E\u786E\u7684\u963B\u585E\u9879\u3002`,
       dependencies: ["delivery-verification"],
       readScope: unique([...contextRefs, ...scopes.implementation, ...scopes.tests]),
-      writeScope: scopes.implementation,
+      writeScope: [],
       deliverables: ["review findings", "\u963B\u585E\u9879\u4FEE\u590D patch \u6216 PASS \u51B3\u7B56", "merge posture"],
       requiredEvidence: ["\u9700\u6C42\u7B26\u5408\u6027", "blocking findings", "merge posture"],
       verification: taskVerificationCommands,
@@ -11689,7 +11689,9 @@ function validatePlanGraph(plan) {
     if (ids.has(node.id)) errors.push(`plan node id \u91CD\u590D\uFF1A${node.id}`);
     ids.add(node.id);
     if (!node.objective) errors.push(`${node.id} \u7F3A\u5C11 objective`);
-    if (!Array.isArray(node.write_scope) || node.write_scope.length === 0) errors.push(`${node.id} \u7F3A\u5C11 write_scope`);
+    if (!Array.isArray(node.write_scope) || node.execution_class !== "cognitive" && node.write_scope.length === 0) {
+      errors.push(`${node.id} \u7F3A\u5C11 write_scope`);
+    }
     if (!Array.isArray(node.required_evidence) || node.required_evidence.length === 0) errors.push(`${node.id} \u7F3A\u5C11 required_evidence`);
     if (!Array.isArray(node.verification) || node.verification.length === 0) errors.push(`${node.id} \u7F3A\u5C11 verification`);
     if (node.adapter != null && (typeof node.adapter !== "string" || !node.adapter)) errors.push(`${node.id} \u7684 adapter \u65E0\u6548\uFF1A${node.adapter}`);
@@ -11834,7 +11836,7 @@ function buildQuickPlanNodes({
       objective: `\u590D\u6838\u201C${roadmapNode.title}\u201D\u7684\u9700\u6C42\u6620\u5C04\u3001ActionWorkspace \u9A8C\u6536\u8BC1\u636E\u4E0E merge posture\u3002`,
       dependencies: ["delivery-implementation"],
       readScope: unique([...contextRefs, ...writeScope]),
-      writeScope: scopes.implementation,
+      writeScope: [],
       deliverables: ["review findings", "residual risks", "merge posture"],
       requiredEvidence: ["\u9700\u6C42\u7B26\u5408\u6027", "ActionWorkspace public acceptance", "merge posture"],
       verification: verificationCommands,
@@ -13707,6 +13709,9 @@ var PROVIDER_AGENT_RESULT_SCHEMA = schemaPath("agent-result-provider.schema.json
 var IGNORED_WORKSPACE_NAMES = /* @__PURE__ */ new Set([
   ".git",
   ".apex-agent",
+  ".claude",
+  ".codex",
+  ".gemini",
   ".apex-v2",
   ".apex-v2.lock",
   ".apex-v2.scheduler-lock",
