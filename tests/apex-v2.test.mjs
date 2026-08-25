@@ -2347,6 +2347,9 @@ test("governed PlanGraph 用三个 barrier 编排七项职责和模型档位", (
     assert.equal(byId.get(id).barrier_id, "delivery-candidate");
   }
   assert.equal(byId.get("delivery-review").barrier_id, "delivery-readiness");
+  assert.deepEqual(byId.get("delivery-context").write_scope, []);
+  assert.deepEqual(byId.get("delivery-risk").write_scope, []);
+  assert.deepEqual(byId.get("delivery-design").write_scope, []);
   assert.equal(byId.get("delivery-context").model_tier, "cheap");
   assert.equal(byId.get("delivery-risk").model_tier, "cheap");
   assert.equal(byId.get("delivery-design").model_tier, "standard");

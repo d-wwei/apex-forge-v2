@@ -52,7 +52,7 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
       objective: `围绕“${roadmapNode.title}”核对需求边界、受影响模块、已有决策和可执行验收标准。`,
       dependencies: [],
       readScope: contextRefs,
-      writeScope: [`${runArtifactScope}context/`],
+      writeScope: [],
       deliverables: ["任务上下文摘要", "验收标准", "已知与未知项"],
       requiredEvidence: ["intake 与 roadmap 引用", "相关代码或文档来源", "可验证验收标准"],
       verification: taskVerificationCommands.slice(0, 1),
@@ -71,7 +71,7 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
       objective: `独立检查“${roadmapNode.title}”的失败模式、回归面、冲突风险和需要升级的人类 gate。`,
       dependencies: [],
       readScope: contextRefs,
-      writeScope: [`${runArtifactScope}risk/`],
+      writeScope: [],
       deliverables: ["风险清单", "反证与替代方案", "回归检查范围"],
       requiredEvidence: ["danger-zone 引用", "失败路径", "风险处置建议"],
       verification: taskVerificationCommands.slice(0, 1),
@@ -90,7 +90,7 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
       objective: `基于上下文和风险证据，为“${roadmapNode.title}”形成最小可交付切片、依赖顺序和回滚策略。`,
       dependencies: ["delivery-context", "delivery-risk"],
       readScope: contextRefs,
-      writeScope: [`${runArtifactScope}design/`],
+      writeScope: [],
       deliverables: ["实施切片", "依赖与并行策略", "回滚方案"],
       requiredEvidence: ["上下文 evidence", "风险 evidence", "每个切片的验证路径"],
       verification: taskVerificationCommands.slice(0, 2),
@@ -169,7 +169,7 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
       objective: `复核“${roadmapNode.title}”是否满足需求、证据和回滚要求；只允许修复明确的阻塞项。`,
       dependencies: ["delivery-verification"],
       readScope: unique([...contextRefs, ...scopes.implementation, ...scopes.tests]),
-      writeScope: scopes.implementation,
+      writeScope: [],
       deliverables: ["review findings", "阻塞项修复 patch 或 PASS 决策", "merge posture"],
       requiredEvidence: ["需求符合性", "blocking findings", "merge posture"],
       verification: taskVerificationCommands,
@@ -681,7 +681,12 @@ export function validatePlanGraph(plan) {
     if (ids.has(node.id)) errors.push(`plan node id 重复：${node.id}`);
     ids.add(node.id);
     if (!node.objective) errors.push(`${node.id} 缺少 objective`);
-    if (!Array.isArray(node.write_scope) || node.write_scope.length === 0) errors.push(`${node.id} 缺少 write_scope`);
+    if (
+      !Array.isArray(node.write_scope)
+      || (node.execution_class !== "cognitive" && node.write_scope.length === 0)
+    ) {
+      errors.push(`${node.id} 缺少 write_scope`);
+    }
     if (!Array.isArray(node.required_evidence) || node.required_evidence.length === 0) errors.push(`${node.id} 缺少 required_evidence`);
     if (!Array.isArray(node.verification) || node.verification.length === 0) errors.push(`${node.id} 缺少 verification`);
     if (node.adapter != null && (typeof node.adapter !== "string" || !node.adapter)) errors.push(`${node.id} 的 adapter 无效：${node.adapter}`);
@@ -839,7 +844,7 @@ function buildQuickPlanNodes({
       objective: `复核“${roadmapNode.title}”的需求映射、ActionWorkspace 验收证据与 merge posture。`,
       dependencies: ["delivery-implementation"],
       readScope: unique([...contextRefs, ...writeScope]),
-      writeScope: scopes.implementation,
+      writeScope: [],
       deliverables: ["review findings", "residual risks", "merge posture"],
       requiredEvidence: ["需求符合性", "ActionWorkspace public acceptance", "merge posture"],
       verification: verificationCommands,
