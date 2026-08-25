@@ -379,3 +379,12 @@ test("Codex executor skips wrapper binaries inside denied configuration roots", 
     safeBinary
   );
 });
+
+test("Codex executor avoids the user-local mode-switch wrapper", () => {
+  const resolved = resolveCodexExecutable("codex");
+  assert.ok(resolved.includes("/"));
+  assert.equal(
+    resolved.startsWith(join(homedir(), ".local", "bin")),
+    false
+  );
+});
