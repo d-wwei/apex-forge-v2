@@ -71,6 +71,12 @@ export function executeCodexAdapter(options) {
       APEX_V2_ADAPTER: "codex"
     }
   });
+  if (result.status === 0 && !existsSync(outputPath)) {
+    const recovered = extractCodexStructuredOutput(result.stdout);
+    if (recovered) {
+      writeFileSync(outputPath, `${JSON.stringify(recovered)}\n`);
+    }
+  }
 
   return {
     executable: resolvedExecutable,
@@ -84,6 +90,28 @@ export function executeCodexAdapter(options) {
     stdout_tail: tail(result.stdout),
     stderr_tail: tail(result.stderr || result.error?.message || "")
   };
+}
+
+export function extractCodexStructuredOutput(output) {
+  let recovered = null;
+  for (const line of String(output || "").split("\n")) {
+    if (!line.trim()) continue;
+    try {
+      const event = JSON.parse(line);
+      if (
+        event.type !== "item.completed"
+        || event.item?.type !== "agent_message"
+        || typeof event.item.text !== "string"
+      ) {
+        continue;
+      }
+      const candidate = JSON.parse(event.item.text);
+      if (candidate && typeof candidate === "object" && !Array.isArray(candidate)) {
+        recovered = candidate;
+      }
+    } catch {}
+  }
+  return recovered;
 }
 
 export function resolveCodexExecutable(

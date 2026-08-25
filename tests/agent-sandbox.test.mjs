@@ -19,7 +19,10 @@ import {
 import { terminateGuardTokenProcesses } from "../src/core/process-guard.mjs";
 import { buildClaudeArgs } from "../src/adapters/claude.mjs";
 import { buildCodexArgs } from "../src/adapters/codex.mjs";
-import { resolveCodexExecutable } from "../src/executors/codex-cli.mjs";
+import {
+  extractCodexStructuredOutput,
+  resolveCodexExecutable
+} from "../src/executors/codex-cli.mjs";
 import { buildGeminiArgs } from "../src/adapters/gemini.mjs";
 
 function tempDir(prefix) {
@@ -413,4 +416,26 @@ test("Codex executor rejects a mode-switch wrapper regardless of HOME", () => {
     }, []),
     safeBinary
   );
+});
+
+test("Codex executor recovers structured output from JSONL when -o is absent", () => {
+  const output = [
+    JSON.stringify({ type: "thread.started", thread_id: "thread-1" }),
+    JSON.stringify({
+      type: "item.completed",
+      item: {
+        type: "agent_message",
+        text: JSON.stringify({
+          verdict: "pass",
+          summary: "recovered",
+          tests: [],
+          risks: [],
+          evidence_refs: [],
+          semantic_evidence: null,
+          capability_evidence: []
+        })
+      }
+    })
+  ].join("\n");
+  assert.equal(extractCodexStructuredOutput(output)?.summary, "recovered");
 });

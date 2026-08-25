@@ -55,6 +55,7 @@ const PROVIDER_AGENT_RESULT_SCHEMA = schemaPath("agent-result-provider.schema.js
 const IGNORED_WORKSPACE_NAMES = new Set([
   ".git",
   ".apex-agent",
+  ".apex-host-home",
   ".claude",
   ".codex",
   ".gemini",
