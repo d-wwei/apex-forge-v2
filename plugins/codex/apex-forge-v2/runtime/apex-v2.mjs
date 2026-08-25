@@ -12764,11 +12764,19 @@ function resolveCodexExecutable(executable = "codex", environment = process.env,
     const resolvedCandidate = existsSync12(candidate) ? realpathSync3(candidate) : resolve9(candidate);
     if (!denied.some(
       (root) => resolvedCandidate === root || resolvedCandidate.startsWith(`${root}${sep2}`)
-    )) {
+    ) && !isModeSwitchWrapper(candidate)) {
       return candidate;
     }
   }
   return executable;
+}
+function isModeSwitchWrapper(path) {
+  try {
+    const content = readFileSync10(path, "utf8").slice(0, 16 * 1024);
+    return content.includes("codex_mode.py") || content.includes("CODEX_WRAPPER_PATH");
+  } catch {
+    return false;
+  }
 }
 function prepareIsolatedCodexHome(workspaceDir, profile) {
   const sourceHome = process.env.CODEX_HOME || join16(homedir4(), ".codex");
