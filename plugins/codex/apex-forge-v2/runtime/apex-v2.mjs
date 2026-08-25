@@ -12738,6 +12738,13 @@ function executeCodexAdapter(options) {
       APEX_V2_ADAPTER: "codex"
     }
   });
+  if (result.status === 0 && !existsSync12(outputPath)) {
+    const recovered = extractCodexStructuredOutput(result.stdout);
+    if (recovered) {
+      writeFileSync7(outputPath, `${JSON.stringify(recovered)}
+`);
+    }
+  }
   return {
     executable: resolvedExecutable,
     executable_name: basename5(resolvedExecutable),
@@ -12750,6 +12757,24 @@ function executeCodexAdapter(options) {
     stdout_tail: tail(result.stdout),
     stderr_tail: tail(result.stderr || result.error?.message || "")
   };
+}
+function extractCodexStructuredOutput(output) {
+  let recovered = null;
+  for (const line of String(output || "").split("\n")) {
+    if (!line.trim()) continue;
+    try {
+      const event = JSON.parse(line);
+      if (event.type !== "item.completed" || event.item?.type !== "agent_message" || typeof event.item.text !== "string") {
+        continue;
+      }
+      const candidate = JSON.parse(event.item.text);
+      if (candidate && typeof candidate === "object" && !Array.isArray(candidate)) {
+        recovered = candidate;
+      }
+    } catch {
+    }
+  }
+  return recovered;
 }
 function resolveCodexExecutable(executable = "codex", environment = process.env, deniedRoots = providerSecretPaths()) {
   if (String(executable).includes("/")) return resolve9(String(executable));
@@ -13709,6 +13734,7 @@ var PROVIDER_AGENT_RESULT_SCHEMA = schemaPath("agent-result-provider.schema.json
 var IGNORED_WORKSPACE_NAMES = /* @__PURE__ */ new Set([
   ".git",
   ".apex-agent",
+  ".apex-host-home",
   ".claude",
   ".codex",
   ".gemini",
