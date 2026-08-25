@@ -12762,8 +12762,16 @@ function executeCodexAdapter(options) {
   };
 }
 function extractCodexStructuredOutput(output) {
+  const text = String(output || "").trim();
+  try {
+    const direct = JSON.parse(text);
+    if (direct && typeof direct === "object" && !Array.isArray(direct) && typeof direct.verdict === "string") {
+      return direct;
+    }
+  } catch {
+  }
   let recovered = null;
-  for (const line of String(output || "").split("\n")) {
+  for (const line of text.split("\n")) {
     if (!line.trim()) continue;
     try {
       const event = JSON.parse(line);
