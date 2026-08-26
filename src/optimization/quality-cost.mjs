@@ -189,6 +189,13 @@ export function initialOptimizationState(config, configDigest, immutableDigests)
   };
 }
 
+export function selectNextHypothesis(config, attemptedHypothesisIds = []) {
+  const attempted = new Set(attemptedHypothesisIds);
+  return (config.hypotheses || []).find((hypothesis) =>
+    !attempted.has(hypothesis.id)
+  ) || null;
+}
+
 function qualityAdjustedDeliveryCost(config, sample) {
   const weights = config.score_weights;
   const cost = sample.metrics.cost;

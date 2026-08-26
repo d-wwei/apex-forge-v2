@@ -74,7 +74,11 @@
     ],
     "require_clean_worktree": true,
     "allow_hard_reset": false,
-    "allow_unbounded_run": false
+    "allow_unbounded_run": false,
+    "required_runtime_paths": [
+      "benchmarks/plugin-vs-v1/workspaces/base/apex-manager/.benchmark-source.json",
+      "benchmarks/plugin-vs-v1/workspaces/base/apex-manager/.benchmark-dependencies.json"
+    ]
   },
   "immutable_paths": [
     "benchmarks/optimization-loop/config.json",

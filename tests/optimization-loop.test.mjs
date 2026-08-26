@@ -5,6 +5,7 @@ import {
   evaluateOptimizationSample,
   initialOptimizationState,
   nextOptimizationState,
+  selectNextHypothesis,
   validateOptimizationConfig
 } from "../src/optimization/quality-cost.mjs";
 
@@ -198,4 +199,14 @@ test("loop stops at bounded experiment budget", () => {
   }
   assert.equal(state.status, "stopped");
   assert.ok(state.stop_reasons.includes("experiment-budget"));
+});
+
+test("safety canaries do not skip the next configured optimization hypothesis", () => {
+  const next = selectNextHypothesis({
+    hypotheses: [
+      { id: "GOV-001" },
+      { id: "GOV-002" }
+    ]
+  }, ["SAFETY-000"]);
+  assert.equal(next.id, "GOV-001");
 });

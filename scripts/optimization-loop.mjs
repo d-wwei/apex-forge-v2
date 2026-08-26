@@ -9,6 +9,8 @@ import {
   openSync,
   readFileSync,
   readdirSync,
+  renameSync,
+  rmSync,
   statSync
 } from "node:fs";
 import { createHash } from "node:crypto";
@@ -23,6 +25,7 @@ import {
   evaluateOptimizationSample,
   initialOptimizationState,
   nextOptimizationState,
+  selectNextHypothesis,
   validateOptimizationConfig
 } from "../src/optimization/quality-cost.mjs";
 
@@ -53,11 +56,14 @@ if (command === "check") {
 } else if (command === "next") {
   const context = loadConfigContext();
   const state = readState();
-  const hypotheses = context.config.hypotheses || [];
+  const attempted = readHistory()
+    .filter((entry) => entry.kind === "experiment")
+    .map((entry) => entry.sample?.hypothesis_id)
+    .filter(Boolean);
   print({
     campaign_id: state.campaign_id,
     status: state.status,
-    next_hypothesis: hypotheses[state.experiment_count] || null,
+    next_hypothesis: selectNextHypothesis(context.config, attempted),
     stop_reasons: state.stop_reasons
   });
 } else {
@@ -70,10 +76,12 @@ function start() {
   }
   const context = loadConfigContext();
   assertSafeExperimentBranch(context.config);
+  assertRuntimePreconditions(context.config);
   assertDiskHeadroom(
     repoRoot,
     Number(context.config.budgets.min_free_disk_gib) * 1024 ** 3
   );
+  if (args.force) archivePriorState();
   mkdirSync(runtimeRoot, { recursive: true });
   const state = initialOptimizationState(
     context.config,
@@ -117,6 +125,7 @@ function record() {
     throw new Error(`optimization loop is not running: ${state.status}`);
   }
   assertSafeExperimentBranch(context.config);
+  assertRuntimePreconditions(context.config);
   assertImmutableInputs(state, context);
   assertDiskHeadroom(
     repoRoot,
@@ -237,6 +246,14 @@ function assertSafeExperimentBranch(config) {
   }
 }
 
+function assertRuntimePreconditions(config) {
+  for (const path of config.safety.required_runtime_paths || []) {
+    if (!existsSync(resolve(repoRoot, path))) {
+      throw new Error(`required runtime path missing: ${path}`);
+    }
+  }
+}
+
 function currentBranch() {
   return runGit(["rev-parse", "--abbrev-ref", "HEAD"]);
 }
@@ -287,12 +304,27 @@ function appendHistory(value) {
   }
 }
 
-function historyHasExperiment(experimentId) {
-  if (!existsSync(historyPath)) return false;
+function readHistory() {
+  if (!existsSync(historyPath)) return [];
   return readFileSync(historyPath, "utf8")
     .split("\n")
     .filter(Boolean)
-    .some((line) => JSON.parse(line).sample?.experiment_id === experimentId);
+    .map((line) => JSON.parse(line));
+}
+
+function historyHasExperiment(experimentId) {
+  return readHistory().some((entry) =>
+    entry.sample?.experiment_id === experimentId
+  );
+}
+
+function archivePriorState() {
+  if (!existsSync(runtimeRoot)) return;
+  const suffix = new Date().toISOString().replaceAll(/[:.]/g, "-");
+  if (existsSync(historyPath)) {
+    renameSync(historyPath, join(runtimeRoot, `history-${suffix}.jsonl`));
+  }
+  rmSync(statePath, { force: true });
 }
 
 function readState() {
