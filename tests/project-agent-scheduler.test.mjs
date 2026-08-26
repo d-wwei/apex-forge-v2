@@ -234,6 +234,45 @@ test("one project agent failure does not cancel its sibling", () => {
   );
 });
 
+test("terminal blocked worker halts the run after retry and fallback are exhausted", () => {
+  const { project, root, runId } = createGovernedProject();
+  const executionPath = join(root, "policies", "execution.json");
+  const execution = readJson(executionPath);
+  execution.budgets.max_agent_runs_per_tick = 2;
+  execution.permissions.allowed_adapters = ["host", "shell", "human", "codex"];
+  execution.permissions.adapter_fallback_order = ["codex"];
+  writeFileSync(executionPath, `${JSON.stringify(execution, null, 2)}\n`);
+  const retryPath = join(root, "policies", "retry.json");
+  const retry = readJson(retryPath);
+  retry.max_attempts.codex = 1;
+  writeFileSync(retryPath, `${JSON.stringify(retry, null, 2)}\n`);
+
+  const fake = createFakeCognitiveAgent(project, {
+    sleepMs: 50,
+    failType: "risk"
+  });
+  const tick = JSON.parse(run([
+    "project", "tick", "--project", project,
+    "--run-agents", "--agent-limit", "2", "--agent-cycles", "4",
+    "--agent-sandbox", "scratch",
+    "--agent-command", fake.executable,
+    "--agent-timeout-ms", "10000"
+  ]).stdout);
+
+  assert.equal(tick.agent_scheduler.stop_reason, "terminal-failure");
+  assert.deepEqual(
+    tick.agent_scheduler.terminalized_runs.map((item) => item.run_id),
+    [runId]
+  );
+  const runState = readJson(join(root, "runs", runId, "run.json"));
+  assert.equal(runState.status, "halted");
+  assert.equal(
+    runState.nodes.find((node) => node.id === "execute").status,
+    "halted"
+  );
+  assert.equal(readJson(join(root, "project.json")).active_runs.includes(runId), false);
+});
+
 test("worker execution claim is exclusive and an expired lease is recoverable", () => {
   const { project, root, runId } = createGovernedProject();
   const worker = JSON.parse(run([

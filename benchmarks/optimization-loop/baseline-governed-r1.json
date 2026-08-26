@@ -1,0 +1,51 @@
+{
+  "schema_version": "v0",
+  "experiment_id": "baseline-governed-5b17dac",
+  "task_id": "apex-manager--review-defect",
+  "route": "governed",
+  "status": "completed",
+  "commit": "3d72571873b9ce52d1eee35bebec68376ead8a1c",
+  "hypothesis_id": "BASELINE",
+  "metrics": {
+    "valid_deliveries": 1,
+    "quality": {
+      "public_acceptance": 1,
+      "hidden_acceptance": 0.5,
+      "scope_safety": 1,
+      "durable_closure": 0,
+      "false_completion_count": 0,
+      "defect_detection": 0.5,
+      "false_positive_rate": 0
+    },
+    "efficiency": {
+      "wall_ms": 994488,
+      "model_calls": 0,
+      "retries": 0,
+      "rework_rate": 0
+    },
+    "cost": {
+      "uncached_input_tokens": 95754,
+      "cached_input_tokens": 2592986,
+      "output_tokens": 20522,
+      "tool_calls": 0
+    },
+    "complexity": {
+      "changed_lines": 0,
+      "added_runtime_nodes": 0
+    }
+  },
+  "comparator": {
+    "mode": "v1-skill",
+    "wall_ms": 73491,
+    "total_tokens": 188968
+  },
+  "provenance": {
+    "candidate_digest": "5b17dac0a3d919dbff9d3cb13416304da4ca0a1c0b51f8ec046a66d2586c381f",
+    "candidate_result": "benchmarks/plugin-vs-v1/results/5b17dac0a3d919dbff9d3cb13416304da4ca0a1c0b51f8ec046a66d2586c381f/apex-manager--review-defect--plugin-kernel.json",
+    "comparator_result": "benchmarks/plugin-vs-v1/results/5b17dac0a3d919dbff9d3cb13416304da4ca0a1c0b51f8ec046a66d2586c381f/apex-manager--review-defect--v1-skill.json",
+    "limitations": [
+      "model_calls, retries, rework_rate, and tool_calls were not present in the historical result and are recorded as zero only for baseline compatibility",
+      "the baseline fails hidden acceptance and durable closure and is not eligible for keep"
+    ]
+  }
+}

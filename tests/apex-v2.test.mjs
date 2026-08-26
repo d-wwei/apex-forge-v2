@@ -7,6 +7,7 @@ import {
   mkdtempSync,
   readFileSync,
   readdirSync,
+  statSync,
   symlinkSync,
   writeFileSync
 } from "node:fs";
@@ -103,7 +104,9 @@ if (!prompt.includes("## Objective") || !prompt.includes("## Write Scope")) {
 const target = join(workspace, ${JSON.stringify(target)});
 mkdirSync(dirname(target), { recursive: true });
 ${options.noPatch ? "" : `writeFileSync(target, ${JSON.stringify(content)});`}
-writeFileSync(output, JSON.stringify(${JSON.stringify(resultValue)}));
+${options.rawOutputBytes
+    ? `writeFileSync(output, Buffer.alloc(${Number(options.rawOutputBytes)}, 0x61));`
+    : `writeFileSync(output, JSON.stringify(${JSON.stringify(resultValue)}));`}
 `);
   chmodSync(path, 0o755);
   return path;
@@ -3486,6 +3489,45 @@ test("invalid Agent output 保留为非权威 evidence 且 strict contracts 继�
   assert.equal(existsSync(join(dir, "agent-output-invalid.txt")), true);
   const contracts = JSON.parse(run(["contracts", "validate", "--project", project]).stdout);
   assert.equal(contracts.status, "PASS");
+});
+
+test("oversized invalid Agent output and change evidence are bounded on disk", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithPlanGraph(project);
+  const fakeCodex = createFakeCodex(project, {
+    invalidResult: true,
+    rawOutputBytes: 2 * 1024 * 1024
+  });
+  const worker = JSON.parse(run([
+    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
+    "--plan-node-id", "delivery-implementation"
+  ]).stdout);
+  run([
+    "worker", "sandbox", "init", "--project", project,
+    "--worker-id", worker.worker_id, "--type", "scratch"
+  ]);
+
+  const executed = JSON.parse(run([
+    "worker", "exec-agent", "--project", project, "--worker-id", worker.worker_id,
+    "--adapter", "codex", "--command", fakeCodex, "--timeout-ms", "10000"
+  ]).stdout);
+  assert.equal(executed.result.status, "FAIL");
+  assert.equal(executed.result.output_summary.raw_agent_output_truncated, true);
+  assert.equal(executed.result.output_summary.raw_agent_output_bytes, 2 * 1024 * 1024);
+  const dir = join(
+    project,
+    ".apex-v2",
+    "runs",
+    deliveryRun.run_id,
+    "workers",
+    worker.worker_id
+  );
+  assert.ok(statSync(join(dir, "agent-output-invalid.txt")).size < 70 * 1024);
+  const adapterResultPath = join(
+    dir,
+    readdirSync(dir).find((file) => file.startsWith("adapter-result-"))
+  );
+  assert.ok(statSync(adapterResultPath).size < 128 * 1024);
 });
 
 test("worker fallback 在 retryable adapter failure 后切换到下一个可用 runtime", () => {

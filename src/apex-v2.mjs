@@ -30,6 +30,7 @@ import {
   closeRunIfComplete,
   createRunNode,
   getRunNode,
+  haltRun,
   loadRun,
   recordRunClosure,
   requirePassedNode,
@@ -1143,7 +1144,8 @@ async function runProjectAgentScheduler(root, limit, args) {
     agent_runs: [],
     collected_results: [],
     completed_execute_runs: [],
-    recovered_workers: []
+    recovered_workers: [],
+    terminalized_runs: []
   };
   let remainingAgentRuns = aggregate.max_agent_runs;
 
@@ -1169,6 +1171,7 @@ async function runProjectAgentScheduler(root, limit, args) {
     remainingAgentRuns -= agents.filter((item) => item.status !== "STALE").length;
     const collected = collectWorkerResults(root, runIds);
     const completed = completeReadyExecuteNodes(root, runIds);
+    const terminalized = haltTerminallyBlockedRuns(root, runIds);
     const progressCount = [
       ...fallback.filter((item) => item.status === "FALLBACK_READY"),
       ...recovered,
@@ -1177,7 +1180,8 @@ async function runProjectAgentScheduler(root, limit, args) {
       ...deterministic,
       ...agents.filter((item) => item.status !== "STALE"),
       ...collected,
-      ...completed
+      ...completed,
+      ...terminalized
     ].length;
 
     aggregate.fallback_workers.push(...fallback);
@@ -1188,6 +1192,7 @@ async function runProjectAgentScheduler(root, limit, args) {
     aggregate.agent_runs.push(...agents);
     aggregate.collected_results.push(...collected);
     aggregate.completed_execute_runs.push(...completed);
+    aggregate.terminalized_runs.push(...terminalized);
     aggregate.cycles.push({
       cycle,
       progress_count: progressCount,
@@ -1202,9 +1207,14 @@ async function runProjectAgentScheduler(root, limit, args) {
       deterministic_workers: deterministic.map((item) => item.worker_id),
       agent_workers: agents.map((item) => item.worker_id),
       collected_workers: collected.map((item) => item.worker_id),
-      completed_runs: completed.map((item) => item.run_id)
+      completed_runs: completed.map((item) => item.run_id),
+      terminalized_runs: terminalized.map((item) => item.run_id)
     });
 
+    if (terminalized.length > 0) {
+      aggregate.stop_reason = "terminal-failure";
+      break;
+    }
     if (remainingAgentRuns <= 0) {
       aggregate.stop_reason = "agent-run-budget";
       break;
@@ -1219,6 +1229,120 @@ async function runProjectAgentScheduler(root, limit, args) {
   }
 
   return aggregate;
+}
+
+function haltTerminallyBlockedRuns(root, runIds) {
+  const retryPolicy = readJson(join(root, "policies", "retry.json"));
+  const executionPolicy = readJson(join(root, "policies", "execution.json"));
+  const availableExecutors = new Set(
+    inspectWorkerExecutors()
+      .filter((item) => item.available)
+      .map((item) => item.adapter)
+  );
+  const halted = [];
+
+  for (const runId of runIds) {
+    const workers = getWorkers(root, runId);
+    const blockedWorkers = workers.filter((worker) => worker.status === "blocked");
+    if (blockedWorkers.length === 0) continue;
+    if (workers.some((worker) =>
+      ["active", "running", "claimed"].includes(worker.status)
+    )) {
+      continue;
+    }
+    const terminalWorkers = blockedWorkers.filter((worker) =>
+      !blockedWorkerCanRecover(
+        root,
+        worker,
+        retryPolicy,
+        executionPolicy,
+        availableExecutors
+      )
+    );
+    if (terminalWorkers.length !== blockedWorkers.length) continue;
+
+    const transition = withProjectTransaction(resolve(root, ".."), {
+      kind: "run-terminal-worker-failure",
+      idempotencyKey: `run-terminal-worker-failure:${runId}`
+    }, () => {
+      const run = loadRun(root, runId);
+      if (run.status !== "active") return null;
+      const timestamp = now();
+      const executeNode = getRunNode(run, "execute");
+      const blocking = terminalWorkers.map((worker) => worker.worker_id);
+      const reason = `worker 恢复路径已耗尽：${blocking.join(", ")}`;
+      executeNode.status = "halted";
+      executeNode.started_at = executeNode.started_at || timestamp;
+      executeNode.completed_at = timestamp;
+      executeNode.evidence_refs = [];
+      executeNode.gate = {
+        status: "HALT",
+        reason,
+        blocking,
+        carry_forward_ids: []
+      };
+      run.gate = executeNode.gate;
+      haltRun(root, run, timestamp);
+      writeRun(root, run);
+      appendEvent(root, "run.node.completed", "apex-v2", {
+        run_id: run.run_id,
+        node_id: executeNode.id,
+        gate: "HALT",
+        evidence_refs: [],
+        blocking,
+        via: "project.tick"
+      });
+      const event = appendEvent(root, "run.halted", "apex-v2", {
+        run_id: run.run_id,
+        roadmap_node_id: run.roadmap_node_id,
+        node_id: executeNode.id,
+        reason,
+        blocking_worker_ids: blocking,
+        via: "project.tick"
+      });
+      updateProject(root, {
+        last_event_id: event.event_id,
+        updated_at: event.timestamp
+      });
+      return {
+        run_id: run.run_id,
+        status: "HALTED",
+        blocking_worker_ids: blocking,
+        reason
+      };
+    }).result;
+    if (transition) halted.push(transition);
+  }
+
+  return halted;
+}
+
+function blockedWorkerCanRecover(
+  root,
+  worker,
+  retryPolicy,
+  executionPolicy,
+  availableExecutors
+) {
+  const latest = latestWorkerAdapterResult(root, worker);
+  const failureKind = latest?.failure_kind || "unknown";
+  const adapter = worker.last_adapter || worker.executor_id || worker.adapter;
+  const maxAttempts = Number(retryPolicy.max_attempts?.[adapter] || 1);
+  const retryable = retryPolicy.auto_retry?.enabled === true
+    && retryPolicy.auto_retry.retryable_failure_kinds.includes(failureKind)
+    && Number(worker.attempt || 0) < maxAttempts;
+  if (retryable) return true;
+
+  const permissions = executionPolicy.permissions || {};
+  if (!permissions.adapter_fallback_failure_kinds?.includes(failureKind)) {
+    return false;
+  }
+  const order = permissions.adapter_fallback_order || [];
+  const start = Math.max(-1, order.indexOf(adapter));
+  return order.slice(start + 1).some((candidate) =>
+    permissions.allowed_adapters?.includes(candidate)
+    && availableExecutors.has(candidate)
+  );
 }
 
 function schedulerStopReason(root, runIds) {

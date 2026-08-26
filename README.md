@@ -374,6 +374,26 @@ Product Gate 的 absolute、relative 和 durable-value Gate 全部通过。
 - [`planning/plugin-upgrade-execution-status.md`](./planning/plugin-upgrade-execution-status.md)
 - [`benchmarks/plugin-vs-v1/latest-evaluation.json`](./benchmarks/plugin-vs-v1/latest-evaluation.json)
 - [`benchmarks/plugin-vs-v1/results-manifest.json`](./benchmarks/plugin-vs-v1/results-manifest.json)
+
+### 受控优化 Loop
+
+Apex Forge 使用质量硬门槛优先的 bounded experiment loop，而不是无限自动改代码：
+
+- public/hidden acceptance、scope safety、durable closure 和 false completion
+  任一失败，候选直接淘汰；
+- 质量通过后才比较耗时、Token、模型调用、重试、返工与实现复杂度；
+- 每轮只改变一个变量，计时 benchmark 严格串行；
+- 实验数量、总耗时、总 Token、连续失败和磁盘余量均有熔断；
+- 实验只能在非保护分支的干净 worktree 中启动。
+
+```bash
+npm run optimization:check
+npm run optimization:start
+npm run optimization:status
+node scripts/optimization-loop.mjs next
+```
+
+完整规则见 [`labloop.md`](./labloop.md)。
 - [`docs/releases/v0.2.0-rc.1.md`](./docs/releases/v0.2.0-rc.1.md)
 
 ## 仓库结构

@@ -1,7 +1,10 @@
 # Local runtime state and agent sandboxes
 .apex-v2/
 .apex-v2.lock/
+.apex-loop/
 .tmp-*/
+benchmarks/plugin-vs-v1/evidence/
+benchmarks/plugin-vs-v1/results/
 
 # Dependencies and generated output
 node_modules/

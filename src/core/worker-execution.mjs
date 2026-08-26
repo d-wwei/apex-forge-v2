@@ -1,6 +1,11 @@
 import {
+  closeSync,
   existsSync,
+  lstatSync,
+  openSync,
   readFileSync,
+  readSync,
+  realpathSync,
   readdirSync,
   rmSync,
   statSync,
@@ -8,6 +13,7 @@ import {
 } from "node:fs";
 import { createHash } from "node:crypto";
 import { join, relative, resolve } from "node:path";
+import { spawnSync } from "node:child_process";
 import {
   normalizeExecutorInspection
 } from "../contracts/worker-executor.mjs";
@@ -77,6 +83,10 @@ const ALLOWED_CONTEXT_ROOTS = new Set([
   "policies",
   "learning"
 ]);
+const MAX_PERSISTED_CHANGE_PATHS = 200;
+const MAX_AGENT_RESULT_BYTES = 1024 * 1024;
+const MAX_PERSISTED_AGENT_OUTPUT_BYTES = 64 * 1024;
+const MAX_PERSISTED_TEXT_CHARS = 16 * 1024;
 
 export function executeWorkerExecutor(root, worker, planNode, options = {}) {
   if (!worker.sandbox || worker.sandbox.status !== "ready") {
@@ -156,7 +166,10 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
     sessionId
   });
   const structured = readAgentResult(outputPath);
-  const rawAgentOutput = existsSync(outputPath) ? readFileSync(outputPath, "utf8") : "";
+  const rawAgentOutput = readBoundedTextFile(
+    outputPath,
+    MAX_PERSISTED_AGENT_OUTPUT_BYTES
+  );
   rmSync(outputPath, { force: true });
   const changes = collectWorkspaceChanges(projectDir, workspaceDir, worker.write_scope);
   const protectedChanges = diffProtectedWorkspace(protectedBefore, snapshotProtectedWorkspace(workspaceDir));
@@ -228,6 +241,7 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
         ? "contract_error"
       : classifyFailure(execution, structured, changes, worker);
   const timestamp = now();
+  const persistedChanges = boundWorkspaceChanges(changes);
   const adapterResult = {
     schema_version: SCHEMA_VERSION,
     result_id: shortId("adapter"),
@@ -244,15 +258,24 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
     executable: execution.executable,
     status: success ? "PASS" : "FAIL",
     failure_kind: failureKind,
-    command: execution.command,
-    summary: structured.value?.summary || (success ? "worker executor completed" : "worker executor failed"),
+    command: boundText(execution.command),
+    summary: boundText(
+      structured.value?.summary
+      || (success ? "worker executor completed" : "worker executor failed")
+    ),
     exit_code: execution.exit_code,
     duration_ms: execution.duration_ms,
     stdout_tail: execution.stdout_tail,
     stderr_tail: execution.stderr_tail,
-    changed_files: changes.changed_files,
-    out_of_scope_files: changes.out_of_scope_files,
-    unsupported_files: changes.unsupported_files,
+    changed_files: persistedChanges.changed_files,
+    out_of_scope_files: persistedChanges.out_of_scope_files,
+    unsupported_files: persistedChanges.unsupported_files,
+    change_summary: persistedChanges.change_summary,
+    output_summary: {
+      raw_agent_output_bytes: rawAgentOutput.observed_bytes,
+      raw_agent_output_truncated: rawAgentOutput.truncated,
+      persisted_limit_bytes: MAX_PERSISTED_AGENT_OUTPUT_BYTES
+    },
     usage: execution.usage || {
       input_tokens: null,
       output_tokens: null,
@@ -321,7 +344,7 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
     modelSelection,
     modelChanged,
     semanticEvidence,
-    rawAgentOutput,
+    rawAgentOutput: rawAgentOutput.text,
     capabilityEvidence,
     timestamp
   })).result;
@@ -394,8 +417,14 @@ function commitWorkerExecution(root, input) {
       body: [
         input.adapterResult.summary,
         `exit_code=${input.adapterResult.exit_code}`,
-        `out_of_scope=${input.changes.out_of_scope_files.join(",") || "none"}`,
-        `unsupported=${input.changes.unsupported_files.join(",") || "none"}`
+        `out_of_scope=${formatPathSummary(
+          input.adapterResult.out_of_scope_files,
+          input.adapterResult.change_summary.out_of_scope_file_count
+        )}`,
+        `unsupported=${formatPathSummary(
+          input.adapterResult.unsupported_files,
+          input.adapterResult.change_summary.unsupported_file_count
+        )}`
       ].join("\n"),
       refs: input.adapterResult.refs,
       timestamp: input.timestamp
@@ -599,6 +628,9 @@ ${readCapabilityProtocol(binding.protocol_ref).trim()}
 }
 
 export function collectWorkspaceChanges(projectDir, workspaceDir, writeScope) {
+  if (isGitWorkspace(workspaceDir)) {
+    return collectGitWorkspaceChanges(workspaceDir, writeScope);
+  }
   const projectFiles = listWorkspaceFiles(projectDir);
   const sandboxFiles = listWorkspaceFiles(workspaceDir);
   const allFiles = new Set([...projectFiles, ...sandboxFiles]);
@@ -654,9 +686,46 @@ export function collectWorkspaceChanges(projectDir, workspaceDir, writeScope) {
   };
 }
 
+export function boundWorkspaceChanges(
+  changes,
+  limit = MAX_PERSISTED_CHANGE_PATHS
+) {
+  const normalizedLimit = Math.max(
+    1,
+    Number(limit) || MAX_PERSISTED_CHANGE_PATHS
+  );
+  const changedFiles = [...(changes.changed_files || [])];
+  const outOfScopeFiles = [...(changes.out_of_scope_files || [])];
+  const unsupportedFiles = [...(changes.unsupported_files || [])];
+  return {
+    changed_files: changedFiles.slice(0, normalizedLimit),
+    out_of_scope_files: outOfScopeFiles.slice(0, normalizedLimit),
+    unsupported_files: unsupportedFiles.slice(0, normalizedLimit),
+    change_summary: {
+      changed_file_count: changedFiles.length,
+      out_of_scope_file_count: outOfScopeFiles.length,
+      unsupported_file_count: unsupportedFiles.length,
+      list_limit: normalizedLimit,
+      truncated: [
+        changedFiles,
+        outOfScopeFiles,
+        unsupportedFiles
+      ].some((items) => items.length > normalizedLimit)
+    }
+  };
+}
+
 function readAgentResult(path) {
   if (!existsSync(path)) {
     return { valid: false, value: null, error: "agent-result.json missing" };
+  }
+  const size = statSync(path).size;
+  if (size > MAX_AGENT_RESULT_BYTES) {
+    return {
+      valid: false,
+      value: null,
+      error: `agent-result.json exceeds ${MAX_AGENT_RESULT_BYTES} bytes`
+    };
   }
   try {
     const value = normalizeProviderAgentResult(readJson(path));
@@ -669,6 +738,159 @@ function readAgentResult(path) {
   } catch (error) {
     return { valid: false, value: null, error: error.message };
   }
+}
+
+function collectGitWorkspaceChanges(workspaceDir, writeScope) {
+  const tracked = gitPathList(workspaceDir, [
+    "diff",
+    "--name-only",
+    "-z",
+    "--diff-filter=ACDMRTUXB",
+    "HEAD",
+    "--"
+  ]);
+  const untracked = gitPathList(workspaceDir, [
+    "ls-files",
+    "--others",
+    "--exclude-standard",
+    "-z",
+    "--"
+  ]);
+  const untrackedSet = new Set(untracked);
+  const paths = Array.from(new Set([...tracked, ...untracked]))
+    .filter((path) => !isExecutorOwnedPath(path))
+    .sort();
+  const changedFiles = [];
+  const outOfScopeFiles = [];
+  const unsupportedFiles = [];
+  const operations = [];
+
+  for (const file of paths) {
+    const workspacePath = join(workspaceDir, file);
+    const workspaceExists = existsSync(workspacePath);
+    changedFiles.push(file);
+    if (!isFileAllowedByScope(file, writeScope)) {
+      outOfScopeFiles.push(file);
+      continue;
+    }
+    if (!workspaceExists) {
+      unsupportedFiles.push(`${file}:delete`);
+      continue;
+    }
+    const workspaceStat = lstatSync(workspacePath);
+    if (workspaceStat.isSymbolicLink()) {
+      unsupportedFiles.push(`${file}:symlink`);
+      continue;
+    }
+    if (workspaceStat.isDirectory()) {
+      unsupportedFiles.push(`${file}:directory`);
+      continue;
+    }
+    const next = readFileSync(workspacePath);
+    if (isBinary(next)) {
+      unsupportedFiles.push(`${file}:binary`);
+      continue;
+    }
+    if (untrackedSet.has(file)) {
+      operations.push({
+        op: "write_text",
+        path: file,
+        content: next.toString("utf8")
+      });
+      continue;
+    }
+    const previous = gitFileAtHead(workspaceDir, file);
+    if (previous == null) {
+      unsupportedFiles.push(`${file}:missing_base`);
+      continue;
+    }
+    if (isBinary(previous)) {
+      unsupportedFiles.push(`${file}:binary`);
+      continue;
+    }
+    operations.push({
+      op: "replace_text",
+      path: file,
+      old_text: previous.toString("utf8"),
+      new_text: next.toString("utf8")
+    });
+  }
+
+  return {
+    changed_files: changedFiles,
+    out_of_scope_files: outOfScopeFiles,
+    unsupported_files: unsupportedFiles,
+    operations
+  };
+}
+
+function isGitWorkspace(workspaceDir) {
+  const result = spawnSync("git", ["rev-parse", "--show-toplevel"], {
+    cwd: workspaceDir,
+    encoding: "utf8"
+  });
+  if (result.status !== 0 || !result.stdout.trim()) return false;
+  return realpathSync(result.stdout.trim()) === realpathSync(workspaceDir);
+}
+
+function gitPathList(workspaceDir, args) {
+  const result = spawnSync("git", args, {
+    cwd: workspaceDir,
+    encoding: "buffer",
+    maxBuffer: 64 * 1024 * 1024
+  });
+  if (result.status !== 0) {
+    throw new Error(`git workspace diff failed: ${String(result.stderr || "")}`);
+  }
+  return result.stdout.toString("utf8").split("\0").filter(Boolean);
+}
+
+function gitFileAtHead(workspaceDir, file) {
+  const result = spawnSync("git", ["show", `HEAD:${file}`], {
+    cwd: workspaceDir,
+    encoding: "buffer",
+    maxBuffer: 64 * 1024 * 1024
+  });
+  return result.status === 0 ? result.stdout : null;
+}
+
+function isExecutorOwnedPath(path) {
+  const [root] = String(path).split("/");
+  return IGNORED_WORKSPACE_NAMES.has(root);
+}
+
+function readBoundedTextFile(path, maxBytes) {
+  if (!existsSync(path)) {
+    return { text: "", observed_bytes: 0, truncated: false };
+  }
+  const size = statSync(path).size;
+  const length = Math.min(size, maxBytes);
+  const buffer = Buffer.alloc(length);
+  const descriptor = openSync(path, "r");
+  try {
+    readSync(descriptor, buffer, 0, length, Math.max(0, size - length));
+  } finally {
+    closeSync(descriptor);
+  }
+  return {
+    text: size > maxBytes
+      ? `[truncated ${size - maxBytes} leading bytes]\n${buffer.toString("utf8")}`
+      : buffer.toString("utf8"),
+    observed_bytes: size,
+    truncated: size > maxBytes
+  };
+}
+
+function boundText(value, max = MAX_PERSISTED_TEXT_CHARS) {
+  const text = String(value || "");
+  if (text.length <= max) return text;
+  return `${text.slice(0, max)}\n[truncated ${text.length - max} characters]`;
+}
+
+function formatPathSummary(paths, total) {
+  if (total === 0) return "none";
+  const suffix = total > paths.length ? `,...(+${total - paths.length})` : "";
+  return `${paths.join(",")}${suffix}`;
 }
 
 export function normalizeProviderAgentResult(value) {
