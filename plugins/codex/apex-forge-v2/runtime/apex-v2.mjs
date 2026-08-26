@@ -12073,8 +12073,13 @@ function unique(values) {
 
 // src/core/worker-execution.mjs
 import {
+  closeSync as closeSync2,
   existsSync as existsSync15,
+  lstatSync as lstatSync3,
+  openSync as openSync2,
   readFileSync as readFileSync12,
+  readSync,
+  realpathSync as realpathSync4,
   readdirSync as readdirSync7,
   rmSync as rmSync5,
   statSync as statSync3,
@@ -12082,6 +12087,7 @@ import {
 } from "node:fs";
 import { createHash as createHash7 } from "node:crypto";
 import { join as join21, relative as relative5, resolve as resolve12 } from "node:path";
+import { spawnSync as spawnSync10 } from "node:child_process";
 
 // src/contracts/worker-executor.mjs
 function assertWorkerExecutor(executor) {
@@ -13767,6 +13773,10 @@ var ALLOWED_CONTEXT_ROOTS = /* @__PURE__ */ new Set([
   "policies",
   "learning"
 ]);
+var MAX_PERSISTED_CHANGE_PATHS = 200;
+var MAX_AGENT_RESULT_BYTES = 1024 * 1024;
+var MAX_PERSISTED_AGENT_OUTPUT_BYTES = 64 * 1024;
+var MAX_PERSISTED_TEXT_CHARS = 16 * 1024;
 function executeWorkerExecutor(root, worker, planNode2, options = {}) {
   if (!worker.sandbox || worker.sandbox.status !== "ready") {
     throw new Error(`coding-agent adapter \u8981\u6C42 ready sandbox\uFF1A${worker.worker_id}`);
@@ -13826,7 +13836,10 @@ function executeWorkerExecutor(root, worker, planNode2, options = {}) {
     sessionId
   });
   const structured = readAgentResult(outputPath);
-  const rawAgentOutput = existsSync15(outputPath) ? readFileSync12(outputPath, "utf8") : "";
+  const rawAgentOutput = readBoundedTextFile(
+    outputPath,
+    MAX_PERSISTED_AGENT_OUTPUT_BYTES
+  );
   rmSync5(outputPath, { force: true });
   const changes = collectWorkspaceChanges(projectDir, workspaceDir, worker.write_scope);
   const protectedChanges = diffProtectedWorkspace(protectedBefore, snapshotProtectedWorkspace(workspaceDir));
@@ -13879,6 +13892,7 @@ function executeWorkerExecutor(root, worker, planNode2, options = {}) {
   const success = execution.exit_code === 0 && structured.valid && structured.value.verdict === "pass" && changes.out_of_scope_files.length === 0 && changes.unsupported_files.length === 0 && !budgetFailed && capabilityEvidenceValidation.valid && semanticEvidenceError === "" && (worker.output_contract !== "patch" || changes.operations.length > 0);
   const failureKind = success ? null : budgetFailed ? "budget_exceeded" : !capabilityEvidenceValidation.valid ? "contract_error" : semanticEvidenceError ? "contract_error" : classifyFailure(execution, structured, changes, worker);
   const timestamp = now();
+  const persistedChanges = boundWorkspaceChanges(changes);
   const adapterResult = {
     schema_version: SCHEMA_VERSION,
     result_id: shortId("adapter"),
@@ -13895,15 +13909,23 @@ function executeWorkerExecutor(root, worker, planNode2, options = {}) {
     executable: execution.executable,
     status: success ? "PASS" : "FAIL",
     failure_kind: failureKind,
-    command: execution.command,
-    summary: structured.value?.summary || (success ? "worker executor completed" : "worker executor failed"),
+    command: boundText(execution.command),
+    summary: boundText(
+      structured.value?.summary || (success ? "worker executor completed" : "worker executor failed")
+    ),
     exit_code: execution.exit_code,
     duration_ms: execution.duration_ms,
     stdout_tail: execution.stdout_tail,
     stderr_tail: execution.stderr_tail,
-    changed_files: changes.changed_files,
-    out_of_scope_files: changes.out_of_scope_files,
-    unsupported_files: changes.unsupported_files,
+    changed_files: persistedChanges.changed_files,
+    out_of_scope_files: persistedChanges.out_of_scope_files,
+    unsupported_files: persistedChanges.unsupported_files,
+    change_summary: persistedChanges.change_summary,
+    output_summary: {
+      raw_agent_output_bytes: rawAgentOutput.observed_bytes,
+      raw_agent_output_truncated: rawAgentOutput.truncated,
+      persisted_limit_bytes: MAX_PERSISTED_AGENT_OUTPUT_BYTES
+    },
     usage: execution.usage || {
       input_tokens: null,
       output_tokens: null,
@@ -13969,7 +13991,7 @@ function executeWorkerExecutor(root, worker, planNode2, options = {}) {
     modelSelection,
     modelChanged,
     semanticEvidence,
-    rawAgentOutput,
+    rawAgentOutput: rawAgentOutput.text,
     capabilityEvidence,
     timestamp
   })).result;
@@ -14035,8 +14057,14 @@ function commitWorkerExecution(root, input) {
       body: [
         input.adapterResult.summary,
         `exit_code=${input.adapterResult.exit_code}`,
-        `out_of_scope=${input.changes.out_of_scope_files.join(",") || "none"}`,
-        `unsupported=${input.changes.unsupported_files.join(",") || "none"}`
+        `out_of_scope=${formatPathSummary(
+          input.adapterResult.out_of_scope_files,
+          input.adapterResult.change_summary.out_of_scope_file_count
+        )}`,
+        `unsupported=${formatPathSummary(
+          input.adapterResult.unsupported_files,
+          input.adapterResult.change_summary.unsupported_file_count
+        )}`
       ].join("\n"),
       refs: input.adapterResult.refs,
       timestamp: input.timestamp
@@ -14219,6 +14247,9 @@ ${readCapabilityProtocol(binding.protocol_ref).trim()}
 `).join("\n");
 }
 function collectWorkspaceChanges(projectDir, workspaceDir, writeScope) {
+  if (isGitWorkspace(workspaceDir)) {
+    return collectGitWorkspaceChanges(workspaceDir, writeScope);
+  }
   const projectFiles = listWorkspaceFiles(projectDir);
   const sandboxFiles = listWorkspaceFiles(workspaceDir);
   const allFiles = /* @__PURE__ */ new Set([...projectFiles, ...sandboxFiles]);
@@ -14270,9 +14301,42 @@ function collectWorkspaceChanges(projectDir, workspaceDir, writeScope) {
     operations
   };
 }
+function boundWorkspaceChanges(changes, limit = MAX_PERSISTED_CHANGE_PATHS) {
+  const normalizedLimit = Math.max(
+    1,
+    Number(limit) || MAX_PERSISTED_CHANGE_PATHS
+  );
+  const changedFiles = [...changes.changed_files || []];
+  const outOfScopeFiles = [...changes.out_of_scope_files || []];
+  const unsupportedFiles = [...changes.unsupported_files || []];
+  return {
+    changed_files: changedFiles.slice(0, normalizedLimit),
+    out_of_scope_files: outOfScopeFiles.slice(0, normalizedLimit),
+    unsupported_files: unsupportedFiles.slice(0, normalizedLimit),
+    change_summary: {
+      changed_file_count: changedFiles.length,
+      out_of_scope_file_count: outOfScopeFiles.length,
+      unsupported_file_count: unsupportedFiles.length,
+      list_limit: normalizedLimit,
+      truncated: [
+        changedFiles,
+        outOfScopeFiles,
+        unsupportedFiles
+      ].some((items) => items.length > normalizedLimit)
+    }
+  };
+}
 function readAgentResult(path) {
   if (!existsSync15(path)) {
     return { valid: false, value: null, error: "agent-result.json missing" };
+  }
+  const size = statSync3(path).size;
+  if (size > MAX_AGENT_RESULT_BYTES) {
+    return {
+      valid: false,
+      value: null,
+      error: `agent-result.json exceeds ${MAX_AGENT_RESULT_BYTES} bytes`
+    };
   }
   try {
     const value = normalizeProviderAgentResult(readJson(path));
@@ -14285,6 +14349,147 @@ function readAgentResult(path) {
   } catch (error) {
     return { valid: false, value: null, error: error.message };
   }
+}
+function collectGitWorkspaceChanges(workspaceDir, writeScope) {
+  const tracked = gitPathList(workspaceDir, [
+    "diff",
+    "--name-only",
+    "-z",
+    "--diff-filter=ACDMRTUXB",
+    "HEAD",
+    "--"
+  ]);
+  const untracked = gitPathList(workspaceDir, [
+    "ls-files",
+    "--others",
+    "--exclude-standard",
+    "-z",
+    "--"
+  ]);
+  const untrackedSet = new Set(untracked);
+  const paths = Array.from(/* @__PURE__ */ new Set([...tracked, ...untracked])).filter((path) => !isExecutorOwnedPath(path)).sort();
+  const changedFiles = [];
+  const outOfScopeFiles = [];
+  const unsupportedFiles = [];
+  const operations = [];
+  for (const file of paths) {
+    const workspacePath = join21(workspaceDir, file);
+    const workspaceExists = existsSync15(workspacePath);
+    changedFiles.push(file);
+    if (!isFileAllowedByScope(file, writeScope)) {
+      outOfScopeFiles.push(file);
+      continue;
+    }
+    if (!workspaceExists) {
+      unsupportedFiles.push(`${file}:delete`);
+      continue;
+    }
+    const workspaceStat = lstatSync3(workspacePath);
+    if (workspaceStat.isSymbolicLink()) {
+      unsupportedFiles.push(`${file}:symlink`);
+      continue;
+    }
+    if (workspaceStat.isDirectory()) {
+      unsupportedFiles.push(`${file}:directory`);
+      continue;
+    }
+    const next = readFileSync12(workspacePath);
+    if (isBinary2(next)) {
+      unsupportedFiles.push(`${file}:binary`);
+      continue;
+    }
+    if (untrackedSet.has(file)) {
+      operations.push({
+        op: "write_text",
+        path: file,
+        content: next.toString("utf8")
+      });
+      continue;
+    }
+    const previous = gitFileAtHead(workspaceDir, file);
+    if (previous == null) {
+      unsupportedFiles.push(`${file}:missing_base`);
+      continue;
+    }
+    if (isBinary2(previous)) {
+      unsupportedFiles.push(`${file}:binary`);
+      continue;
+    }
+    operations.push({
+      op: "replace_text",
+      path: file,
+      old_text: previous.toString("utf8"),
+      new_text: next.toString("utf8")
+    });
+  }
+  return {
+    changed_files: changedFiles,
+    out_of_scope_files: outOfScopeFiles,
+    unsupported_files: unsupportedFiles,
+    operations
+  };
+}
+function isGitWorkspace(workspaceDir) {
+  const result = spawnSync10("git", ["rev-parse", "--show-toplevel"], {
+    cwd: workspaceDir,
+    encoding: "utf8"
+  });
+  if (result.status !== 0 || !result.stdout.trim()) return false;
+  return realpathSync4(result.stdout.trim()) === realpathSync4(workspaceDir);
+}
+function gitPathList(workspaceDir, args) {
+  const result = spawnSync10("git", args, {
+    cwd: workspaceDir,
+    encoding: "buffer",
+    maxBuffer: 64 * 1024 * 1024
+  });
+  if (result.status !== 0) {
+    throw new Error(`git workspace diff failed: ${String(result.stderr || "")}`);
+  }
+  return result.stdout.toString("utf8").split("\0").filter(Boolean);
+}
+function gitFileAtHead(workspaceDir, file) {
+  const result = spawnSync10("git", ["show", `HEAD:${file}`], {
+    cwd: workspaceDir,
+    encoding: "buffer",
+    maxBuffer: 64 * 1024 * 1024
+  });
+  return result.status === 0 ? result.stdout : null;
+}
+function isExecutorOwnedPath(path) {
+  const [root] = String(path).split("/");
+  return IGNORED_WORKSPACE_NAMES.has(root);
+}
+function readBoundedTextFile(path, maxBytes) {
+  if (!existsSync15(path)) {
+    return { text: "", observed_bytes: 0, truncated: false };
+  }
+  const size = statSync3(path).size;
+  const length = Math.min(size, maxBytes);
+  const buffer = Buffer.alloc(length);
+  const descriptor = openSync2(path, "r");
+  try {
+    readSync(descriptor, buffer, 0, length, Math.max(0, size - length));
+  } finally {
+    closeSync2(descriptor);
+  }
+  return {
+    text: size > maxBytes ? `[truncated ${size - maxBytes} leading bytes]
+${buffer.toString("utf8")}` : buffer.toString("utf8"),
+    observed_bytes: size,
+    truncated: size > maxBytes
+  };
+}
+function boundText(value, max = MAX_PERSISTED_TEXT_CHARS) {
+  const text = String(value || "");
+  if (text.length <= max) return text;
+  return `${text.slice(0, max)}
+[truncated ${text.length - max} characters]`;
+}
+function formatPathSummary(paths, total) {
+  if (total === 0) return "none";
+  const suffix = total > paths.length ? `,...(+${total - paths.length})` : "";
+  return `${paths.join(",")}${suffix}`;
 }
 function normalizeProviderAgentResult(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return value;
@@ -17217,7 +17422,7 @@ import {
   existsSync as existsSync23,
   readFileSync as readFileSync17,
   readdirSync as readdirSync14,
-  realpathSync as realpathSync4,
+  realpathSync as realpathSync5,
   statSync as statSync4
 } from "node:fs";
 import { createHash as createHash10 } from "node:crypto";
@@ -17327,7 +17532,7 @@ function normalizeSpecSource(projectDir, input = {}) {
 function resolveExistingProjectRoot(projectDir) {
   const path = resolve18(String(projectDir || "."));
   if (!existsSync23(path)) throw new Error(`\u9879\u76EE\u6839\u76EE\u5F55\u4E0D\u5B58\u5728\uFF1A${path}`);
-  const real = realpathSync4(path);
+  const real = realpathSync5(path);
   if (!statSync4(real).isDirectory()) throw new Error(`\u9879\u76EE\u6839\u76EE\u5F55\u4E0D\u662F\u76EE\u5F55\uFF1A${path}`);
   return real;
 }
@@ -17344,14 +17549,14 @@ function resolveSourcePath(projectRoot2, requestedPath) {
   const lexicalPath = isAbsolute(requestedPath) ? resolve18(requestedPath) : resolve18(projectRoot2, requestedPath);
   assertInsideProject(projectRoot2, lexicalPath);
   if (!existsSync23(lexicalPath)) throw new Error(`Spec source \u4E0D\u5B58\u5728\uFF1A${requestedPath}`);
-  const realPath = realpathSync4(lexicalPath);
+  const realPath = realpathSync5(lexicalPath);
   assertInsideProject(projectRoot2, realPath);
   return realPath;
 }
 function collectSingleMarkdownFile(projectRoot2, path) {
   assertMarkdownFile(path);
-  assertInsideProject(projectRoot2, realpathSync4(path));
-  return [realpathSync4(path)];
+  assertInsideProject(projectRoot2, realpathSync5(path));
+  return [realpathSync5(path)];
 }
 function collectMarkdownDirectory(projectRoot2, sourcePath) {
   const files = [];
@@ -17362,14 +17567,14 @@ function collectMarkdownDirectory(projectRoot2, sourcePath) {
   }
   return [...new Set(files)].sort((left, right) => projectRelative(projectRoot2, left).localeCompare(projectRelative(projectRoot2, right)));
   function walk(directory) {
-    const realDirectory = realpathSync4(directory);
+    const realDirectory = realpathSync5(directory);
     assertInsideProject(projectRoot2, realDirectory);
     if (visited.has(realDirectory)) return;
     visited.add(realDirectory);
     for (const entry of readdirSync14(realDirectory, { withFileTypes: true })) {
       if (entry.isDirectory() && IGNORED_DIRECTORIES.has(entry.name)) continue;
       const entryPath = join35(realDirectory, entry.name);
-      const realEntry = realpathSync4(entryPath);
+      const realEntry = realpathSync5(entryPath);
       assertInsideProject(projectRoot2, realEntry);
       const stats = statSync4(realEntry);
       if (stats.isDirectory()) {
@@ -17840,7 +18045,7 @@ import {
   cpSync as cpSync2,
   existsSync as existsSync24,
   mkdtempSync as mkdtempSync3,
-  realpathSync as realpathSync5,
+  realpathSync as realpathSync6,
   readFileSync as readFileSync18,
   readdirSync as readdirSync15,
   rmSync as rmSync7,
@@ -17850,7 +18055,7 @@ import {
 import { createHash as createHash11 } from "node:crypto";
 import { tmpdir as tmpdir3 } from "node:os";
 import { basename as basename7, join as join36, relative as relative7, resolve as resolve19, sep as sep4 } from "node:path";
-import { spawnSync as spawnSync10 } from "node:child_process";
+import { spawnSync as spawnSync11 } from "node:child_process";
 function handleMergeCommand(subcommand, args) {
   if (subcommand === "enqueue") {
     enqueueMerge(args);
@@ -18360,7 +18565,7 @@ function prepareVerificationWorkspace(root, run, projectDir) {
   };
 }
 function verificationTempBase(projectDir) {
-  const projectReal = realpathSync5(projectDir);
+  const projectReal = realpathSync6(projectDir);
   const candidates = [
     process.env.APEX_V2_VERIFY_TMPDIR,
     tmpdir3(),
@@ -18369,7 +18574,7 @@ function verificationTempBase(projectDir) {
   ].filter(Boolean);
   for (const candidate of candidates) {
     if (!existsSync24(candidate)) continue;
-    const candidateReal = realpathSync5(candidate);
+    const candidateReal = realpathSync6(candidate);
     if (candidateReal !== projectReal && !candidateReal.startsWith(`${projectReal}${sep4}`)) {
       return candidateReal;
     }
@@ -18382,7 +18587,7 @@ function initializeVerificationRepository(workspaceDir) {
     ["config", "user.name", "Apex Forge Verification"],
     ["config", "user.email", "verification@apex-forge.local"]
   ]) {
-    const result = spawnSync10("git", args, { cwd: workspaceDir, encoding: "utf8" });
+    const result = spawnSync11("git", args, { cwd: workspaceDir, encoding: "utf8" });
     if (result.status !== 0) {
       throw new Error(`staged git ${args.join(" ")} failed: ${result.stderr || result.stdout}`);
     }
@@ -18395,7 +18600,7 @@ function initializeVerificationRepository(workspaceDir) {
     ["add", "-A"],
     ["commit", "-q", "-m", "Apex Forge staged verification baseline"]
   ]) {
-    const result = spawnSync10("git", args, {
+    const result = spawnSync11("git", args, {
       cwd: workspaceDir,
       encoding: "utf8",
       env: {
@@ -19311,7 +19516,7 @@ function handleNegativeControlCommand(subcommand, args) {
 import { cpSync as cpSync3, existsSync as existsSync27, readFileSync as readFileSync21, readdirSync as readdirSync17, rmSync as rmSync9, symlinkSync as symlinkSync3, writeFileSync as writeFileSync14 } from "node:fs";
 import { createHash as createHash13 } from "node:crypto";
 import { join as join40, resolve as resolve23 } from "node:path";
-import { spawnSync as spawnSync12 } from "node:child_process";
+import { spawnSync as spawnSync13 } from "node:child_process";
 
 // src/core/worker-results.mjs
 import { existsSync as existsSync25, readdirSync as readdirSync16 } from "node:fs";
@@ -19379,13 +19584,13 @@ function addNullable(left, right) {
 
 // src/core/git-delivery.mjs
 import {
-  closeSync as closeSync2,
+  closeSync as closeSync3,
   existsSync as existsSync26,
   fsyncSync as fsyncSync2,
   mkdirSync as mkdirSync7,
-  openSync as openSync2,
+  openSync as openSync3,
   readFileSync as readFileSync20,
-  realpathSync as realpathSync6,
+  realpathSync as realpathSync7,
   renameSync as renameSync3,
   rmSync as rmSync8,
   statSync as statSync5,
@@ -19393,7 +19598,7 @@ import {
 } from "node:fs";
 import { createHash as createHash12, randomUUID as randomUUID4 } from "node:crypto";
 import { basename as basename8, isAbsolute as isAbsolute2, join as join39, resolve as resolve22 } from "node:path";
-import { spawnSync as spawnSync11 } from "node:child_process";
+import { spawnSync as spawnSync12 } from "node:child_process";
 var DEFAULT_PROTECTED_BRANCHES = Object.freeze([
   "main",
   "master",
@@ -19689,7 +19894,7 @@ function discoverWorktrees(repositoryRoot) {
   }
   if (current.worktree) records.push(current);
   return records.map((record) => {
-    const checkoutPath = existsSync26(record.worktree) ? realpathSync6(record.worktree) : resolve22(record.worktree);
+    const checkoutPath = existsSync26(record.worktree) ? realpathSync7(record.worktree) : resolve22(record.worktree);
     return {
       kind: "checkout",
       checkout_path: checkoutPath,
@@ -19914,7 +20119,7 @@ function canonicalDirectory(path) {
   const value = requiredString(String(path ?? ""), "repository path");
   let canonical;
   try {
-    canonical = realpathSync6(value);
+    canonical = realpathSync7(value);
   } catch (error) {
     throw new GitDeliveryError(
       "REPOSITORY_PATH_NOT_FOUND",
@@ -19932,7 +20137,7 @@ function canonicalDirectory(path) {
   return canonical;
 }
 function runGit(cwd, args) {
-  const result = spawnSync11("git", args, {
+  const result = spawnSync12("git", args, {
     cwd,
     encoding: "utf8",
     env: gitEnvironment()
@@ -19941,7 +20146,7 @@ function runGit(cwd, args) {
   return result.stdout;
 }
 function runGitBuffer(cwd, args) {
-  const result = spawnSync11("git", args, {
+  const result = spawnSync12("git", args, {
     cwd,
     encoding: "buffer",
     env: gitEnvironment()
@@ -19950,7 +20155,7 @@ function runGitBuffer(cwd, args) {
   return result.stdout;
 }
 function tryGit(cwd, args) {
-  const result = spawnSync11("git", args, {
+  const result = spawnSync12("git", args, {
     cwd,
     encoding: "utf8",
     env: gitEnvironment()
@@ -19982,25 +20187,25 @@ function gitCommandError(cwd, args, result) {
 function writeExclusiveJson(path, value) {
   let descriptor = null;
   try {
-    descriptor = openSync2(path, "wx", 384);
+    descriptor = openSync3(path, "wx", 384);
     writeFileSync13(descriptor, `${JSON.stringify(value, null, 2)}
 `);
     fsyncSync2(descriptor);
-    closeSync2(descriptor);
+    closeSync3(descriptor);
     descriptor = null;
   } finally {
-    if (descriptor != null) closeSync2(descriptor);
+    if (descriptor != null) closeSync3(descriptor);
   }
 }
 function fsyncDirectory2(path) {
   let descriptor = null;
   try {
-    descriptor = openSync2(path, "r");
+    descriptor = openSync3(path, "r");
     fsyncSync2(descriptor);
   } catch (error) {
     if (!["EINVAL", "ENOTSUP", "EISDIR"].includes(error.code)) throw error;
   } finally {
-    if (descriptor != null) closeSync2(descriptor);
+    if (descriptor != null) closeSync3(descriptor);
   }
 }
 
@@ -20119,7 +20324,7 @@ function initializeWorkerSandbox(root, worker, requestedType) {
   const dir = join40(workerDir(root, worker.run_id, worker.worker_id), "sandbox");
   if (useWorktree) {
     ensureDir(dirnameForPath(dir));
-    const result = spawnSync12("git", ["worktree", "add", "--detach", dir, "HEAD"], {
+    const result = spawnSync13("git", ["worktree", "add", "--detach", dir, "HEAD"], {
       cwd: gitRoot,
       encoding: "utf8"
     });
@@ -20138,7 +20343,7 @@ function initializeWorkerSandbox(root, worker, requestedType) {
     try {
       checkoutClaim = claimCheckout(dir, checkoutOwner(worker));
     } catch (error) {
-      spawnSync12("git", ["worktree", "remove", dir, "--force"], {
+      spawnSync13("git", ["worktree", "remove", dir, "--force"], {
         cwd: gitRoot,
         encoding: "utf8"
       });
@@ -20678,7 +20883,7 @@ function resetWorkerSandbox(root, worker) {
         claim_token: worker.sandbox.checkout_claim_token
       });
     }
-    spawnSync12("git", ["worktree", "remove", sandboxDir, "--force"], {
+    spawnSync13("git", ["worktree", "remove", sandboxDir, "--force"], {
       cwd: projectDir,
       encoding: "utf8"
     });
@@ -21364,7 +21569,7 @@ import { createHash as createHash14 } from "node:crypto";
 import { chmodSync as chmodSync4, existsSync as existsSync29, mkdirSync as mkdirSync8 } from "node:fs";
 import { homedir as homedir6 } from "node:os";
 import { join as join43, resolve as resolve24 } from "node:path";
-import { spawnSync as spawnSync13 } from "node:child_process";
+import { spawnSync as spawnSync14 } from "node:child_process";
 function heartbeatJobId(projectDir) {
   const suffix = createHash14("sha256").update(resolve24(projectDir)).digest("hex").slice(0, 12);
   return `com.apex-forge-v2.heartbeat.${suffix}`;
@@ -21407,7 +21612,7 @@ function installHeartbeatScheduler(projectDir, options = {}) {
   atomicWriteFile(installedPlistPath, plist);
   let activation = null;
   if (options.activate) {
-    const launcher = options.launcher || spawnSync13;
+    const launcher = options.launcher || spawnSync14;
     const domain = `gui/${process.getuid()}`;
     launcher("launchctl", ["bootout", domain, installedPlistPath], { encoding: "utf8" });
     const bootstrap = launcher("launchctl", ["bootstrap", domain, installedPlistPath], { encoding: "utf8" });
@@ -21433,7 +21638,7 @@ function installHeartbeatScheduler(projectDir, options = {}) {
 }
 function heartbeatSchedulerStatus(projectDir, options = {}) {
   const label = heartbeatJobId(projectDir);
-  const launcher = options.launcher || spawnSync13;
+  const launcher = options.launcher || spawnSync14;
   const domain = `gui/${process.getuid()}`;
   const status2 = launcher("launchctl", ["print", `${domain}/${label}`], { encoding: "utf8" });
   const output = `${status2.stdout || ""}
@@ -21500,9 +21705,9 @@ function numberFrom(value, pattern) {
 }
 
 // src/core/heartbeat-daemon-control.mjs
-import { closeSync as closeSync3, openSync as openSync3 } from "node:fs";
+import { closeSync as closeSync4, openSync as openSync4 } from "node:fs";
 import { join as join44, resolve as resolve25 } from "node:path";
-import { spawn, spawnSync as spawnSync14 } from "node:child_process";
+import { spawn, spawnSync as spawnSync15 } from "node:child_process";
 var DAEMON = new URL("./heartbeat-daemon.mjs", import.meta.url).pathname;
 function startHeartbeatDaemon(projectDir, options = {}) {
   const resolvedProject = resolve25(projectDir);
@@ -21514,8 +21719,8 @@ function startHeartbeatDaemon(projectDir, options = {}) {
   if (!Number.isInteger(intervalMinutes) || intervalMinutes < 1) {
     throw new Error("heartbeat daemon intervalMinutes \u5FC5\u987B\u662F\u6B63\u6574\u6570");
   }
-  const stdoutFd = openSync3(join44(root, "heartbeat", "logs", "daemon-stdout.log"), "a");
-  const stderrFd = openSync3(join44(root, "heartbeat", "logs", "daemon-stderr.log"), "a");
+  const stdoutFd = openSync4(join44(root, "heartbeat", "logs", "daemon-stdout.log"), "a");
+  const stderrFd = openSync4(join44(root, "heartbeat", "logs", "daemon-stderr.log"), "a");
   const child = spawn(process.execPath, [options.daemonPath || DAEMON, resolvedProject, String(intervalMinutes * 6e4)], {
     cwd: resolvedProject,
     detached: true,
@@ -21523,8 +21728,8 @@ function startHeartbeatDaemon(projectDir, options = {}) {
     stdio: ["ignore", stdoutFd, stderrFd]
   });
   child.unref();
-  closeSync3(stdoutFd);
-  closeSync3(stderrFd);
+  closeSync4(stdoutFd);
+  closeSync4(stderrFd);
   const state = {
     pid: child.pid,
     started_at: now(),
@@ -21565,7 +21770,7 @@ function processAlive2(pid) {
   } catch {
     return false;
   }
-  const state = spawnSync14("ps", ["-o", "stat=", "-p", String(pid)], {
+  const state = spawnSync15("ps", ["-o", "stat=", "-p", String(pid)], {
     encoding: "utf8"
   });
   const status2 = String(state.stdout || "").trim();
@@ -21592,7 +21797,7 @@ function waitForExit(pid, timeoutMs) {
 }
 
 // src/core/project-audit.mjs
-import { spawnSync as spawnSync15 } from "node:child_process";
+import { spawnSync as spawnSync16 } from "node:child_process";
 function runProjectAuditTests(projectDir, options = {}) {
   if (options.skip) {
     return {
@@ -21610,7 +21815,7 @@ function runProjectAuditTests(projectDir, options = {}) {
   }
   const command = options.command || "npm test";
   const startedAt = Date.now();
-  const execution = spawnSync15(command, {
+  const execution = spawnSync16(command, {
     cwd: projectDir,
     encoding: "utf8",
     shell: true,
@@ -23277,7 +23482,8 @@ async function runProjectAgentScheduler(root, limit, args) {
     agent_runs: [],
     collected_results: [],
     completed_execute_runs: [],
-    recovered_workers: []
+    recovered_workers: [],
+    terminalized_runs: []
   };
   let remainingAgentRuns = aggregate.max_agent_runs;
   for (let cycle = 1; cycle <= configuredCycles; cycle += 1) {
@@ -23299,6 +23505,7 @@ async function runProjectAgentScheduler(root, limit, args) {
     remainingAgentRuns -= agents.filter((item) => item.status !== "STALE").length;
     const collected = collectWorkerResults(root, runIds);
     const completed = completeReadyExecuteNodes(root, runIds);
+    const terminalized = haltTerminallyBlockedRuns(root, runIds);
     const progressCount = [
       ...fallback.filter((item) => item.status === "FALLBACK_READY"),
       ...recovered,
@@ -23307,7 +23514,8 @@ async function runProjectAgentScheduler(root, limit, args) {
       ...deterministic,
       ...agents.filter((item) => item.status !== "STALE"),
       ...collected,
-      ...completed
+      ...completed,
+      ...terminalized
     ].length;
     aggregate.fallback_workers.push(...fallback);
     aggregate.recovered_workers.push(...recovered);
@@ -23317,6 +23525,7 @@ async function runProjectAgentScheduler(root, limit, args) {
     aggregate.agent_runs.push(...agents);
     aggregate.collected_results.push(...collected);
     aggregate.completed_execute_runs.push(...completed);
+    aggregate.terminalized_runs.push(...terminalized);
     aggregate.cycles.push({
       cycle,
       progress_count: progressCount,
@@ -23327,8 +23536,13 @@ async function runProjectAgentScheduler(root, limit, args) {
       deterministic_workers: deterministic.map((item) => item.worker_id),
       agent_workers: agents.map((item) => item.worker_id),
       collected_workers: collected.map((item) => item.worker_id),
-      completed_runs: completed.map((item) => item.run_id)
+      completed_runs: completed.map((item) => item.run_id),
+      terminalized_runs: terminalized.map((item) => item.run_id)
     });
+    if (terminalized.length > 0) {
+      aggregate.stop_reason = "terminal-failure";
+      break;
+    }
     if (remainingAgentRuns <= 0) {
       aggregate.stop_reason = "agent-run-budget";
       break;
@@ -23342,6 +23556,103 @@ async function runProjectAgentScheduler(root, limit, args) {
     }
   }
   return aggregate;
+}
+function haltTerminallyBlockedRuns(root, runIds) {
+  const retryPolicy = readJson(join47(root, "policies", "retry.json"));
+  const executionPolicy = readJson(join47(root, "policies", "execution.json"));
+  const availableExecutors = new Set(
+    inspectWorkerExecutors().filter((item) => item.available).map((item) => item.adapter)
+  );
+  const halted = [];
+  for (const runId of runIds) {
+    const workers = getWorkers(root, runId);
+    const blockedWorkers = workers.filter((worker) => worker.status === "blocked");
+    if (blockedWorkers.length === 0) continue;
+    if (workers.some(
+      (worker) => ["active", "running", "claimed"].includes(worker.status)
+    )) {
+      continue;
+    }
+    const terminalWorkers = blockedWorkers.filter(
+      (worker) => !blockedWorkerCanRecover(
+        root,
+        worker,
+        retryPolicy,
+        executionPolicy,
+        availableExecutors
+      )
+    );
+    if (terminalWorkers.length !== blockedWorkers.length) continue;
+    const transition = withProjectTransaction(resolve27(root, ".."), {
+      kind: "run-terminal-worker-failure",
+      idempotencyKey: `run-terminal-worker-failure:${runId}`
+    }, () => {
+      const run = loadRun(root, runId);
+      if (run.status !== "active") return null;
+      const timestamp = now();
+      const executeNode = getRunNode(run, "execute");
+      const blocking = terminalWorkers.map((worker) => worker.worker_id);
+      const reason = `worker \u6062\u590D\u8DEF\u5F84\u5DF2\u8017\u5C3D\uFF1A${blocking.join(", ")}`;
+      executeNode.status = "halted";
+      executeNode.started_at = executeNode.started_at || timestamp;
+      executeNode.completed_at = timestamp;
+      executeNode.evidence_refs = [];
+      executeNode.gate = {
+        status: "HALT",
+        reason,
+        blocking,
+        carry_forward_ids: []
+      };
+      run.gate = executeNode.gate;
+      haltRun(root, run, timestamp);
+      writeRun(root, run);
+      appendEvent(root, "run.node.completed", "apex-v2", {
+        run_id: run.run_id,
+        node_id: executeNode.id,
+        gate: "HALT",
+        evidence_refs: [],
+        blocking,
+        via: "project.tick"
+      });
+      const event = appendEvent(root, "run.halted", "apex-v2", {
+        run_id: run.run_id,
+        roadmap_node_id: run.roadmap_node_id,
+        node_id: executeNode.id,
+        reason,
+        blocking_worker_ids: blocking,
+        via: "project.tick"
+      });
+      updateProject(root, {
+        last_event_id: event.event_id,
+        updated_at: event.timestamp
+      });
+      return {
+        run_id: run.run_id,
+        status: "HALTED",
+        blocking_worker_ids: blocking,
+        reason
+      };
+    }).result;
+    if (transition) halted.push(transition);
+  }
+  return halted;
+}
+function blockedWorkerCanRecover(root, worker, retryPolicy, executionPolicy, availableExecutors) {
+  const latest = latestWorkerAdapterResult(root, worker);
+  const failureKind = latest?.failure_kind || "unknown";
+  const adapter = worker.last_adapter || worker.executor_id || worker.adapter;
+  const maxAttempts = Number(retryPolicy.max_attempts?.[adapter] || 1);
+  const retryable = retryPolicy.auto_retry?.enabled === true && retryPolicy.auto_retry.retryable_failure_kinds.includes(failureKind) && Number(worker.attempt || 0) < maxAttempts;
+  if (retryable) return true;
+  const permissions = executionPolicy.permissions || {};
+  if (!permissions.adapter_fallback_failure_kinds?.includes(failureKind)) {
+    return false;
+  }
+  const order = permissions.adapter_fallback_order || [];
+  const start = Math.max(-1, order.indexOf(adapter));
+  return order.slice(start + 1).some(
+    (candidate) => permissions.allowed_adapters?.includes(candidate) && availableExecutors.has(candidate)
+  );
 }
 function schedulerStopReason(root, runIds) {
   const workers = runIds.flatMap((runId) => getWorkers(root, runId));

@@ -56,6 +56,38 @@
     "changed_files": { "type": "array", "items": { "type": "string" } },
     "out_of_scope_files": { "type": "array", "items": { "type": "string" } },
     "unsupported_files": { "type": "array", "items": { "type": "string" } },
+    "change_summary": {
+      "type": "object",
+      "required": [
+        "changed_file_count",
+        "out_of_scope_file_count",
+        "unsupported_file_count",
+        "list_limit",
+        "truncated"
+      ],
+      "properties": {
+        "changed_file_count": { "type": "integer", "minimum": 0 },
+        "out_of_scope_file_count": { "type": "integer", "minimum": 0 },
+        "unsupported_file_count": { "type": "integer", "minimum": 0 },
+        "list_limit": { "type": "integer", "minimum": 1 },
+        "truncated": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "output_summary": {
+      "type": "object",
+      "required": [
+        "raw_agent_output_bytes",
+        "raw_agent_output_truncated",
+        "persisted_limit_bytes"
+      ],
+      "properties": {
+        "raw_agent_output_bytes": { "type": "integer", "minimum": 0 },
+        "raw_agent_output_truncated": { "type": "boolean" },
+        "persisted_limit_bytes": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
     "usage": {
       "type": "object",
       "properties": {
