@@ -1232,6 +1232,18 @@ async function runProjectAgentScheduler(root, limit, args) {
 }
 
 function haltTerminallyBlockedRuns(root, runIds) {
+  const candidates = runIds.map((runId) => ({
+    runId,
+    workers: getWorkers(root, runId)
+  })).filter(({ workers }) => {
+    const blocked = workers.some((worker) => worker.status === "blocked");
+    const stillRunning = workers.some((worker) =>
+      ["active", "running", "claimed"].includes(worker.status)
+    );
+    return blocked && !stillRunning;
+  });
+  if (candidates.length === 0) return [];
+
   const retryPolicy = readJson(join(root, "policies", "retry.json"));
   const executionPolicy = readJson(join(root, "policies", "execution.json"));
   const availableExecutors = new Set(
@@ -1241,15 +1253,8 @@ function haltTerminallyBlockedRuns(root, runIds) {
   );
   const halted = [];
 
-  for (const runId of runIds) {
-    const workers = getWorkers(root, runId);
+  for (const { runId, workers } of candidates) {
     const blockedWorkers = workers.filter((worker) => worker.status === "blocked");
-    if (blockedWorkers.length === 0) continue;
-    if (workers.some((worker) =>
-      ["active", "running", "claimed"].includes(worker.status)
-    )) {
-      continue;
-    }
     const terminalWorkers = blockedWorkers.filter((worker) =>
       !blockedWorkerCanRecover(
         root,
