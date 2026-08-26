@@ -8,6 +8,8 @@
 - Campaign：`governed-quality-cost-r1`
 - 当前最佳候选：无
 - 当前基线：`QUALITY_REJECTED`
+- 已执行实验：1
+- 最近实验：`GOV-000-safety-canary`，`discard`
 - 下一实验：`GOV-001`
 
 基线来自 Candidate
@@ -23,6 +25,27 @@
 
 该 V2 基线因 hidden acceptance、defect detection 和 durable closure 未通过而不具备
 `keep` 资格。
+
+## 首轮 Canary
+
+Candidate：
+`3b8fb2d08a287701dda935cdfd8d90d31a60ca69a39ef3be28bb1225c87188bb`
+
+| 指标 | 历史 V2 基线 | Safety canary |
+| --- | ---: | ---: |
+| wall time | 994.5 秒 | 142.6 秒 |
+| reported tokens | 2,709,262 | 192,986 |
+| public acceptance | 100% | 100% |
+| hidden acceptance | 50% | 50% |
+| durable closure | 0% | 0% |
+| scope safety | 100% | 100% |
+
+观察到的 wall time 下降 `85.7%`、reported token 下降 `92.9%`，但这不是有效
+优化：Agent 没有提交产品 patch，hidden acceptance 和 durable closure 仍失败。
+运行因全局磁盘增长超过 5 GiB 被 resource guard 终止，相关孤儿进程已回收。
+
+Loop 按质量优先规则将该实验判定为 `discard`。由于 nested Agent 的用量尚未完整
+计入当前 result，reported token 也不能作为真实总成本结论。
 
 ## 已完成的安全修复
 
