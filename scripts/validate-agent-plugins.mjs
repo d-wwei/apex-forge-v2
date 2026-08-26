@@ -58,11 +58,15 @@ const claudeInstalledCheck = checks.find((check) => check.id === "claude-plugin-
 if (claudeInstalledCheck.status === "PASS") {
   try {
     const installed = JSON.parse(claudeInstalledCheck.stdout)
-      .find((item) => item.id === "apex-forge-v2@apex-forge-local");
-    claudeInstalledCheck.status = installed
-      && installed.version === claudeManifest.version
-      && installed.projectPath === repoRoot
-      && verifyInstalledRuntime(installed.installPath, claudePlugin)
+      .filter((item) => item.id === "apex-forge-v2@apex-forge-local");
+    claudeInstalledCheck.status = installed.some((item) =>
+      item.version === claudeManifest.version
+      && (
+        item.projectPath == null
+        || item.projectPath === repoRoot
+      )
+      && verifyInstalledRuntime(item.installPath, claudePlugin)
+    )
       ? "PASS"
       : "FAIL";
   } catch {
