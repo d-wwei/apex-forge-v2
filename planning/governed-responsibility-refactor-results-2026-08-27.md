@@ -35,7 +35,7 @@
 
 ## 工程验证
 
-- 全量测试：`688/688 PASS`
+- 全量测试：`692/692 PASS`
 - 吞吐与 scheduler 回归：`12/12 PASS`
 - Provider 结构化输出回归：`6/6 PASS`
 - Benchmark controller/evaluator/provenance 回归：`44/44 PASS`
@@ -71,16 +71,42 @@ PlanGraph 节点从 7 个降为 3 个，减少 57.1%。重复 verification worke
 
 以上证明了调用面和流程往返的确定性下降，并保持现有工程质量门禁。
 
-## 待真实 Benchmark 证明
+## 真实 Product Benchmark
 
-真实模型的 wall time、input/output token 和 hidden acceptance 仍需新的隔离
-Product Benchmark。历史 benchmark 不能用于证明当前 candidate；在完成
-candidate freeze、无并发预检和 usage capture 前，以下结论保持 `NOT_PROVEN`：
+正式结果绑定：
 
-- wall time 是否达到 `<= 10 分钟`
-- total tokens 是否达到 `<= 600k`
-- 相对 V1 成本是否达到 `<= 3x`
-- 三个不同真实任务是否连续达到 100% hidden acceptance 和 durable closure
+- Candidate：`69330f205e4640c59abfc34cd654707008da3d62cd61c6119b6ab65cc206ca6e`
+- Runtime SHA-256：
+  `e9987398312cdfa1c17ee8f41e3b5857076206dfb7692c7c1a57a00593fe6896`
+- Model：`gpt-5.6-luna`
+- Reasoning effort：`low`
+- Task：Apex Manager 的 simple、bug-fix、review-defect
+- Mode：`raw-agent / v1-skill / plugin-kernel`
+- 执行方式：9 个 official runs 严格串行，无并发测试或模型任务
+- 本地证据：
+  `/Users/admin/Documents/AI/Apex-forge/benchmark-runs/adaptive-final-69330f20`
 
-工程实现完成不等于效果目标完成。只有新的三任务 Raw/V1/V2 隔离 Product
-Benchmark 通过后，才能把上述 `NOT_PROVEN` 改为 `PASS`。
+| 指标 | Raw Agent | V1 Skill | Apex Forge V2 |
+| --- | ---: | ---: | ---: |
+| 成功交付率 | 100% | 100% | 100% |
+| Hidden acceptance | 100% | 100% | 100% |
+| Scope safety | 100% | 100% | 100% |
+| Evidence | 66.7% | 66.7% | 100% |
+| Durable closure | 0% | 0% | 100% |
+| 平均耗时 | 60.8 秒 | 70.5 秒 | 106.0 秒 |
+| 每次成功交付 token | 79,216 | 138,400 | 216,395 |
+
+正式 Product Gate：`PASS`。
+
+- V2 相对 Raw：耗时 `1.74x`，token `2.73x`。
+- V2 相对 V1：耗时 `1.50x`，token `1.56x`。
+- simple 路径相对 Raw 的耗时增量为 `17.9%`，通过 `<=25%` 门槛。
+- 三个 V2 样本全部低于 `10 分钟 / 60 万 tokens`。
+- V2 相对 V1 的平均 token 为 `1.56x`，通过 `<=3x` 门槛。
+
+这组小样本没有证明 V2 的功能正确率高于 Raw/V1，因为三组 hidden acceptance
+都达到 100%；它证明的是 V2 用可量化的时间与 token 成本，换来了完整 Evidence
+和 Durable Closure。该结论适用于本次三个任务，不外推为所有仓库和任务类型。
+
+在正式结果前产生的两组探索样本因候选变化、路由口径错误或与全量测试并发，
+仅用于定位热路径，不计入正式结论。
