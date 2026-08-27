@@ -14,7 +14,7 @@ export function printHelp() {
   apex-v2 knowledge refresh --project <dir>
   apex-v2 worker create|list|sandbox|exec-shell|exec-agent|retry|fallback|results|resume|decide|submit-patch --project <dir>
   apex-v2 worker adapters --project <dir>
-  apex-v2 host actions|claim|submit|cancel --project <dir> --host-id <id>
+  apex-v2 host actions|claim|submit|submit-current|cancel --project <dir> --host-id <id>
     host submit accepts --semantic-evidence-json|--semantic-evidence-file and
     --capability-evidence-json|--capability-evidence-file, or one
     --evidence-artifact-json|--evidence-artifact-file
