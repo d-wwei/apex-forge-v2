@@ -197,7 +197,8 @@ function prepareGuidedEntryAction({ workspace, runtimePath, schemaDir }) {
     "--project",
     workspace,
     "--host-id",
-    "codex-host"
+    "codex-host",
+    "--compact"
   ]);
   if (drained.status !== "ACTION_REQUIRED" || !drained.next_action?.claim) {
     throw new Error("plugin guided bootstrap expected one claimed Host action");

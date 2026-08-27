@@ -83,6 +83,7 @@ import {
 import { inspectOperationalIntegrity } from "./core/operational-state.mjs";
 import { withProjectTransaction } from "./core/project-transaction.mjs";
 import {
+  contractRegistry,
   migrateLegacyContracts,
   scanProjectContracts,
   validatePersistedValue
@@ -998,7 +999,10 @@ async function projectDrain(args) {
         status: "ACTION_REQUIRED",
         stop_reason: "waiting-for-agent",
         transitions,
-        next_action: controllerAction(selectable, claimed)
+        next_action: controllerAction(selectable, claimed, {
+          compact: Boolean(args.compact),
+          projectDir
+        })
       }, null, 2));
       return;
     }
@@ -1033,7 +1037,7 @@ async function projectDrain(args) {
   }
 }
 
-function controllerAction(action, claimed) {
+function controllerAction(action, claimed, options = {}) {
   const planNodeId = action.plan_node_id;
   const actionType = planNodeId === "delivery-design"
     ? "plan"
@@ -1044,6 +1048,15 @@ function controllerAction(action, claimed) {
         : planNodeId === "delivery-review"
           ? "review"
           : "decision";
+  const fullClaim = claimed?.action || null;
+  const claim = options.compact && fullClaim
+    ? {
+        action_id: fullClaim.action_id,
+        claim_token: fullClaim.claim_token,
+        fencing_token: fullClaim.fencing_token,
+        lease_expires_at: fullClaim.lease_expires_at
+      }
+    : fullClaim;
   return {
     action_type: actionType,
     worker_id: action.worker_id,
@@ -1060,13 +1073,25 @@ function controllerAction(action, claimed) {
       model_tier: action.model_tier || null,
       lease_expires_at: claimed?.action?.lease_expires_at || action.lease_expires_at
     },
-    claim: claimed?.action || null,
-    capability_bindings: action.capability_bindings,
-    submission_contract: hostSubmissionContract(action, actionType)
+    claim_token: fullClaim?.claim_token || null,
+    claim,
+    capability_bindings: options.compact
+      ? (action.capability_bindings || []).map((binding) => ({
+          capability_id: binding.capability_id,
+          capability_version: binding.capability_version,
+          output_contract: binding.output_contract,
+          required: binding.required
+        }))
+      : action.capability_bindings,
+    submission_contract: hostSubmissionContract(action, actionType, {
+      projectDir: options.projectDir,
+      claim: fullClaim
+    })
   };
 }
 
-function hostSubmissionContract(action, actionType) {
+function hostSubmissionContract(action, actionType, options = {}) {
+  const claim = options.claim || null;
   const evidenceType = {
     plan: "design",
     risk_challenge: "risk",
@@ -1081,10 +1106,22 @@ function hostSubmissionContract(action, actionType) {
     command: "host submit",
     evidence_argument: "--evidence-artifact-file",
     format: "unified-v1",
+    required_cli_values: {
+      project_dir: options.projectDir || null,
+      host_id: claim?.host_id || null,
+      worker_id: action.worker_id,
+      claim_token: claim?.claim_token || null,
+      summary: "<concise completed-action summary>",
+      evidence_file: `/private/tmp/apex-evidence-${action.worker_id}.json`
+    },
     semantic_evidence: evidenceType
       ? {
           evidence_type: evidenceType,
           objective_must_equal: action.objective,
+          field_constraints: semanticEvidenceFieldConstraints(
+            evidenceType,
+            action
+          ),
           required_fields: [
             "schema_version",
             "evidence_type",
@@ -1098,21 +1135,92 @@ function hostSubmissionContract(action, actionType) {
           ]
         }
       : null,
-    capability_outputs: (action.capability_bindings || []).map((binding) => ({
-      capability_id: binding.capability_id,
-      capability_version: binding.capability_version,
-      output_contract: binding.output_contract,
-      required: binding.required,
-      required_output_fields: capabilityOutputRequiredFields(
-        binding.output_contract
-      )
-    })),
+    capability_outputs: (action.capability_bindings || []).map((binding) => {
+      const schema = contractRegistry().schemas.get(
+        `${binding.output_contract}.schema.json`
+      );
+      return {
+        capability_id: binding.capability_id,
+        capability_version: binding.capability_version,
+        output_contract: binding.output_contract,
+        required: binding.required,
+        required_output_fields: capabilityOutputRequiredFields(
+          binding.output_contract
+        ),
+        output_field_constraints: summarizeRequiredProperties(schema)
+      };
+    }),
     rules: [
       "Use semantic_evidence as an object; do not JSON-stringify it.",
       "Use capability_outputs[].output as an object; do not flatten output fields.",
       "Do not read CLI source or schema files unless this contract is rejected."
     ]
   };
+}
+
+function semanticEvidenceFieldConstraints(evidenceType, action) {
+  const constraints = {
+    schema_version: { const: "v0" },
+    evidence_type: { const: evidenceType },
+    objective: { const: action.objective },
+    source_refs: { type: "array", minItems: 1 },
+    claims: { type: "array", minItems: 1 },
+    uncertainties: { type: "array" },
+    acceptance_mapping: {
+      type: "array",
+      minItems: 1,
+      item_required: ["criterion", "evidence_ref", "status"],
+      status_enum: ["supported", "partial", "unverified"]
+    },
+    created_at: { type: "string" }
+  };
+  if (evidenceType === "design") {
+    return {
+      ...constraints,
+      slices: { type: "array", minItems: 1 },
+      dependencies: { type: "array" },
+      verification: { type: "array", minItems: 1 },
+      rollback: { type: "array", minItems: 1 }
+    };
+  }
+  if (evidenceType === "risk") {
+    return {
+      ...constraints,
+      failure_paths: { type: "array", minItems: 1 },
+      blast_radius: { type: "array", minItems: 1 },
+      mitigations: { type: "array", minItems: 1 },
+      rollback: { type: "array", minItems: 1 }
+    };
+  }
+  return {
+    ...constraints,
+    candidate_digest: {
+      const: action.candidate_digest,
+      pattern: "^[a-f0-9]{64}$"
+    },
+    findings: { type: "array" },
+    residual_risks: { type: "array" },
+    merge_posture: { enum: ["approve", "conditional", "block"] }
+  };
+}
+
+function summarizeRequiredProperties(schema) {
+  return Object.fromEntries((schema?.required || []).map((name) => [
+    name,
+    summarizeSchemaProperty(schema?.properties?.[name])
+  ]));
+}
+
+function summarizeSchemaProperty(property) {
+  if (!property || typeof property !== "object") return {};
+  const summary = {};
+  for (const key of ["type", "enum", "const", "minItems", "minimum", "pattern"]) {
+    if (property[key] != null) summary[key] = property[key];
+  }
+  if (property.items?.required) {
+    summary.item_required = property.items.required;
+  }
+  return summary;
 }
 
 function auditProject(args) {

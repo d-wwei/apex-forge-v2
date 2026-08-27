@@ -280,15 +280,26 @@ export function buildBenchmarkPrompt({
         "For a PASS, include `review` with specific claims, acceptance mappings, findings, residual risks, and merge_posture=`approve`."
       );
     } else if (pluginBootstrap?.entry_action) {
+      const bridge = join(
+        candidateRoot,
+        "plugins",
+        "codex",
+        "apex-forge-v2",
+        "scripts",
+        "apex-host.mjs"
+      );
+      const first = pluginBootstrap.entry_action;
       common.unshift(
-        "Use the Apex Forge V2 guided Plugin path.",
-        `Kernel bridge: ${join(candidateRoot, "plugins", "codex", "apex-forge-v2", "scripts", "apex-host.mjs")}`,
-        "The controller already claimed the first Host action shown below.",
-        "Do not locate or read plugin files, CLI help, runtime source, or JSON schemas.",
+        "The benchmark controller already initialized Apex Forge V2 and claimed the first action. No plugin tool invocation is needed.",
+        `Kernel bridge: ${bridge}`,
+        "Do not locate or read plugin files, CLI help, runtime source, or JSON schemas. Do not call bare `actions` or `host submit --help`.",
         "Use each next_action.submission_contract as the authoritative evidence shape.",
         "Submit one natural JSON file with semantic_evidence as an object and capability_outputs[].output as an object.",
-        "After each successful host submit, call project drain with host-id codex-host and follow only the returned next_action.",
-        `Initial action:\n${JSON.stringify(pluginBootstrap.entry_action, null, 2)}`
+        "Every host submit must include the shown worker_id, claim_token, host-id codex-host, project-dir equal to the original benchmark workspace, a summary, and --evidence-artifact-file.",
+        "Write temporary evidence files under /private/tmp, never inside the action workspace.",
+        "After each successful host submit, call `project drain --project-dir <original-workspace> --host-id codex-host --compact` and follow only the returned next_action.",
+        `First submit command template:\nnode ${JSON.stringify(bridge)} host submit --project-dir ${JSON.stringify(workspace)} --host-id codex-host --worker-id ${first.worker_id} --claim-token ${first.claim_token} --summary "<summary>" --evidence-artifact-file ${JSON.stringify(first.submission_contract.required_cli_values.evidence_file)}`,
+        `Initial action:\n${JSON.stringify(first, null, 2)}`
       );
     } else {
       common.unshift(
