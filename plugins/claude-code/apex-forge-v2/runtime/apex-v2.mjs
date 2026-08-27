@@ -12765,14 +12765,21 @@ function defaultSecretPaths() {
   ];
 }
 function existingRealPath(path) {
-  const resolved = resolve7(path);
-  if (existsSync10(resolved)) return realpathSync2(resolved);
-  return realpathSync2(dirname5(resolved));
+  return resolveFromExistingAncestor(path);
 }
 function policyPath(path) {
-  const resolved = resolve7(path);
-  if (existsSync10(resolved)) return realpathSync2(resolved);
-  return join15(realpathSync2(dirname5(resolved)), basename4(resolved));
+  return resolveFromExistingAncestor(path);
+}
+function resolveFromExistingAncestor(path) {
+  let current = resolve7(path);
+  const missing = [];
+  while (!existsSync10(current)) {
+    const parent = dirname5(current);
+    if (parent === current) return resolve7(path);
+    missing.unshift(basename4(current));
+    current = parent;
+  }
+  return join15(realpathSync2(current), ...missing);
 }
 function quote(value) {
   return JSON.stringify(value);
