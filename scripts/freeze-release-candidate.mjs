@@ -8,6 +8,9 @@ if (process.env.APEX_RELEASE_VERIFY === "1" && !process.env.APEX_EXPECT_CANDIDAT
 }
 const result = freezeReleaseCandidate({
   repoRoot,
+  benchmarkWorkspaceRoot: process.env.APEX_BENCHMARK_BASE_ROOT
+    ? resolve(process.env.APEX_BENCHMARK_BASE_ROOT)
+    : undefined,
   expectedDigest: process.env.APEX_EXPECT_CANDIDATE_DIGEST || null
 });
 console.log(JSON.stringify({

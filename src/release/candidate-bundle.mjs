@@ -56,10 +56,17 @@ export function freezeReleaseCandidate({
   repoRoot,
   outputRoot = join(repoRoot, ".apex-v2", "releases", "candidates"),
   latestPath = join(repoRoot, ".apex-v2", "releases", "latest-candidate.json"),
+  benchmarkWorkspaceRoot = join(
+    repoRoot,
+    "benchmarks",
+    "plugin-vs-v1",
+    "workspaces",
+    "base"
+  ),
   timestamp = REPRODUCIBLE_TIMESTAMP,
   expectedDigest = null
 }) {
-  const taskValidation = validateTaskPlans(repoRoot);
+  const taskValidation = validateTaskPlans(repoRoot, benchmarkWorkspaceRoot);
   if (taskValidation.status !== "PASS") {
     throw new Error(`benchmark task plans invalid: ${JSON.stringify(taskValidation.errors)}`);
   }
@@ -333,13 +340,13 @@ export function portableBenchmarkMatrixHash(matrix) {
   return sha256(Buffer.from(JSON.stringify(portable)));
 }
 
-function validateTaskPlans(repoRoot) {
+function validateTaskPlans(repoRoot, workspaceRoot) {
   const benchmarkRoot = join(repoRoot, "benchmarks", "plugin-vs-v1");
   return validateBenchmarkTaskPlans({
     matrix: readJson(join(benchmarkRoot, "matrix.json")),
     schema: readJson(join(repoRoot, "schemas", "benchmark-task-plan.schema.json")),
     taskDir: join(benchmarkRoot, "tasks"),
-    workspaceRoot: join(benchmarkRoot, "workspaces", "base")
+    workspaceRoot
   });
 }
 
