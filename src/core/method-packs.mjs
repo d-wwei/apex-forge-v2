@@ -2,7 +2,8 @@ const SUPPORTED_WORKFLOWS = new Set([
   "quick",
   "disciplined",
   "phase_context",
-  "governed"
+  "governed",
+  "governed_v2"
 ]);
 
 export function defaultMethodPackRegistry(timestamp) {
@@ -34,8 +35,15 @@ export function defaultMethodPackRegistry(timestamp) {
       ),
       methodPack(
         "governed",
+        "2.0.0",
+        "Three-barrier governed workflow with Agent judgment and Kernel-owned gates.",
+        "governed_v2",
+        ["conditional_risk", "candidate_verification", "semantic_review"]
+      ),
+      methodPack(
+        "governed-v1",
         "1.0.0",
-        "Full evidence and separation-of-duties workflow for critical or recovery-sensitive work.",
+        "Legacy seven-node governed workflow for persisted run compatibility.",
         "governed",
         ["independent_risk", "separated_build", "independent_verification", "semantic_review"]
       )
@@ -103,7 +111,7 @@ function assertSupportedWorkflow(pack) {
 function requiresGovernedPack(intake) {
   if (intake.risk === "critical") return true;
   if (intake.type === "risk" && intake.risk === "high") return true;
-  return /(critical|security|auth(?:entication|orization)?|credential|secret|production|destructive|migration|rollback|interrupted|resume|recovery|parallel execution|关键|安全|鉴权|凭据|生产|破坏性|迁移|回滚|中断|恢复|并行执行)/i
+  return /(irreversible|destructive production|production destructive|funds?|trading|payment|auth(?:entication|orization)? protocol|permission protocol|multi[- ]repo(?:sitory)? write|long[- ]running recovery|interrupted resume|resume after interruption|separation of duties|不可逆|生产破坏|资金|交易|支付|鉴权协议|权限协议|多仓库写入|长期恢复|中断后恢复|职责分离)/i
     .test(`${intake.title || ""}\n${intake.description || ""}`);
 }
 

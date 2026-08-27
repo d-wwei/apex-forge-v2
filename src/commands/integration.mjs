@@ -752,6 +752,7 @@ function generateReviewTransaction(root, run) {
   const blocking = [];
   const nonBlocking = [];
   const negativeControl = inspectNegativeControlGate(root, run.run_id);
+  const plan = loadPlanGraph(root, run.run_id);
 
   if (getRunNode(run, "verify").status !== "passed") {
     blocking.push("verify 节点尚未 PASS。");
@@ -780,6 +781,39 @@ function generateReviewTransaction(root, run) {
     } else if (negativeControl.mode === "shadow") {
       nonBlocking.push(
         `Negative Control shadow gap：${negativeControl.message}`
+      );
+    }
+  }
+  if (plan.method_pack?.workflow === "governed_v2") {
+    const reviewWorker = getWorkers(root, run.run_id).find((worker) =>
+      worker.plan_node_id === "delivery-review"
+    );
+    const reviewEvidence = reviewWorker
+      ? readJson(join(workerDir(
+          root,
+          reviewWorker.run_id,
+          reviewWorker.worker_id
+        ), "cognitive-evidence.json"), null)
+      : null;
+    if (!reviewWorker || ![
+      "evidence_submitted",
+      "decision_submitted"
+    ].includes(reviewWorker.status)) {
+      blocking.push("Governed V2 缺少已完成的独立 Review Agent。");
+    } else if (
+      !reviewEvidence
+      || reviewEvidence.candidate_digest !== candidate.candidate.candidate_digest
+    ) {
+      blocking.push("Review Agent evidence 未绑定当前 candidate。");
+    } else if (reviewEvidence.merge_posture !== "approve") {
+      blocking.push(
+        ...reviewEvidence.findings,
+        `Review Agent merge posture=${reviewEvidence.merge_posture}`
+      );
+    } else {
+      nonBlocking.push(
+        ...reviewEvidence.findings,
+        ...reviewEvidence.residual_risks
       );
     }
   }

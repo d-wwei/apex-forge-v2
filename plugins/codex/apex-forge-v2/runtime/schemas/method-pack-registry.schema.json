@@ -20,7 +20,7 @@
           "description": { "type": "string", "minLength": 1 },
           "workflow": {
             "type": "string",
-            "enum": ["quick", "disciplined", "phase_context", "governed"]
+            "enum": ["quick", "disciplined", "phase_context", "governed", "governed_v2"]
           },
           "enabled": { "type": "boolean" },
           "quality_gates": {

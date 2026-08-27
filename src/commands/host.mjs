@@ -116,6 +116,7 @@ export function listHostActions(root) {
         read_scope: worker.read_scope,
         write_scope: worker.write_scope,
         output_contract: worker.output_contract,
+        model_tier: worker.model_tier || null,
         candidate_digest: reviewCandidateDigest(root, worker),
         lease_expires_at: worker.claim_expires_at || null,
         fencing_token: worker.fencing_token || 0,
@@ -204,6 +205,10 @@ function claimHostActionTransaction(root, workerId, hostId) {
       run_id: worker.run_id,
       plan_node_id: worker.plan_node_id,
       objective: worker.objective,
+      candidate_digest: reviewCandidateDigest(root, worker),
+      verification_ref: worker.plan_node_id.endsWith("review")
+        ? `.apex-v2/runs/${worker.run_id}/verification-report.json`
+        : null,
       capability_bindings: worker.capability_bindings || [],
       capability_enforcement: worker.capability_enforcement || "shadow",
       capability_invocation_refs: worker.capability_invocation_refs || [],

@@ -7230,6 +7230,7 @@ function printHelp() {
   apex-v2 project tick --project <dir>
     --run-agents [--agent-limit <n>] [--agent-cycles <n>]
     --learning-worker [--learning-limit <n>]
+  apex-v2 project drain --project <dir> [--host-id <id>] [--max-steps <n>]
   apex-v2 project reconcile --project <dir>
   apex-v2 project metrics|quality|audit --project <dir>
   apex-v2 project git discover|guard|claim|release|claim-status --project <dir>
@@ -10961,7 +10962,8 @@ var SUPPORTED_WORKFLOWS = /* @__PURE__ */ new Set([
   "quick",
   "disciplined",
   "phase_context",
-  "governed"
+  "governed",
+  "governed_v2"
 ]);
 function defaultMethodPackRegistry(timestamp) {
   return {
@@ -10992,8 +10994,15 @@ function defaultMethodPackRegistry(timestamp) {
       ),
       methodPack(
         "governed",
+        "2.0.0",
+        "Three-barrier governed workflow with Agent judgment and Kernel-owned gates.",
+        "governed_v2",
+        ["conditional_risk", "candidate_verification", "semantic_review"]
+      ),
+      methodPack(
+        "governed-v1",
         "1.0.0",
-        "Full evidence and separation-of-duties workflow for critical or recovery-sensitive work.",
+        "Legacy seven-node governed workflow for persisted run compatibility.",
         "governed",
         ["independent_risk", "separated_build", "independent_verification", "semantic_review"]
       )
@@ -11053,7 +11062,7 @@ function assertSupportedWorkflow(pack) {
 function requiresGovernedPack(intake) {
   if (intake.risk === "critical") return true;
   if (intake.type === "risk" && intake.risk === "high") return true;
-  return /(critical|security|auth(?:entication|orization)?|credential|secret|production|destructive|migration|rollback|interrupted|resume|recovery|parallel execution|关键|安全|鉴权|凭据|生产|破坏性|迁移|回滚|中断|恢复|并行执行)/i.test(`${intake.title || ""}
+  return /(irreversible|destructive production|production destructive|funds?|trading|payment|auth(?:entication|orization)? protocol|permission protocol|multi[- ]repo(?:sitory)? write|long[- ]running recovery|interrupted resume|resume after interruption|separation of duties|不可逆|生产破坏|资金|交易|支付|鉴权协议|权限协议|多仓库写入|长期恢复|中断后恢复|职责分离)/i.test(`${intake.title || ""}
 ${intake.description || ""}`);
 }
 function governedReason(intake) {
@@ -11266,7 +11275,8 @@ function buildTaskPlanGraph(root, run, timestamp, inventory) {
     quickNodes,
     fullNodes,
     roadmapNode,
-    scopes
+    scopes,
+    runId: run.run_id
   };
   let capabilityApplication;
   try {
@@ -11280,7 +11290,7 @@ function buildTaskPlanGraph(root, run, timestamp, inventory) {
       throw error;
     }
     const governed = methodPackRegistry.packs.find(
-      (pack) => pack.enabled !== false && pack.workflow === "governed"
+      (pack) => pack.enabled !== false && pack.id === "governed"
     );
     if (!governed) {
       throw new Error(
@@ -11318,6 +11328,7 @@ function buildTaskPlanGraph(root, run, timestamp, inventory) {
     source_title: roadmapNode.title,
     affected_area: intake.affected_area,
     generated_at: timestamp,
+    graph_version: methodPack2.workflow === "governed_v2" ? "governed-v2" : "legacy-v1",
     profile,
     execution_model: "barrier-v1",
     barriers,
@@ -11384,12 +11395,14 @@ function bindMethodPackCapabilities(methodPack2, availableNodes, routedCapabilit
     ...node,
     method_pack_id: methodPack2.id
   }));
-  return applyCapabilityBindings(selectedNodes, routedCapabilities);
+  return applyCapabilityBindings(selectedNodes, routedCapabilities, {
+    limits: methodPack2.workflow === "governed_v2" ? { core: 5, conditional: 3 } : void 0
+  });
 }
 function isCapabilityPlanEscalationError(error) {
   return /Capability (?:context budget exceeded|execution class unavailable)/i.test(String(error?.message || error));
 }
-function applyCapabilityBindings(nodes, routedCapabilities) {
+function applyCapabilityBindings(nodes, routedCapabilities, options = {}) {
   const nextNodes = nodes.map((node) => ({
     ...node,
     required_evidence: [...node.required_evidence || []],
@@ -11402,7 +11415,11 @@ function applyCapabilityBindings(nodes, routedCapabilities) {
     ...routedCapabilities.advisory || []
   ];
   for (const capability of selected) {
-    const node = selectCapabilityNode(capability, nextNodes);
+    const node = selectCapabilityNode(
+      capability,
+      nextNodes,
+      options.limits
+    );
     if (!node) {
       throw new Error(
         `Capability \u65E0\u53EF\u7528 PlanGraph \u8282\u70B9\uFF1A${capability.capability_id} -> ${capability.target_node_id}`
@@ -11426,7 +11443,7 @@ function applyCapabilityBindings(nodes, routedCapabilities) {
     node.capability_bindings.sort(
       (left, right) => right.priority - left.priority || left.capability_id.localeCompare(right.capability_id)
     );
-    assertCapabilityContextBudget(node.capability_bindings);
+    assertCapabilityContextBudget(node.capability_bindings, options.limits);
     node.required_evidence = unique(node.required_evidence);
   }
   return {
@@ -11441,9 +11458,9 @@ function applyCapabilityBindings(nodes, routedCapabilities) {
     }
   };
 }
-function selectCapabilityNode(capability, nodes) {
+function selectCapabilityNode(capability, nodes, limits) {
   const targetId = resolveCapabilityTarget(
-    capability.target_node_id,
+    capability,
     nodes
   );
   const targetIndex = nodes.findIndex((node) => node.id === targetId);
@@ -11451,17 +11468,20 @@ function selectCapabilityNode(capability, nodes) {
     ...nodes.slice(targetIndex),
     ...nodes.slice(0, targetIndex).reverse()
   ].filter(Boolean);
-  const preferredCandidates = capability.execution_class === "deterministic_check" ? ordered.filter((node) => node.execution_class === "deterministic_check") : capability.execution_class === "workspace_patch" ? ordered.filter((node) => node.execution_class === "workspace_patch") : ordered;
-  const candidates = preferredCandidates.length > 0 ? [
-    ...preferredCandidates,
-    ...ordered.filter((node) => !preferredCandidates.includes(node))
-  ] : ordered;
+  const candidates = ordered.filter(
+    (node) => capabilityExecutionCompatible(capability.execution_class, node.execution_class)
+  );
+  if (candidates.length === 0) {
+    throw new Error(
+      `Capability execution class unavailable\uFF1A${capability.capability_id} ${capability.execution_class} -> ${nodes.map((node) => `${node.id}:${node.execution_class}`).join(",")}`
+    );
+  }
   for (const node of candidates) {
     try {
       assertCapabilityContextBudget([
         ...node.capability_bindings || [],
         capability
-      ]);
+      ], limits);
       return node;
     } catch {
     }
@@ -11488,8 +11508,12 @@ function persistedCapabilityBinding(capability) {
     certification: capability.certification
   };
 }
-function resolveCapabilityTarget(targetNodeId, nodes) {
+function resolveCapabilityTarget(capability, nodes) {
+  const targetNodeId = capability.target_node_id;
   if (nodes.some((node) => node.id === targetNodeId)) return targetNodeId;
+  if (targetNodeId === "delivery-verification" && capability.execution_class === "cognitive" && nodes.some((node) => node.id === "delivery-design")) {
+    return "delivery-design";
+  }
   if (["delivery-context", "delivery-risk", "delivery-design", "delivery-verification"].includes(targetNodeId) && nodes.some((node) => node.id === "delivery-implementation")) {
     return "delivery-implementation";
   }
@@ -11497,6 +11521,19 @@ function resolveCapabilityTarget(targetNodeId, nodes) {
     return "delivery-review";
   }
   return nodes[0]?.id || null;
+}
+function capabilityExecutionCompatible(capabilityClass, nodeClass) {
+  if (!nodeClass) return true;
+  if (capabilityClass === "deterministic_check") {
+    return nodeClass === "deterministic_check";
+  }
+  if (capabilityClass === "workspace_patch") {
+    return nodeClass === "workspace_patch";
+  }
+  if (capabilityClass === "human_decision") {
+    return nodeClass === "human_decision";
+  }
+  return ["cognitive", "workspace_patch"].includes(nodeClass);
 }
 function buildExecutionBarriers(workflow, nodes) {
   const groups = workflow === "quick" ? [
@@ -11555,13 +11592,13 @@ function modelTierForNode(node, workflow) {
   ]);
   if (node.risk === "critical" || (node.capability_bindings || []).some(
     (binding) => strongCapabilities.has(binding.capability_id)
-  ) || workflow === "governed" && node.id === "delivery-review") {
+  )) {
     return "strong";
   }
   if (["delivery-context", "delivery-risk", "delivery-tests"].includes(node.id)) {
     return "cheap";
   }
-  if (node.id === "delivery-review") return "cheap";
+  if (node.id === "delivery-review") return "standard";
   return "standard";
 }
 function delegationDefaultForNode(node, workflow) {
@@ -11603,6 +11640,13 @@ function buildParallelLanes(workflow) {
       { id: "readiness", purpose: "\u590D\u6838\u9700\u6C42\u7B26\u5408\u6027\u4E0E merge posture\u3002", node_ids: ["delivery-review"] }
     ];
   }
+  if (workflow === "governed_v2") {
+    return [
+      { id: "planning", purpose: "\u5355\u4E00 Plan Agent \u6C47\u603B\u4E0A\u4E0B\u6587\u3001\u98CE\u9669\u3001\u65B9\u6848\u548C\u6D4B\u8BD5\u7B56\u7565\u3002", node_ids: ["delivery-design"] },
+      { id: "build", purpose: "Implementation Agent \u9ED8\u8BA4\u540C\u65F6\u5B8C\u6210\u5B9E\u73B0\u548C\u805A\u7126\u6D4B\u8BD5\u3002", node_ids: ["delivery-implementation"] },
+      { id: "readiness", purpose: "Verified Candidate \u7684\u72EC\u7ACB\u53EA\u8BFB\u8BED\u4E49\u8BC4\u5BA1\u3002", node_ids: ["delivery-review"] }
+    ];
+  }
   return [
     { id: "discovery", purpose: "\u5E76\u884C\u6838\u5BF9\u4E0A\u4E0B\u6587\u4E0E\u98CE\u9669\uFF0C\u907F\u514D\u5355\u4E00\u8DEF\u5F84\u81EA\u8BC1\u3002", node_ids: ["delivery-context", "delivery-risk"] },
     { id: "planning", purpose: "\u6C47\u603B\u8BC1\u636E\u5E76\u5F62\u6210\u4EFB\u52A1\u7EA7\u5B9E\u65BD\u5207\u7247\u3002", node_ids: ["delivery-design"] },
@@ -11640,6 +11684,26 @@ function selectMethodPackNodes(workflow, input) {
   implementation.objective = `\u5728\u4E00\u4E2A\u9694\u79BB ActionWorkspace \u5185\u6309\u6D4B\u8BD5\u5148\u884C\u65B9\u5F0F\u5B8C\u6210\u201C${input.roadmapNode.title}\u201D\u7684\u6700\u5C0F\u5B9E\u73B0\u4E0E\u56DE\u5F52\u6D4B\u8BD5\u3002`;
   verification.dependencies = ["delivery-implementation"];
   review.dependencies = ["delivery-verification"];
+  if (workflow === "governed_v2") {
+    design.dependencies = [];
+    design.objective = `\u5728\u5355\u4E00 Plan Artifact \u4E2D\u5B8C\u6210\u201C${input.roadmapNode.title}\u201D\u7684\u4E0A\u4E0B\u6587\u3001\u98CE\u9669\u3001\u65B9\u6848\u3001\u56DE\u6EDA\u548C\u6D4B\u8BD5\u7B56\u7565\u3002`;
+    implementation.dependencies = ["delivery-design"];
+    implementation.title = "\u5B9E\u73B0\u4E0E\u805A\u7126\u6D4B\u8BD5";
+    implementation.write_scope = unique([
+      ...input.scopes.implementation,
+      ...input.scopes.tests
+    ]);
+    implementation.objective = `\u5728\u4E00\u4E2A\u9694\u79BB Workspace \u5185\u5B8C\u6210\u201C${input.roadmapNode.title}\u201D\u7684\u6700\u5C0F\u5B9E\u73B0\u548C\u805A\u7126\u6D4B\u8BD5\u3002`;
+    review.dependencies = ["delivery-implementation"];
+    review.read_scope = unique([
+      ...review.read_scope,
+      `.apex-v2/runs/${input.runId}/verification-report.json`,
+      `.apex-v2/runs/${input.runId}/merge-queue.json`
+    ]);
+    review.write_scope = [];
+    review.objective = `\u5728 candidate-bound staged verification PASS \u540E\uFF0C\u5BF9\u201C${input.roadmapNode.title}\u201D\u6267\u884C\u72EC\u7ACB\u53EA\u8BFB\u8BED\u4E49\u8BC4\u5BA1\u3002`;
+    return [design, implementation, review];
+  }
   return workflow === "phase_context" ? [context, design, implementation, verification, review] : [design, implementation, verification, review];
 }
 function clonePlanNode(nodes, id) {
@@ -11682,7 +11746,8 @@ function validatePlanGraph(plan) {
     quick: 2,
     disciplined: 4,
     phase_context: 5,
-    governed: 7
+    governed: 7,
+    governed_v2: 3
   }[plan.method_pack?.workflow] || (plan.profile === "quick" ? 2 : 5);
   if (!Array.isArray(plan.nodes) || plan.nodes.length < minimumNodes) {
     errors.push(`plan graph \u81F3\u5C11\u9700\u8981 ${minimumNodes} \u4E2A\u8282\u70B9`);
@@ -11718,6 +11783,16 @@ function validatePlanGraph(plan) {
       if (!node.delegation) errors.push(`${node.id} \u7F3A\u5C11 delegation`);
     }
     const capabilityIds = /* @__PURE__ */ new Set();
+    for (const binding of node.capability_bindings || []) {
+      if (!capabilityExecutionCompatible(
+        binding.execution_class,
+        node.execution_class
+      )) {
+        errors.push(
+          `${node.id} \u7684 capability execution class \u4E0D\u517C\u5BB9\uFF1A${binding.capability_id}:${binding.execution_class} -> ${node.execution_class}`
+        );
+      }
+    }
     for (const capability of node.capability_bindings || []) {
       if (capabilityIds.has(capability.capability_id)) {
         errors.push(`${node.id} \u7684 capability \u91CD\u590D\uFF1A${capability.capability_id}`);
@@ -18738,6 +18813,7 @@ function generateReviewTransaction(root, run) {
   const blocking = [];
   const nonBlocking = [];
   const negativeControl = inspectNegativeControlGate(root, run.run_id);
+  const plan = loadPlanGraph(root, run.run_id);
   if (getRunNode(run, "verify").status !== "passed") {
     blocking.push("verify \u8282\u70B9\u5C1A\u672A PASS\u3002");
   }
@@ -18765,6 +18841,34 @@ function generateReviewTransaction(root, run) {
     } else if (negativeControl.mode === "shadow") {
       nonBlocking.push(
         `Negative Control shadow gap\uFF1A${negativeControl.message}`
+      );
+    }
+  }
+  if (plan.method_pack?.workflow === "governed_v2") {
+    const reviewWorker = getWorkers(root, run.run_id).find(
+      (worker) => worker.plan_node_id === "delivery-review"
+    );
+    const reviewEvidence = reviewWorker ? readJson(join36(workerDir(
+      root,
+      reviewWorker.run_id,
+      reviewWorker.worker_id
+    ), "cognitive-evidence.json"), null) : null;
+    if (!reviewWorker || ![
+      "evidence_submitted",
+      "decision_submitted"
+    ].includes(reviewWorker.status)) {
+      blocking.push("Governed V2 \u7F3A\u5C11\u5DF2\u5B8C\u6210\u7684\u72EC\u7ACB Review Agent\u3002");
+    } else if (!reviewEvidence || reviewEvidence.candidate_digest !== candidate.candidate.candidate_digest) {
+      blocking.push("Review Agent evidence \u672A\u7ED1\u5B9A\u5F53\u524D candidate\u3002");
+    } else if (reviewEvidence.merge_posture !== "approve") {
+      blocking.push(
+        ...reviewEvidence.findings,
+        `Review Agent merge posture=${reviewEvidence.merge_posture}`
+      );
+    } else {
+      nonBlocking.push(
+        ...reviewEvidence.findings,
+        ...reviewEvidence.residual_risks
       );
     }
   }
@@ -18995,6 +19099,7 @@ function listHostActions(root) {
       read_scope: worker.read_scope,
       write_scope: worker.write_scope,
       output_contract: worker.output_contract,
+      model_tier: worker.model_tier || null,
       candidate_digest: reviewCandidateDigest(root, worker),
       lease_expires_at: worker.claim_expires_at || null,
       fencing_token: worker.fencing_token || 0,
@@ -19073,6 +19178,8 @@ function claimHostActionTransaction(root, workerId, hostId) {
       run_id: worker.run_id,
       plan_node_id: worker.plan_node_id,
       objective: worker.objective,
+      candidate_digest: reviewCandidateDigest(root, worker),
+      verification_ref: worker.plan_node_id.endsWith("review") ? `.apex-v2/runs/${worker.run_id}/verification-report.json` : null,
       capability_bindings: worker.capability_bindings || [],
       capability_enforcement: worker.capability_enforcement || "shadow",
       capability_invocation_refs: worker.capability_invocation_refs || [],
@@ -22932,6 +23039,10 @@ async function handleProject(subcommand, args) {
     await projectTick(args);
     return;
   }
+  if (subcommand === "drain") {
+    await projectDrain(args);
+    return;
+  }
   if (subcommand === "heartbeat") {
     const action = args._[0];
     if (action === "install") {
@@ -23288,6 +23399,98 @@ async function projectTick(args) {
     active_runs: readJson(projectPath).active_runs
   }, null, 2));
 }
+async function projectDrain(args) {
+  const projectDir = projectRoot(args);
+  const root = requireStore(projectDir);
+  const maxSteps = Math.max(1, Number(args["max-steps"] || 20));
+  const transitions = [];
+  let stopReason = "max-steps";
+  for (let step = 1; step <= maxSteps; step += 1) {
+    const runIds = readJson(join47(root, "project.json")).active_runs;
+    if (runIds.length === 0) {
+      stopReason = "no-active-runs";
+      break;
+    }
+    const advanced = runIds.map((runId) => advanceRunPlanning(root, runId)).filter((item) => item.actions.length > 0);
+    const recovered = recoverExpiredWorkerExecutions(root, runIds, "project.drain");
+    const collected = collectWorkerResults(root, runIds);
+    const completed = completeReadyExecuteNodes(root, runIds);
+    const verified = verifyReadyRuns(root, runIds, projectDir);
+    const reviewed = reviewReadyRuns(root, runIds);
+    const integrated = integrateReadyRuns(root, runIds);
+    const learned = learnReadyRuns(root, runIds);
+    const dispatched = dispatchReadyWorkers(root, runIds, {
+      mode: args["execution-mode"] ? String(args["execution-mode"]) : "interactive"
+    });
+    transitions.push({
+      step,
+      advanced,
+      recovered,
+      collected,
+      completed,
+      verified,
+      reviewed,
+      integrated,
+      learned,
+      dispatched
+    });
+    const actions = listHostActions(root);
+    const hostId = args["host-id"] ? String(args["host-id"]) : null;
+    const selectable = actions.find(
+      (action) => action.status === "active" || hostId && action.status === "claimed" && action.claimed_by === hostId
+    );
+    if (selectable) {
+      const claimed = hostId ? claimHostAction(root, selectable.worker_id, hostId) : null;
+      console.log(JSON.stringify({
+        status: "ACTION_REQUIRED",
+        stop_reason: "waiting-for-agent",
+        transitions,
+        next_action: controllerAction(selectable, claimed)
+      }, null, 2));
+      return;
+    }
+    const progress = [
+      ...advanced,
+      ...recovered,
+      ...collected,
+      ...completed,
+      ...verified,
+      ...reviewed,
+      ...integrated,
+      ...learned,
+      ...dispatched
+    ].length;
+    if (progress === 0) {
+      stopReason = actions.length > 0 ? "claimed-by-other-host" : "blocked";
+      break;
+    }
+  }
+  console.log(JSON.stringify({
+    status: readJson(join47(root, "project.json")).active_runs.length === 0 ? "COMPLETE" : "BLOCKED",
+    stop_reason: stopReason,
+    transitions,
+    next_action: null
+  }, null, 2));
+}
+function controllerAction(action, claimed) {
+  const planNodeId = action.plan_node_id;
+  const actionType = planNodeId === "delivery-design" ? "plan" : planNodeId === "delivery-implementation" || planNodeId === "delivery-tests" ? "implement" : planNodeId === "delivery-risk-challenger" ? "risk_challenge" : planNodeId === "delivery-review" ? "review" : "decision";
+  return {
+    action_type: actionType,
+    worker_id: action.worker_id,
+    run_id: action.run_id,
+    objective: action.objective,
+    workspace: claimed?.workspace?.workspace_path || action.workspace_path || null,
+    context_refs: action.read_scope,
+    required_output: action.output_contract,
+    budget: {
+      model_tier: action.model_tier || null,
+      lease_expires_at: claimed?.action?.lease_expires_at || action.lease_expires_at
+    },
+    claim: claimed?.action || null,
+    capability_bindings: action.capability_bindings
+  };
+}
 function auditProject(args) {
   const projectDir = projectRoot(args);
   const root = requireStore(projectDir);
@@ -23401,6 +23604,13 @@ function reviewReadyRuns(root, runIds) {
     const run = loadRun(root, runId);
     if (getRunNode(run, "verify").status !== "passed") continue;
     if (getRunNode(run, "review").status !== "pending") continue;
+    const plan = loadPlanGraph3(root, runId);
+    if (plan.method_pack?.workflow === "governed_v2") {
+      const reviewWorker = getWorkers(root, runId).find(
+        (worker) => worker.plan_node_id === "delivery-review"
+      );
+      if (!reviewWorker || !workerSuccessfullyCompleted(reviewWorker)) continue;
+    }
     const result = generateReviewInternal(root, run);
     if (result.report.status === "PASS") {
       passNode(root, run.run_id, "review", result.artifact_id, "project tick \u81EA\u52A8\u5B8C\u6210 review report\u3002");
@@ -24052,7 +24262,7 @@ function collectWorkerResults(root, runIds) {
   const collected = [];
   for (const runId of runIds) {
     const run = loadRun(root, runId);
-    if (getRunNode(run, "execute").status !== "pending") continue;
+    if (run.status !== "active") continue;
     const queue = readDecisionQueue2(root, runId);
     for (const worker of getWorkers(root, runId)) {
       if (!["evidence_submitted", "decision_submitted"].includes(worker.status)) continue;
@@ -24085,12 +24295,16 @@ function completeReadyExecuteNodes(root, runIds) {
     const workers = getWorkers(root, runId);
     if (workers.length === 0) continue;
     const workersByPlanNode = new Map(workers.map((worker) => [worker.plan_node_id, worker]));
-    if (plan.nodes.some((node) => !workersByPlanNode.has(node.id))) continue;
-    if (workers.some((worker) => !workerSuccessfullyCompleted(worker))) continue;
+    const executePlanNodes = plan.method_pack?.workflow === "governed_v2" ? plan.nodes.filter((node) => node.barrier_id !== "delivery-readiness") : plan.nodes;
+    if (executePlanNodes.some((node) => !workersByPlanNode.has(node.id))) continue;
+    const executeWorkers = executePlanNodes.map(
+      (node) => workersByPlanNode.get(node.id)
+    );
+    if (executeWorkers.some((worker) => !workerSuccessfullyCompleted(worker))) continue;
     const evidenceRefs = [];
     let ready = true;
     const decisionQueue = readDecisionQueue2(root, runId);
-    for (const worker of workers) {
+    for (const worker of executeWorkers) {
       if (["evidence_submitted", "decision_submitted"].includes(worker.status)) {
         const item = decisionQueue.items.find((entry) => entry.worker_id === worker.worker_id);
         if (!item) {
@@ -24163,16 +24377,27 @@ function dispatchReadyWorkers(root, runIds, options = {}) {
     if (available <= 0) break;
     const run = loadRun(root, runId);
     if (getRunNode(run, "plan_graph").status !== "passed") continue;
-    if (getRunNode(run, "execute").status !== "pending") continue;
     const plan = loadPlanGraph3(root, runId);
+    const governedV2 = plan.method_pack?.workflow === "governed_v2";
+    const executePending = getRunNode(run, "execute").status === "pending";
+    const reviewPending = getRunNode(run, "review").status === "pending";
+    if (!executePending && !(governedV2 && reviewPending)) continue;
     const workers = getWorkers(root, runId);
     const existingPlanNodeIds = new Set(workers.map((worker) => worker.plan_node_id));
     const completedPlanNodeIds = new Set(
       workers.filter(workerSuccessfullyCompleted).map((worker) => worker.plan_node_id)
     );
-    const readyNodes = plan.nodes.filter(
-      (node) => !existingPlanNodeIds.has(node.id) && node.dependencies.every((dependency) => completedPlanNodeIds.has(dependency))
-    );
+    const readyNodes = plan.nodes.filter((node) => {
+      if (existingPlanNodeIds.has(node.id)) return false;
+      if (!node.dependencies.every(
+        (dependency) => completedPlanNodeIds.has(dependency)
+      )) return false;
+      if (!governedV2) return executePending;
+      if (node.barrier_id === "delivery-readiness") {
+        return getRunNode(run, "verify").status === "passed";
+      }
+      return executePending;
+    });
     for (const planNode2 of readyNodes) {
       if (available <= 0) break;
       const worker = createWorkerForPlanNode(root, run, planNode2, options);

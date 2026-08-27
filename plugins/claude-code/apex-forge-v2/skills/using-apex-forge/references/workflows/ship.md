@@ -7,8 +7,10 @@ discoverable Skill.
 
 1. Confirm every PlanGraph action has successful typed evidence and no required
    capability evidence remains missing under `enforce` mode.
-2. Complete execute collection and run candidate-bound staged verification.
-3. Confirm semantic review evidence binds the same candidate digest.
+2. Call `project drain --host-id claude-code-host`; the Kernel completes execute
+   collection and candidate-bound staged verification.
+3. Complete the returned review action and call `project drain` again. Confirm
+   semantic review evidence binds the same candidate digest.
 4. Inspect merge conflicts and candidate-bound approvals.
    In Negative Control enforce mode, confirm the Bug record is `restored` or
    covered by a valid approved waiver.
@@ -16,7 +18,7 @@ discoverable Skill.
 6. Apply merge only when verification, review, approval, and merge recompute the
    same candidate digest.
 7. Run final verification against the integrated project.
-8. Queue learning governance with `project tick --integrate --learn`.
+8. Let `project drain` queue learning governance after integration.
    Delivery closure waits for the durable proposal and apply job, not for
    knowledge mutation. Approved jobs may be applied later with
    `project tick --learning-worker`.

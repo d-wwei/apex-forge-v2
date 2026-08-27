@@ -82,7 +82,7 @@ test("concurrent worker processes preserve isolated patches and ProjectState", a
     "--area",
     "src/,tests/",
     "--method-pack",
-    "governed"
+    "governed-v1"
   ]);
   run(["intake", "triage", "--project", project, "--id", intake.id, "--decision", "accepted"]);
   const roadmap = run(["roadmap", "promote", "--project", project, "--intake-id", intake.id]);

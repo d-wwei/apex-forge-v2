@@ -26,6 +26,7 @@ export function printHelp() {
   apex-v2 project tick --project <dir>
     --run-agents [--agent-limit <n>] [--agent-cycles <n>]
     --learning-worker [--learning-limit <n>]
+  apex-v2 project drain --project <dir> [--host-id <id>] [--max-steps <n>]
   apex-v2 project reconcile --project <dir>
   apex-v2 project metrics|quality|audit --project <dir>
   apex-v2 project git discover|guard|claim|release|claim-status --project <dir>

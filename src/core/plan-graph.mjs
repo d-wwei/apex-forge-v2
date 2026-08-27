@@ -197,7 +197,8 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
     quickNodes,
     fullNodes,
     roadmapNode,
-    scopes
+    scopes,
+    runId: run.run_id
   };
   let capabilityApplication;
   try {
@@ -214,7 +215,7 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
       throw error;
     }
     const governed = methodPackRegistry.packs.find((pack) =>
-      pack.enabled !== false && pack.workflow === "governed"
+      pack.enabled !== false && pack.id === "governed"
     );
     if (!governed) {
       throw new Error(
@@ -253,6 +254,9 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
     source_title: roadmapNode.title,
     affected_area: intake.affected_area,
     generated_at: timestamp,
+    graph_version: methodPack.workflow === "governed_v2"
+      ? "governed-v2"
+      : "legacy-v1",
     profile,
     execution_model: "barrier-v1",
     barriers,
@@ -324,7 +328,11 @@ function bindMethodPackCapabilities(methodPack, availableNodes, routedCapabiliti
     ...node,
     method_pack_id: methodPack.id
   }));
-  return applyCapabilityBindings(selectedNodes, routedCapabilities);
+  return applyCapabilityBindings(selectedNodes, routedCapabilities, {
+    limits: methodPack.workflow === "governed_v2"
+      ? { core: 5, conditional: 3 }
+      : undefined
+  });
 }
 
 function isCapabilityPlanEscalationError(error) {
@@ -332,7 +340,7 @@ function isCapabilityPlanEscalationError(error) {
     .test(String(error?.message || error));
 }
 
-export function applyCapabilityBindings(nodes, routedCapabilities) {
+export function applyCapabilityBindings(nodes, routedCapabilities, options = {}) {
   const nextNodes = nodes.map((node) => ({
     ...node,
     required_evidence: [...(node.required_evidence || [])],
@@ -345,7 +353,11 @@ export function applyCapabilityBindings(nodes, routedCapabilities) {
     ...(routedCapabilities.advisory || [])
   ];
   for (const capability of selected) {
-    const node = selectCapabilityNode(capability, nextNodes);
+    const node = selectCapabilityNode(
+      capability,
+      nextNodes,
+      options.limits
+    );
     if (!node) {
       throw new Error(
         `Capability 无可用 PlanGraph 节点：${capability.capability_id} -> ${capability.target_node_id}`
@@ -370,7 +382,7 @@ export function applyCapabilityBindings(nodes, routedCapabilities) {
       right.priority - left.priority
       || left.capability_id.localeCompare(right.capability_id)
     );
-    assertCapabilityContextBudget(node.capability_bindings);
+    assertCapabilityContextBudget(node.capability_bindings, options.limits);
     node.required_evidence = unique(node.required_evidence);
   }
   return {
@@ -386,9 +398,9 @@ export function applyCapabilityBindings(nodes, routedCapabilities) {
   };
 }
 
-function selectCapabilityNode(capability, nodes) {
+function selectCapabilityNode(capability, nodes, limits) {
   const targetId = resolveCapabilityTarget(
-    capability.target_node_id,
+    capability,
     nodes
   );
   const targetIndex = nodes.findIndex((node) => node.id === targetId);
@@ -396,23 +408,21 @@ function selectCapabilityNode(capability, nodes) {
     ...nodes.slice(targetIndex),
     ...nodes.slice(0, targetIndex).reverse()
   ].filter(Boolean);
-  const preferredCandidates = capability.execution_class === "deterministic_check"
-    ? ordered.filter((node) => node.execution_class === "deterministic_check")
-    : capability.execution_class === "workspace_patch"
-      ? ordered.filter((node) => node.execution_class === "workspace_patch")
-      : ordered;
-  const candidates = preferredCandidates.length > 0
-    ? [
-        ...preferredCandidates,
-        ...ordered.filter((node) => !preferredCandidates.includes(node))
-      ]
-    : ordered;
+  const candidates = ordered.filter((node) =>
+    capabilityExecutionCompatible(capability.execution_class, node.execution_class)
+  );
+  if (candidates.length === 0) {
+    throw new Error(
+      `Capability execution class unavailable：${capability.capability_id} `
+      + `${capability.execution_class} -> ${nodes.map((node) => `${node.id}:${node.execution_class}`).join(",")}`
+    );
+  }
   for (const node of candidates) {
     try {
       assertCapabilityContextBudget([
         ...(node.capability_bindings || []),
         capability
-      ]);
+      ], limits);
       return node;
     } catch {}
   }
@@ -441,8 +451,16 @@ function persistedCapabilityBinding(capability) {
   };
 }
 
-function resolveCapabilityTarget(targetNodeId, nodes) {
+function resolveCapabilityTarget(capability, nodes) {
+  const targetNodeId = capability.target_node_id;
   if (nodes.some((node) => node.id === targetNodeId)) return targetNodeId;
+  if (
+    targetNodeId === "delivery-verification"
+    && capability.execution_class === "cognitive"
+    && nodes.some((node) => node.id === "delivery-design")
+  ) {
+    return "delivery-design";
+  }
   if (
     ["delivery-context", "delivery-risk", "delivery-design", "delivery-verification"]
       .includes(targetNodeId)
@@ -454,6 +472,20 @@ function resolveCapabilityTarget(targetNodeId, nodes) {
     return "delivery-review";
   }
   return nodes[0]?.id || null;
+}
+
+function capabilityExecutionCompatible(capabilityClass, nodeClass) {
+  if (!nodeClass) return true;
+  if (capabilityClass === "deterministic_check") {
+    return nodeClass === "deterministic_check";
+  }
+  if (capabilityClass === "workspace_patch") {
+    return nodeClass === "workspace_patch";
+  }
+  if (capabilityClass === "human_decision") {
+    return nodeClass === "human_decision";
+  }
+  return ["cognitive", "workspace_patch"].includes(nodeClass);
 }
 
 function buildExecutionBarriers(workflow, nodes) {
@@ -532,14 +564,13 @@ function modelTierForNode(node, workflow) {
     || (node.capability_bindings || []).some((binding) =>
       strongCapabilities.has(binding.capability_id)
     )
-    || (workflow === "governed" && node.id === "delivery-review")
   ) {
     return "strong";
   }
   if (["delivery-context", "delivery-risk", "delivery-tests"].includes(node.id)) {
     return "cheap";
   }
-  if (node.id === "delivery-review") return "cheap";
+  if (node.id === "delivery-review") return "standard";
   return "standard";
 }
 
@@ -584,6 +615,13 @@ function buildParallelLanes(workflow) {
       { id: "readiness", purpose: "复核需求符合性与 merge posture。", node_ids: ["delivery-review"] }
     ];
   }
+  if (workflow === "governed_v2") {
+    return [
+      { id: "planning", purpose: "单一 Plan Agent 汇总上下文、风险、方案和测试策略。", node_ids: ["delivery-design"] },
+      { id: "build", purpose: "Implementation Agent 默认同时完成实现和聚焦测试。", node_ids: ["delivery-implementation"] },
+      { id: "readiness", purpose: "Verified Candidate 的独立只读语义评审。", node_ids: ["delivery-review"] }
+    ];
+  }
   return [
         { id: "discovery", purpose: "并行核对上下文与风险，避免单一路径自证。", node_ids: ["delivery-context", "delivery-risk"] },
         { id: "planning", purpose: "汇总证据并形成任务级实施切片。", node_ids: ["delivery-design"] },
@@ -625,6 +663,26 @@ function selectMethodPackNodes(workflow, input) {
   implementation.objective = `在一个隔离 ActionWorkspace 内按测试先行方式完成“${input.roadmapNode.title}”的最小实现与回归测试。`;
   verification.dependencies = ["delivery-implementation"];
   review.dependencies = ["delivery-verification"];
+  if (workflow === "governed_v2") {
+    design.dependencies = [];
+    design.objective = `在单一 Plan Artifact 中完成“${input.roadmapNode.title}”的上下文、风险、方案、回滚和测试策略。`;
+    implementation.dependencies = ["delivery-design"];
+    implementation.title = "实现与聚焦测试";
+    implementation.write_scope = unique([
+      ...input.scopes.implementation,
+      ...input.scopes.tests
+    ]);
+    implementation.objective = `在一个隔离 Workspace 内完成“${input.roadmapNode.title}”的最小实现和聚焦测试。`;
+    review.dependencies = ["delivery-implementation"];
+    review.read_scope = unique([
+      ...review.read_scope,
+      `.apex-v2/runs/${input.runId}/verification-report.json`,
+      `.apex-v2/runs/${input.runId}/merge-queue.json`
+    ]);
+    review.write_scope = [];
+    review.objective = `在 candidate-bound staged verification PASS 后，对“${input.roadmapNode.title}”执行独立只读语义评审。`;
+    return [design, implementation, review];
+  }
   return workflow === "phase_context"
     ? [context, design, implementation, verification, review]
     : [design, implementation, verification, review];
@@ -673,7 +731,8 @@ export function validatePlanGraph(plan) {
     quick: 2,
     disciplined: 4,
     phase_context: 5,
-    governed: 7
+    governed: 7,
+    governed_v2: 3
   }[plan.method_pack?.workflow] || (plan.profile === "quick" ? 2 : 5);
   if (!Array.isArray(plan.nodes) || plan.nodes.length < minimumNodes) {
     errors.push(`plan graph 至少需要 ${minimumNodes} 个节点`);
@@ -713,6 +772,17 @@ export function validatePlanGraph(plan) {
       if (!node.delegation) errors.push(`${node.id} 缺少 delegation`);
     }
     const capabilityIds = new Set();
+    for (const binding of node.capability_bindings || []) {
+      if (!capabilityExecutionCompatible(
+        binding.execution_class,
+        node.execution_class
+      )) {
+        errors.push(
+          `${node.id} 的 capability execution class 不兼容：`
+          + `${binding.capability_id}:${binding.execution_class} -> ${node.execution_class}`
+        );
+      }
+    }
     for (const capability of node.capability_bindings || []) {
       if (capabilityIds.has(capability.capability_id)) {
         errors.push(`${node.id} 的 capability 重复：${capability.capability_id}`);

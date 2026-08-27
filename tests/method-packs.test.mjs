@@ -27,11 +27,11 @@ test("method pack registry exposes safe built-in workflows", () => {
   assert.equal(registry.default_pack_id, "disciplined-tdd");
   assert.deepEqual(
     registry.packs.map((pack) => pack.id),
-    ["quick", "disciplined-tdd", "phase-context", "governed"]
+    ["quick", "disciplined-tdd", "phase-context", "governed", "governed-v1"]
   );
   assert.deepEqual(
     registry.packs.map((pack) => pack.workflow),
-    ["quick", "disciplined", "phase_context", "governed"]
+    ["quick", "disciplined", "phase_context", "governed_v2", "governed"]
   );
   assert.equal(
     validateContract("method-pack-registry.schema.json", registry).valid,

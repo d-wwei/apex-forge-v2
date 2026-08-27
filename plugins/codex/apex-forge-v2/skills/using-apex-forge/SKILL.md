@@ -42,7 +42,11 @@ lifecycle route. The deprecated names `apex-forge-plan`,
 3. If `.apex-v2/project.json` exists, inspect `status` and `host actions`.
 4. If the project is not initialized and the user requested Apex Forge, run
    `init` silently with the project directory.
-5. Select the route above, read its internal reference, and follow it.
+5. For active delivery work, call
+   `project drain --host-id codex-host` and follow its single
+   `next_action`. Do not reconstruct Kernel choreography from raw lifecycle
+   commands.
+6. Select the route above, read its internal reference, and follow it.
 
 ## Interaction Rules
 

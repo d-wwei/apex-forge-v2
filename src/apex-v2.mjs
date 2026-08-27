@@ -130,7 +130,11 @@ import {
   handleRoadmapCommand
 } from "./commands/intake-roadmap.mjs";
 import { handleCapabilityCommand } from "./commands/capability.mjs";
-import { handleHostCommand } from "./commands/host.mjs";
+import {
+  claimHostAction,
+  handleHostCommand,
+  listHostActions
+} from "./commands/host.mjs";
 import {
   handleDecisionCommand,
   handleNegativeControlCommand
@@ -558,6 +562,10 @@ async function handleProject(subcommand, args) {
     await projectTick(args);
     return;
   }
+  if (subcommand === "drain") {
+    await projectDrain(args);
+    return;
+  }
   if (subcommand === "heartbeat") {
     const action = args._[0];
     if (action === "install") {
@@ -940,6 +948,122 @@ async function projectTick(args) {
   }, null, 2));
 }
 
+async function projectDrain(args) {
+  const projectDir = projectRoot(args);
+  const root = requireStore(projectDir);
+  const maxSteps = Math.max(1, Number(args["max-steps"] || 20));
+  const transitions = [];
+  let stopReason = "max-steps";
+
+  for (let step = 1; step <= maxSteps; step += 1) {
+    const runIds = readJson(join(root, "project.json")).active_runs;
+    if (runIds.length === 0) {
+      stopReason = "no-active-runs";
+      break;
+    }
+
+    const advanced = runIds.map((runId) => advanceRunPlanning(root, runId))
+      .filter((item) => item.actions.length > 0);
+    const recovered = recoverExpiredWorkerExecutions(root, runIds, "project.drain");
+    const collected = collectWorkerResults(root, runIds);
+    const completed = completeReadyExecuteNodes(root, runIds);
+    const verified = verifyReadyRuns(root, runIds, projectDir);
+    const reviewed = reviewReadyRuns(root, runIds);
+    const integrated = integrateReadyRuns(root, runIds);
+    const learned = learnReadyRuns(root, runIds);
+    const dispatched = dispatchReadyWorkers(root, runIds, {
+      mode: args["execution-mode"]
+        ? String(args["execution-mode"])
+        : "interactive"
+    });
+
+    transitions.push({
+      step,
+      advanced,
+      recovered,
+      collected,
+      completed,
+      verified,
+      reviewed,
+      integrated,
+      learned,
+      dispatched
+    });
+
+    const actions = listHostActions(root);
+    const hostId = args["host-id"] ? String(args["host-id"]) : null;
+    const selectable = actions.find((action) =>
+      action.status === "active"
+      || (hostId && action.status === "claimed" && action.claimed_by === hostId)
+    );
+    if (selectable) {
+      const claimed = hostId
+        ? claimHostAction(root, selectable.worker_id, hostId)
+        : null;
+      console.log(JSON.stringify({
+        status: "ACTION_REQUIRED",
+        stop_reason: "waiting-for-agent",
+        transitions,
+        next_action: controllerAction(selectable, claimed)
+      }, null, 2));
+      return;
+    }
+
+    const progress = [
+      ...advanced,
+      ...recovered,
+      ...collected,
+      ...completed,
+      ...verified,
+      ...reviewed,
+      ...integrated,
+      ...learned,
+      ...dispatched
+    ].length;
+    if (progress === 0) {
+      stopReason = actions.length > 0 ? "claimed-by-other-host" : "blocked";
+      break;
+    }
+  }
+
+  console.log(JSON.stringify({
+    status: readJson(join(root, "project.json")).active_runs.length === 0
+      ? "COMPLETE"
+      : "BLOCKED",
+    stop_reason: stopReason,
+    transitions,
+    next_action: null
+  }, null, 2));
+}
+
+function controllerAction(action, claimed) {
+  const planNodeId = action.plan_node_id;
+  const actionType = planNodeId === "delivery-design"
+    ? "plan"
+    : planNodeId === "delivery-implementation" || planNodeId === "delivery-tests"
+      ? "implement"
+      : planNodeId === "delivery-risk-challenger"
+        ? "risk_challenge"
+        : planNodeId === "delivery-review"
+          ? "review"
+          : "decision";
+  return {
+    action_type: actionType,
+    worker_id: action.worker_id,
+    run_id: action.run_id,
+    objective: action.objective,
+    workspace: claimed?.workspace?.workspace_path || action.workspace_path || null,
+    context_refs: action.read_scope,
+    required_output: action.output_contract,
+    budget: {
+      model_tier: action.model_tier || null,
+      lease_expires_at: claimed?.action?.lease_expires_at || action.lease_expires_at
+    },
+    claim: claimed?.action || null,
+    capability_bindings: action.capability_bindings
+  };
+}
+
 function auditProject(args) {
   const projectDir = projectRoot(args);
   const root = requireStore(projectDir);
@@ -1057,6 +1181,13 @@ function reviewReadyRuns(root, runIds) {
     const run = loadRun(root, runId);
     if (getRunNode(run, "verify").status !== "passed") continue;
     if (getRunNode(run, "review").status !== "pending") continue;
+    const plan = loadPlanGraph(root, runId);
+    if (plan.method_pack?.workflow === "governed_v2") {
+      const reviewWorker = getWorkers(root, runId).find((worker) =>
+        worker.plan_node_id === "delivery-review"
+      );
+      if (!reviewWorker || !workerSuccessfullyCompleted(reviewWorker)) continue;
+    }
     const result = generateReviewInternal(root, run);
     if (result.report.status === "PASS") {
       passNode(root, run.run_id, "review", result.artifact_id, "project tick 自动完成 review report。");
@@ -1775,7 +1906,7 @@ function collectWorkerResults(root, runIds) {
   const collected = [];
   for (const runId of runIds) {
     const run = loadRun(root, runId);
-    if (getRunNode(run, "execute").status !== "pending") continue;
+    if (run.status !== "active") continue;
     const queue = readDecisionQueue(root, runId);
     for (const worker of getWorkers(root, runId)) {
       if (!["evidence_submitted", "decision_submitted"].includes(worker.status)) continue;
@@ -1809,14 +1940,20 @@ function completeReadyExecuteNodes(root, runIds) {
     const workers = getWorkers(root, runId);
     if (workers.length === 0) continue;
     const workersByPlanNode = new Map(workers.map((worker) => [worker.plan_node_id, worker]));
-    if (plan.nodes.some((node) => !workersByPlanNode.has(node.id))) continue;
-    if (workers.some((worker) => !workerSuccessfullyCompleted(worker))) continue;
+    const executePlanNodes = plan.method_pack?.workflow === "governed_v2"
+      ? plan.nodes.filter((node) => node.barrier_id !== "delivery-readiness")
+      : plan.nodes;
+    if (executePlanNodes.some((node) => !workersByPlanNode.has(node.id))) continue;
+    const executeWorkers = executePlanNodes.map((node) =>
+      workersByPlanNode.get(node.id)
+    );
+    if (executeWorkers.some((worker) => !workerSuccessfullyCompleted(worker))) continue;
 
     const evidenceRefs = [];
     let ready = true;
     const decisionQueue = readDecisionQueue(root, runId);
 
-    for (const worker of workers) {
+    for (const worker of executeWorkers) {
       if (["evidence_submitted", "decision_submitted"].includes(worker.status)) {
         const item = decisionQueue.items.find((entry) => entry.worker_id === worker.worker_id);
         if (!item) {
@@ -1902,18 +2039,28 @@ function dispatchReadyWorkers(root, runIds, options = {}) {
     if (available <= 0) break;
     const run = loadRun(root, runId);
     if (getRunNode(run, "plan_graph").status !== "passed") continue;
-    if (getRunNode(run, "execute").status !== "pending") continue;
 
     const plan = loadPlanGraph(root, runId);
+    const governedV2 = plan.method_pack?.workflow === "governed_v2";
+    const executePending = getRunNode(run, "execute").status === "pending";
+    const reviewPending = getRunNode(run, "review").status === "pending";
+    if (!executePending && !(governedV2 && reviewPending)) continue;
     const workers = getWorkers(root, runId);
     const existingPlanNodeIds = new Set(workers.map((worker) => worker.plan_node_id));
     const completedPlanNodeIds = new Set(
       workers.filter(workerSuccessfullyCompleted).map((worker) => worker.plan_node_id)
     );
-    const readyNodes = plan.nodes.filter((node) =>
-      !existingPlanNodeIds.has(node.id) &&
-      node.dependencies.every((dependency) => completedPlanNodeIds.has(dependency))
-    );
+    const readyNodes = plan.nodes.filter((node) => {
+      if (existingPlanNodeIds.has(node.id)) return false;
+      if (!node.dependencies.every((dependency) =>
+        completedPlanNodeIds.has(dependency)
+      )) return false;
+      if (!governedV2) return executePending;
+      if (node.barrier_id === "delivery-readiness") {
+        return getRunNode(run, "verify").status === "passed";
+      }
+      return executePending;
+    });
 
     for (const planNode of readyNodes) {
       if (available <= 0) break;

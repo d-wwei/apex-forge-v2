@@ -256,7 +256,7 @@ function createRunWithPlanGraph(project, options = {}) {
   seedProjectFiles(project);
   const { deliveryRun } = createAcceptedRun(project, {
     ...options,
-    methodPack: options.methodPack || "governed"
+    methodPack: options.methodPack || "governed-v1"
   });
   passNode(project, deliveryRun.run_id, "mandate", "目标已明确");
   run(["knowledge", "refresh", "--project", project]);
@@ -312,7 +312,10 @@ function completeHostWorker(project, worker, summary, modifyWorkspace = false) {
     "--worker-id", worker.worker_id
   ]).stdout);
   if (modifyWorkspace) {
-    const target = worker.write_scope.find((scope) => !scope.endsWith("/"))
+    const target = worker.write_scope.find((scope) =>
+      scope.startsWith("src/") && !scope.endsWith("/")
+    ) || (worker.write_scope.includes("src/") ? "src/apex-v2.mjs" : null)
+      || worker.write_scope.find((scope) => !scope.endsWith("/"))
       || (worker.write_scope.some((scope) => scope.startsWith("tests/"))
         ? "tests/apex-v2.test.mjs"
         : "src/apex-v2.mjs");
@@ -1367,63 +1370,43 @@ test("project tick --run-workers 遇到失败命令会阻塞 worker", () => {
   assert.equal(workers.find((item) => item.worker_id === worker.worker_id).status, "blocked");
 });
 
-test("shell worker 在 enforce 模式必须提交 typed capability evidence", () => {
+test("cognitive test-strategy 不会绑定到 deterministic shell worker", () => {
   const project = tempProject();
   const { deliveryRun } = createRunWithPlanGraph(project);
   setPlanCapabilityEnforcement(project, deliveryRun.run_id, "enforce");
-  const worker = JSON.parse(run([
-    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
-    "--plan-node-id", "delivery-verification"
-  ]).stdout);
-  const binding = worker.capability_bindings.find((item) =>
-    item.capability_id === "test-strategy"
-  );
-  assert.ok(binding);
-
-  const missing = JSON.parse(run([
-    "worker", "exec-shell", "--project", project,
-    "--worker-id", worker.worker_id,
-    "--cmd", "node --version"
-  ]).stdout);
-  assert.equal(missing.result.status, "FAIL");
-  assert.equal(missing.result.failure_kind, "contract_error");
-  assert.match(
-    missing.result.capability_evidence_status.error,
-    /缺少 required capability evidence：test-strategy/
-  );
-
-  run([
-    "worker", "retry", "--project", project, "--worker-id", worker.worker_id
-  ]);
-  const retried = JSON.parse(run([
-    "worker", "list", "--project", project, "--run-id", deliveryRun.run_id
-  ]).stdout).find((item) => item.worker_id === worker.worker_id);
-  const evidence = capabilityEvidenceForWorker(retried, "test-strategy");
-  const completed = JSON.parse(run([
-    "worker", "exec-shell", "--project", project,
-    "--worker-id", worker.worker_id,
-    "--cmd", "node --version",
-    "--capability-evidence-json", JSON.stringify([evidence])
-  ]).stdout);
-  assert.equal(completed.result.status, "PASS");
-  assert.deepEqual(completed.result.capability_evidence_status, {
-    enforcement: "enforce",
-    submitted: ["test-strategy"],
-    missing: [],
-    error: ""
-  });
-  const dir = join(
+  const plan = readJson(join(
     project,
     ".apex-v2",
     "runs",
     deliveryRun.run_id,
-    "workers",
-    worker.worker_id
-  );
-  assert.equal(
-    existsSync(join(dir, "capability-evidence-test-strategy.json")),
-    true
-  );
+    "plan-graph.json"
+  ));
+  assert.ok(plan.nodes.every((node) =>
+    node.execution_class !== "deterministic_check"
+    || node.capability_bindings.every((item) =>
+      item.execution_class === "deterministic_check"
+    )
+  ));
+  const worker = JSON.parse(run([
+    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
+    "--plan-node-id", "delivery-verification"
+  ]).stdout);
+  assert.equal(worker.capability_bindings.some((item) =>
+    item.capability_id === "test-strategy"
+  ), false);
+
+  const completed = JSON.parse(run([
+    "worker", "exec-shell", "--project", project,
+    "--worker-id", worker.worker_id,
+    "--cmd", "node --version"
+  ]).stdout);
+  assert.equal(completed.result.status, "PASS");
+  assert.deepEqual(completed.result.capability_evidence_status, {
+    enforcement: "enforce",
+    submitted: [],
+    missing: [],
+    error: ""
+  });
 });
 
 test("project tick --complete-execute 必须等待全部 PlanGraph 节点完成", () => {
@@ -2144,7 +2127,7 @@ test("plan graph 会按 intake 类型、标题和 affected area 生成任务相�
   assert.equal(generated.plan.profile, "full");
   assert.equal(generated.plan.source_intake_type, "bug");
   assert.equal(generated.plan.source_title, "修复 session 恢复丢失状态");
-  assert.match(generated.plan.strategy, /先复现失败/);
+  assert.match(generated.plan.strategy, /测试先行实现/);
   assert.deepEqual(generated.plan.verification_policy.required_commands, [
     "node --test tests/session.test.mjs",
     "node --check src/session.mjs"
@@ -2152,16 +2135,19 @@ test("plan graph 会按 intake 类型、标题和 affected area 生成任务相�
   assert.equal(generated.plan.verification_policy.schema_check, null);
   assert.ok(generated.plan.planning_basis.some((ref) => ref.includes(intake.id)));
   const implementation = generated.plan.nodes.find((node) => node.id === "delivery-implementation");
-  const tests = generated.plan.nodes.find((node) => node.id === "delivery-tests");
-  assert.deepEqual(implementation.write_scope, ["src/session.mjs"]);
-  assert.deepEqual(tests.write_scope, ["tests/session.test.mjs"]);
+  assert.deepEqual(implementation.write_scope, [
+    "src/session.mjs",
+    "tests/session.test.mjs"
+  ]);
   assert.equal(implementation.adapter, undefined);
   assert.equal(implementation.execution_class, "workspace_patch");
   assert.deepEqual(implementation.required_capabilities, ["structured_output", "workspace_write", "tool_use"]);
   assert.equal(implementation.preferred_mode, "interactive");
   assert.equal(implementation.output_contract, "patch");
-  assert.equal(tests.adapter, undefined);
-  assert.equal(tests.execution_class, "workspace_patch");
+  assert.equal(
+    generated.plan.nodes.some((node) => node.id === "delivery-tests"),
+    false
+  );
   assert.ok(generated.plan.nodes.every((node) => node.objective.includes("修复 session 恢复丢失状态")));
   assert.ok(generated.plan.nodes.every((node) => !node.title.includes("Project Kernel")));
 });
@@ -2314,20 +2300,22 @@ test("显式 quick 在 capability 预算不足时自动升级 governed", () => {
   assert.equal(generated.validation.status, "PASS");
   assert.equal(generated.plan.profile, "full");
   assert.equal(generated.plan.method_pack.id, "governed");
-  assert.equal(generated.plan.method_pack.workflow, "governed");
+  assert.equal(generated.plan.method_pack.workflow, "governed_v2");
   assert.match(
     generated.plan.method_pack.selection_reason,
     /auto_escalated_from=quick.*context budget exceeded/i
   );
-  assert.equal(generated.plan.nodes.length, 7);
+  assert.equal(generated.plan.nodes.length, 3);
   assert.ok(
     generated.plan.nodes.every((node) => node.method_pack_id === "governed")
   );
 });
 
-test("governed PlanGraph 用三个 barrier 编排七项职责和模型档位", () => {
+test("governed v2 用三个 barrier 编排三个默认 Agent 判断", () => {
   const project = tempProject();
-  const { generated } = createRunWithPlanGraph(project);
+  const { generated } = createRunWithPlanGraph(project, {
+    methodPack: "governed"
+  });
 
   assert.equal(generated.plan.execution_model, "barrier-v1");
   assert.deepEqual(
@@ -2339,39 +2327,136 @@ test("governed PlanGraph 用三个 barrier 编排七项职责和模型档位", (
     [[], ["delivery-plan"], ["delivery-candidate"]]
   );
   const byId = new Map(generated.plan.nodes.map((node) => [node.id, node]));
-  for (const id of ["delivery-context", "delivery-risk", "delivery-design"]) {
-    assert.equal(byId.get(id).barrier_id, "delivery-plan");
-  }
-  for (const id of [
+  assert.equal(generated.plan.graph_version, "governed-v2");
+  assert.deepEqual([...byId.keys()], [
+    "delivery-design",
     "delivery-implementation",
-    "delivery-tests",
-    "delivery-verification"
-  ]) {
-    assert.equal(byId.get(id).barrier_id, "delivery-candidate");
-  }
+    "delivery-review"
+  ]);
+  assert.equal(byId.get("delivery-design").barrier_id, "delivery-plan");
+  assert.equal(byId.get("delivery-implementation").barrier_id, "delivery-candidate");
   assert.equal(byId.get("delivery-review").barrier_id, "delivery-readiness");
-  assert.deepEqual(byId.get("delivery-context").write_scope, []);
-  assert.deepEqual(byId.get("delivery-risk").write_scope, []);
   assert.deepEqual(byId.get("delivery-design").write_scope, []);
-  assert.equal(byId.get("delivery-context").model_tier, "cheap");
-  assert.equal(byId.get("delivery-risk").model_tier, "cheap");
-  assert.ok(byId.get("delivery-context").read_scope.includes(
-    ".apex-v2/intake/items.json"
-  ));
-  assert.ok(byId.get("delivery-risk").read_scope.includes(
-    ".apex-v2/roadmap/graph.json"
-  ));
   assert.equal(byId.get("delivery-design").model_tier, "standard");
   assert.equal(byId.get("delivery-implementation").model_tier, "standard");
-  assert.equal(byId.get("delivery-tests").model_tier, "cheap");
-  assert.equal(byId.get("delivery-verification").model_tier, "deterministic");
-  assert.equal(byId.get("delivery-review").model_tier, "strong");
-  assert.equal(byId.get("delivery-context").delegation.default, true);
-  assert.equal(byId.get("delivery-risk").delegation.parallel, true);
+  assert.equal(byId.get("delivery-review").model_tier, "standard");
   assert.equal(byId.get("delivery-design").delegation.default, false);
   assert.equal(byId.get("delivery-design").delegation.main_agent_required, true);
-  assert.equal(byId.get("delivery-review").delegation.default, false);
-  assert.equal(byId.get("delivery-review").delegation.main_agent_required, true);
+  assert.deepEqual(byId.get("delivery-review").write_scope, []);
+  assert.equal(byId.get("delivery-review").delegation.default, true);
+  assert.equal(byId.get("delivery-review").delegation.main_agent_required, false);
+});
+
+test("governed v2 drain 在 staged verification PASS 后才解锁 review", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithPlanGraph(project, {
+    methodPack: "governed",
+    risk: "medium"
+  });
+  enableInteractiveWorkspacePatch(project);
+
+  const planStep = JSON.parse(run([
+    "project", "drain", "--project", project, "--host-id", "codex-host"
+  ]).stdout);
+  assert.equal(planStep.next_action.action_type, "plan");
+  assert.equal(planStep.next_action.claim.payload.plan_node_id, "delivery-design");
+  assert.equal(
+    JSON.parse(run([
+      "worker", "list", "--project", project, "--run-id", deliveryRun.run_id
+    ]).stdout).some((worker) => worker.plan_node_id === "delivery-review"),
+    false
+  );
+  completeHostWorker(
+    project,
+    planStep.transitions.flatMap((step) => step.dispatched)
+      .map((item) => JSON.parse(run([
+        "worker", "list", "--project", project, "--run-id", deliveryRun.run_id
+      ]).stdout).find((worker) => worker.worker_id === item.worker_id))
+      .find((worker) => worker.plan_node_id === "delivery-design"),
+    "governed v2 plan complete"
+  );
+
+  const implementationStep = JSON.parse(run([
+    "project", "drain", "--project", project, "--host-id", "codex-host"
+  ]).stdout);
+  assert.ok(
+    implementationStep.next_action,
+    JSON.stringify(implementationStep, null, 2)
+  );
+  assert.equal(implementationStep.next_action.action_type, "implement");
+  const implementationWorker = JSON.parse(run([
+    "worker", "list", "--project", project, "--run-id", deliveryRun.run_id
+  ]).stdout).find((worker) =>
+    worker.worker_id === implementationStep.next_action.worker_id
+  );
+  completeHostWorker(
+    project,
+    implementationWorker,
+    "governed v2 implementation complete",
+    true
+  );
+
+  const reviewStep = JSON.parse(run([
+    "project", "drain", "--project", project, "--host-id", "codex-host",
+    "--max-steps", "2"
+  ]).stdout);
+  assert.ok(reviewStep.next_action, JSON.stringify(reviewStep, null, 2));
+  assert.equal(reviewStep.next_action.action_type, "review");
+  const verification = readJson(join(
+    project,
+    ".apex-v2",
+    "runs",
+    deliveryRun.run_id,
+    "verification-report.json"
+  ));
+  assert.equal(verification.status, "PASS");
+  assert.equal(
+    reviewStep.next_action.claim.payload.candidate_digest,
+    verification.candidate_digest
+  );
+  assert.equal(
+    reviewStep.next_action.claim.payload.verification_ref,
+    `.apex-v2/runs/${deliveryRun.run_id}/verification-report.json`
+  );
+  const runState = readJson(join(
+    project,
+    ".apex-v2",
+    "runs",
+    deliveryRun.run_id,
+    "run.json"
+  ));
+  assert.equal(runState.nodes.find((node) => node.id === "execute").status, "passed");
+  assert.equal(runState.nodes.find((node) => node.id === "verify").status, "passed");
+  assert.equal(runState.nodes.find((node) => node.id === "review").status, "pending");
+
+  const reviewWorker = JSON.parse(run([
+    "worker", "list", "--project", project, "--run-id", deliveryRun.run_id
+  ]).stdout).find((worker) =>
+    worker.worker_id === reviewStep.next_action.worker_id
+  );
+  completeHostWorker(project, reviewWorker, "independent review approved");
+  const closure = JSON.parse(run([
+    "project", "drain", "--project", project, "--host-id", "codex-host"
+  ]).stdout);
+  assert.equal(closure.status, "COMPLETE");
+  const reviewReport = readJson(join(
+    project,
+    ".apex-v2",
+    "runs",
+    deliveryRun.run_id,
+    "review-report.json"
+  ));
+  assert.equal(reviewReport.status, "PASS");
+  assert.equal(reviewReport.candidate_digest, verification.candidate_digest);
+  const closedRun = readJson(join(
+    project,
+    ".apex-v2",
+    "runs",
+    deliveryRun.run_id,
+    "run.json"
+  ));
+  assert.equal(closedRun.status, "done");
+  assert.deepEqual(readJson(join(project, ".apex-v2", "project.json")).active_runs, []);
 });
 
 test("high-risk governed plan 自动生成幂等 Decision Note proposal", () => {

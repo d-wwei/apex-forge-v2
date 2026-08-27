@@ -51,7 +51,7 @@ function createGovernedProject() {
     "--title", "Parallel context and risk analysis",
     "--area", "index.mjs",
     "--risk", "high",
-    "--method-pack", "governed"
+    "--method-pack", "governed-v1"
   ]).stdout);
   run([
     "intake", "triage", "--project", project,

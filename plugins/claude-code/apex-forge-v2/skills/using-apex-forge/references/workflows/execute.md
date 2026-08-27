@@ -5,10 +5,10 @@ discoverable Skill.
 
 ## Interactive Workflow
 
-1. List Host actions and select a ready `workspace_patch` action.
-2. Claim exactly one `workspace_patch` action at a time as `claude-code-host`.
-   Claiming returns an action-owned `workspace_path`, `claim_token`, lease,
-   fencing token, and write scope.
+1. Call `project drain --host-id claude-code-host`.
+2. Follow the single returned `next_action`. The controller performs
+   collection, dependency unlock, candidate verification, review scheduling,
+   integration, and closure transitions deterministically.
 3. Read the objective, deliverables, required evidence, read scope, write scope,
    verification commands, capability bindings, protocols, and enforcement mode.
 4. Implement only inside the returned `workspace_path`. Never edit the project
@@ -22,8 +22,8 @@ discoverable Skill.
    - left the project root untouched;
    - created a patch bundle;
    - queued it for candidate-bound verification and merge.
-8. Run `project tick --collect-results --dispatch` and continue with the next
-   ready action.
+8. Call `project drain --host-id claude-code-host` again. Do not manually compose
+   `collect-results`, `complete-execute`, `verify`, `review`, or `integrate`.
 
 ## Quick Route
 
@@ -33,10 +33,9 @@ When `plan-graph.json` has `profile: quick`:
    and focused test changes.
 2. Run the public acceptance command inside the ActionWorkspace, but do not run
    the full project verification suite against the unmaterialized project root.
-3. After submitting it, run: `project tick --collect-results --dispatch`.
-4. Continue directly to the ready `delivery-review` action; do not create
-   context, risk, design, test, or verification workers that are absent from
-   the quick plan.
+3. After submitting it, call `project drain --host-id claude-code-host`.
+4. The Kernel must complete staged verification before returning the
+   `delivery-review` action.
 5. Before reporting completion, verify all four landing conditions:
    - the implementation patch is `merged` in `merge-queue.json`;
    - `integration-report.json` is `MERGED` and names that patch;
@@ -60,6 +59,8 @@ dispatch -> parallel run -> collect -> unlock -> refill
 
 The scheduler stops when it reaches a coordinator-owned action, a durable
 blocker, no further progress, or `--agent-cycles`.
+After a Factory wave, call `project drain --host-id claude-code-host` for
+coordinator actions and deterministic delivery transitions.
 
 ## Hard Stops
 

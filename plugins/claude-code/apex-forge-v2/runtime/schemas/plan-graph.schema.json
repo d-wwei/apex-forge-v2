@@ -29,6 +29,10 @@
     "source_title": { "type": "string" },
     "affected_area": { "type": "string" },
     "generated_at": { "type": "string" },
+    "graph_version": {
+      "type": "string",
+      "enum": ["legacy-v1", "governed-v2"]
+    },
     "profile": { "type": "string", "enum": ["full", "quick"] },
     "execution_model": {
       "type": "string",
@@ -72,7 +76,7 @@
         "version": { "type": "string", "minLength": 1 },
         "workflow": {
           "type": "string",
-          "enum": ["quick", "disciplined", "phase_context", "governed"]
+          "enum": ["quick", "disciplined", "phase_context", "governed", "governed_v2"]
         },
         "selection_reason": { "type": "string", "minLength": 1 },
         "quality_gates": {
