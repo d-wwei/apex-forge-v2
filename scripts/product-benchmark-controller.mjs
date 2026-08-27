@@ -893,12 +893,17 @@ function loadContext(args) {
         if (!task) throw new Error(`unknown benchmark task: ${taskId}`);
         return task;
       })
-    : fullTaskValidation.tasks).map((task) => ({
-      ...task,
-      ...(taskSelection?.plugin_method_pack
-        ? { plugin_method_pack: taskSelection.plugin_method_pack }
-        : {})
-    }));
+    : fullTaskValidation.tasks).map((task) => {
+      const pluginMethodPack = taskSelection?.plugin_method_packs?.[task.task_id]
+        || taskSelection?.plugin_method_pack
+        || null;
+      return {
+        ...task,
+        ...(pluginMethodPack
+          ? { plugin_method_pack: pluginMethodPack }
+          : {})
+      };
+    });
   const taskValidation = {
     ...fullTaskValidation,
     tasks: selectedTasks,
@@ -907,6 +912,7 @@ function loadContext(args) {
       .update(JSON.stringify({
         modes: selectedModes,
         plugin_method_pack: taskSelection?.plugin_method_pack || null,
+        plugin_method_packs: taskSelection?.plugin_method_packs || {},
         tasks: selectedTasks.map((task) => ({
           task_id: task.task_id,
           task_digest: task.task_digest
@@ -1007,6 +1013,7 @@ function loadTaskSet(path) {
   const pluginMethodPack = value?.plugin_method_pack == null
     ? null
     : String(value.plugin_method_pack).trim();
+  const pluginMethodPacks = value?.plugin_method_packs || {};
   if (
     pluginMethodPack != null
     && ![
@@ -1019,10 +1026,39 @@ function loadTaskSet(path) {
   ) {
     throw new Error("--task-set plugin_method_pack is invalid");
   }
+  if (
+    !pluginMethodPacks
+    || typeof pluginMethodPacks !== "object"
+    || Array.isArray(pluginMethodPacks)
+  ) {
+    throw new Error("--task-set plugin_method_packs must be an object");
+  }
+  for (const [taskId, methodPack] of Object.entries(pluginMethodPacks)) {
+    if (
+      !normalized.includes(taskId)
+      || ![
+        "quick",
+        "disciplined-tdd",
+        "phase-context",
+        "governed",
+        "governed-v1"
+      ].includes(String(methodPack))
+    ) {
+      throw new Error(
+        `--task-set plugin_method_packs contains an invalid entry: ${taskId}`
+      );
+    }
+  }
   return {
     task_ids: normalized,
     modes,
-    plugin_method_pack: pluginMethodPack
+    plugin_method_pack: pluginMethodPack,
+    plugin_method_packs: Object.fromEntries(
+      Object.entries(pluginMethodPacks).map(([taskId, methodPack]) => [
+        taskId,
+        String(methodPack)
+      ])
+    )
   };
 }
 

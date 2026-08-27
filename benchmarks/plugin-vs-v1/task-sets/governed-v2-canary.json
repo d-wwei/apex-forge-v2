@@ -10,5 +10,7 @@
     "v1-skill",
     "plugin-kernel"
   ],
-  "plugin_method_pack": "governed"
+  "plugin_method_packs": {
+    "apex-manager--review-defect": "governed"
+  }
 }
