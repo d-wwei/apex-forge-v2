@@ -12,7 +12,9 @@ const configured = process.env.APEX_FORGE_V2_CLI;
 const cli = configured
   || (existsSync(packagedCandidate) ? packagedCandidate : null)
   || (existsSync(sourceCandidate) ? sourceCandidate : null);
-const args = process.argv.slice(2);
+const args = process.argv.slice(2).map((arg) =>
+  arg === "--project-dir" ? "--project" : arg
+);
 const schemaDir = cli === packagedCandidate
   ? resolve(scriptDir, "../runtime/schemas")
   : resolve(dirname(cli || ""), "../schemas");

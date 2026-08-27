@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   cpSync,
   existsSync,
+  mkdirSync,
   mkdtempSync,
   readFileSync,
   readdirSync,
@@ -275,6 +276,17 @@ test("installed-shape Host Bridge initializes and reads a project without reposi
   const parsed = JSON.parse(status.stdout);
   assert.equal(parsed.project, "Plugin Runtime");
   assert.deepEqual(parsed.active_runs, []);
+
+  const nested = join(project, "nested", "workspace");
+  mkdirSync(nested, { recursive: true });
+  const nestedStatus = spawnSync(process.execPath, [
+    BRIDGE,
+    "status",
+    "--project-dir",
+    project
+  ], { cwd: nested, encoding: "utf8", env });
+  assert.equal(nestedStatus.status, 0, nestedStatus.stderr);
+  assert.equal(JSON.parse(nestedStatus.stdout).project, "Plugin Runtime");
 });
 
 test("Codex and Claude packages share workflows but render native Host identity", () => {
