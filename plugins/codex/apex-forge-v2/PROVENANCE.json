@@ -1,8 +1,8 @@
 {
   "schema_version": "v0",
   "release_version": "0.2.0-rc.1+codex.20260827190511",
-  "source_commit": "d5546594592023c8a802a57ef28a60313250bd1a",
-  "source_tree_hash": "d3b5e37acea91fcd9f4adc493e1d448b4e9f197b0af15605e5842791636bfe8a",
+  "source_commit": "51c180c1e05fe60248518df2c7fb71b492213191",
+  "source_tree_hash": "f0192e5a1b5a022bf60e06189b117bdb0883f60d5180e03fb3ed6eec64049b6c",
   "runtime_sha256": "3975e632a2a12bcf0700626b937de085f614b9754ef3f32f99cbde43f667cd34",
   "schemas_sha256": "5719d2b7b76947fe826ad8ee4345afb227386bf95e63360aa7b0353af7c2c003",
   "capabilities_sha256": "7822f7971fca510add8bbfc7b8aee39962e453a4378a8dc669a7d1c03ef9f0c9"
