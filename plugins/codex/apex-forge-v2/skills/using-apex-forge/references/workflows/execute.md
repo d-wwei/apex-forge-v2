@@ -19,8 +19,10 @@ discoverable Skill.
    `semantic_evidence` is an object and each
    `capability_outputs[].output` is an object. The Kernel also accepts the old
    JSON-string fields for compatibility, then derives Capability Receipts and
-   legacy projections. Use `--evidence-artifact-json` or
-   `--evidence-artifact-file`, the exact `claim_token`, and a precise summary.
+   legacy projections. Prefer
+   `host submit-current --host-id codex-host --summary <text>
+   --evidence-artifact-file <path>` so the Kernel resolves the only active
+   claim without making the Agent repeat worker and fencing identifiers.
    Put temporary evidence files outside the ActionWorkspace, such as under
    `/private/tmp`, so they cannot violate the declared write scope.
 7. Confirm that Apex Forge:

@@ -7218,7 +7218,7 @@ function printHelp() {
   apex-v2 knowledge refresh --project <dir>
   apex-v2 worker create|list|sandbox|exec-shell|exec-agent|retry|fallback|results|resume|decide|submit-patch --project <dir>
   apex-v2 worker adapters --project <dir>
-  apex-v2 host actions|claim|submit|cancel --project <dir> --host-id <id>
+  apex-v2 host actions|claim|submit|submit-current|cancel --project <dir> --host-id <id>
     host submit accepts --semantic-evidence-json|--semantic-evidence-file and
     --capability-evidence-json|--capability-evidence-file, or one
     --evidence-artifact-json|--evidence-artifact-file
@@ -19911,6 +19911,33 @@ function handleHostCommand(subcommand, args) {
     ), null, 2));
     return;
   }
+  if (subcommand === "submit-current") {
+    const root = requireStore(projectRoot(args));
+    const hostId = required(args, "host-id");
+    const claimed = listHostActions(root).filter(
+      (action) => action.status === "claimed" && action.claimed_by === hostId && !action.claim_expired
+    );
+    if (claimed.length !== 1) {
+      throw new Error(
+        `host submit-current \u9700\u8981\u6070\u597D\u4E00\u4E2A\u6709\u6548 claim\uFF0C\u5F53\u524D ${claimed.length} \u4E2A`
+      );
+    }
+    const worker = findWorker(root, claimed[0].worker_id);
+    console.log(JSON.stringify(submitHostResult(
+      root,
+      worker.worker_id,
+      hostId,
+      {
+        summary: required(args, "summary"),
+        refs: splitList(args.refs),
+        claimToken: worker.claim_token,
+        semanticEvidence: parseSemanticEvidence(args),
+        capabilityEvidence: parseCapabilityEvidence(args),
+        evidenceArtifact: parseEvidenceArtifact(args)
+      }
+    ), null, 2));
+    return;
+  }
   if (subcommand === "cancel") {
     console.log(JSON.stringify(cancelHostAction(
       requireStore(projectRoot(args)),
@@ -24455,14 +24482,12 @@ function hostSubmissionContract(action, actionType, options = {}) {
     review: ["candidate_digest", "findings", "residual_risks", "merge_posture"]
   };
   return {
-    command: "host submit",
+    command: "host submit-current",
     evidence_argument: "--evidence-artifact-file",
     format: "unified-v1",
     required_cli_values: {
       project_dir: options.projectDir || null,
       host_id: claim?.host_id || null,
-      worker_id: action.worker_id,
-      claim_token: claim?.claim_token || null,
       summary: "<concise completed-action summary>",
       evidence_file: `/private/tmp/apex-evidence-${action.worker_id}.json`
     },
@@ -24503,12 +24528,62 @@ function hostSubmissionContract(action, actionType, options = {}) {
         } : {}
       };
     }),
+    evidence_template: {
+      schema_version: "unified-v1",
+      semantic_evidence: semanticEvidenceTemplate(evidenceType, action),
+      capability_outputs: []
+    },
     rules: [
+      "Only schema_version, semantic_evidence, and capability_outputs are allowed at the top level.",
       "Use semantic_evidence as an object; do not JSON-stringify it.",
       "Use capability_outputs[].output as an object; do not flatten output fields.",
       "In shadow mode, omit capability output unless it was actually executed; never synthesize evidence.",
+      "Every acceptance_mapping.evidence_ref must exactly match one source_refs entry.",
       "Do not read CLI source or schema files unless this contract is rejected."
     ]
+  };
+}
+function semanticEvidenceTemplate(evidenceType, action) {
+  if (!evidenceType) return null;
+  const sourceRef = action.read_scope?.[0] || ".apex-v2/intake/items.json";
+  const base = {
+    schema_version: "v0",
+    evidence_type: evidenceType,
+    objective: action.objective,
+    source_refs: [sourceRef],
+    claims: ["<specific source-backed claim>"],
+    uncertainties: [],
+    acceptance_mapping: [{
+      criterion: "<acceptance criterion>",
+      evidence_ref: sourceRef,
+      status: "supported"
+    }],
+    created_at: "<ISO-8601 timestamp>"
+  };
+  if (evidenceType === "design") {
+    return {
+      ...base,
+      slices: ["<implementation slice>"],
+      dependencies: [],
+      verification: ["<verification command>"],
+      rollback: ["<rollback step>"]
+    };
+  }
+  if (evidenceType === "risk") {
+    return {
+      ...base,
+      failure_paths: ["<failure path>"],
+      blast_radius: ["<affected surface>"],
+      mitigations: ["<mitigation>"],
+      rollback: ["<rollback step>"]
+    };
+  }
+  return {
+    ...base,
+    candidate_digest: action.candidate_digest,
+    findings: [],
+    residual_risks: [],
+    merge_posture: "approve"
   };
 }
 function semanticEvidenceFieldConstraints(evidenceType, action) {
