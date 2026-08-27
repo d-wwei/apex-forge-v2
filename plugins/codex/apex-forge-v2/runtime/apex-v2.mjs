@@ -9400,6 +9400,9 @@ var REQUIRED_OUTPUT_FIELDS = {
     "decision"
   ]
 };
+function capabilityOutputRequiredFields(outputContract) {
+  return [...REQUIRED_OUTPUT_FIELDS[outputContract] || []];
+}
 function validateCapabilityEvidenceForBindings(bindings = [], evidenceItems = [], options = {}) {
   const declared = new Map(bindings.map((binding) => [
     binding.capability_id,
@@ -9810,8 +9813,15 @@ function normalizeEvidenceSubmission(worker, input) {
     input.evidenceArtifact,
     `evidence submission:${worker.worker_id}`
   );
+  if (input.evidenceArtifact.semantic_evidence_json != null && input.evidenceArtifact.semantic_evidence != null) {
+    throw new Error(
+      "evidence_artifact \u53EA\u80FD\u6307\u5B9A semantic_evidence \u6216 semantic_evidence_json \u4E4B\u4E00"
+    );
+  }
   let semanticEvidence = null;
-  if (input.evidenceArtifact.semantic_evidence_json != null) {
+  if (input.evidenceArtifact.semantic_evidence != null) {
+    semanticEvidence = input.evidenceArtifact.semantic_evidence;
+  } else if (input.evidenceArtifact.semantic_evidence_json != null) {
     try {
       semanticEvidence = JSON.parse(
         input.evidenceArtifact.semantic_evidence_json
@@ -9835,13 +9845,27 @@ function normalizeEvidenceSubmission(worker, input) {
         throw new Error(`Capability output \u91CD\u590D\uFF1A${section.capability_id}`);
       }
       seen.add(section.capability_id);
-      let output;
-      try {
-        output = JSON.parse(section.output_json);
-      } catch (error) {
+      if (section.capability_version && section.capability_version !== binding.capability_version) {
         throw new Error(
-          `Capability output_json \u65E0\u6548\uFF1A${section.capability_id} ${error.message}`
+          `Capability output version \u4E0D\u5339\u914D\uFF1A${section.capability_id}`
         );
+      }
+      if (section.output_contract && section.output_contract !== binding.output_contract) {
+        throw new Error(
+          `Capability output contract \u4E0D\u5339\u914D\uFF1A${section.capability_id}`
+        );
+      }
+      let output;
+      if (section.output != null) {
+        output = section.output;
+      } else {
+        try {
+          output = JSON.parse(section.output_json);
+        } catch (error) {
+          throw new Error(
+            `Capability output_json \u65E0\u6548\uFF1A${section.capability_id} ${error.message}`
+          );
+        }
       }
       return {
         schema_version: SCHEMA_VERSION,
@@ -24393,7 +24417,54 @@ function controllerAction(action, claimed) {
       lease_expires_at: claimed?.action?.lease_expires_at || action.lease_expires_at
     },
     claim: claimed?.action || null,
-    capability_bindings: action.capability_bindings
+    capability_bindings: action.capability_bindings,
+    submission_contract: hostSubmissionContract(action, actionType)
+  };
+}
+function hostSubmissionContract(action, actionType) {
+  const evidenceType = {
+    plan: "design",
+    risk_challenge: "risk",
+    review: "review"
+  }[actionType] || null;
+  const semanticFields = {
+    design: ["slices", "dependencies", "verification", "rollback"],
+    risk: ["failure_paths", "blast_radius", "mitigations", "rollback"],
+    review: ["candidate_digest", "findings", "residual_risks", "merge_posture"]
+  };
+  return {
+    command: "host submit",
+    evidence_argument: "--evidence-artifact-file",
+    format: "unified-v1",
+    semantic_evidence: evidenceType ? {
+      evidence_type: evidenceType,
+      objective_must_equal: action.objective,
+      required_fields: [
+        "schema_version",
+        "evidence_type",
+        "objective",
+        "source_refs",
+        "claims",
+        "uncertainties",
+        "acceptance_mapping",
+        ...semanticFields[evidenceType],
+        "created_at"
+      ]
+    } : null,
+    capability_outputs: (action.capability_bindings || []).map((binding) => ({
+      capability_id: binding.capability_id,
+      capability_version: binding.capability_version,
+      output_contract: binding.output_contract,
+      required: binding.required,
+      required_output_fields: capabilityOutputRequiredFields(
+        binding.output_contract
+      )
+    })),
+    rules: [
+      "Use semantic_evidence as an object; do not JSON-stringify it.",
+      "Use capability_outputs[].output as an object; do not flatten output fields.",
+      "Do not read CLI source or schema files unless this contract is rejected."
+    ]
   };
 }
 function auditProject(args) {

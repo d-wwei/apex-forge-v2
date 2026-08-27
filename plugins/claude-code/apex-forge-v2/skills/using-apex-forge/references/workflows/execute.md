@@ -9,16 +9,18 @@ discoverable Skill.
 2. Follow the single returned `next_action`. The controller performs
    collection, dependency unlock, candidate verification, review scheduling,
    integration, and closure transitions deterministically.
-3. Read the objective, deliverables, required evidence, read scope, write scope,
-   verification commands, capability bindings, protocols, and enforcement mode.
+3. Read the objective, scope, verification inputs and `submission_contract`
+   returned in `next_action`. Treat that object as authoritative; do not inspect
+   runtime source, CLI help or JSON schema files unless the Kernel rejects it.
 4. Implement only inside the returned `workspace_path`. Never edit the project
    root for an Interactive patch action. Use TDD when behavior changes.
 5. Run the declared verification commands inside the action workspace.
-6. Prefer one unified Evidence Artifact: provide semantic evidence once and a
-   compact `capability_outputs` section containing each required typed output.
-   The Kernel derives Capability Receipts and legacy projections. Submit it
-   with `--evidence-artifact-json` or `--evidence-artifact-file`, the exact
-   `claim_token`, and a precise summary.
+6. Submit one unified Evidence Artifact using the natural object shape:
+   `semantic_evidence` is an object and each
+   `capability_outputs[].output` is an object. The Kernel also accepts the old
+   JSON-string fields for compatibility, then derives Capability Receipts and
+   legacy projections. Use `--evidence-artifact-json` or
+   `--evidence-artifact-file`, the exact `claim_token`, and a precise summary.
 7. Confirm that Apex Forge:
    - detected only in-scope changes;
    - left the project root untouched;

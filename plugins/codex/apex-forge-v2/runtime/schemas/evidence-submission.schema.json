@@ -3,22 +3,47 @@
   "$id": "https://apex-forge.local/v2/schemas/evidence-submission.schema.json",
   "title": "Apex Forge V2 Unified Evidence Submission",
   "type": "object",
-  "required": ["semantic_evidence_json", "capability_outputs"],
+  "required": ["capability_outputs"],
   "properties": {
+    "schema_version": {
+      "type": "string",
+      "enum": ["v0", "unified-v1"]
+    },
     "semantic_evidence_json": { "type": ["string", "null"] },
+    "semantic_evidence": { "type": ["object", "null"] },
     "capability_outputs": {
       "type": "array",
       "items": {
-        "type": "object",
-        "required": ["capability_id", "output_json"],
-        "properties": {
-          "capability_id": {
-            "type": "string",
-            "pattern": "^[a-z][a-z0-9-]*$"
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["capability_id", "output_json"],
+            "properties": {
+              "capability_id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*$"
+              },
+              "capability_version": { "type": "string" },
+              "output_contract": { "type": "string" },
+              "output_json": { "type": "string", "minLength": 2 }
+            },
+            "additionalProperties": false
           },
-          "output_json": { "type": "string", "minLength": 2 }
-        },
-        "additionalProperties": false
+          {
+            "type": "object",
+            "required": ["capability_id", "output"],
+            "properties": {
+              "capability_id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*$"
+              },
+              "capability_version": { "type": "string" },
+              "output_contract": { "type": "string" },
+              "output": { "type": "object" }
+            },
+            "additionalProperties": false
+          }
+        ]
       }
     }
   },

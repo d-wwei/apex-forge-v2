@@ -1,9 +1,9 @@
 {
   "schema_version": "v0",
   "release_version": "0.2.0-rc.1+codex.20260827190511",
-  "source_commit": "a8ca7decb88af7ce017f148e099b00272c852437",
-  "source_tree_hash": "d24de2fa18fbd7cf03476a5879885ce481fb829bdc7c9bf4d7b56b5adeed517c",
-  "runtime_sha256": "afd225cd3283cd3524a2d82abd093f35f9fa6f977be540cb3e999e75f6b6b1cd",
-  "schemas_sha256": "839b93e1e8af75894560cde5ceeab3e4db8da9a6aacc02cc799f53ec62615ec4",
+  "source_commit": "e851fdc8c27fb93ad60348cf649867f9a7d1213a",
+  "source_tree_hash": "475b85924590c47b1ceaf5f86e3c4073c03f3999cd43051b555c6181875c7bcf",
+  "runtime_sha256": "3a795fdfbd184caf4e08476b28d23299f81015b52d5bdb770060e1c92b28d40f",
+  "schemas_sha256": "804b379ccb26f33e21c9234ab64cc874ccceabbae14ad4b7e2c68aa0973d39cb",
   "capabilities_sha256": "7822f7971fca510add8bbfc7b8aee39962e453a4378a8dc669a7d1c03ef9f0c9"
 }
