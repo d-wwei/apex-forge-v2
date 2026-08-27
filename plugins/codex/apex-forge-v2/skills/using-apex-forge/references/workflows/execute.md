@@ -5,7 +5,7 @@ discoverable Skill.
 
 ## Interactive Workflow
 
-1. Call `project drain --host-id codex-host`.
+1. Call `project drain --host-id codex-host --compact`.
 2. Follow the single returned `next_action`. The controller performs
    collection, dependency unlock, candidate verification, review scheduling,
    integration, and closure transitions deterministically.
@@ -21,12 +21,14 @@ discoverable Skill.
    JSON-string fields for compatibility, then derives Capability Receipts and
    legacy projections. Use `--evidence-artifact-json` or
    `--evidence-artifact-file`, the exact `claim_token`, and a precise summary.
+   Put temporary evidence files outside the ActionWorkspace, such as under
+   `/private/tmp`, so they cannot violate the declared write scope.
 7. Confirm that Apex Forge:
    - detected only in-scope changes;
    - left the project root untouched;
    - created a patch bundle;
    - queued it for candidate-bound verification and merge.
-8. Call `project drain --host-id codex-host` again. Do not manually compose
+8. Call `project drain --host-id codex-host --compact` again. Do not manually compose
    `collect-results`, `complete-execute`, `verify`, `review`, or `integrate`.
 
 ## Quick Route
