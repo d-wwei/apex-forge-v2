@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/host-action-result.schema.json",
+  "title": "Apex Forge V2 Compact Host Action Result",
+  "type": "object",
+  "required": ["summary", "semantic", "capability_outputs"],
+  "properties": {
+    "summary": { "type": "string", "minLength": 1 },
+    "refs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "semantic": { "type": ["object", "null"] },
+    "capability_outputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["capability_id", "output"],
+        "properties": {
+          "capability_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "output": { "type": "object" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

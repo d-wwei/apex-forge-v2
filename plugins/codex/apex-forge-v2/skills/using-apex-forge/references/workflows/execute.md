@@ -12,17 +12,18 @@ discoverable Skill.
 3. Read the objective, scope, verification inputs and `submission_contract`
    returned in `next_action`. Treat that object as authoritative; do not inspect
    runtime source, CLI help or JSON schema files unless the Kernel rejects it.
+   A `plan` or `review` action is read-only. Do not edit source until an
+   `implement` action returns its exact `workspace_path`.
 4. Implement only inside the returned `workspace_path`. Never edit the project
    root for an Interactive patch action. Use TDD when behavior changes.
 5. Run the declared verification commands inside the action workspace.
-6. Submit one unified Evidence Artifact using the natural object shape:
-   `semantic_evidence` is an object and each
-   `capability_outputs[].output` is an object. The Kernel also accepts the old
-   JSON-string fields for compatibility, then derives Capability Receipts and
-   legacy projections. Prefer
-   `host submit-current --host-id codex-host --summary <text>
-   --evidence-artifact-file <path>` so the Kernel resolves the only active
-   claim without making the Agent repeat worker and fencing identifiers.
+6. Prefer one compact action result matching
+   `next_action.submission_contract.action_result_template`. Submit it with
+   `host submit-current --host-id codex-host --action-result-file <path>`.
+   The Kernel fills objective, candidate digest, source refs, acceptance
+   mapping, versions and timestamps, then derives the unified Evidence Artifact,
+   Capability Receipts and legacy projections. The old full
+   `--evidence-artifact-file` format remains available for compatibility.
    Put temporary evidence files outside the ActionWorkspace, such as under
    `/private/tmp`, so they cannot violate the declared write scope.
 7. Confirm that Apex Forge:

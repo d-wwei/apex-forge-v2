@@ -19923,17 +19923,25 @@ function handleHostCommand(subcommand, args) {
       );
     }
     const worker = findWorker(root, claimed[0].worker_id);
+    const compactResult = parseActionResult(args);
+    const submission = compactResult ? expandActionResult(root, worker, compactResult) : {
+      summary: required(args, "summary"),
+      refs: splitList(args.refs),
+      semanticEvidence: parseSemanticEvidence(args),
+      capabilityEvidence: parseCapabilityEvidence(args),
+      evidenceArtifact: parseEvidenceArtifact(args)
+    };
     console.log(JSON.stringify(submitHostResult(
       root,
       worker.worker_id,
       hostId,
       {
-        summary: required(args, "summary"),
-        refs: splitList(args.refs),
+        summary: submission.summary,
+        refs: submission.refs,
         claimToken: worker.claim_token,
-        semanticEvidence: parseSemanticEvidence(args),
-        capabilityEvidence: parseCapabilityEvidence(args),
-        evidenceArtifact: parseEvidenceArtifact(args)
+        semanticEvidence: submission.semanticEvidence,
+        capabilityEvidence: submission.capabilityEvidence,
+        evidenceArtifact: submission.evidenceArtifact
       }
     ), null, 2));
     return;
@@ -20465,6 +20473,141 @@ function parseEvidenceArtifact(args) {
   } catch (error) {
     throw new Error(`evidence artifact JSON \u65E0\u6548\uFF1A${error.message}`);
   }
+}
+function parseActionResult(args) {
+  const inline2 = args["action-result-json"];
+  const file = args["action-result-file"];
+  if (!inline2 && !file) return null;
+  if (inline2 && file) {
+    throw new Error(
+      "\u53EA\u80FD\u6307\u5B9A --action-result-json \u6216 --action-result-file \u4E4B\u4E00"
+    );
+  }
+  let value;
+  try {
+    value = JSON.parse(
+      file ? readFileSync19(resolve20(String(file)), "utf8") : String(inline2)
+    );
+  } catch (error) {
+    throw new Error(`action result JSON \u65E0\u6548\uFF1A${error.message}`);
+  }
+  assertContract("host-action-result.schema.json", value, "host action result");
+  return value;
+}
+function expandActionResult(root, worker, value) {
+  const timestamp = now();
+  const refs = uniqueStrings2(value.refs?.length > 0 ? value.refs : worker.read_scope || []);
+  const semanticEvidence = compactSemanticEvidence(
+    root,
+    worker,
+    value.semantic,
+    value.summary,
+    refs,
+    timestamp
+  );
+  const bindingMap = new Map((worker.capability_bindings || []).map((binding) => [
+    binding.capability_id,
+    binding
+  ]));
+  const capabilityOutputs = (value.capability_outputs || []).map((item) => {
+    const binding = bindingMap.get(item.capability_id);
+    if (!binding) {
+      throw new Error(`Capability output \u672A\u7ED1\u5B9A\uFF1A${item.capability_id}`);
+    }
+    return {
+      capability_id: binding.capability_id,
+      capability_version: binding.capability_version,
+      output_contract: binding.output_contract,
+      output: item.output
+    };
+  });
+  return {
+    summary: value.summary,
+    refs,
+    semanticEvidence: null,
+    capabilityEvidence: [],
+    evidenceArtifact: {
+      schema_version: "unified-v1",
+      semantic_evidence: semanticEvidence,
+      capability_outputs: capabilityOutputs
+    }
+  };
+}
+function compactSemanticEvidence(root, worker, value, summary, refs, timestamp) {
+  if (worker.execution_class === "workspace_patch") return null;
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error(`Host action ${worker.plan_node_id} \u7F3A\u5C11 semantic object`);
+  }
+  const evidenceType = worker.plan_node_id === "delivery-risk-challenger" ? "risk" : worker.plan_node_id === "delivery-review" ? "review" : "design";
+  const sourceRefs = uniqueStrings2([
+    ...refs,
+    ...worker.read_scope || []
+  ]);
+  const acceptance = (worker.required_evidence || []).filter((item) => !String(item).startsWith("capability:"));
+  const common = {
+    schema_version: SCHEMA_VERSION,
+    evidence_type: evidenceType,
+    objective: worker.objective,
+    source_refs: sourceRefs,
+    claims: normalizeStringEvidence(value.claims, [summary]),
+    uncertainties: normalizeStringEvidence(value.uncertainties, []),
+    acceptance_mapping: acceptance.length > 0 ? acceptance.map((criterion) => ({
+      criterion,
+      evidence_ref: sourceRefs[0],
+      status: "supported"
+    })) : [{
+      criterion: worker.objective,
+      evidence_ref: sourceRefs[0],
+      status: "supported"
+    }],
+    created_at: timestamp
+  };
+  if (evidenceType === "design") {
+    return {
+      ...common,
+      slices: normalizeStringEvidence(value.slices, worker.deliverables),
+      dependencies: normalizeStringEvidence(value.dependencies, []),
+      verification: normalizeStringEvidence(
+        value.verification,
+        worker.verification
+      ),
+      rollback: normalizeStringEvidence(
+        value.rollback,
+        ["Revert the candidate patch."]
+      )
+    };
+  }
+  if (evidenceType === "risk") {
+    return {
+      ...common,
+      failure_paths: normalizeStringEvidence(value.failure_paths, [summary]),
+      blast_radius: normalizeStringEvidence(value.blast_radius, worker.read_scope),
+      mitigations: normalizeStringEvidence(value.mitigations, [summary]),
+      rollback: normalizeStringEvidence(
+        value.rollback,
+        ["Revert the candidate patch."]
+      )
+    };
+  }
+  const context = reviewActionContext(root, worker);
+  return {
+    ...common,
+    candidate_digest: context.candidate_digest,
+    findings: Array.isArray(value.findings) ? value.findings : [],
+    residual_risks: Array.isArray(value.residual_risks) ? value.residual_risks : [],
+    merge_posture: ["approve", "conditional", "block"].includes(
+      value.merge_posture
+    ) ? value.merge_posture : "block"
+  };
+}
+function normalizeStringEvidence(value, fallback) {
+  if (!Array.isArray(value) || value.length === 0) return [...fallback];
+  return value.map(
+    (item) => typeof item === "string" ? item : JSON.stringify(item)
+  );
+}
+function uniqueStrings2(values = []) {
+  return [...new Set(values.map(String).filter(Boolean))];
 }
 function assertActiveClaim(worker, action, claimToken) {
   if (!claimToken || claimToken !== worker.claim_token || claimToken !== action.claim_token) {
@@ -24483,13 +24626,13 @@ function hostSubmissionContract(action, actionType, options = {}) {
   };
   return {
     command: "host submit-current",
-    evidence_argument: "--evidence-artifact-file",
-    format: "unified-v1",
+    evidence_argument: "--action-result-file",
+    format: "compact-action-v1",
     required_cli_values: {
       project_dir: options.projectDir || null,
       host_id: claim?.host_id || null,
       summary: "<concise completed-action summary>",
-      evidence_file: `/private/tmp/apex-evidence-${action.worker_id}.json`
+      evidence_file: `/private/tmp/apex-action-${action.worker_id}.json`
     },
     semantic_evidence: evidenceType ? {
       evidence_type: evidenceType,
@@ -24528,37 +24671,27 @@ function hostSubmissionContract(action, actionType, options = {}) {
         } : {}
       };
     }),
-    evidence_template: {
-      schema_version: "unified-v1",
-      semantic_evidence: semanticEvidenceTemplate(evidenceType, action),
+    action_result_template: {
+      summary: "<concise completed-action summary>",
+      refs: [],
+      semantic: compactSemanticTemplate(evidenceType),
       capability_outputs: []
     },
     rules: [
-      "Only schema_version, semantic_evidence, and capability_outputs are allowed at the top level.",
-      "Use semantic_evidence as an object; do not JSON-stringify it.",
-      "Use capability_outputs[].output as an object; do not flatten output fields.",
+      "Only summary, refs, semantic, and capability_outputs are allowed at the top level.",
+      "Kernel supplies objective, candidate digest, source refs, acceptance mapping, versions, and timestamps.",
+      "Use strings inside semantic arrays; Kernel will normalize object items when needed.",
+      "Use capability_outputs[].output as an object.",
       "In shadow mode, omit capability output unless it was actually executed; never synthesize evidence.",
-      "Every acceptance_mapping.evidence_ref must exactly match one source_refs entry.",
       "Do not read CLI source or schema files unless this contract is rejected."
     ]
   };
 }
-function semanticEvidenceTemplate(evidenceType, action) {
+function compactSemanticTemplate(evidenceType) {
   if (!evidenceType) return null;
-  const sourceRef = action.read_scope?.[0] || ".apex-v2/intake/items.json";
   const base = {
-    schema_version: "v0",
-    evidence_type: evidenceType,
-    objective: action.objective,
-    source_refs: [sourceRef],
     claims: ["<specific source-backed claim>"],
-    uncertainties: [],
-    acceptance_mapping: [{
-      criterion: "<acceptance criterion>",
-      evidence_ref: sourceRef,
-      status: "supported"
-    }],
-    created_at: "<ISO-8601 timestamp>"
+    uncertainties: []
   };
   if (evidenceType === "design") {
     return {
@@ -24580,7 +24713,6 @@ function semanticEvidenceTemplate(evidenceType, action) {
   }
   return {
     ...base,
-    candidate_digest: action.candidate_digest,
     findings: [],
     residual_risks: [],
     merge_posture: "approve"
