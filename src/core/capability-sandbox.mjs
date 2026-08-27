@@ -144,15 +144,23 @@ function defaultSecretPaths() {
 }
 
 function existingRealPath(path) {
-  const resolved = resolve(path);
-  if (existsSync(resolved)) return realpathSync(resolved);
-  return realpathSync(dirname(resolved));
+  return resolveFromExistingAncestor(path);
 }
 
 function policyPath(path) {
-  const resolved = resolve(path);
-  if (existsSync(resolved)) return realpathSync(resolved);
-  return join(realpathSync(dirname(resolved)), basename(resolved));
+  return resolveFromExistingAncestor(path);
+}
+
+function resolveFromExistingAncestor(path) {
+  let current = resolve(path);
+  const missing = [];
+  while (!existsSync(current)) {
+    const parent = dirname(current);
+    if (parent === current) return resolve(path);
+    missing.unshift(basename(current));
+    current = parent;
+  }
+  return join(realpathSync(current), ...missing);
 }
 
 function quote(value) {

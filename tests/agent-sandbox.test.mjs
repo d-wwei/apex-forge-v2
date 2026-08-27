@@ -85,6 +85,29 @@ console.log(JSON.stringify({ readable }));
   assert.deepEqual(JSON.parse(execution.stdout), { readable: false });
 });
 
+test("agent sandbox accepts protected paths with multiple missing ancestors", {
+  skip: process.platform !== "darwin"
+}, () => {
+  const workspace = tempDir("apex-agent-missing-policy-path-");
+  const missing = join(
+    tempDir("apex-agent-missing-policy-root-"),
+    "not-created",
+    "nested",
+    "private.json"
+  );
+  const execution = spawnCapabilityProcess(
+    process.execPath,
+    ["-e", "console.log('ok')"],
+    {
+      workspaceDir: workspace,
+      network: false,
+      deniedReadPaths: [missing]
+    }
+  );
+  assert.equal(execution.status, 0, execution.stderr);
+  assert.equal(execution.stdout.trim(), "ok");
+});
+
 test("agent environment strips unapproved secrets", () => {
   const env = sanitizeEnvironment({
     PATH: "/bin",
