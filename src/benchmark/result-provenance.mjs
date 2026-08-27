@@ -14,7 +14,8 @@ export function loadVerifiedBenchmarkResults({
   benchmarkDir,
   manifest,
   expectedCandidateDigest,
-  expectedTaskSetDigest
+  expectedTaskSetDigest,
+  expectedArtifactPrefix = null
 }) {
   assertContract(
     "benchmark-results-manifest.schema.json",
@@ -62,12 +63,20 @@ export function loadVerifiedBenchmarkResults({
         `benchmark result path mismatch: ${entry.path} != ${expectedPath}`
       );
     }
-    verifyBenchmarkResultArtifacts({ repoRoot, result });
+    verifyBenchmarkResultArtifacts({
+      repoRoot,
+      result,
+      expectedArtifactPrefix
+    });
     return result;
   });
 }
 
-export function verifyBenchmarkResultArtifacts({ repoRoot, result }) {
+export function verifyBenchmarkResultArtifacts({
+  repoRoot,
+  result,
+  expectedArtifactPrefix = null
+}) {
   const refs = result.provenance.artifact_refs;
   const hashes = result.provenance.artifact_hashes;
   if (refs.length !== hashes.length) {
@@ -82,16 +91,18 @@ export function verifyBenchmarkResultArtifacts({ repoRoot, result }) {
     throw new Error(`raw log missing from artifact refs: ${result.task_id}:${result.mode}`);
   }
   const runKey = `${result.task_id}--${result.mode}`;
-  const expectedPrefix = [
-    "benchmarks",
-    "plugin-vs-v1",
-    "workspaces",
-    "runs",
-    result.candidate_digest,
-    "runs",
-    runKey,
-    ""
-  ].join("/");
+  const expectedPrefix = expectedArtifactPrefix
+    ? `${normalized(expectedArtifactPrefix).replace(/\/+$/, "")}/${runKey}/`
+    : [
+        "benchmarks",
+        "plugin-vs-v1",
+        "workspaces",
+        "runs",
+        result.candidate_digest,
+        "runs",
+        runKey,
+        ""
+      ].join("/");
   for (const [index, ref] of refs.entries()) {
     if (!normalized(ref).startsWith(expectedPrefix)) {
       throw new Error(`benchmark artifact outside run root: ${ref}`);

@@ -105,7 +105,11 @@ flowchart TD
 - context、risk、design、implementation、tests、verification、review、integrate、learn；
 - quick route 与 full route；
 - Governed 以 `delivery-plan -> delivery-candidate -> delivery-readiness`
-  三个 Barrier 组织七类研发职责，而不是七次全局串行等待；
+  三个 Barrier 组织默认三个 Agent 判断；critical 时增加 Risk Challenger，
+  大型且写域互斥时才拆出独立 Test Worker；
+- `project drain` 由 Kernel 自动执行 collect、unlock、staged verification、
+  review 调度、integration、learning 和 closure，只向 Agent 返回一个
+  `next_action`；
 - Factory scheduler 按 `dispatch -> run -> collect -> unlock -> refill`
   持续补位，并用 scheduler/worker lease 与 fencing 防止重复执行；
 - context、risk、tests 默认使用 cheap tier（Codex 映射为 Luna），implementation
@@ -133,7 +137,8 @@ flowchart TD
 
 ### Agent 与执行器
 
-- typed cognitive evidence 和 semantic claim checks；
+- Unified Evidence Artifact、Kernel 派生 Capability Receipt、旧 evidence
+  格式兼容投影和 semantic claim checks；
 - HostAdapter / WorkerExecutor / ModelProvider 分层；
 - Codex、Claude、Gemini 和 generic OpenAI-compatible runner；
 - capability-based routing、retry、resume、fallback 和 cancellation；
@@ -156,14 +161,21 @@ protocol、预算、provenance、四重 lock 和 Capability Evidence。默认 ro
 `shadow`，缺证据会被持久化但不阻塞；验证或迁移环境可设置
 `APEX_CAPABILITY_ENFORCEMENT_MODE=enforce`，required evidence 缺失时 fail closed。
 
-Browser、Mobile、Performance、Deploy 只声明为 `bundled`，默认不会创建执行 worker。
-提供方完成独立认证后，才可通过 `APEX_CAPABILITY_PROVIDERS` 显式启用，例如：
+Browser、Mobile、Performance、Deploy 依赖真实外部环境，默认不会执行。提供方完成
+独立认证后，需要同时声明 capability 和 provider command，例如：
 
 ```bash
-APEX_CAPABILITY_PROVIDERS=browser-qa,performance-validation
+export APEX_CAPABILITY_PROVIDERS=browser-qa,performance-validation
+export APEX_CAPABILITY_PROVIDER_COMMANDS='{
+  "browser-qa": "node ./tools/browser-qa-provider.mjs",
+  "performance-validation": "node ./tools/performance-provider.mjs"
+}'
 ```
 
-这不是 provider 安装命令，也不会把未验证平台升级成 `live_verified`。
+Provider command 从 stdin 接收 candidate-bound Capability Invocation，并向 stdout
+输出完整 `capability-evidence` JSON。只有 output schema、binding/version 和语义
+校验全部通过，Kernel 才生成 Capability Receipt；只设置
+`APEX_CAPABILITY_PROVIDERS`、普通测试通过或 Agent 自报完成都不能冒充能力证据。
 
 ### DSH Lifecycle R1
 
@@ -321,10 +333,20 @@ node src/apex-v2.mjs project reconcile --project . --apply
 # 查看 Host actions
 node src/apex-v2.mjs host actions --project . --host-id codex-host
 
+# 推进 Kernel 并领取唯一下一动作
+node src/apex-v2.mjs project drain --project . --host-id codex-host
+
 # 生成和验证 Release Candidate
 npm run release:candidate
 npm run release:validate-candidate
 npm run benchmark:capabilities
+
+# 隔离的小样本 Product Benchmark
+node scripts/product-benchmark-controller.mjs init \
+  --candidate <candidate-manifest> \
+  --task-set benchmarks/plugin-vs-v1/task-sets/governed-v2-canary.json \
+  --run-root ../benchmark-runs/governed-v2-canary \
+  --base-root /path/to/prepared/base
 
 # 执行完整发布 Gate
 npm run release:verify

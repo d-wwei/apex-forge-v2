@@ -54,6 +54,10 @@
       "uniqueItems": true
     },
     "output_contract": { "type": "string", "enum": ["evidence", "patch", "decision"] },
+    "evidence_format": {
+      "type": "string",
+      "enum": ["legacy-v1", "unified-v1"]
+    },
     "objective": { "type": "string" },
     "deliverables": { "type": "array", "items": { "type": "string" } },
     "required_evidence": { "type": "array", "items": { "type": "string" } },

@@ -2,16 +2,21 @@ import {
   cpSync,
   copyFileSync,
   existsSync,
+  lstatSync,
   mkdirSync,
   readFileSync,
+  readdirSync,
   rmSync,
+  realpathSync,
   writeFileSync
 } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn, spawnSync } from "node:child_process";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import {
+  assertBenchmarkControllerIdentity,
+  DEFAULT_BENCHMARK_MODES,
   createBenchmarkControllerState,
   loadBenchmarkControllerState,
   prepareBenchmarkWorkspace,
@@ -20,6 +25,7 @@ import {
   saveBenchmarkControllerState,
   shouldRetryBenchmarkValidation,
 } from "../src/benchmark/controller-state.mjs";
+import { computeBenchmarkBaseIdentity } from "../src/benchmark/base-provenance.mjs";
 import {
   claimNextBenchmarkRunLocked,
   finishBenchmarkRunLocked,
@@ -49,6 +55,7 @@ import {
 import { withProjectLock } from "../src/core/project-lock.mjs";
 import { benchmarkEnvironment } from "../src/benchmark/environment.mjs";
 import { inspectPreparedSource } from "../src/benchmark/prepared-source.mjs";
+import { verifyReleaseCandidateBundle } from "../src/release/candidate-bundle.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 Object.assign(process.env, benchmarkEnvironment(process.env));
@@ -62,12 +69,24 @@ if (command === "init") {
   if (existsSync(context.statePath) && !args.force) {
     throw new Error(`controller already exists: ${context.statePath}`);
   }
+  if (
+    !existsSync(context.statePath)
+    && existsSync(context.controllerRoot)
+    && readdirSync(context.controllerRoot).length > 0
+    && !args.force
+  ) {
+    throw new Error(
+      `controller root is not empty: ${context.controllerRoot}; use a fresh --run-root`
+    );
+  }
   if (args.force) rmSync(context.controllerRoot, { recursive: true, force: true });
   mkdirSync(context.runWorkspaceRoot, { recursive: true });
   const state = createBenchmarkControllerState({
     candidateManifest: context.candidate,
     taskValidation: context.taskValidation,
-    workspaceRoot: context.runWorkspaceRoot
+    workspaceRoot: context.runWorkspaceRoot,
+    baseFingerprint: context.baseIdentity.fingerprint,
+    modes: context.taskValidation.modes
   });
   saveBenchmarkControllerState(context.statePath, state);
   printSummary(state, context);
@@ -77,6 +96,12 @@ if (command === "init") {
 } else if (command === "recover") {
   const { state, recovered } = withProjectLock(context.controllerRoot, () => {
     const state = loadBenchmarkControllerState(context.statePath);
+    assertBenchmarkControllerIdentity(state, {
+      candidateDigest: context.candidate.release_candidate_digest,
+      taskSetDigest: context.taskValidation.task_set_digest,
+      baseFingerprint: context.baseIdentity.fingerprint,
+      modes: context.taskValidation.modes
+    });
     const recovered = recoverBenchmarkControllerState(state);
     if (recovered.recovered > 0) saveBenchmarkControllerState(context.statePath, state);
     return { state, recovered };
@@ -115,6 +140,7 @@ if (command === "init") {
 
 async function runSelected(context, args) {
   ensurePreparedDependencies(context);
+  loadAndRecover(context);
   const model = args.model || process.env.APEX_BENCHMARK_MODEL;
   if (!model) {
     throw new Error("formal benchmark requires --model or APEX_BENCHMARK_MODEL");
@@ -306,11 +332,19 @@ async function runSelected(context, args) {
           force_killed_pids: []
         },
         plugin_closeout_ref: pluginCloseout
-          ? relativePath(join(runRoot, "plugin-closeout.json"))
+          ? relativePath(
+              join(runRoot, "plugin-closeout.json"),
+              context.artifactRoot
+            )
           : null,
         command: execution.command,
-        raw_logs: execution.raw_logs.map((path) => relativePath(path)),
-        output_path: relativePath(execution.output_path)
+        raw_logs: execution.raw_logs.map((path) =>
+          relativePath(path, context.artifactRoot)
+        ),
+        output_path: relativePath(
+          execution.output_path,
+          context.artifactRoot
+        )
       });
       assertStableProcessCohort(runRoot);
       updateBenchmarkRunLocked({
@@ -321,8 +355,10 @@ async function runSelected(context, args) {
         leaseId,
         fencingToken,
         rawLogRefs: [
-          relativePath(executionPath),
-          ...execution.raw_logs.map((path) => relativePath(path))
+          relativePath(executionPath, context.artifactRoot),
+          ...execution.raw_logs.map((path) =>
+            relativePath(path, context.artifactRoot)
+          )
         ]
       });
 
@@ -363,11 +399,11 @@ async function runSelected(context, args) {
         + Math.max(0, Date.now() - started - execution.duration_ms);
       const totalUsage = sumUsage(runRoot);
       const processEvidence = collectBenchmarkProcessEvidence({
-        repoRoot,
+        repoRoot: context.artifactRoot,
         runRoot
       });
       const evaluated = evaluateBenchmarkRun({
-        repoRoot,
+        repoRoot: context.artifactRoot,
         workspace: prepared.workspace,
         task,
         mode: run.mode,
@@ -416,7 +452,7 @@ async function runSelected(context, args) {
         leaseId,
         fencingToken,
         status: evaluated.status === "VALID" ? "completed" : "invalid",
-        resultRef: relativePath(resultPath),
+        resultRef: relativePath(resultPath, context.manifestRoot),
         resultSha256: fileSha256(resultPath),
         failure: evaluated.validation_errors.length > 0
           ? JSON.stringify(evaluated.validation_errors)
@@ -461,6 +497,7 @@ async function runSelected(context, args) {
 
 async function runParallel(context, args) {
   ensurePreparedDependencies(context);
+  loadAndRecover(context);
   const model = args.model || process.env.APEX_BENCHMARK_MODEL;
   if (!model) {
     throw new Error("formal benchmark requires --model or APEX_BENCHMARK_MODEL");
@@ -542,7 +579,7 @@ function assertBenchmarkDiskHeadroom(context) {
     context.controllerRoot,
     integer(
       process.env.APEX_BENCHMARK_MIN_FREE_BYTES,
-      20 * 1024 * 1024 * 1024
+      150 * 1024 * 1024 * 1024
     )
   );
 }
@@ -604,7 +641,10 @@ function runRepositoryWorker({
       "timeout-ms",
       "interrupt-ms",
       "lease-ms",
-      "candidate"
+      "candidate",
+      "task-set",
+      "run-root",
+      "base-root"
     ]) {
       if (args[key]) workerArgs.push(`--${key}`, String(args[key]));
     }
@@ -688,6 +728,12 @@ function resetRun(context, args) {
   if (!args["run-key"]) throw new Error("reset requires --run-key");
   const state = withProjectLock(context.controllerRoot, () => {
     const state = loadBenchmarkControllerState(context.statePath);
+    assertBenchmarkControllerIdentity(state, {
+      candidateDigest: context.candidate.release_candidate_digest,
+      taskSetDigest: context.taskValidation.task_set_digest,
+      baseFingerprint: context.baseIdentity.fingerprint,
+      modes: context.taskValidation.modes
+    });
     const run = state.runs.find((item) => item.run_key === args["run-key"]);
     if (!run) throw new Error(`run not found: ${args["run-key"]}`);
     if (run.status === "completed") throw new Error("completed official run cannot be reset");
@@ -735,12 +781,12 @@ function finalize(context) {
       throw new Error(`cannot finalize: immutable result evidence missing for ${run.run_key}`);
     }
     const resultPath = join(context.resultRoot, `${safeName(run.run_key)}.json`);
-    const expectedRef = relativePath(resultPath);
+    const expectedRef = relativePath(resultPath, context.manifestRoot);
     if (run.result_ref !== expectedRef) {
       throw new Error(`cannot finalize: result path mismatch for ${run.run_key}`);
     }
     return {
-      path: relative(benchmarkRoot, resultPath).split(sep).join("/"),
+      path: relative(context.manifestRoot, resultPath).split(sep).join("/"),
       sha256: run.result_sha256
     };
   });
@@ -751,11 +797,12 @@ function finalize(context) {
     results: resultEntries
   };
   const results = loadVerifiedBenchmarkResults({
-    repoRoot,
-    benchmarkDir: benchmarkRoot,
+    repoRoot: context.artifactRoot,
+    benchmarkDir: context.manifestRoot,
     manifest: resultsManifest,
     expectedCandidateDigest: context.candidate.release_candidate_digest,
-    expectedTaskSetDigest: context.taskValidation.task_set_digest
+    expectedTaskSetDigest: context.taskValidation.task_set_digest,
+    expectedArtifactPrefix: context.artifactPrefix
   });
   const resultsByRun = new Map(results.map((result) => [
     `${result.task_id}--${result.mode}`,
@@ -769,15 +816,21 @@ function finalize(context) {
       throw new Error(`cannot finalize: incomplete process evidence for ${run.run_key}`);
     }
   }
-  const plan = buildBenchmarkPlan(context.matrix, context.taskValidation.tasks);
-  const evaluation = evaluateBenchmark(plan.tasks, results);
-  writeJson(join(benchmarkRoot, "benchmark-plan.json"), {
+  const plan = buildBenchmarkPlan(
+    context.matrix,
+    context.taskValidation.tasks,
+    context.taskValidation.modes
+  );
+  const evaluation = evaluateBenchmark(plan.tasks, results, {
+    modes: context.taskValidation.modes
+  });
+  writeJson(join(context.outputRoot, "benchmark-plan.json"), {
     ...plan,
     release_candidate_digest: context.candidate.release_candidate_digest,
     task_set_digest: context.taskValidation.task_set_digest
   });
-  writeJson(join(benchmarkRoot, "results-manifest.json"), resultsManifest);
-  writeJson(join(benchmarkRoot, "latest-evaluation.json"), evaluation);
+  writeJson(join(context.outputRoot, "results-manifest.json"), resultsManifest);
+  writeJson(join(context.outputRoot, "latest-evaluation.json"), evaluation);
   console.log(JSON.stringify(evaluation, null, 2));
   if (evaluation.status !== "PASS") process.exitCode = 1;
 }
@@ -796,53 +849,212 @@ function loadContext(args) {
     throw new Error("release candidate missing; run npm run release:candidate");
   }
   const candidateRoot = dirname(manifestPath);
+  const bundle = verifyReleaseCandidateBundle({
+    repoRoot,
+    candidateRoot,
+    checkCurrentSource: false
+  });
+  if (bundle.status !== "PASS") {
+    throw new Error(
+      `release candidate bundle invalid: ${bundle.errors.join("; ")}`
+    );
+  }
   const candidate = {
-    ...readJson(manifestPath, null),
+    ...bundle.manifest,
     __candidate_root: candidateRoot
   };
   const matrix = readJson(join(benchmarkRoot, "matrix.json"), null);
-  const taskValidation = validateBenchmarkTaskPlans({
+  const baseRoot = args["base-root"]
+    ? resolve(String(args["base-root"]))
+    : join(benchmarkRoot, "workspaces", "base");
+  const fullTaskValidation = validateBenchmarkTaskPlans({
     matrix,
     schema: readJson(join(repoRoot, "schemas", "benchmark-task-plan.schema.json"), null),
     taskDir: join(benchmarkRoot, "tasks"),
-    workspaceRoot: join(benchmarkRoot, "workspaces", "base")
+    workspaceRoot: baseRoot
   });
-  if (taskValidation.status !== "PASS") {
-    throw new Error(`benchmark tasks invalid: ${JSON.stringify(taskValidation.errors)}`);
+  if (fullTaskValidation.status !== "PASS") {
+    throw new Error(`benchmark tasks invalid: ${JSON.stringify(fullTaskValidation.errors)}`);
   }
-  if (candidate.content.benchmark_task_set_digest !== taskValidation.task_set_digest) {
+  if (candidate.content.benchmark_task_set_digest !== fullTaskValidation.task_set_digest) {
     throw new Error("candidate task set differs from current benchmark tasks");
   }
   if (candidate.content.benchmark_matrix_sha256 !== portableBenchmarkMatrixHash(matrix)) {
     throw new Error("candidate benchmark matrix differs from current matrix");
   }
-  const controllerRoot = join(
-    benchmarkRoot,
-    "workspaces",
-    "runs",
-    candidate.release_candidate_digest
+  const taskSelection = loadTaskSet(args["task-set"]);
+  const selectedTaskIds = taskSelection?.task_ids || null;
+  const selectedModes = taskSelection?.modes || DEFAULT_BENCHMARK_MODES;
+  const selectedTasks = selectedTaskIds
+    ? selectedTaskIds.map((taskId) => {
+        const task = fullTaskValidation.tasks.find((item) =>
+          item.task_id === taskId
+        );
+        if (!task) throw new Error(`unknown benchmark task: ${taskId}`);
+        return task;
+      })
+    : fullTaskValidation.tasks;
+  const taskValidation = {
+    ...fullTaskValidation,
+    tasks: selectedTasks,
+    modes: [...selectedModes],
+    task_set_digest: createHash("sha256")
+      .update(JSON.stringify({
+        modes: selectedModes,
+        tasks: selectedTasks.map((task) => ({
+          task_id: task.task_id,
+          task_digest: task.task_digest
+        }))
+      }))
+      .digest("hex")
+  };
+  const selectedRepositories = new Set(
+    selectedTasks.map((task) => task.repository)
   );
+  const selectedMatrix = {
+    ...matrix,
+    repositories: matrix.repositories.filter((repository) =>
+      selectedRepositories.has(
+        typeof repository === "string" ? repository : repository.id
+      )
+    ),
+    scenarios: [...new Set(selectedTasks.map((task) => task.scenario))]
+  };
+  const baseIdentity = computeBenchmarkBaseIdentity({
+    baseRoot,
+    repositories: selectedMatrix.repositories
+  });
+  const controllerRoot = args["run-root"]
+    ? resolveIsolatedRunRoot(String(args["run-root"]))
+    : join(
+        benchmarkRoot,
+        "workspaces",
+        "runs",
+        candidate.release_candidate_digest
+      );
+  const customRoot = Boolean(args["run-root"]);
+  const artifactRoot = customRoot ? controllerRoot : repoRoot;
+  const manifestRoot = customRoot ? controllerRoot : benchmarkRoot;
   return {
     candidate,
     candidateRoot,
-    matrix,
+    matrix: selectedMatrix,
     taskValidation,
     controllerRoot,
     statePath: join(controllerRoot, "controller.json"),
     runWorkspaceRoot: join(controllerRoot, "runs"),
     resultRoot: join(
-      benchmarkRoot,
+      manifestRoot,
       "results",
       candidate.release_candidate_digest
     ),
-    baseRoot: join(benchmarkRoot, "workspaces", "base")
+    outputRoot: manifestRoot,
+    manifestRoot,
+    artifactRoot,
+    artifactPrefix: customRoot
+      ? "runs"
+      : [
+          "benchmarks",
+          "plugin-vs-v1",
+          "workspaces",
+          "runs",
+          candidate.release_candidate_digest,
+          "runs"
+        ].join("/"),
+    baseRoot,
+    baseIdentity
   };
 }
 
+function loadTaskSet(path) {
+  if (!path) return null;
+  const value = readJson(resolve(String(path)), null);
+  const ids = Array.isArray(value) ? value : value?.task_ids;
+  if (!Array.isArray(ids) || ids.length === 0) {
+    throw new Error("--task-set must contain a non-empty task_ids array");
+  }
+  const normalized = ids.map(String);
+  if (new Set(normalized).size !== normalized.length) {
+    throw new Error("--task-set contains duplicate task ids");
+  }
+  const modes = value?.modes
+    ? value.modes.map(String)
+    : DEFAULT_BENCHMARK_MODES;
+  if (
+    !Array.isArray(modes)
+    || modes.length === 0
+    || new Set(modes).size !== modes.length
+    || modes.some((mode) => ![
+      "v1-skill",
+      "cli-kernel",
+      "plugin-kernel",
+      "raw-agent"
+    ].includes(mode))
+  ) {
+    throw new Error(
+      "--task-set modes must be a non-empty subset of supported benchmark modes"
+    );
+  }
+  if (!modes.includes("plugin-kernel")) {
+    throw new Error("--task-set modes must include plugin-kernel");
+  }
+  return { task_ids: normalized, modes };
+}
+
+function resolveIsolatedRunRoot(value) {
+  const parent = dirname(repoRoot);
+  const projectFamilyRoot = parent.endsWith(`${sep}worktrees`)
+    ? dirname(parent)
+    : parent;
+  const allowedRoot = resolve(projectFamilyRoot, "benchmark-runs");
+  const target = resolve(value);
+  const relativeTarget = relative(allowedRoot, target);
+  if (
+    relativeTarget === ""
+    || relativeTarget === ".."
+    || relativeTarget.startsWith(`..${sep}`)
+  ) {
+    throw new Error(
+      `--run-root must be a child of ${allowedRoot}`
+    );
+  }
+  if (existsSync(allowedRoot) && lstatSync(allowedRoot).isSymbolicLink()) {
+    throw new Error(`benchmark root cannot be a symlink: ${allowedRoot}`);
+  }
+  let current = allowedRoot;
+  for (const part of relativeTarget.split(sep).filter(Boolean)) {
+    current = join(current, part);
+    if (existsSync(current) && lstatSync(current).isSymbolicLink()) {
+      throw new Error(`--run-root cannot traverse symlink: ${current}`);
+    }
+  }
+  if (existsSync(target)) {
+    const allowedReal = existsSync(allowedRoot)
+      ? realpathSync(allowedRoot)
+      : allowedRoot;
+    const targetReal = realpathSync(target);
+    const realRelative = relative(allowedReal, targetReal);
+    if (
+      realRelative === ""
+      || realRelative === ".."
+      || realRelative.startsWith(`..${sep}`)
+    ) {
+      throw new Error("--run-root resolves outside benchmark-runs");
+    }
+  }
+  return target;
+}
+
 function loadAndRecover(context) {
-  return loadBenchmarkControllerSnapshot({
+  const state = loadBenchmarkControllerSnapshot({
     controllerRoot: context.controllerRoot,
     statePath: context.statePath
+  });
+  return assertBenchmarkControllerIdentity(state, {
+    candidateDigest: context.candidate.release_candidate_digest,
+    taskSetDigest: context.taskValidation.task_set_digest,
+    baseFingerprint: context.baseIdentity.fingerprint,
+    modes: context.taskValidation.modes
   });
 }
 
@@ -1004,8 +1216,8 @@ function countBy(values, field) {
   return counts;
 }
 
-function relativePath(path) {
-  return relative(repoRoot, path).split(sep).join("/");
+function relativePath(path, base = repoRoot) {
+  return relative(base, path).split(sep).join("/");
 }
 
 function safeName(value) {

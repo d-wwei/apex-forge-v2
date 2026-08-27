@@ -16,7 +16,8 @@ export function printHelp() {
   apex-v2 worker adapters --project <dir>
   apex-v2 host actions|claim|submit|cancel --project <dir> --host-id <id>
     host submit accepts --semantic-evidence-json|--semantic-evidence-file and
-    --capability-evidence-json|--capability-evidence-file
+    --capability-evidence-json|--capability-evidence-file, or one
+    --evidence-artifact-json|--evidence-artifact-file
   apex-v2 decision list|show|propose --project <dir>
   apex-v2 negative-control show|record-red|record-green|restore --project <dir>
   apex-v2 merge enqueue|status|resolve|apply --project <dir>

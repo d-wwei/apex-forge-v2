@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/evidence-submission.schema.json",
+  "title": "Apex Forge V2 Unified Evidence Submission",
+  "type": "object",
+  "required": ["semantic_evidence_json", "capability_outputs"],
+  "properties": {
+    "semantic_evidence_json": { "type": ["string", "null"] },
+    "capability_outputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["capability_id", "output_json"],
+        "properties": {
+          "capability_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "output_json": { "type": "string", "minLength": 2 }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

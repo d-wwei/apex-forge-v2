@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/capability-receipt.schema.json",
+  "title": "Apex Forge V2 Capability Receipt",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "evidence_artifact_id",
+    "capability_id",
+    "capability_version",
+    "invocation_id",
+    "output_contract",
+    "output_ref",
+    "output_digest",
+    "source_refs",
+    "verification_refs",
+    "validation",
+    "derived_at"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "receipt_id": { "type": "string", "minLength": 1 },
+    "evidence_artifact_id": { "type": "string", "minLength": 1 },
+    "capability_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "capability_version": { "type": "string", "minLength": 1 },
+    "invocation_id": { "type": "string", "minLength": 1 },
+    "output_contract": { "type": "string", "minLength": 1 },
+    "output_ref": { "type": "string", "minLength": 1 },
+    "output_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "source_refs": { "type": "array", "items": { "type": "string" } },
+    "verification_refs": { "type": "array", "items": { "type": "string" } },
+    "validation": {
+      "type": "object",
+      "required": [
+        "binding_match",
+        "version_match",
+        "schema_valid",
+        "semantic_valid",
+        "status"
+      ],
+      "properties": {
+        "binding_match": { "type": "boolean" },
+        "version_match": { "type": "boolean" },
+        "schema_valid": { "type": "boolean" },
+        "semantic_valid": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["PASS", "FAIL"] }
+      },
+      "additionalProperties": false
+    },
+    "derived_at": { "type": "string" }
+  },
+  "additionalProperties": false
+}

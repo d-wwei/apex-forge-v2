@@ -1,0 +1,13 @@
+{
+  "schema_version": "v0",
+  "task_ids": [
+    "apex-manager--simple",
+    "apex-manager--bug-fix",
+    "apex-manager--review-defect"
+  ],
+  "modes": [
+    "raw-agent",
+    "v1-skill",
+    "plugin-kernel"
+  ]
+}

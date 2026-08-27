@@ -448,6 +448,9 @@ function contractTargets(path, value) {
   else if (name === "host-result.json") push("host-result.schema.json");
   else if (name === "action-workspace.json") push("action-workspace.schema.json");
   else if (name === "cognitive-evidence.json") push("cognitive-evidence.schema.json");
+  else if (name === "rework-request.json") push("rework-request.schema.json");
+  else if (name.startsWith("evidence-artifact-")) push("evidence-artifact.schema.json");
+  else if (name.startsWith("capability-receipt-")) push("capability-receipt.schema.json");
   else if (name.startsWith("capability-invocation-")) push("capability-invocation.schema.json");
   else if (name.startsWith("capability-evidence-")) push("capability-evidence.schema.json");
   else if (name === "execution-route.json") push("execution-route.schema.json");

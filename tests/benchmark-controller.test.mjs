@@ -20,6 +20,7 @@ import {
 } from "../src/benchmark/plugin-bootstrap.mjs";
 import test from "node:test";
 import {
+  assertBenchmarkControllerIdentity,
   claimBenchmarkRun,
   createBenchmarkControllerState,
   finishBenchmarkRun,
@@ -48,6 +49,80 @@ test("controller creates exactly 90 candidate-bound runs", () => {
   assert.deepEqual([...new Set(state.runs.map((run) => run.mode))], MODES);
   assert.ok(state.runs.every((run) => run.official_attempt === 1));
   assert.ok(state.runs.every((run) => run.release_candidate_digest == null));
+});
+
+test("controller supports an isolated subset without weakening the default matrix", () => {
+  const full = createState();
+  const subset = createBenchmarkControllerState({
+    candidateManifest: {
+      release_candidate_digest: "a".repeat(64)
+    },
+    taskValidation: {
+      task_set_digest: "c".repeat(64),
+      tasks: full.runs.filter((run) =>
+        run.mode === "v1-skill"
+      ).slice(0, 3).map((run) => ({
+        task_id: run.task_id,
+        task_digest: run.task_digest,
+        repository: run.repository,
+        scenario: run.scenario
+      }))
+    },
+    workspaceRoot: "/tmp/apex-benchmark-subset/runs",
+    baseFingerprint: "e".repeat(64),
+    modes: ["raw-agent", "v1-skill", "plugin-kernel"],
+    now: "2026-08-27T00:00:00.000Z"
+  });
+  assert.equal(subset.runs.length, 9);
+  assert.equal(new Set(subset.runs.map((run) => run.task_id)).size, 3);
+});
+
+test("controller rejects candidate or task-set reuse under the same run root", () => {
+  const state = createState();
+  assert.throws(() => assertBenchmarkControllerIdentity(state, {
+    candidateDigest: "c".repeat(64),
+    taskSetDigest: state.task_set_digest
+  }), /candidate differs/);
+  assert.throws(() => assertBenchmarkControllerIdentity(state, {
+    candidateDigest: state.release_candidate_digest,
+    taskSetDigest: "d".repeat(64)
+  }), /task set differs/);
+  assert.throws(() => assertBenchmarkControllerIdentity(state, {
+    candidateDigest: state.release_candidate_digest,
+    taskSetDigest: state.task_set_digest,
+    baseFingerprint: "d".repeat(64),
+    modes: state.modes
+  }), /base differs/);
+  assert.throws(() => assertBenchmarkControllerIdentity(state, {
+    candidateDigest: state.release_candidate_digest,
+    taskSetDigest: state.task_set_digest,
+    baseFingerprint: state.identity.base_fingerprint,
+    modes: ["raw-agent", "v1-skill", "plugin-kernel"]
+  }), /modes differ/);
+});
+
+test("controller can create a raw-agent/v1/plugin canary matrix", () => {
+  const state = createBenchmarkControllerState({
+    candidateManifest: { release_candidate_digest: "a".repeat(64) },
+    taskValidation: {
+      task_set_digest: "b".repeat(64),
+      modes: ["raw-agent", "v1-skill", "plugin-kernel"],
+      tasks: [{
+        task_id: "repo--simple",
+        task_digest: "c".repeat(64),
+        repository: "repo",
+        scenario: "simple"
+      }]
+    },
+    workspaceRoot: "/tmp/apex-benchmark-canary/runs",
+    baseFingerprint: "d".repeat(64)
+  });
+  assert.deepEqual(state.modes, ["raw-agent", "v1-skill", "plugin-kernel"]);
+  assert.deepEqual(
+    state.runs.map((run) => run.mode),
+    ["raw-agent", "v1-skill", "plugin-kernel"]
+  );
+  assert.equal(state.identity.base_fingerprint, "d".repeat(64));
 });
 
 test("dead running process recovers to interrupted and can be reclaimed", () => {
@@ -615,6 +690,7 @@ function createState() {
       tasks
     },
     workspaceRoot: "/tmp/apex-benchmark/runs",
+    baseFingerprint: "f".repeat(64),
     now: "2026-08-14T00:00:00.000Z"
   });
 }

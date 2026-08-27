@@ -118,6 +118,10 @@
         "advisory": {
           "type": "array",
           "items": { "$ref": "#/$defs/capabilityBinding" }
+        },
+        "kernel": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/capabilityBinding" }
         }
       },
       "additionalProperties": false
@@ -235,6 +239,10 @@
             "additionalProperties": false
           },
           "output_contract": { "type": "string", "enum": ["evidence", "patch", "decision"] },
+          "evidence_format": {
+            "type": "string",
+            "enum": ["legacy-v1", "unified-v1"]
+          },
           "risk": { "type": "string", "enum": ["low", "medium", "high", "critical"] }
         },
         "additionalProperties": false

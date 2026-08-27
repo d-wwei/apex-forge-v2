@@ -57,8 +57,10 @@ lifecycle route. The deprecated names `apex-forge-plan`,
 - Preserve the claim token, lease, and fencing token; submit/cancel only with
   the current claim token.
 - Inspect every action's `capability_bindings`, `capability_protocols`, and
-  `capability_enforcement` before acting. Produce one typed capability evidence
-  object per required binding and submit the array with the Host result.
+  `capability_enforcement` before acting. Prefer one unified Evidence Artifact:
+  submit semantic evidence once plus one compact typed output section per
+  required Capability. The Kernel derives compatibility projections and
+  Capability Receipts.
 - In `enforce` mode, never omit required capability evidence. In `shadow` mode,
   missing evidence remains an auditable gap and must not be described as
   capability-complete.

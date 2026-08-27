@@ -58,25 +58,11 @@
             "affected_files",
             "constraints",
             "unknowns",
-            "failure_paths",
-            "blast_radius",
-            "mitigations",
-            "rollback",
-            "slices",
-            "dependencies",
-            "verification",
-            "candidate_digest",
-            "findings",
-            "residual_risks",
-            "merge_posture",
             "created_at"
           ],
           "properties": {
             "schema_version": { "type": "string", "const": "v0" },
-            "evidence_type": {
-              "type": "string",
-              "enum": ["context", "risk", "design", "review"]
-            },
+            "evidence_type": { "type": "string", "const": "context" },
             "objective": { "type": "string", "minLength": 1 },
             "source_refs": {
               "type": "array",
@@ -111,7 +97,8 @@
             },
             "affected_files": {
               "type": "array",
-              "items": { "type": "string" }
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
             },
             "constraints": {
               "type": "array",
@@ -121,25 +108,140 @@
               "type": "array",
               "items": { "type": "string" }
             },
-            "failure_paths": {
+            "created_at": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "schema_version",
+            "evidence_type",
+            "objective",
+            "source_refs",
+            "claims",
+            "uncertainties",
+            "acceptance_mapping",
+            "failure_paths",
+            "blast_radius",
+            "mitigations",
+            "rollback",
+            "created_at"
+          ],
+          "properties": {
+            "schema_version": { "type": "string", "const": "v0" },
+            "evidence_type": { "type": "string", "const": "risk" },
+            "objective": { "type": "string", "minLength": 1 },
+            "source_refs": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "claims": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "uncertainties": {
               "type": "array",
               "items": { "type": "string" }
+            },
+            "acceptance_mapping": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": ["criterion", "evidence_ref", "status"],
+                "properties": {
+                  "criterion": { "type": "string", "minLength": 1 },
+                  "evidence_ref": { "type": "string", "minLength": 1 },
+                  "status": {
+                    "type": "string",
+                    "enum": ["supported", "partial", "unverified"]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "failure_paths": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
             },
             "blast_radius": {
               "type": "array",
-              "items": { "type": "string" }
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
             },
             "mitigations": {
               "type": "array",
-              "items": { "type": "string" }
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
             },
             "rollback": {
               "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "created_at": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "schema_version",
+            "evidence_type",
+            "objective",
+            "source_refs",
+            "claims",
+            "uncertainties",
+            "acceptance_mapping",
+            "slices",
+            "dependencies",
+            "verification",
+            "rollback",
+            "created_at"
+          ],
+          "properties": {
+            "schema_version": { "type": "string", "const": "v0" },
+            "evidence_type": { "type": "string", "const": "design" },
+            "objective": { "type": "string", "minLength": 1 },
+            "source_refs": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "claims": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "uncertainties": {
+              "type": "array",
               "items": { "type": "string" }
+            },
+            "acceptance_mapping": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": ["criterion", "evidence_ref", "status"],
+                "properties": {
+                  "criterion": { "type": "string", "minLength": 1 },
+                  "evidence_ref": { "type": "string", "minLength": 1 },
+                  "status": {
+                    "type": "string",
+                    "enum": ["supported", "partial", "unverified"]
+                  }
+                },
+                "additionalProperties": false
+              }
             },
             "slices": {
               "type": "array",
-              "items": { "type": "string" }
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
             },
             "dependencies": {
               "type": "array",
@@ -147,7 +249,68 @@
             },
             "verification": {
               "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "rollback": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "created_at": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "schema_version",
+            "evidence_type",
+            "objective",
+            "source_refs",
+            "claims",
+            "uncertainties",
+            "acceptance_mapping",
+            "candidate_digest",
+            "findings",
+            "residual_risks",
+            "merge_posture",
+            "created_at"
+          ],
+          "properties": {
+            "schema_version": { "type": "string", "const": "v0" },
+            "evidence_type": { "type": "string", "const": "review" },
+            "objective": { "type": "string", "minLength": 1 },
+            "source_refs": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "claims": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "uncertainties": {
+              "type": "array",
               "items": { "type": "string" }
+            },
+            "acceptance_mapping": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": ["criterion", "evidence_ref", "status"],
+                "properties": {
+                  "criterion": { "type": "string", "minLength": 1 },
+                  "evidence_ref": { "type": "string", "minLength": 1 },
+                  "status": {
+                    "type": "string",
+                    "enum": ["supported", "partial", "unverified"]
+                  }
+                },
+                "additionalProperties": false
+              }
             },
             "candidate_digest": { "type": "string" },
             "findings": {
@@ -172,53 +335,96 @@
     "capability_evidence": {
       "type": "array",
       "items": {
-        "type": "object",
-        "required": [
-          "schema_version",
-          "capability_id",
-          "capability_version",
-          "invocation_id",
-          "objective",
-          "source_refs",
-          "claims",
-          "uncertainties",
-          "verification_refs",
-          "output_contract",
-          "output",
-          "created_at"
-        ],
-        "properties": {
-          "schema_version": { "type": "string", "const": "v0" },
-          "capability_id": { "type": "string" },
-          "capability_version": { "type": "string" },
-          "invocation_id": { "type": "string" },
-          "objective": { "type": "string" },
-          "source_refs": {
-            "type": "array",
-            "items": { "type": "string" }
-          },
-          "claims": {
-            "type": "array",
-            "items": { "type": "string" }
-          },
-          "uncertainties": {
-            "type": "array",
-            "items": { "type": "string" }
-          },
-          "verification_refs": {
-            "type": "array",
-            "items": { "type": "string" }
-          },
-          "output_contract": { "type": "string" },
-          "output": {
+        "oneOf": [
+          {
             "type": "object",
-            "required": [],
-            "properties": {},
+            "required": [
+              "schema_version",
+              "capability_id",
+              "capability_version",
+              "invocation_id",
+              "objective",
+              "source_refs",
+              "claims",
+              "uncertainties",
+              "verification_refs",
+              "output_contract",
+              "output_json",
+              "created_at"
+            ],
+            "properties": {
+              "schema_version": { "type": "string", "const": "v0" },
+              "capability_id": { "type": "string" },
+              "capability_version": { "type": "string" },
+              "invocation_id": { "type": "string" },
+              "objective": { "type": "string" },
+              "source_refs": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "claims": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "uncertainties": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "verification_refs": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "output_contract": { "type": "string" },
+              "output_json": { "type": "string" },
+              "created_at": { "type": "string" }
+            },
             "additionalProperties": false
           },
-          "created_at": { "type": "string" }
-        },
-        "additionalProperties": false
+          {
+            "type": "object",
+            "required": [
+              "schema_version",
+              "capability_id",
+              "capability_version",
+              "invocation_id",
+              "objective",
+              "source_refs",
+              "claims",
+              "uncertainties",
+              "verification_refs",
+              "output_contract",
+              "output",
+              "created_at"
+            ],
+            "properties": {
+              "schema_version": { "type": "string", "const": "v0" },
+              "capability_id": { "type": "string" },
+              "capability_version": { "type": "string" },
+              "invocation_id": { "type": "string" },
+              "objective": { "type": "string" },
+              "source_refs": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "claims": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "uncertainties": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "verification_refs": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "output_contract": { "type": "string" },
+              "output": { "type": "object" },
+              "created_at": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        ]
       }
     }
   },

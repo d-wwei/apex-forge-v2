@@ -211,39 +211,24 @@ export function closePluginBenchmarkProject({
       + `${implementation.patch_id || "(missing)"}=${implementation.queue_status || "(missing)"}`
     );
   }
-  runRuntime(runtimePath, schemaDir, [
+  const reviewDrain = runRuntime(runtimePath, schemaDir, [
     "project",
-    "tick",
-    "--project",
-    workspace,
-    "--collect-results",
-    "--dispatch"
-  ]);
-  const actions = runRuntime(runtimePath, schemaDir, [
-    "host",
-    "actions",
+    "drain",
     "--project",
     workspace,
     "--host-id",
     "codex-host"
   ]);
-  const reviewAction = actions.find((action) =>
-    action.run_id === bootstrap.run_id
-    && action.plan_node_id.endsWith("review")
-  );
+  const reviewAction = reviewDrain.next_action?.action_type === "review"
+    ? reviewDrain.next_action
+    : null;
   if (!reviewAction?.candidate_digest) {
     throw new Error("plugin quick closeout review action lacks candidate digest");
   }
-  const reviewClaim = runRuntime(runtimePath, schemaDir, [
-    "host",
-    "claim",
-    "--project",
-    workspace,
-    "--host-id",
-    "codex-host",
-    "--worker-id",
-    reviewAction.worker_id
-  ]);
+  const reviewClaim = reviewAction.claim;
+  if (!reviewClaim?.claim_token) {
+    throw new Error("plugin quick closeout review action lacks claim token");
+  }
   const implementationRoot = `.apex-v2/runs/${bootstrap.run_id}/workers/${fastPath.worker_id}`;
   const patchRef = `${implementationRoot}/patches/${implementation.patch_id}/patch-bundle.json`;
   const review = agentOutput.review;
@@ -280,8 +265,7 @@ export function closePluginBenchmarkProject({
     "codex-host",
     "--worker-id",
     reviewAction.worker_id,
-    "--claim-token",
-    reviewClaim.action.claim_token,
+    "--claim-token", reviewClaim.claim_token,
     "--summary",
     `Quick review: ${agentOutput.summary}`,
     "--evidence-json",
@@ -289,16 +273,11 @@ export function closePluginBenchmarkProject({
   ]);
   const closeout = runRuntime(runtimePath, schemaDir, [
     "project",
-    "tick",
+    "drain",
     "--project",
     workspace,
-    "--collect-results",
-    "--complete-execute",
-    "--verify",
-    "--review",
-    "--integrate",
-    "--learn",
-    "--apply-learning"
+    "--host-id",
+    "codex-host"
   ], {
     APEX_V2_VERIFY_TMPDIR: "/private/tmp",
     TMPDIR: "/private/tmp"

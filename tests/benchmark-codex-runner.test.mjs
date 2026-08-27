@@ -34,9 +34,11 @@ test("non-plugin modes disable plugins while plugin mode keeps native discovery"
   };
   const v1 = buildBenchmarkCodexArgs({ ...base, mode: "v1-skill" });
   const cli = buildBenchmarkCodexArgs({ ...base, mode: "cli-kernel" });
+  const raw = buildBenchmarkCodexArgs({ ...base, mode: "raw-agent" });
   const plugin = buildBenchmarkCodexArgs({ ...base, mode: "plugin-kernel" });
   assert.ok(v1.includes("--disable") && v1.includes("plugins"));
   assert.ok(cli.includes("--disable") && cli.includes("plugins"));
+  assert.ok(raw.includes("--disable") && raw.includes("plugins"));
   assert.ok(!plugin.includes("--disable"));
   assert.ok(plugin.includes("-C"));
 });
@@ -66,7 +68,7 @@ test("resume keeps the same session without creating a new cwd-scoped run", () =
 });
 
 test("mode prompts expose public task but never hidden checks", () => {
-  for (const mode of ["v1-skill", "cli-kernel", "plugin-kernel"]) {
+  for (const mode of ["v1-skill", "cli-kernel", "plugin-kernel", "raw-agent"]) {
     const prompt = buildBenchmarkPrompt({
       task,
       mode,
@@ -77,6 +79,15 @@ test("mode prompts expose public task but never hidden checks", () => {
     assert.match(prompt, /npm test/);
     assert.doesNotMatch(prompt, /hidden_checks/);
   }
+  const rawPrompt = buildBenchmarkPrompt({
+    task,
+    mode: "raw-agent",
+    candidateRoot: "/candidate",
+    runRoot: "/run"
+  });
+  assert.match(rawPrompt, /plain coding agent/);
+  assert.match(rawPrompt, /Do not load or invoke any plugin, V1 skill, Apex Forge Kernel/);
+  assert.doesNotMatch(rawPrompt, /Kernel bridge|durable intake\/run/);
   assert.match(buildBenchmarkPrompt({
     task,
     mode: "plugin-kernel",

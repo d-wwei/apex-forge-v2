@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-forge.local/v2/schemas/evidence-artifact.schema.json",
+  "title": "Apex Forge V2 Unified Evidence Artifact",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "evidence_artifact_id",
+    "run_id",
+    "node_id",
+    "worker_id",
+    "action_id",
+    "attempt",
+    "kind",
+    "objective",
+    "verdict",
+    "candidate_digest",
+    "scope",
+    "sections",
+    "provenance",
+    "evidence_refs",
+    "gate",
+    "created_at"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "v0" },
+    "evidence_artifact_id": { "type": "string", "minLength": 1 },
+    "run_id": { "type": "string", "minLength": 1 },
+    "node_id": { "type": "string", "minLength": 1 },
+    "worker_id": { "type": "string", "minLength": 1 },
+    "action_id": { "type": ["string", "null"] },
+    "attempt": { "type": "integer", "minimum": 0 },
+    "kind": {
+      "type": "string",
+      "enum": ["plan", "patch", "risk_challenge", "review", "execution"]
+    },
+    "objective": { "type": "string", "minLength": 1 },
+    "verdict": { "type": "string", "enum": ["PASS", "FAIL"] },
+    "candidate_digest": {
+      "type": ["string", "null"],
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "scope": {
+      "type": "object",
+      "required": ["read", "write"],
+      "properties": {
+        "read": { "type": "array", "items": { "type": "string" } },
+        "write": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["kind", "content"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["semantic", "capability", "tests", "patch", "risk"]
+          },
+          "capability_id": { "type": ["string", "null"] },
+          "output_contract": { "type": ["string", "null"] },
+          "content": { "type": "object" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["submission_format", "executor", "model"],
+      "properties": {
+        "submission_format": {
+          "type": "string",
+          "enum": ["legacy_projection", "unified"]
+        },
+        "executor": { "type": ["string", "null"] },
+        "model": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "gate": {
+      "type": "object",
+      "required": ["status", "reasons"],
+      "properties": {
+        "status": { "type": "string", "enum": ["PASS", "FAIL"] },
+        "reasons": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "created_at": { "type": "string" }
+  },
+  "additionalProperties": false
+}

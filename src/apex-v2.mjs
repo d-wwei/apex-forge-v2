@@ -65,6 +65,7 @@ import {
   getWorkers,
   isFileAllowedByScope,
   recoverExpiredWorkerExecutions,
+  updatePatchBundle,
   workerDir
 } from "./core/worker.mjs";
 import {
@@ -381,31 +382,19 @@ function proposeLearningInternal(root, run) {
   if (!review || review.status !== "PASS") throw new Error("缺少 PASS review-report，不能生成 learning proposal");
   if (!integration || !["MERGED", "NOOP"].includes(integration.status)) throw new Error("缺少 MERGED/NOOP integration-report，不能生成 learning proposal");
 
-  const candidates = [
-    {
+  const candidates = (review.non_blocking_findings || [])
+    .map((finding) => String(finding).match(/^learning:\s*(.+)$/i)?.[1]?.trim())
+    .filter((finding) => finding && finding.length >= 20)
+    .map((finding) => ({
       target_file: "knowledge/decisions.md",
-      proposed_change: "Apex Forge V2 的持续交付闭环采用 artifact evidence gate：run 节点 PASS 必须引用当前节点 artifact，review 必须基于 verification report 和 merge queue，integration 必须在 review PASS 后应用 merge queue。",
+      proposed_change: finding,
       evidence_refs: [
-        `.apex-v2/runs/${run.run_id}/run.json`,
-        `.apex-v2/runs/${run.run_id}/verification-report.json`,
         `.apex-v2/runs/${run.run_id}/review-report.json`,
+        `.apex-v2/runs/${run.run_id}/verification-report.json`,
         `.apex-v2/runs/${run.run_id}/integration-report.json`
       ],
-      confidence: 0.95
-    },
-    {
-      target_file: "knowledge/test-map.md",
-      proposed_change: "当前最小回归组为 npm test、node --check src/apex-v2.mjs、strict project validate、schemas JSON parse；verification report 必须记录每条命令的 exit code 和输出尾部。",
-      evidence_refs: [`.apex-v2/runs/${run.run_id}/verification-report.json`, "tests/apex-v2.test.mjs"],
-      confidence: 0.95
-    },
-    {
-      target_file: "knowledge/danger-zones.md",
-      proposed_change: "merge queue 状态重算不得回滚已 merged patch；同文件 patch 必须生成 conflict report 并阻塞相关 worker，直到 coordinator 串行处理。",
-      evidence_refs: [`.apex-v2/runs/${run.run_id}/merge-queue.json`, "src/apex-v2.mjs", "tests/apex-v2.test.mjs"],
       confidence: 0.9
-    }
-  ];
+    }));
 
   const proposalsPath = join(root, "learning", "proposals.json");
   const jobsPath = join(root, "learning", "jobs.json");
@@ -414,29 +403,27 @@ function proposeLearningInternal(root, run) {
   const created = [];
   const queuedJobs = [];
   for (const candidate of candidates) {
-    let proposal = proposals.find((item) =>
-      item.source_run_id === run.run_id &&
-      item.target_file === candidate.target_file &&
-      item.proposed_change === candidate.proposed_change
+    const existing = proposals.find((item) =>
+      item.target_file === candidate.target_file
+      && item.proposed_change === candidate.proposed_change
     );
-    if (!proposal) {
-      proposal = {
-        schema_version: SCHEMA_VERSION,
-        id: shortId("learning"),
-        source_run_id: run.run_id,
-        target_file: candidate.target_file,
-        proposed_change: candidate.proposed_change,
-        evidence_refs: candidate.evidence_refs,
-        confidence: candidate.confidence,
-        status: "proposed",
-        apply_job_id: null,
-        apply_receipt_id: null,
-        applied_at: null,
-        created_at: timestamp,
-        updated_at: timestamp
-      };
-      proposals.push(proposal);
-    }
+    if (existing) continue;
+    const proposal = {
+      schema_version: SCHEMA_VERSION,
+      id: shortId("learning"),
+      source_run_id: run.run_id,
+      target_file: candidate.target_file,
+      proposed_change: candidate.proposed_change,
+      evidence_refs: candidate.evidence_refs,
+      confidence: candidate.confidence,
+      status: "proposed",
+      apply_job_id: null,
+      apply_receipt_id: null,
+      applied_at: null,
+      created_at: timestamp,
+      updated_at: timestamp
+    };
+    proposals.push(proposal);
     let job = jobs.find((item) => item.proposal_id === proposal.id);
     if (!job) {
       job = {
@@ -475,14 +462,18 @@ function proposeLearningInternal(root, run) {
     created_at: timestamp,
     proposal_ids: created.map((proposal) => proposal.id),
     queue_job_ids: queuedJobs.map((job) => job.job_id),
-    completion_kind: "proposal_queued",
+    completion_kind: created.length > 0 ? "proposal_queued" : "no_change",
     proposal_artifact_id: null
   };
   writeJson(reportPath, report);
   const artifact = createArtifact(root, run, "learn", {
     type: "decision",
-    title: "Learning：已生成治理提案",
-    body: `已生成 ${created.length} 条 learning proposals，等待 governance approval。`,
+    title: created.length > 0
+      ? "Learning：已生成治理提案"
+      : "Learning：无新增可复用规则",
+    body: created.length > 0
+      ? `已生成 ${created.length} 条 learning proposals，等待 governance approval。`
+      : "Review 未提出新的跨任务规则，跳过 learning proposal。",
     refs: [
       ".apex-v2/learning/proposals.json",
       `.apex-v2/runs/${run.run_id}/learning-report.json`
@@ -951,11 +942,13 @@ async function projectTick(args) {
 async function projectDrain(args) {
   const projectDir = projectRoot(args);
   const root = requireStore(projectDir);
+  const releaseScheduler = acquireSchedulerLock(resolve(root, ".."));
   const maxSteps = Math.max(1, Number(args["max-steps"] || 20));
   const transitions = [];
   let stopReason = "max-steps";
 
-  for (let step = 1; step <= maxSteps; step += 1) {
+  try {
+    for (let step = 1; step <= maxSteps; step += 1) {
     const runIds = readJson(join(root, "project.json")).active_runs;
     if (runIds.length === 0) {
       stopReason = "no-active-runs";
@@ -1020,20 +1013,23 @@ async function projectDrain(args) {
       ...learned,
       ...dispatched
     ].length;
-    if (progress === 0) {
-      stopReason = actions.length > 0 ? "claimed-by-other-host" : "blocked";
-      break;
+      if (progress === 0) {
+        stopReason = actions.length > 0 ? "claimed-by-other-host" : "blocked";
+        break;
+      }
     }
-  }
 
-  console.log(JSON.stringify({
-    status: readJson(join(root, "project.json")).active_runs.length === 0
-      ? "COMPLETE"
-      : "BLOCKED",
-    stop_reason: stopReason,
-    transitions,
-    next_action: null
-  }, null, 2));
+    console.log(JSON.stringify({
+      status: readJson(join(root, "project.json")).active_runs.length === 0
+        ? "COMPLETE"
+        : "BLOCKED",
+      stop_reason: stopReason,
+      transitions,
+      next_action: null
+    }, null, 2));
+  } finally {
+    releaseScheduler();
+  }
 }
 
 function controllerAction(action, claimed) {
@@ -1055,6 +1051,10 @@ function controllerAction(action, claimed) {
     workspace: claimed?.workspace?.workspace_path || action.workspace_path || null,
     context_refs: action.read_scope,
     required_output: action.output_contract,
+    candidate_digest: action.candidate_digest,
+    verification_ref: action.verification_ref,
+    patch_refs: action.patch_refs,
+    risk_refs: action.risk_refs,
     budget: {
       model_tier: action.model_tier || null,
       lease_expires_at: claimed?.action?.lease_expires_at || action.lease_expires_at
@@ -1182,19 +1182,163 @@ function reviewReadyRuns(root, runIds) {
     if (getRunNode(run, "verify").status !== "passed") continue;
     if (getRunNode(run, "review").status !== "pending") continue;
     const plan = loadPlanGraph(root, runId);
-    if (plan.method_pack?.workflow === "governed_v2") {
-      const reviewWorker = getWorkers(root, runId).find((worker) =>
-        worker.plan_node_id === "delivery-review"
+    if (usesPostVerificationReview(plan)) {
+      const reviewWorker = latestWorkerForPlanNode(
+        getWorkers(root, runId).filter((worker) =>
+          workerCountsForCurrentStage(root, run, worker)
+        ),
+        "delivery-review"
       );
       if (!reviewWorker || !workerSuccessfullyCompleted(reviewWorker)) continue;
     }
     const result = generateReviewInternal(root, run);
     if (result.report.status === "PASS") {
       passNode(root, run.run_id, "review", result.artifact_id, "project tick 自动完成 review report。");
+      resolveGovernedRework(root, run.run_id);
+    } else if (
+      usesPostVerificationReview(plan)
+      && governedReviewRequestsRework(root, run.run_id)
+    ) {
+      reopenGovernedCandidate(root, run.run_id, result.report);
     }
     out.push({ run_id: run.run_id, status: result.report.status, artifact_id: result.artifact_id });
   }
   return out;
+}
+
+function governedReviewRequestsRework(root, runId) {
+  const reviewWorker = latestWorkerForPlanNode(
+    getWorkers(root, runId),
+    "delivery-review"
+  );
+  if (!reviewWorker) return false;
+  const dir = workerDir(root, runId, reviewWorker.worker_id);
+  const artifact = readdirSync(dir)
+    .filter((name) =>
+      name.startsWith("evidence-artifact-") && name.endsWith(".json")
+    )
+    .map((name) => readJson(join(dir, name), null))
+    .filter(Boolean)
+    .sort((left, right) =>
+      String(left.created_at).localeCompare(String(right.created_at))
+    )
+    .at(-1);
+  const evidence = artifact?.sections?.find((section) =>
+    section.kind === "semantic"
+  )?.content;
+  return ["block", "conditional"].includes(evidence?.merge_posture);
+}
+
+function reopenGovernedCandidate(root, runId, report) {
+  return withProjectTransaction(resolve(root, ".."), {
+    kind: "review-rework",
+    idempotencyKey: `review-rework:${runId}:${report.candidate_digest}`
+  }, () => {
+    const run = loadRun(root, runId);
+    const timestamp = now();
+    for (const nodeId of ["execute", "verify", "review"]) {
+      const node = getRunNode(run, nodeId);
+      node.status = "pending";
+      node.started_at = null;
+      node.completed_at = null;
+      node.evidence_refs = [];
+      node.gate = null;
+    }
+    run.status = "active";
+    run.updated_at = timestamp;
+    writeRun(root, run);
+
+    const queuePath = join(root, "runs", runId, "merge-queue.json");
+    const queue = readJson(queuePath, {
+      schema_version: SCHEMA_VERSION,
+      run_id: runId,
+      updated_at: timestamp,
+      items: [],
+      conflicts: [],
+      resolutions: []
+    });
+    for (const item of queue.items) {
+      if (item.status === "merged" || item.status === "dropped") continue;
+      item.status = "dropped";
+      const patchInfo = findPatchWithPath(root, runId, item.patch_id);
+      patchInfo.patch.status = "dropped";
+      patchInfo.patch.updated_at = timestamp;
+      updatePatchBundle(root, patchInfo.patch);
+      const worker = findWorker(root, item.worker_id);
+      worker.status = "dropped";
+      worker.updated_at = timestamp;
+      writeJson(join(
+        workerDir(root, worker.run_id, worker.worker_id),
+        "worker.json"
+      ), worker);
+    }
+    queue.conflicts = [];
+    queue.updated_at = timestamp;
+    writeJson(queuePath, queue);
+
+    const path = join(root, "runs", runId, "rework-request.json");
+    const previous = readJson(path, null);
+    const request = {
+      schema_version: SCHEMA_VERSION,
+      run_id: runId,
+      generation: Number(previous?.generation || 0) + 1,
+      status: "open",
+      candidate_digest: report.candidate_digest,
+      findings: report.blocking_findings,
+      superseded_worker_ids: getWorkers(root, runId)
+        .filter((worker) => [
+          "delivery-implementation",
+          "delivery-tests",
+          "delivery-review"
+        ].includes(worker.plan_node_id))
+        .map((worker) => worker.worker_id),
+      requested_at: timestamp,
+      resolved_at: null
+    };
+    writeJson(path, request);
+    const event = appendEvent(root, "review.rework.requested", "apex-v2", {
+      run_id: runId,
+      generation: request.generation,
+      candidate_digest: request.candidate_digest,
+      findings: request.findings
+    });
+    updateProject(root, {
+      last_event_id: event.event_id,
+      updated_at: event.timestamp
+    });
+    return request;
+  }).result;
+}
+
+function resolveGovernedRework(root, runId) {
+  const path = join(root, "runs", runId, "rework-request.json");
+  const request = readJson(path, null);
+  if (!request || request.status !== "open") return null;
+  return withProjectTransaction(resolve(root, ".."), {
+    kind: "review-rework-resolve",
+    idempotencyKey: [
+      "review-rework-resolve",
+      runId,
+      request.generation,
+      request.candidate_digest
+    ].join(":")
+  }, () => {
+    const current = readJson(path, null);
+    if (!current || current.status !== "open") return current;
+    current.status = "resolved";
+    current.resolved_at = now();
+    writeJson(path, current);
+    const event = appendEvent(root, "review.rework.resolved", "apex-v2", {
+      run_id: runId,
+      generation: current.generation,
+      candidate_digest: current.candidate_digest
+    });
+    updateProject(root, {
+      last_event_id: event.event_id,
+      updated_at: event.timestamp
+    });
+    return current;
+  }).result;
 }
 
 function integrateReadyRuns(root, runIds) {
@@ -1939,8 +2083,14 @@ function completeReadyExecuteNodes(root, runIds) {
     const plan = loadPlanGraph(root, runId);
     const workers = getWorkers(root, runId);
     if (workers.length === 0) continue;
-    const workersByPlanNode = new Map(workers.map((worker) => [worker.plan_node_id, worker]));
-    const executePlanNodes = plan.method_pack?.workflow === "governed_v2"
+    const workersByPlanNode = latestWorkersByPlanNode(
+      workers.filter((worker) => workerCountsForCurrentStage(
+        root,
+        run,
+        worker
+      ))
+    );
+    const executePlanNodes = usesPostVerificationReview(plan)
       ? plan.nodes.filter((node) => node.barrier_id !== "delivery-readiness")
       : plan.nodes;
     if (executePlanNodes.some((node) => !workersByPlanNode.has(node.id))) continue;
@@ -2041,12 +2191,16 @@ function dispatchReadyWorkers(root, runIds, options = {}) {
     if (getRunNode(run, "plan_graph").status !== "passed") continue;
 
     const plan = loadPlanGraph(root, runId);
-    const governedV2 = plan.method_pack?.workflow === "governed_v2";
+    const governedV2 = usesPostVerificationReview(plan);
     const executePending = getRunNode(run, "execute").status === "pending";
     const reviewPending = getRunNode(run, "review").status === "pending";
     if (!executePending && !(governedV2 && reviewPending)) continue;
     const workers = getWorkers(root, runId);
-    const existingPlanNodeIds = new Set(workers.map((worker) => worker.plan_node_id));
+    const existingPlanNodeIds = new Set(
+      workers.filter((worker) =>
+        workerCountsForCurrentStage(root, run, worker)
+      ).map((worker) => worker.plan_node_id)
+    );
     const completedPlanNodeIds = new Set(
       workers.filter(workerSuccessfullyCompleted).map((worker) => worker.plan_node_id)
     );
@@ -2075,6 +2229,66 @@ function dispatchReadyWorkers(root, runIds, options = {}) {
   }
 
   return dispatched;
+}
+
+function latestWorkersByPlanNode(workers) {
+  const values = new Map();
+  for (const worker of workers) {
+    const previous = values.get(worker.plan_node_id);
+    if (
+      !previous
+      || String(worker.created_at).localeCompare(String(previous.created_at)) > 0
+    ) {
+      values.set(worker.plan_node_id, worker);
+    }
+  }
+  return values;
+}
+
+function usesPostVerificationReview(plan) {
+  return ["quick", "governed_v2"].includes(plan.method_pack?.workflow);
+}
+
+function latestWorkerForPlanNode(workers, planNodeId) {
+  return latestWorkersByPlanNode(
+    workers.filter((worker) => worker.plan_node_id === planNodeId)
+  ).get(planNodeId) || null;
+}
+
+function workerCountsForCurrentStage(root, run, worker) {
+  const plan = loadPlanGraph(root, run.run_id);
+  if (!usesPostVerificationReview(plan)) return true;
+  const rework = readJson(join(
+    root,
+    "runs",
+    run.run_id,
+    "rework-request.json"
+  ), null);
+  if (
+    rework?.status === "open"
+    && [
+      "delivery-implementation",
+      "delivery-tests",
+      "delivery-review"
+    ].includes(
+      worker.plan_node_id
+    )
+  ) {
+    return !(rework.superseded_worker_ids || []).includes(worker.worker_id);
+  }
+  if (worker.plan_node_id === "delivery-review") {
+    const verification = readJson(join(
+      root,
+      "runs",
+      run.run_id,
+      "verification-report.json"
+    ), null);
+    return Boolean(
+      verification?.created_at
+      && Date.parse(worker.created_at) > Date.parse(verification.created_at)
+    );
+  }
+  return true;
 }
 
 function countOpenWorkers(root) {

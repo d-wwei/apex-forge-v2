@@ -37,6 +37,8 @@ import { appendEvent, SCHEMA_VERSION, updateProject } from "./store.mjs";
 import { withProjectTransaction } from "./project-transaction.mjs";
 import { schemaPath } from "./schema-paths.mjs";
 import { evaluateRouteUsage } from "./execution-router.mjs";
+import { persistUnifiedEvidence } from "./evidence-artifact.mjs";
+import { normalizeEvidenceSubmission } from "./evidence-artifact.mjs";
 import {
   assertCapabilityContextBudget,
   readCapabilityProtocol
@@ -154,11 +156,12 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
   const modelChanged = worker.model_tier !== modelSelection.model_tier
     || worker.model_id !== modelSelection.model_id;
   const sessionId = modelChanged ? undefined : options.sessionId;
+  const outputSchemaPath = providerResultSchemaPath(worker, dir);
   const execution = resolved.executor.execute({
     executable: options.command || resolved.name,
     workspaceDir,
     prompt,
-    outputSchemaPath: PROVIDER_AGENT_RESULT_SCHEMA,
+    outputSchemaPath,
     outputPath,
     model: modelSelection.model_id,
     profile: options.profile,
@@ -175,17 +178,39 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
   const protectedChanges = diffProtectedWorkspace(protectedBefore, snapshotProtectedWorkspace(workspaceDir));
   changes.changed_files = Array.from(new Set([...changes.changed_files, ...protectedChanges])).sort();
   changes.out_of_scope_files = Array.from(new Set([...changes.out_of_scope_files, ...protectedChanges])).sort();
-  const capabilityEvidence = structured.valid
-    ? structured.value.capability_evidence || []
-    : [];
+  let normalizedEvidence = {
+    semanticEvidence: null,
+    capabilityEvidence: [],
+    submissionFormat: "legacy_projection"
+  };
+  let evidenceSubmissionError = "";
+  if (structured.valid) {
+    try {
+      normalizedEvidence = normalizeEvidenceSubmission(worker, {
+        evidenceArtifact: structured.value.evidence_artifact || null,
+        semanticEvidence: structured.value.semantic_evidence || null,
+        capabilityEvidence: structured.value.capability_evidence || [],
+        refs: structured.value.evidence_refs || [],
+        summary: structured.value.summary,
+        timestamp: now()
+      });
+    } catch (error) {
+      evidenceSubmissionError = error.message;
+    }
+  }
+  const capabilityEvidence = normalizedEvidence.capabilityEvidence;
   let semanticEvidence = null;
   let semanticEvidenceError = "";
-  if (structured.valid && worker.execution_class === "cognitive") {
+  if (
+    structured.valid
+    && !evidenceSubmissionError
+    && worker.execution_class === "cognitive"
+  ) {
     try {
       semanticEvidence = validateWorkerSemanticEvidence(
         root,
         worker,
-        structured.value.semantic_evidence
+        normalizedEvidence.semanticEvidence
       );
     } catch (error) {
       semanticEvidenceError = error.message;
@@ -198,7 +223,7 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
     missing: [],
     error: ""
   };
-  if (structured.valid) {
+  if (structured.valid && !evidenceSubmissionError) {
     try {
       capabilityEvidenceValidation = {
         valid: true,
@@ -228,6 +253,7 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
     && changes.out_of_scope_files.length === 0
     && changes.unsupported_files.length === 0
     && !budgetFailed
+    && evidenceSubmissionError === ""
     && capabilityEvidenceValidation.valid
     && semanticEvidenceError === ""
     && (worker.output_contract !== "patch" || changes.operations.length > 0);
@@ -237,6 +263,8 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
       ? "budget_exceeded"
       : !capabilityEvidenceValidation.valid
       ? "contract_error"
+      : evidenceSubmissionError
+        ? "contract_error"
       : semanticEvidenceError
         ? "contract_error"
       : classifyFailure(execution, structured, changes, worker);
@@ -286,12 +314,12 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
       enforcement: worker.capability_enforcement || "shadow",
       submitted: capabilityEvidenceValidation.submitted,
       missing: capabilityEvidenceValidation.missing,
-      error: capabilityEvidenceValidation.error
+      error: evidenceSubmissionError || capabilityEvidenceValidation.error
     },
     semantic_evidence_status: {
       required: worker.execution_class === "cognitive",
-      valid: semanticEvidenceError === "",
-      error: semanticEvidenceError
+      valid: evidenceSubmissionError === "" && semanticEvidenceError === "",
+      error: evidenceSubmissionError || semanticEvidenceError
     },
     refs: [
       `${worker.namespace}/agent-prompt.md`,
@@ -346,6 +374,8 @@ export function executeWorkerExecutor(root, worker, planNode, options = {}) {
     semanticEvidence,
     rawAgentOutput: rawAgentOutput.text,
     capabilityEvidence,
+    capabilityEvidenceValidation,
+    submissionFormat: normalizedEvidence.submissionFormat,
     timestamp
   })).result;
 }
@@ -363,20 +393,53 @@ function commitWorkerExecution(root, input) {
     throw new Error(`worker execution commit 遇到并发状态变化：${worker.worker_id}`);
   }
   const dir = workerDir(root, worker.run_id, worker.worker_id);
+  const submissionAttempt = Number(worker.attempt || 0) + 1;
+  const acceptedCapabilityEvidence = input.capabilityEvidenceValidation.valid
+    ? input.capabilityEvidence
+    : [];
   const capabilityEvidenceRefs = persistCapabilityEvidence(
     dir,
     worker.namespace,
-    input.capabilityEvidence
+    acceptedCapabilityEvidence,
+    submissionAttempt
   );
   let semanticEvidenceRef = null;
   if (input.semanticEvidence) {
-    semanticEvidenceRef = `${worker.namespace}/cognitive-evidence.json`;
-    writeJson(join(dir, "cognitive-evidence.json"), input.semanticEvidence);
+    semanticEvidenceRef = persistSemanticEvidence(
+      dir,
+      worker.namespace,
+      input.semanticEvidence,
+      submissionAttempt
+    );
   }
+  const unified = persistUnifiedEvidence(root, worker, {
+    success: input.success,
+    semanticEvidence: input.semanticEvidence,
+    capabilityEvidence: acceptedCapabilityEvidence,
+    capabilityValidation: input.capabilityEvidenceValidation,
+    tests: input.structured.value?.tests || [],
+    patch: input.patch,
+    evidenceRefs: [
+      ...(input.structured.value?.evidence_refs || []),
+      ...capabilityEvidenceRefs,
+      ...(semanticEvidenceRef ? [semanticEvidenceRef] : [])
+    ],
+    executor: input.resolved.id,
+    model: input.modelSelection.model_id,
+    attempt: submissionAttempt,
+    reasons: input.success ? [] : [input.adapterResult.summary],
+    timestamp: input.timestamp
+  });
+  input.adapterResult.evidence_artifact_ref = unified.evidenceArtifactRef;
+  input.adapterResult.capability_evidence_refs = capabilityEvidenceRefs;
+  input.adapterResult.capability_receipt_refs = unified.capabilityReceiptRefs;
+  input.adapterResult.submission_format = input.submissionFormat;
   input.adapterResult.refs = Array.from(new Set([
     ...input.adapterResult.refs,
     ...capabilityEvidenceRefs,
-    ...(semanticEvidenceRef ? [semanticEvidenceRef] : [])
+    ...(semanticEvidenceRef ? [semanticEvidenceRef] : []),
+    unified.evidenceArtifactRef,
+    ...unified.capabilityReceiptRefs
   ]));
   if (input.structured.valid) {
     writeFileSync(
@@ -473,12 +536,34 @@ function commitWorkerExecution(root, input) {
   return { adapterResult: input.adapterResult, patch: input.patch, artifact };
 }
 
-function persistCapabilityEvidence(dir, namespace, evidenceItems = []) {
+function persistCapabilityEvidence(
+  dir,
+  namespace,
+  evidenceItems = [],
+  attempt = 1
+) {
   return evidenceItems.map((evidence) => {
-    const name = `capability-evidence-${evidence.capability_id}.json`;
+    const name = [
+      "capability-evidence",
+      `attempt-${attempt}`,
+      evidence.capability_id
+    ].join("-") + ".json";
     writeJson(join(dir, name), evidence);
+    const legacyAlias = join(
+      dir,
+      `capability-evidence-${evidence.capability_id}.json`
+    );
+    if (!existsSync(legacyAlias)) writeJson(legacyAlias, evidence);
     return `${namespace}/${name}`;
   });
+}
+
+function persistSemanticEvidence(dir, namespace, evidence, attempt) {
+  const name = `cognitive-evidence-attempt-${attempt}.json`;
+  writeJson(join(dir, name), evidence);
+  const legacyAlias = join(dir, "cognitive-evidence.json");
+  if (!existsSync(legacyAlias)) writeJson(legacyAlias, evidence);
+  return `${namespace}/${name}`;
 }
 
 function readPriorAdapterResults(dir) {
@@ -590,6 +675,20 @@ ${capabilityProtocols(planNode.capability_bindings || [])}
 ${lines(worker.capability_invocation_refs || [])}
 
 ${semanticEvidence}
+${worker.evidence_format === "unified-v1" ? `## Unified Evidence
+
+Return one top-level \`evidence_artifact\` object:
+- \`semantic_evidence_json\`: JSON-stringified semantic evidence, or null.
+- \`capability_outputs\`: one item per required capability with
+  \`capability_id\` and JSON-stringified typed \`output_json\`.
+- Set legacy \`semantic_evidence\` to null and \`capability_evidence\` to [].
+  The Kernel derives compatibility projections and Capability Receipts.
+` : `## Legacy Capability Evidence
+
+For each capability evidence item, put the typed output object in
+\`output_json\` as a JSON string. The Kernel restores it to \`output\` before
+canonical validation.
+`}
 ${options.semanticEvidenceType
     ? `## Cognitive Verdict Semantics
 
@@ -613,6 +712,37 @@ ${lines(worker.verification)}
 7. If blocked, return verdict "fail" and explain the exact blocker.
 8. Your final response must satisfy the provided JSON output schema.
 `;
+}
+
+function providerResultSchemaPath(worker, dir) {
+  if (worker.evidence_format !== "unified-v1") {
+    return PROVIDER_AGENT_RESULT_SCHEMA;
+  }
+  const schema = JSON.parse(readFileSync(PROVIDER_AGENT_RESULT_SCHEMA, "utf8"));
+  schema.required = [...schema.required, "evidence_artifact"];
+  schema.properties.evidence_artifact = {
+    type: "object",
+    required: ["semantic_evidence_json", "capability_outputs"],
+    properties: {
+      semantic_evidence_json: { type: ["string", "null"] },
+      capability_outputs: {
+        type: "array",
+        items: {
+          type: "object",
+          required: ["capability_id", "output_json"],
+          properties: {
+            capability_id: { type: "string" },
+            output_json: { type: "string" }
+          },
+          additionalProperties: false
+        }
+      }
+    },
+    additionalProperties: false
+  };
+  const path = join(dir, "agent-result-provider-unified.schema.json");
+  writeFileSync(path, `${JSON.stringify(schema, null, 2)}\n`);
+  return path;
 }
 
 function capabilityProtocols(bindings) {
@@ -896,33 +1026,52 @@ function formatPathSummary(paths, total) {
 export function normalizeProviderAgentResult(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return value;
   const normalized = structuredClone(value);
+  if (normalized.evidence_artifact === null) {
+    delete normalized.evidence_artifact;
+  }
   if (normalized.semantic_evidence === null) {
     delete normalized.semantic_evidence;
-    return normalized;
   }
   const evidence = normalized.semantic_evidence;
-  if (!evidence || typeof evidence !== "object" || Array.isArray(evidence)) {
-    return normalized;
+  if (evidence && typeof evidence === "object" && !Array.isArray(evidence)) {
+    const common = [
+      "schema_version",
+      "evidence_type",
+      "objective",
+      "source_refs",
+      "claims",
+      "uncertainties",
+      "acceptance_mapping",
+      "created_at"
+    ];
+    const specific = {
+      context: ["affected_files", "constraints", "unknowns"],
+      risk: ["failure_paths", "blast_radius", "mitigations", "rollback"],
+      design: ["slices", "dependencies", "verification", "rollback"],
+      review: ["candidate_digest", "findings", "residual_risks", "merge_posture"]
+    }[evidence.evidence_type] || [];
+    const allowed = new Set([...common, ...specific]);
+    for (const key of Object.keys(evidence)) {
+      if (!allowed.has(key)) delete evidence[key];
+    }
   }
-  const common = [
-    "schema_version",
-    "evidence_type",
-    "objective",
-    "source_refs",
-    "claims",
-    "uncertainties",
-    "acceptance_mapping",
-    "created_at"
-  ];
-  const specific = {
-    context: ["affected_files", "constraints", "unknowns"],
-    risk: ["failure_paths", "blast_radius", "mitigations", "rollback"],
-    design: ["slices", "dependencies", "verification", "rollback"],
-    review: ["candidate_digest", "findings", "residual_risks", "merge_posture"]
-  }[evidence.evidence_type] || [];
-  const allowed = new Set([...common, ...specific]);
-  for (const key of Object.keys(evidence)) {
-    if (!allowed.has(key)) delete evidence[key];
+  for (const capability of normalized.capability_evidence || []) {
+    if (
+      Object.hasOwn(capability, "output_json")
+      && Object.hasOwn(capability, "output")
+    ) {
+      throw new Error(
+        `capability evidence 不能同时提交 output 和 output_json：${capability.capability_id}`
+      );
+    }
+    if (Object.hasOwn(capability, "output_json")) {
+      try {
+        capability.output = JSON.parse(capability.output_json);
+      } catch {
+        capability.output = null;
+      }
+      delete capability.output_json;
+    }
   }
   return normalized;
 }

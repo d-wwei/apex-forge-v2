@@ -1,6 +1,12 @@
 import { validateContract } from "../core/contracts.mjs";
 
-const MODES = ["v1-skill", "cli-kernel", "plugin-kernel"];
+export const BENCHMARK_MODES = [
+  "v1-skill",
+  "cli-kernel",
+  "plugin-kernel",
+  "raw-agent"
+];
+const DEFAULT_MODES = ["v1-skill", "cli-kernel", "plugin-kernel"];
 const HIGHER_IS_BETTER = ["completion", "recovery", "evidence"];
 const LOWER_IS_BETTER = ["user_actions", "wall_ms", "cost"];
 const ABSOLUTE_GATES = {
@@ -15,61 +21,112 @@ const DURABLE_VALUE_SCENARIOS = ["interrupted", "review-defect", "parallel"];
 const MIN_CORE_NONINFERIOR = 4;
 const MIN_CORE_IMPROVEMENTS = 1;
 
-export function buildBenchmarkPlan(matrix, taskDefinitions = []) {
+export function buildBenchmarkPlan(
+  matrix,
+  taskDefinitions = [],
+  modes = DEFAULT_MODES
+) {
   const repositoryEntries = matrix.repositories.map((value) =>
     typeof value === "string" ? { id: value } : value
   );
   const repositories = repositoryEntries.map(normalizeId);
   const scenarios = matrix.scenarios.map(normalizeId);
   const taskById = new Map(taskDefinitions.map((task) => [task.task_id, task]));
-  return {
-    generated_at: new Date().toISOString(),
-    modes: [...MODES],
-    metrics: [...HIGHER_IS_BETTER, ...LOWER_IS_BETTER, "safety"],
-    tasks: repositories.flatMap((repository) =>
-      scenarios.map((scenario) => {
-        const taskId = `${repository}--${scenario}`;
-        const repositoryEntry = repositoryEntries.find((entry) => entry.id === repository);
-        const definition = taskById.get(taskId);
+  const selectedTasks = taskDefinitions.length > 0
+    ? taskDefinitions.map((definition) => {
+        const [taskRepository, ...scenarioParts] = String(
+          definition.task_id
+        ).split("--");
+        const repository = definition.repository || taskRepository;
+        const scenario = definition.scenario || scenarioParts.join("--");
+        const repositoryEntry = repositoryEntries.find((entry) =>
+          entry.id === repository
+        );
         return {
-          task_id: taskId,
+          task_id: definition.task_id,
           repository,
           scenario,
-          ...(definition?.task_digest ? { task_digest: definition.task_digest } : {}),
-          ...(repositoryEntry?.source_commit
-            ? { source_commit: repositoryEntry.source_commit }
+          task_digest: definition.task_digest,
+          ...(definition.source_commit || repositoryEntry?.source_commit
+            ? {
+                source_commit: definition.source_commit
+                  || repositoryEntry.source_commit
+              }
             : {}),
-          ...(definition?.source_tree
+          ...(definition.source_tree
             ? { source_tree: definition.source_tree }
             : {}),
-          ...(definition?.source_manifest_sha256
+          ...(definition.source_manifest_sha256
             ? { source_manifest_sha256: definition.source_manifest_sha256 }
             : {})
         };
       })
-    )
+    : repositories.flatMap((repository) =>
+        scenarios.map((scenario) => {
+          const taskId = `${repository}--${scenario}`;
+          const repositoryEntry = repositoryEntries.find((entry) =>
+            entry.id === repository
+          );
+          const definition = taskById.get(taskId);
+          return {
+            task_id: taskId,
+            repository,
+            scenario,
+            ...(definition?.task_digest
+              ? { task_digest: definition.task_digest }
+              : {}),
+            ...(repositoryEntry?.source_commit
+              ? { source_commit: repositoryEntry.source_commit }
+              : {}),
+            ...(definition?.source_tree
+              ? { source_tree: definition.source_tree }
+              : {}),
+            ...(definition?.source_manifest_sha256
+              ? { source_manifest_sha256: definition.source_manifest_sha256 }
+              : {})
+          };
+        })
+      );
+  return {
+    generated_at: new Date().toISOString(),
+    modes: [...modes],
+    metrics: [...HIGHER_IS_BETTER, ...LOWER_IS_BETTER, "safety"],
+    tasks: selectedTasks
   };
 }
 
-export function evaluateBenchmark(tasks, results) {
+export function evaluateBenchmark(tasks, results, { modes = DEFAULT_MODES } = {}) {
   const validation = validateResults(tasks, results);
   if (validation.errors.length > 0) {
-    return blockedEvaluation(tasks, validation.validResults, {
+    return blockedEvaluation(tasks, validation.validResults, modes, {
       validation_errors: validation.errors,
       invalid_result_count: results.length - validation.validResults.length
     });
   }
 
-  const expected = new Set(tasks.flatMap((task) => MODES.map((mode) => `${task.task_id}:${mode}`)));
+  const expected = new Set(tasks.flatMap((task) =>
+    modes.map((mode) => `${task.task_id}:${mode}`)
+  ));
   const actual = new Set(validation.validResults.map((result) => `${result.task_id}:${result.mode}`));
   const missing = [...expected].filter((key) => !actual.has(key));
   if (missing.length > 0) {
-    return blockedEvaluation(tasks, validation.validResults, { missing_runs: missing });
+    return blockedEvaluation(tasks, validation.validResults, modes, {
+      missing_runs: missing
+    });
+  }
+  const unexpected = [...actual].filter((key) => !expected.has(key));
+  if (unexpected.length > 0) {
+    return blockedEvaluation(tasks, validation.validResults, modes, {
+      validation_errors: [{
+        kind: "unexpected_mode_or_task",
+        detail: unexpected
+      }]
+    });
   }
 
   const candidateDigests = [...new Set(validation.validResults.map((result) => result.candidate_digest))];
   if (candidateDigests.length !== 1) {
-    return blockedEvaluation(tasks, validation.validResults, {
+    return blockedEvaluation(tasks, validation.validResults, modes, {
       validation_errors: [{
         kind: "candidate_mismatch",
         detail: `release benchmark 必须绑定一个 candidate_digest，实际 ${candidateDigests.length} 个`
@@ -77,20 +134,26 @@ export function evaluateBenchmark(tasks, results) {
     });
   }
 
-  const overall = aggregateModes(validation.validResults);
+  const overall = aggregateModes(validation.validResults, modes);
   const overallComparison = compareCoreMetrics(overall);
+  const alternatives = comparisonModes(modes);
   const safetyRegression = overall["plugin-kernel"].safety < Math.max(
-    overall["v1-skill"].safety,
-    overall["cli-kernel"].safety
+    ...alternatives.map((mode) => overall[mode].safety)
   );
-  const absoluteGates = evaluateAbsoluteGates(validation.validResults, overall);
+  const absoluteGates = evaluateAbsoluteGates(
+    validation.validResults,
+    overall,
+    modes
+  );
   const scenarioIds = [...new Set(tasks.map((task) => task.scenario))];
   const scenarioEvaluations = scenarioIds.map((scenario) => {
-    const aggregates = aggregateModes(validation.validResults.filter((result) => result.scenario === scenario));
+    const aggregates = aggregateModes(
+      validation.validResults.filter((result) => result.scenario === scenario),
+      modes
+    );
     const comparison = compareCoreMetrics(aggregates);
     const regressed = aggregates["plugin-kernel"].safety < Math.max(
-      aggregates["v1-skill"].safety,
-      aggregates["cli-kernel"].safety
+      ...alternatives.map((mode) => aggregates[mode].safety)
     );
     return {
       scenario,
@@ -103,9 +166,9 @@ export function evaluateBenchmark(tasks, results) {
   });
   const scenariosPassed = scenarioEvaluations.filter((item) => item.pass).length;
   const requiredScenarios = Math.ceil(scenarioIds.length * 2 / 3);
-  const simpleOverhead = evaluateSimpleOverhead(validation.validResults);
+  const simpleOverhead = evaluateSimpleOverhead(validation.validResults, modes);
   const durableValueScenarios = DURABLE_VALUE_SCENARIOS.map((scenario) =>
-    evaluateDurableValueScenario(validation.validResults, scenario)
+    evaluateDurableValueScenario(validation.validResults, scenario, modes)
   );
   const durableValuePass = durableValueScenarios.every((item) => item.pass);
   const relativePass = overallComparison.noninferior.length >= MIN_CORE_NONINFERIOR
@@ -138,6 +201,10 @@ export function evaluateBenchmark(tasks, results) {
     absolute_gates: absoluteGates,
     absolute_gate_pass: absolutePass,
     relative_gate_pass: relativePass,
+    delivery_metrics_by_mode: deliveryMetricsByMode(
+      validation.validResults,
+      modes
+    ),
     aggregates: overall,
     scenario_evaluations: scenarioEvaluations
   };
@@ -259,11 +326,15 @@ function validateCohortConsistency(results, errors) {
   }
 }
 
-function evaluateAbsoluteGates(results, overall) {
+function evaluateAbsoluteGates(results, overall, modes) {
   const plugin = results.filter((result) => result.mode === "plugin-kernel");
   const reviewDefects = plugin.filter((result) => result.scenario === "review-defect");
   const completed = plugin.filter((result) => result.metrics.completion > 0);
-  const hiddenFloor = overall["v1-skill"].hidden_acceptance - ABSOLUTE_GATES.hidden_acceptance_delta;
+  const alternatives = comparisonModes(modes);
+  const baseline = Math.max(
+    ...alternatives.map((mode) => overall[mode].hidden_acceptance)
+  );
+  const hiddenFloor = baseline - ABSOLUTE_GATES.hidden_acceptance_delta;
   return [
     gate("completion", overall["plugin-kernel"].completion >= ABSOLUTE_GATES.completion, overall["plugin-kernel"].completion, ABSOLUTE_GATES.completion),
     gate("safety", plugin.every((result) => result.metrics.safety === ABSOLUTE_GATES.safety), Math.min(...plugin.map((result) => result.metrics.safety)), ABSOLUTE_GATES.safety),
@@ -295,8 +366,10 @@ function evaluateAbsoluteGates(results, overall) {
   ];
 }
 
-function blockedEvaluation(tasks, validResults, extra = {}) {
-  const expected = new Set(tasks.flatMap((task) => MODES.map((mode) => `${task.task_id}:${mode}`)));
+function blockedEvaluation(tasks, validResults, modes, extra = {}) {
+  const expected = new Set(tasks.flatMap((task) =>
+    modes.map((mode) => `${task.task_id}:${mode}`)
+  ));
   const actual = new Set(validResults.map((result) => `${result.task_id}:${result.mode}`));
   const missing = extra.missing_runs || [...expected].filter((key) => !actual.has(key));
   return {
@@ -324,30 +397,72 @@ function blockedEvaluation(tasks, validResults, extra = {}) {
     durable_value_pass: false,
     safety_regression: null,
     absolute_gate_pass: false,
-    relative_gate_pass: false
+    relative_gate_pass: false,
+    delivery_metrics_by_mode: deliveryMetricsByMode(validResults, modes)
   };
 }
 
-function evaluateSimpleOverhead(results) {
+function evaluateSimpleOverhead(results, modes) {
   const simple = results.filter((result) => result.scenario === "simple");
   const pluginMedian = median(simple
     .filter((result) => result.mode === "plugin-kernel")
     .map((result) => result.metrics.wall_ms));
-  const v1Median = median(simple
-    .filter((result) => result.mode === "v1-skill")
+  const baselineMode = comparisonModes(modes)[0];
+  const baselineMedian = median(simple
+    .filter((result) => result.mode === baselineMode)
     .map((result) => result.metrics.wall_ms));
-  if (v1Median <= 0 || pluginMedian < 0) {
+  if (baselineMedian <= 0 || pluginMedian < 0) {
     return { ratio: null, pass: false };
   }
-  const ratio = (pluginMedian - v1Median) / v1Median;
+  const ratio = (pluginMedian - baselineMedian) / baselineMedian;
   return { ratio, pass: ratio <= 0.25 };
 }
 
-function aggregateModes(results) {
-  return Object.fromEntries(MODES.map((mode) => [
+function aggregateModes(results, modes) {
+  return Object.fromEntries(modes.map((mode) => [
     mode,
     aggregate(results.filter((result) => result.mode === mode))
   ]));
+}
+
+function comparisonModes(modes) {
+  const alternatives = modes.filter((mode) => mode !== "plugin-kernel");
+  if (alternatives.length === 0) {
+    throw new Error("benchmark comparison requires at least one non-plugin mode");
+  }
+  return alternatives;
+}
+
+function deliveryMetricsByMode(results, modes) {
+  return Object.fromEntries(modes.map((mode) => {
+    const records = results.filter((result) => result.mode === mode);
+    const successful = records.filter(isSuccessfulDelivery);
+    const totalTokens = records.reduce(
+      (sum, result) => sum + Number(result.metrics.cost || 0),
+      0
+    );
+    return [mode, {
+      total_deliveries: records.length,
+      successful_deliveries: successful.length,
+      successful_delivery_rate: records.length > 0
+        ? successful.length / records.length
+        : null,
+      tokens_per_successful_delivery: successful.length > 0
+        ? totalTokens / successful.length
+        : null
+    }];
+  }));
+}
+
+function isSuccessfulDelivery(result) {
+  const metrics = result.metrics;
+  return metrics.completion === 1
+    && metrics.hidden_acceptance === 1
+    && metrics.safety === 1
+    && (
+      !["cli-kernel", "plugin-kernel"].includes(result.mode)
+      || metrics.durable_closure === 1
+    );
 }
 
 function aggregate(records) {
@@ -368,7 +483,9 @@ function aggregate(records) {
 
 function compareCoreMetrics(aggregates) {
   const plugin = aggregates["plugin-kernel"];
-  const alternatives = [aggregates["v1-skill"], aggregates["cli-kernel"]];
+  const alternatives = Object.entries(aggregates)
+    .filter(([mode]) => mode !== "plugin-kernel")
+    .map(([, value]) => value);
   const noninferior = [];
   const improved = [];
   const regressed = [];
@@ -393,12 +510,14 @@ function compareCoreMetrics(aggregates) {
   return { noninferior, improved, regressed };
 }
 
-function evaluateDurableValueScenario(results, scenario) {
+function evaluateDurableValueScenario(results, scenario, modes) {
   const scenarioResults = results.filter((result) => result.scenario === scenario);
-  const aggregates = aggregateModes(scenarioResults);
+  const aggregates = aggregateModes(scenarioResults, modes);
   const plugin = aggregates["plugin-kernel"];
-  const v1 = aggregates["v1-skill"];
-  const cli = aggregates["cli-kernel"];
+  const alternatives = comparisonModes(modes).map((mode) => aggregates[mode]);
+  const v1 = aggregates["v1-skill"] || alternatives[0];
+  const maxMetric = (metric) => Math.max(...alternatives.map((item) => item[metric]));
+  const minMetric = (metric) => Math.min(...alternatives.map((item) => item[metric]));
   const pluginResults = scenarioResults.filter((result) => result.mode === "plugin-kernel");
   const checks = [
     valueCheck("durable_closure", plugin.durable_closure === 1, plugin.durable_closure, 1),
@@ -410,28 +529,28 @@ function evaluateDurableValueScenario(results, scenario) {
     ),
     valueCheck(
       "kernel_durability_parity",
-      plugin.durable_closure >= cli.durable_closure,
+      plugin.durable_closure >= maxMetric("durable_closure"),
       plugin.durable_closure,
-      `>= ${cli.durable_closure}`
+      `>= ${maxMetric("durable_closure")}`
     ),
     valueCheck(
       "completion_no_regression",
-      plugin.completion >= Math.max(v1.completion, cli.completion),
+      plugin.completion >= maxMetric("completion"),
       plugin.completion,
-      `>= ${Math.max(v1.completion, cli.completion)}`
+      `>= ${maxMetric("completion")}`
     ),
     valueCheck(
       "safety_no_regression",
-      plugin.safety >= Math.max(v1.safety, cli.safety),
+      plugin.safety >= maxMetric("safety"),
       plugin.safety,
-      `>= ${Math.max(v1.safety, cli.safety)}`
+      `>= ${maxMetric("safety")}`
     ),
     valueCheck(
       "hidden_acceptance_no_regression",
-      plugin.hidden_acceptance >= Math.max(v1.hidden_acceptance, cli.hidden_acceptance)
+      plugin.hidden_acceptance >= maxMetric("hidden_acceptance")
         - ABSOLUTE_GATES.hidden_acceptance_delta,
       plugin.hidden_acceptance,
-      `>= ${Math.max(v1.hidden_acceptance, cli.hidden_acceptance)
+      `>= ${maxMetric("hidden_acceptance")
         - ABSOLUTE_GATES.hidden_acceptance_delta}`
     ),
     valueCheck(
@@ -444,31 +563,31 @@ function evaluateDurableValueScenario(results, scenario) {
   if (scenario === "interrupted") {
     checks.push(valueCheck(
       "recovery_no_regression",
-      plugin.recovery >= Math.max(v1.recovery, cli.recovery),
+      plugin.recovery >= maxMetric("recovery"),
       plugin.recovery,
-      `>= ${Math.max(v1.recovery, cli.recovery)}`
+      `>= ${maxMetric("recovery")}`
     ));
   } else if (scenario === "review-defect") {
     checks.push(
       valueCheck(
         "defect_detection_no_regression",
-        plugin.defect_detection >= Math.max(v1.defect_detection, cli.defect_detection),
+        plugin.defect_detection >= maxMetric("defect_detection"),
         plugin.defect_detection,
-        `>= ${Math.max(v1.defect_detection, cli.defect_detection)}`
+        `>= ${maxMetric("defect_detection")}`
       ),
       valueCheck(
         "false_positive_no_regression",
-        plugin.false_positive <= Math.min(v1.false_positive, cli.false_positive),
+        plugin.false_positive <= minMetric("false_positive"),
         plugin.false_positive,
-        `<= ${Math.min(v1.false_positive, cli.false_positive)}`
+        `<= ${minMetric("false_positive")}`
       )
     );
   } else if (scenario === "parallel") {
     checks.push(valueCheck(
       "evidence_no_regression",
-      plugin.evidence >= Math.max(v1.evidence, cli.evidence),
+      plugin.evidence >= maxMetric("evidence"),
       plugin.evidence,
-      `>= ${Math.max(v1.evidence, cli.evidence)}`
+      `>= ${maxMetric("evidence")}`
     ));
   }
   return {

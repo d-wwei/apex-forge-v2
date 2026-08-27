@@ -16,9 +16,14 @@ const IGNORED_ROOT_NAMES = new Set([
   ".git",
   ".apex-v2",
   ".apex-v2.lock",
+  ".apex-v2.scheduler-lock",
   ".apex-v2.transaction-backups",
   "node_modules"
 ]);
+const IGNORED_ROOT_PREFIXES = [
+  ".apex-v2.lock.stale-",
+  ".apex-v2.scheduler-lock.stale-"
+];
 const IGNORED_TREE_NAMES = new Set(["node_modules"]);
 const SECRET_BASENAMES = new Set([".npmrc", ".pypirc", ".netrc", "credentials", "credentials.json"]);
 
@@ -127,7 +132,9 @@ function listProjectSourceFiles(projectDir) {
 
 function isIgnoredPath(path) {
   const parts = path.split("/");
-  return IGNORED_ROOT_NAMES.has(parts[0]) || parts.some((part) => IGNORED_TREE_NAMES.has(part));
+  return IGNORED_ROOT_NAMES.has(parts[0])
+    || IGNORED_ROOT_PREFIXES.some((prefix) => parts[0].startsWith(prefix))
+    || parts.some((part) => IGNORED_TREE_NAMES.has(part));
 }
 
 function isSecretPath(path) {

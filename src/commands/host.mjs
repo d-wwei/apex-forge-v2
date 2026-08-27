@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import {
   appendEvent,
@@ -26,6 +26,10 @@ import {
   readCapabilityProtocol
 } from "../core/capability-registry.mjs";
 import { assertCapabilityEvidence } from "../core/capability-evidence.mjs";
+import {
+  normalizeEvidenceSubmission,
+  persistUnifiedEvidence
+} from "../core/evidence-artifact.mjs";
 import { withProjectTransaction } from "../core/project-transaction.mjs";
 import {
   findWorker,
@@ -67,7 +71,8 @@ export function handleHostCommand(subcommand, args) {
         refs: splitList(args.refs),
         claimToken: required(args, "claim-token"),
         semanticEvidence: parseSemanticEvidence(args),
-        capabilityEvidence: parseCapabilityEvidence(args)
+        capabilityEvidence: parseCapabilityEvidence(args),
+        evidenceArtifact: parseEvidenceArtifact(args)
       }
     ), null, 2));
     return;
@@ -116,9 +121,10 @@ export function listHostActions(root) {
         read_scope: worker.read_scope,
         write_scope: worker.write_scope,
         output_contract: worker.output_contract,
+        evidence_format: worker.evidence_format || "legacy-v1",
         model_tier: worker.model_tier || null,
-        candidate_digest: reviewCandidateDigest(root, worker),
-        lease_expires_at: worker.claim_expires_at || null,
+      ...reviewActionContext(root, worker),
+      lease_expires_at: worker.claim_expires_at || null,
         fencing_token: worker.fencing_token || 0,
         claim_expired: worker.status === "claimed" && claimExpired(worker),
         workspace_path: readJson(
@@ -129,8 +135,15 @@ export function listHostActions(root) {
   );
 }
 
-function reviewCandidateDigest(root, worker) {
-  if (!worker.plan_node_id.endsWith("review")) return null;
+function reviewActionContext(root, worker) {
+  if (!worker.plan_node_id.endsWith("review")) {
+    return {
+      candidate_digest: null,
+      verification_ref: null,
+      patch_refs: [],
+      risk_refs: []
+    };
+  }
   const run = loadRun(root, worker.run_id);
   const queue = readJson(join(root, "runs", worker.run_id, "merge-queue.json"), {
     schema_version: SCHEMA_VERSION,
@@ -140,7 +153,21 @@ function reviewCandidateDigest(root, worker) {
     conflicts: [],
     resolutions: []
   });
-  return buildCandidateSet(root, run, queue, resolve(root, "..")).candidate_digest;
+  return {
+    candidate_digest: buildCandidateSet(
+      root,
+      run,
+      queue,
+      resolve(root, "..")
+    ).candidate_digest,
+    verification_ref: `.apex-v2/runs/${worker.run_id}/verification-report.json`,
+    patch_refs: queue.items
+      .filter((item) => item.status !== "dropped")
+      .map((item) =>
+        `.apex-v2/runs/${worker.run_id}/workers/${item.worker_id}/patches/${item.patch_id}/patch-bundle.json`
+      ),
+    risk_refs: [`.apex-v2/risks/register.json`]
+  };
 }
 
 export function claimHostAction(root, workerId, hostId) {
@@ -205,10 +232,8 @@ function claimHostActionTransaction(root, workerId, hostId) {
       run_id: worker.run_id,
       plan_node_id: worker.plan_node_id,
       objective: worker.objective,
-      candidate_digest: reviewCandidateDigest(root, worker),
-      verification_ref: worker.plan_node_id.endsWith("review")
-        ? `.apex-v2/runs/${worker.run_id}/verification-report.json`
-        : null,
+      evidence_format: worker.evidence_format || "legacy-v1",
+      ...reviewActionContext(root, worker),
       capability_bindings: worker.capability_bindings || [],
       capability_enforcement: worker.capability_enforcement || "shadow",
       capability_invocation_refs: worker.capability_invocation_refs || [],
@@ -294,11 +319,16 @@ function submitHostResultTransaction(root, workerId, hostId, input) {
   const action = readJson(join(workerDir(root, worker.run_id, worker.worker_id), "host-action.json"));
   assertActiveClaim(worker, action, input.claimToken);
   const timestamp = now();
+  const submissionAttempt = Number(worker.attempt || 0) + 1;
   const dir = workerDir(root, worker.run_id, worker.worker_id);
   let patch = null;
   let queueStatus = null;
   let semanticEvidenceRef = null;
-  const capabilityEvidence = input.capabilityEvidence || [];
+  const normalizedEvidence = normalizeEvidenceSubmission(worker, {
+    ...input,
+    timestamp
+  });
+  const capabilityEvidence = normalizedEvidence.capabilityEvidence;
   const capabilityStatus = assertCapabilityEvidence(
     worker.capability_bindings || [],
     capabilityEvidence,
@@ -307,7 +337,8 @@ function submitHostResultTransaction(root, workerId, hostId, input) {
   const capabilityEvidenceRefs = persistCapabilityEvidence(
     dir,
     worker.namespace,
-    capabilityEvidence
+    capabilityEvidence,
+    submissionAttempt
   );
   if (worker.execution_class === "workspace_patch") {
     patch = buildHostPatch(root, worker, input.summary, timestamp);
@@ -315,11 +346,35 @@ function submitHostResultTransaction(root, workerId, hostId, input) {
     const semanticEvidence = validateWorkerSemanticEvidence(
       root,
       worker,
-      input.semanticEvidence
+      normalizedEvidence.semanticEvidence
     );
-    semanticEvidenceRef = `${worker.namespace}/cognitive-evidence.json`;
-    writeJson(join(dir, "cognitive-evidence.json"), semanticEvidence);
+    semanticEvidenceRef = persistSemanticEvidence(
+      dir,
+      worker.namespace,
+      semanticEvidence,
+      submissionAttempt
+    );
   }
+  const unified = persistUnifiedEvidence(root, worker, {
+    actionId: action.action_id,
+    success: true,
+    semanticEvidence: normalizedEvidence.semanticEvidence,
+    capabilityEvidence,
+    capabilityValidation: {
+      valid: true
+    },
+    patch,
+    evidenceRefs: [
+      ...(input.refs || []),
+      ...(patch?.changed_files || []),
+      ...(normalizedEvidence.semanticEvidence?.source_refs || []),
+      ...capabilityEvidenceRefs
+    ],
+    executor: "host",
+    model: worker.model_id || null,
+    attempt: submissionAttempt,
+    timestamp
+  });
   const result = {
     schema_version: SCHEMA_VERSION,
     action_id: action.action_id,
@@ -329,11 +384,16 @@ function submitHostResultTransaction(root, workerId, hostId, input) {
     artifact_refs: [
       ...(input.refs || []),
       ...(patch?.changed_files || []),
-      ...(input.semanticEvidence?.source_refs || []),
-      ...capabilityEvidenceRefs
+      ...(normalizedEvidence.semanticEvidence?.source_refs || []),
+      ...capabilityEvidenceRefs,
+      unified.evidenceArtifactRef,
+      ...unified.capabilityReceiptRefs
     ],
     semantic_evidence_ref: semanticEvidenceRef,
     capability_evidence_refs: capabilityEvidenceRefs,
+    evidence_artifact_ref: unified.evidenceArtifactRef,
+    capability_receipt_refs: unified.capabilityReceiptRefs,
+    submission_format: normalizedEvidence.submissionFormat,
     capability_evidence_status: {
       enforcement: worker.capability_enforcement || "shadow",
       submitted: capabilityStatus.submitted,
@@ -362,6 +422,7 @@ function submitHostResultTransaction(root, workerId, hostId, input) {
       timestamp
     });
     worker.status = "patch_submitted";
+    worker.attempt = submissionAttempt;
     worker.updated_at = timestamp;
     writeJson(join(dir, "worker.json"), worker);
     const queue = enqueuePatchInternal(root, run, patch);
@@ -380,6 +441,7 @@ function submitHostResultTransaction(root, workerId, hostId, input) {
       timestamp
     });
     worker.status = "evidence_submitted";
+    worker.attempt = submissionAttempt;
     worker.updated_at = timestamp;
     writeJson(join(dir, "worker.json"), worker);
   }
@@ -399,12 +461,29 @@ function submitHostResultTransaction(root, workerId, hostId, input) {
   };
 }
 
-function persistCapabilityEvidence(dir, namespace, evidenceItems) {
+function persistCapabilityEvidence(dir, namespace, evidenceItems, attempt) {
   return evidenceItems.map((evidence) => {
-    const name = `capability-evidence-${evidence.capability_id}.json`;
+    const name = [
+      "capability-evidence",
+      `attempt-${attempt}`,
+      evidence.capability_id
+    ].join("-") + ".json";
     writeJson(join(dir, name), evidence);
+    const legacyAlias = join(
+      dir,
+      `capability-evidence-${evidence.capability_id}.json`
+    );
+    if (!existsSync(legacyAlias)) writeJson(legacyAlias, evidence);
     return `${namespace}/${name}`;
   });
+}
+
+function persistSemanticEvidence(dir, namespace, evidence, attempt) {
+  const name = `cognitive-evidence-attempt-${attempt}.json`;
+  writeJson(join(dir, name), evidence);
+  const legacyAlias = join(dir, "cognitive-evidence.json");
+  if (!existsSync(legacyAlias)) writeJson(legacyAlias, evidence);
+  return `${namespace}/${name}`;
 }
 
 export function cancelHostAction(root, workerId, hostId, claimToken, reason) {
@@ -545,6 +624,24 @@ function parseCapabilityEvidence(args) {
     throw new Error("capability evidence JSON 必须是数组");
   }
   return value;
+}
+
+function parseEvidenceArtifact(args) {
+  const inline = args["evidence-artifact-json"];
+  const file = args["evidence-artifact-file"];
+  if (!inline && !file) return null;
+  if (inline && file) {
+    throw new Error(
+      "只能指定 --evidence-artifact-json 或 --evidence-artifact-file 之一"
+    );
+  }
+  try {
+    return JSON.parse(
+      file ? readFileSync(resolve(String(file)), "utf8") : String(inline)
+    );
+  } catch (error) {
+    throw new Error(`evidence artifact JSON 无效：${error.message}`);
+  }
 }
 
 function assertActiveClaim(worker, action, claimToken) {

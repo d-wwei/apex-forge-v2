@@ -14,9 +14,11 @@ discoverable Skill.
 4. Implement only inside the returned `workspace_path`. Never edit the project
    root for an Interactive patch action. Use TDD when behavior changes.
 5. Run the declared verification commands inside the action workspace.
-6. Produce one typed capability evidence object per required binding, including
-   RED/GREEN or other protocol-specific proof, then submit it with the exact
-   `claim_token` and a precise summary.
+6. Prefer one unified Evidence Artifact: provide semantic evidence once and a
+   compact `capability_outputs` section containing each required typed output.
+   The Kernel derives Capability Receipts and legacy projections. Submit it
+   with `--evidence-artifact-json` or `--evidence-artifact-file`, the exact
+   `claim_token`, and a precise summary.
 7. Confirm that Apex Forge:
    - detected only in-scope changes;
    - left the project root untouched;

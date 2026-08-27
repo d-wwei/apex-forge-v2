@@ -137,7 +137,7 @@ export function scoreBenchmarkMetrics({
     recovery: scenario === "interrupted"
       ? Number(completed && recoveryCount > 0)
       : 1,
-    evidence: mode === "v1-skill"
+    evidence: ["v1-skill", "raw-agent"].includes(mode)
       ? Math.min(1, (execution.output?.evidence_refs?.length || 0) / 3)
       : durable.evidence_score,
     wall_ms: wallMs,
@@ -152,7 +152,7 @@ export function scoreBenchmarkMetrics({
       && (
         !completed
         || hiddenRate < 1
-        || (mode !== "v1-skill" && !durable.closed)
+        || (!["v1-skill", "raw-agent"].includes(mode) && !durable.closed)
       )
     )
   };

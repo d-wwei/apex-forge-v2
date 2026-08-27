@@ -15,6 +15,16 @@
     "summary": { "type": "string" },
     "artifact_refs": { "type": "array", "items": { "type": "string" } },
     "semantic_evidence_ref": { "type": ["string", "null"] },
+    "evidence_artifact_ref": { "type": ["string", "null"] },
+    "capability_receipt_refs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "submission_format": {
+      "type": "string",
+      "enum": ["legacy_projection", "unified"]
+    },
     "capability_evidence_refs": {
       "type": "array",
       "items": { "type": "string", "minLength": 1 },

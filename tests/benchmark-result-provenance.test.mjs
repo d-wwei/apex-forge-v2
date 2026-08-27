@@ -34,6 +34,19 @@ test("verified benchmark results bind candidate, task set, result hash, and arti
   assert.equal(results[0].candidate_digest, CANDIDATE);
 });
 
+test("verified benchmark results accept an isolated run-root artifact prefix", () => {
+  const fixture = provenanceFixture({ isolated: true });
+  const results = loadVerifiedBenchmarkResults({
+    repoRoot: fixture.root,
+    benchmarkDir: fixture.benchmarkDir,
+    manifest: fixture.manifest,
+    expectedCandidateDigest: CANDIDATE,
+    expectedTaskSetDigest: TASK_SET,
+    expectedArtifactPrefix: "runs"
+  });
+  assert.equal(results.length, 1);
+});
+
 test("verified benchmark results reject a release candidate mismatch", () => {
   const fixture = provenanceFixture();
   assert.throws(() => loadVerifiedBenchmarkResults({
@@ -107,18 +120,22 @@ test("process evidence collection preserves every recovery attempt", () => {
   assert.ok(evidence.raw_logs.some((path) => path.endsWith("execution-2.json")));
 });
 
-function provenanceFixture() {
+function provenanceFixture(options = {}) {
   const root = mkdtempSync(join(tmpdir(), "apex-benchmark-provenance-"));
-  const benchmarkDir = join(root, "benchmarks", "plugin-vs-v1");
+  const benchmarkDir = options.isolated
+    ? root
+    : join(root, "benchmarks", "plugin-vs-v1");
   const runKey = "repo--simple--plugin-kernel";
-  const artifactRoot = join(
-    benchmarkDir,
-    "workspaces",
-    "runs",
-    CANDIDATE,
-    "runs",
-    runKey
-  );
+  const artifactRoot = options.isolated
+    ? join(root, "runs", runKey)
+    : join(
+        benchmarkDir,
+        "workspaces",
+        "runs",
+        CANDIDATE,
+        "runs",
+        runKey
+      );
   const artifactPaths = [
     join(artifactRoot, "process-1.jsonl"),
     join(artifactRoot, "process-1.stderr.log"),

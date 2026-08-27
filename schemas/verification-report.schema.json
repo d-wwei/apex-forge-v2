@@ -12,6 +12,11 @@
     "candidate_ref": { "type": "string" },
     "status": { "type": "string", "enum": ["PASS", "FAIL"] },
     "created_at": { "type": "string" },
+    "capability_receipt_refs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
     "workspace": {
       "type": "object",
       "required": [

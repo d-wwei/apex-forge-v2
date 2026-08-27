@@ -148,6 +148,21 @@
       },
       "additionalProperties": false
     },
+    "capability_evidence_refs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "evidence_artifact_ref": { "type": ["string", "null"] },
+    "capability_receipt_refs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "submission_format": {
+      "type": "string",
+      "enum": ["legacy_projection", "unified"]
+    },
     "semantic_evidence_status": {
       "type": "object",
       "required": ["required", "valid", "error"],

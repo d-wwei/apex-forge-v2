@@ -1,32 +1,32 @@
 {
   "schema_version": "v0",
-  "generated_at": "2026-08-27T06:13:12.611Z",
-  "status": "PASS",
+  "generated_at": "2026-08-27T18:58:58.634Z",
+  "status": "FAIL",
   "checks": [
     {
       "id": "codex-plugin-validator",
       "status": "PASS",
       "exit_code": 0,
-      "stdout": "Plugin validation passed: /Users/admin/Documents/AI/Apex-forge/v2/plugins/codex/apex-forge-v2\n",
+      "stdout": "Plugin validation passed: /Users/admin/Documents/AI/Apex-forge/worktrees/governed-responsibility-v2-complete/plugins/codex/apex-forge-v2\n",
       "stderr": ""
     },
     {
       "id": "claude-plugin-validator",
       "status": "PASS",
       "exit_code": 0,
-      "stdout": "Validating plugin manifest: /Users/admin/Documents/AI/Apex-forge/v2/plugins/claude-code/apex-forge-v2/.claude-plugin/plugin.json\n\n✔ Validation passed\n",
+      "stdout": "Validating plugin manifest: /Users/admin/Documents/AI/Apex-forge/worktrees/governed-responsibility-v2-complete/plugins/claude-code/apex-forge-v2/.claude-plugin/plugin.json\n\n✔ Validation passed\n",
       "stderr": ""
     },
     {
       "id": "codex-plugin-installed",
-      "status": "PASS",
+      "status": "FAIL",
       "exit_code": 0,
-      "stdout": "                   not installed           /Users/admin/.codex/.tmp/plugins/plugins/quickbooks                  \nintercom@openai-curated                      not installed           /Users/admin/.codex/.tmp/plugins/plugins/intercom                    \nchronograph-lp@openai-curated                not installed           /Users/admin/.codex/.tmp/plugins/plugins/chronograph-lp              \nnvidia@openai-curated                        not installed           /Users/admin/.codex/.tmp/plugins/plugins/nvidia                      \nposthog@openai-curated                       not installed           /Users/admin/.codex/.tmp/plugins/plugins/posthog                     \nactively@openai-curated                      not installed           /Users/admin/.codex/.tmp/plugins/plugins/actively                    \nzoho@openai-curated                          not installed           /Users/admin/.codex/.tmp/plugins/plugins/zoho                        \nfiscal-ai@openai-curated                     not installed           /Users/admin/.codex/.tmp/plugins/plugins/fiscal-ai                   \npicsart@openai-curated                       not installed           /Users/admin/.codex/.tmp/plugins/plugins/picsart                     \nalation@openai-curated                       not installed           /Users/admin/.codex/.tmp/plugins/plugins/alation                     \nfal@openai-curated                           not installed           /Users/admin/.codex/.tmp/plugins/plugins/fal                         \nhebbia@openai-curated                        not installed           /Users/admin/.codex/.tmp/plugins/plugins/hebbia                      \nwix@openai-curated                           not installed           /Users/admin/.codex/.tmp/plugins/plugins/wix                         \nbase44@openai-curated                        not installed           /Users/admin/.codex/.tmp/plugins/plugins/base44                      \nngs-analysis@openai-curated                  not installed           /Users/admin/.codex/.tmp/plugins/plugins/ngs-analysis                \nsuperhuman@openai-curated                    not installed           /Users/admin/.codex/.tmp/plugins/plugins/superhuman                  \nshopify@openai-curated                       not installed           /Users/admin/.codex/.tmp/plugins/plugins/shopify                     \nmagicpath@openai-curated                     not installed           /Users/admin/.codex/.tmp/plugins/plugins/magicpath                   \nbrighthire@openai-curated                    not installed           /Users/admin/.codex/.tmp/plugins/plugins/brighthire                  \ncatalyst-by-zoho@openai-curated              not installed           /Users/admin/.codex/.tmp/plugins/plugins/catalyst-by-zoho            \nglean@openai-curated                         not installed           /Users/admin/.codex/.tmp/plugins/plugins/glean                       \nchronograph-gp@openai-curated                not installed           /Users/admin/.codex/.tmp/plugins/plugins/chronograph-gp              \nopenai-ads-conversions@openai-curated        not installed           /Users/admin/.codex/.tmp/plugins/plugins/openai-ads-conversions      \nboltz-api-cli@openai-curated                 not installed           /Users/admin/.codex/.tmp/plugins/plugins/boltz-api-cli               \nreplayio@openai-curated                      not installed           /Users/admin/.codex/.tmp/plugins/plugins/replayio                    \ndigitalocean@openai-curated                  not installed           /Users/admin/.codex/.tmp/plugins/plugins/digitalocean                \n\nMarketplace `apex-forge-local`\n/Users/admin/Documents/AI/Apex-forge/v2/.agents/plugins/marketplace.json\n\nPLUGIN                          STATUS              VERSION                          PATH                                                               \napex-forge-v2@apex-forge-local  installed, enabled  0.2.0-rc.1+codex.20260827060911  /Users/admin/Documents/AI/Apex-forge/v2/plugins/codex/apex-forge-v2\n",
+      "stdout": "s/nvidia                      \nposthog@openai-curated                       not installed           /Users/admin/.codex/.tmp/plugins/plugins/posthog                     \nactively@openai-curated                      not installed           /Users/admin/.codex/.tmp/plugins/plugins/actively                    \nzoho@openai-curated                          not installed           /Users/admin/.codex/.tmp/plugins/plugins/zoho                        \nfiscal-ai@openai-curated                     not installed           /Users/admin/.codex/.tmp/plugins/plugins/fiscal-ai                   \npicsart@openai-curated                       not installed           /Users/admin/.codex/.tmp/plugins/plugins/picsart                     \nalation@openai-curated                       not installed           /Users/admin/.codex/.tmp/plugins/plugins/alation                     \nfal@openai-curated                           not installed           /Users/admin/.codex/.tmp/plugins/plugins/fal                         \nhebbia@openai-curated                        not installed           /Users/admin/.codex/.tmp/plugins/plugins/hebbia                      \nwix@openai-curated                           not installed           /Users/admin/.codex/.tmp/plugins/plugins/wix                         \nbase44@openai-curated                        not installed           /Users/admin/.codex/.tmp/plugins/plugins/base44                      \nngs-analysis@openai-curated                  not installed           /Users/admin/.codex/.tmp/plugins/plugins/ngs-analysis                \nsuperhuman@openai-curated                    not installed           /Users/admin/.codex/.tmp/plugins/plugins/superhuman                  \nshopify@openai-curated                       not installed           /Users/admin/.codex/.tmp/plugins/plugins/shopify                     \nmagicpath@openai-curated                     not installed           /Users/admin/.codex/.tmp/plugins/plugins/magicpath                   \nbrighthire@openai-curated                    not installed           /Users/admin/.codex/.tmp/plugins/plugins/brighthire                  \ncatalyst-by-zoho@openai-curated              not installed           /Users/admin/.codex/.tmp/plugins/plugins/catalyst-by-zoho            \nglean@openai-curated                         not installed           /Users/admin/.codex/.tmp/plugins/plugins/glean                       \nchronograph-gp@openai-curated                not installed           /Users/admin/.codex/.tmp/plugins/plugins/chronograph-gp              \nopenai-ads-conversions@openai-curated        not installed           /Users/admin/.codex/.tmp/plugins/plugins/openai-ads-conversions      \nboltz-api-cli@openai-curated                 not installed           /Users/admin/.codex/.tmp/plugins/plugins/boltz-api-cli               \nreplayio@openai-curated                      not installed           /Users/admin/.codex/.tmp/plugins/plugins/replayio                    \ndigitalocean@openai-curated                  not installed           /Users/admin/.codex/.tmp/plugins/plugins/digitalocean                \n\nMarketplace `bpg-moomoo-internal`\n/Users/admin/.codex/local-marketplaces/bpg-moomoo-internal-1.0.0-rc.1/.agents/plugins/marketplace.json\n\nPLUGIN                                    STATUS              VERSION            PATH                                                                                              \nbetter-product-graph@bpg-moomoo-internal  installed, enabled  0.2.19-internal.1  /Users/admin/.codex/local-marketplaces/bpg-moomoo-internal-1.0.0-rc.1/plugins/better-product-graph\n\nMarketplace `apex-forge-local`\n/Users/admin/Documents/AI/Apex-forge/v2/.agents/plugins/marketplace.json\n\nPLUGIN                          STATUS              VERSION                          PATH                                                               \napex-forge-v2@apex-forge-local  installed, enabled  0.2.0-rc.1+codex.20260827060911  /Users/admin/Documents/AI/Apex-forge/v2/plugins/codex/apex-forge-v2\n",
       "stderr": ""
     },
     {
       "id": "claude-plugin-installed",
-      "status": "PASS",
+      "status": "FAIL",
       "exit_code": 0,
       "stdout": "[{\"id\":\"apex-forge-v2@apex-forge-local\",\"version\":\"0.2.0-rc.1+codex.20260825212724\",\"scope\":\"local\",\"enabled\":true,\"installPath\":\"/Users/admin/.claude/plugins/cache/apex-forge-local/apex-forge-v2/0.2.0-rc.1-codex.20260825212724\",\"installedAt\":\"2026-08-25T14:40:59.942Z\",\"lastUpdated\":\"2026-08-25T21:28:08.031Z\",\"projectPath\":\"/Users/admin/Documents/AI/Apex-forge/v2\"},{\"id\":\"apex-forge-v2@apex-forge-local\",\"version\":\"0.2.0-rc.1+codex.20260827060911\",\"scope\":\"user\",\"enabled\":true,\"installPath\":\"/Users/admin/.claude/plugins/cache/apex-forge-local/apex-forge-v2/0.2.0-rc.1-codex.20260827060911\",\"installedAt\":\"2026-08-26T10:49:50.639Z\",\"lastUpdated\":\"2026-08-27T06:12:47.194Z\"}]",
       "stderr": ""
@@ -42,20 +42,20 @@
       "id": "codex-package-provenance",
       "status": "PASS",
       "exit_code": 0,
-      "stdout": "/Users/admin/Documents/AI/Apex-forge/v2/plugins/codex/apex-forge-v2",
+      "stdout": "/Users/admin/Documents/AI/Apex-forge/worktrees/governed-responsibility-v2-complete/plugins/codex/apex-forge-v2",
       "stderr": ""
     },
     {
       "id": "claude-package-provenance",
       "status": "PASS",
       "exit_code": 0,
-      "stdout": "/Users/admin/Documents/AI/Apex-forge/v2/plugins/claude-code/apex-forge-v2",
+      "stdout": "/Users/admin/Documents/AI/Apex-forge/worktrees/governed-responsibility-v2-complete/plugins/claude-code/apex-forge-v2",
       "stderr": ""
     },
     {
       "id": "codex-installed-runtime",
-      "status": "PASS",
-      "exit_code": 0,
+      "status": "FAIL",
+      "exit_code": 1,
       "stdout": "/Users/admin/.codex/plugins/cache/apex-forge-local/apex-forge-v2/0.2.0-rc.1+codex.20260827060911",
       "stderr": ""
     }

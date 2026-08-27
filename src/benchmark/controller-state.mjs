@@ -16,7 +16,17 @@ import { assertContract } from "../core/contracts.mjs";
 import { projectSourceFingerprint } from "../core/candidate.mjs";
 import { readJson, writeJson } from "../lib/common.mjs";
 
-export const BENCHMARK_MODES = ["v1-skill", "cli-kernel", "plugin-kernel"];
+export const BENCHMARK_MODES = [
+  "v1-skill",
+  "cli-kernel",
+  "plugin-kernel",
+  "raw-agent"
+];
+export const DEFAULT_BENCHMARK_MODES = [
+  "v1-skill",
+  "cli-kernel",
+  "plugin-kernel"
+];
 export const BENCHMARK_LEASE_GRACE_MS = 90 * 60 * 1000;
 
 export function resolveBenchmarkLeaseMs(configuredLeaseMs, timeoutMs) {
@@ -33,12 +43,20 @@ export function createBenchmarkControllerState({
   candidateManifest,
   taskValidation,
   workspaceRoot,
+  baseFingerprint,
+  modes = taskValidation.modes || DEFAULT_BENCHMARK_MODES,
   now = new Date().toISOString()
 }) {
   const candidateDigest = candidateManifest.release_candidate_digest;
   const controllerId = `benchmark-${candidateDigest.slice(0, 16)}`;
+  if (!/^[a-f0-9]{64}$/.test(baseFingerprint)) {
+    throw new Error("benchmark base fingerprint is required");
+  }
+  if (!Array.isArray(modes) || modes.length === 0) {
+    throw new Error("benchmark modes are required");
+  }
   const runs = taskValidation.tasks.flatMap((task) =>
-    BENCHMARK_MODES.map((mode) => {
+    modes.map((mode) => {
       const runKey = `${task.task_id}--${mode}`;
       return {
         run_key: runKey,
@@ -79,6 +97,13 @@ export function createBenchmarkControllerState({
     controller_id: controllerId,
     release_candidate_digest: candidateDigest,
     task_set_digest: taskValidation.task_set_digest,
+    modes: [...modes],
+    identity: {
+      candidate_digest: candidateDigest,
+      task_set_digest: taskValidation.task_set_digest,
+      base_fingerprint: baseFingerprint,
+      modes: [...modes]
+    },
     status: "pending",
     created_at: now,
     updated_at: now,
@@ -119,6 +144,38 @@ export function recoverBenchmarkControllerState(
     state.updated_at = now;
   }
   return { state, recovered };
+}
+
+export function assertBenchmarkControllerIdentity(
+  state,
+  { candidateDigest, taskSetDigest, baseFingerprint, modes }
+) {
+  if (state.release_candidate_digest !== candidateDigest) {
+    throw new Error("controller candidate differs from requested candidate");
+  }
+  if (state.task_set_digest !== taskSetDigest) {
+    throw new Error("controller task set differs from requested task set");
+  }
+  if (
+    !state.identity
+    || state.identity.candidate_digest !== candidateDigest
+    || state.identity.task_set_digest !== taskSetDigest
+  ) {
+    throw new Error("controller identity metadata differs from requested identity");
+  }
+  if (
+    baseFingerprint != null
+    && state.identity.base_fingerprint !== baseFingerprint
+  ) {
+    throw new Error("controller base differs from requested base");
+  }
+  if (
+    modes
+    && JSON.stringify(state.identity.modes) !== JSON.stringify(modes)
+  ) {
+    throw new Error("controller modes differ from requested modes");
+  }
+  return state;
 }
 
 export function claimBenchmarkRun(

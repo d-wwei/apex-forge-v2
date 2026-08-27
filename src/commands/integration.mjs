@@ -20,11 +20,12 @@ import { createArtifact, listArtifactsForRun } from "../core/artifacts.mjs";
 import { applyPatchOperations, findPatch, findPatchWithPath, findWorker, getWorkers, updatePatchBundle, workerDir, workerStatusForMergeItems } from "../core/worker.mjs";
 import { ensureMergeApproval } from "../core/governance.mjs";
 import { resolveConflictRisks, syncConflictRisks, syncReviewRisk, syncVerificationRisk } from "../core/risks.mjs";
-import { scanProjectContracts } from "../core/contracts.mjs";
+import { assertContract, scanProjectContracts } from "../core/contracts.mjs";
 import { withProjectTransaction } from "../core/project-transaction.mjs";
 import { buildCandidateSet, persistCandidateSet } from "../core/candidate.mjs";
 import { spawnManagedProcess } from "../core/capability-sandbox.mjs";
 import { inspectNegativeControlGate } from "../core/negative-control.mjs";
+import { validateCapabilityEvidenceForBindings } from "../core/capability-evidence.mjs";
 
 export function handleMergeCommand(subcommand, args) {
   if (subcommand === "enqueue") {
@@ -379,6 +380,7 @@ export function runVerificationInternal(root, run, projectDir) {
     projectDir
   );
   const checks = [staged.materializationCheck];
+  const kernelCapabilityExecutions = [];
   try {
     for (const [index, command] of plan.verification_policy.required_commands.entries()) {
       checks.push(runShellCommandCheck(
@@ -395,6 +397,17 @@ export function runVerificationInternal(root, run, projectDir) {
         staged.workspace_dir,
         staged.environment
       ));
+    }
+    for (const binding of plan.capability_plan?.kernel || []) {
+      const execution = runKernelCapabilityProvider(binding, {
+        run,
+        candidate,
+        workspaceDir: staged.workspace_dir,
+        environment: staged.environment,
+        timestamp
+      });
+      kernelCapabilityExecutions.push(execution);
+      checks.push(execution.check);
     }
   } finally {
     staged.cleanup();
@@ -430,13 +443,25 @@ export function runVerificationInternal(root, run, projectDir) {
   return withProjectTransaction(projectDir, {
     kind: "verification-commit",
     idempotencyKey: `verification-commit:${run.run_id}:${candidate.candidate_digest}`
-  }, () => commitVerification(root, run, report, candidate, timestamp)).result;
+  }, () => commitVerification(
+    root,
+    run,
+    report,
+    candidate,
+    kernelCapabilityExecutions,
+    timestamp
+  )).result;
 }
 
-function commitVerification(root, run, report, candidate, timestamp) {
+function commitVerification(
+  root,
+  run,
+  report,
+  candidate,
+  kernelCapabilityExecutions,
+  timestamp
+) {
   persistCandidateSet(root, candidate);
-  writeJson(join(root, "runs", run.run_id, "verification-report.json"), report);
-  syncVerificationRisk(root, run.run_id, report);
   const artifact = createArtifact(root, run, "verify", {
     type: "test",
     title: `Verification：${report.status}`,
@@ -444,6 +469,15 @@ function commitVerification(root, run, report, candidate, timestamp) {
     refs: [`.apex-v2/runs/${run.run_id}/verification-report.json`],
     timestamp
   });
+  report.capability_receipt_refs = persistKernelCapabilityResults(
+    root,
+    run,
+    kernelCapabilityExecutions,
+    report.candidate_digest,
+    timestamp
+  );
+  writeJson(join(root, "runs", run.run_id, "verification-report.json"), report);
+  syncVerificationRisk(root, run.run_id, report);
   const event = appendEvent(root, "verification.completed", "apex-v2", {
     run_id: run.run_id,
     report_id: report.report_id,
@@ -784,27 +818,35 @@ function generateReviewTransaction(root, run) {
       );
     }
   }
-  if (plan.method_pack?.workflow === "governed_v2") {
-    const reviewWorker = getWorkers(root, run.run_id).find((worker) =>
-      worker.plan_node_id === "delivery-review"
-    );
-    const reviewEvidence = reviewWorker
-      ? readJson(join(workerDir(
-          root,
-          reviewWorker.run_id,
-          reviewWorker.worker_id
-        ), "cognitive-evidence.json"), null)
+  if (["quick", "governed_v2"].includes(plan.method_pack?.workflow)) {
+    const reviewWorker = getWorkers(root, run.run_id)
+      .filter((worker) => worker.plan_node_id === "delivery-review")
+      .sort((left, right) =>
+        String(right.created_at).localeCompare(String(left.created_at))
+      )[0];
+    const reviewEvidenceArtifact = reviewWorker
+      ? latestEvidenceArtifact(root, reviewWorker)
       : null;
+    const reviewEvidence = reviewEvidenceArtifact?.sections?.find((section) =>
+      section.kind === "semantic"
+    )?.content || null;
     if (!reviewWorker || ![
       "evidence_submitted",
       "decision_submitted"
     ].includes(reviewWorker.status)) {
       blocking.push("Governed V2 缺少已完成的独立 Review Agent。");
+    } else if (!reviewEvidenceArtifact) {
+      blocking.push("Review Agent 缺少 Unified Evidence Artifact。");
     } else if (
       !reviewEvidence
       || reviewEvidence.candidate_digest !== candidate.candidate.candidate_digest
     ) {
       blocking.push("Review Agent evidence 未绑定当前 candidate。");
+    } else if (
+      reviewEvidenceArtifact.verdict !== "PASS"
+      || reviewEvidenceArtifact.gate?.status !== "PASS"
+    ) {
+      blocking.push("Review Agent unified evidence gate 未通过。");
     } else if (reviewEvidence.merge_posture !== "approve") {
       blocking.push(
         ...reviewEvidence.findings,
@@ -815,6 +857,28 @@ function generateReviewTransaction(root, run) {
         ...reviewEvidence.findings,
         ...reviewEvidence.residual_risks
       );
+    }
+    if (
+      reviewWorker?.capability_enforcement === "enforce"
+      && reviewEvidenceArtifact
+    ) {
+      const receipts = capabilityReceiptsForArtifact(
+        root,
+        reviewWorker,
+        reviewEvidenceArtifact.evidence_artifact_id
+      );
+      const received = new Set(receipts
+        .filter((receipt) => receipt.validation?.status === "PASS")
+        .map((receipt) => receipt.capability_id));
+      const missing = (reviewWorker.capability_bindings || [])
+        .filter((binding) => binding.required)
+        .map((binding) => binding.capability_id)
+        .filter((capabilityId) => !received.has(capabilityId));
+      if (missing.length > 0) {
+        blocking.push(
+          `Review Agent 缺少有效 Capability Receipt：${missing.join(", ")}`
+        );
+      }
     }
   }
 
@@ -851,6 +915,317 @@ function generateReviewTransaction(root, run) {
   });
   updateProject(root, { last_event_id: event.event_id, updated_at: event.timestamp });
   return { report, artifact_id: artifact.artifact_id };
+}
+
+function runKernelCapabilityProvider(binding, {
+  run,
+  candidate,
+  workspaceDir,
+  environment,
+  timestamp
+}) {
+  const invocation = {
+    schema_version: SCHEMA_VERSION,
+    invocation_id: [
+      "kernel",
+      run.run_id,
+      binding.capability_id,
+      candidate.candidate_digest
+    ].join("-"),
+    run_id: run.run_id,
+    plan_node_id: "kernel-verification",
+    worker_id: null,
+    capability_id: binding.capability_id,
+    capability_version: binding.capability_version,
+    input_contract: binding.input_contract,
+    input_artifact_refs: [
+      `.apex-v2/runs/${run.run_id}/candidates/candidate-${candidate.candidate_digest}.json`
+    ],
+    input: {
+      candidate_digest: candidate.candidate_digest,
+      workspace: workspaceDir
+    },
+    output_contract: binding.output_contract,
+    required: binding.required,
+    created_at: timestamp
+  };
+  assertContract(
+    "capability-invocation.schema.json",
+    invocation,
+    `kernel capability invocation:${binding.capability_id}`
+  );
+  let command;
+  try {
+    command = kernelCapabilityProviderCommands()[
+      binding.capability_id
+    ];
+  } catch (error) {
+    return failedKernelCapabilityExecution(
+      binding,
+      invocation,
+      error.message
+    );
+  }
+  if (!command) {
+    return failedKernelCapabilityExecution(
+      binding,
+      invocation,
+      `未配置真实 provider command：${binding.capability_id}`
+    );
+  }
+  const result = spawnManagedProcess("/bin/zsh", ["-lc", command], {
+    workspaceDir,
+    input: `${JSON.stringify(invocation)}\n`,
+    timeoutMs: positiveInteger(
+      process.env.APEX_V2_CAPABILITY_TIMEOUT_MS,
+      30 * 60 * 1000
+    ),
+    minFreeBytes: positiveInteger(
+      process.env.APEX_V2_MIN_FREE_BYTES,
+      20 * 1024 * 1024 * 1024
+    ),
+    maxDiskGrowthBytes: positiveInteger(
+      process.env.APEX_V2_MAX_DISK_GROWTH_BYTES,
+      5 * 1024 * 1024 * 1024
+    ),
+    maxWorkspaceGrowthBytes: positiveInteger(
+      process.env.APEX_V2_MAX_WORKSPACE_GROWTH_BYTES,
+      5 * 1024 * 1024 * 1024
+    ),
+    maxOutputBytes: positiveInteger(
+      process.env.APEX_V2_MAX_COMMAND_OUTPUT_BYTES,
+      16 * 1024 * 1024
+    ),
+    env: {
+      ...process.env,
+      ...environment,
+      APEX_CAPABILITY_ID: binding.capability_id,
+      APEX_CAPABILITY_VERSION: binding.capability_version,
+      APEX_CANDIDATE_DIGEST: candidate.candidate_digest
+    }
+  });
+  if (result.status !== 0) {
+    return failedKernelCapabilityExecution(
+      binding,
+      invocation,
+      `provider exit=${result.status ?? 1}: ${tail(result.stderr || result.stdout)}`
+    );
+  }
+  let evidence;
+  try {
+    evidence = JSON.parse(String(result.stdout || "").trim());
+    if (evidence.invocation_id !== invocation.invocation_id) {
+      throw new Error(
+        `invocation_id 不匹配：${evidence.invocation_id || "(空)"}`
+      );
+    }
+    validateCapabilityEvidenceForBindings([binding], [evidence], {
+      expectedCandidateDigest: candidate.candidate_digest
+    });
+  } catch (error) {
+    return failedKernelCapabilityExecution(
+      binding,
+      invocation,
+      `provider evidence 无效：${error.message}`
+    );
+  }
+  return {
+    binding,
+    invocation,
+    evidence,
+    command,
+    check: verificationCheck(
+      `capability-provider-${binding.capability_id}`,
+      "PASS",
+      `provider:${binding.capability_id}`,
+      0,
+      `validated ${binding.output_contract}`,
+      ""
+    )
+  };
+}
+
+function failedKernelCapabilityExecution(binding, invocation, error) {
+  return {
+    binding,
+    invocation,
+    evidence: null,
+    command: null,
+    check: verificationCheck(
+      `capability-provider-${binding.capability_id}`,
+      binding.required ? "FAIL" : "PASS",
+      `provider:${binding.capability_id}`,
+      binding.required ? 1 : 0,
+      binding.required ? "" : `SKIPPED_WITH_REASON: ${error}`,
+      binding.required ? error : ""
+    )
+  };
+}
+
+function kernelCapabilityProviderCommands() {
+  const raw = String(
+    process.env.APEX_CAPABILITY_PROVIDER_COMMANDS || ""
+  ).trim();
+  if (!raw) return {};
+  let value;
+  try {
+    value = JSON.parse(raw);
+  } catch (error) {
+    throw new Error(
+      `APEX_CAPABILITY_PROVIDER_COMMANDS 必须是 JSON object：${error.message}`
+    );
+  }
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("APEX_CAPABILITY_PROVIDER_COMMANDS 必须是 JSON object");
+  }
+  for (const [capabilityId, command] of Object.entries(value)) {
+    if (!String(command || "").trim()) {
+      throw new Error(`Capability provider command 为空：${capabilityId}`);
+    }
+  }
+  return value;
+}
+
+function persistKernelCapabilityResults(
+  root,
+  run,
+  executions,
+  candidateDigest,
+  timestamp
+) {
+  const dir = join(root, "runs", run.run_id, "kernel-capabilities");
+  if (executions.length > 0) ensureDir(dir);
+  const receiptRefs = [];
+  for (const execution of executions) {
+    const { binding, invocation, evidence } = execution;
+    const invocationName = `capability-invocation-${binding.capability_id}.json`;
+    writeJson(join(dir, invocationName), invocation);
+    if (!evidence) continue;
+    const evidenceArtifact = {
+      schema_version: SCHEMA_VERSION,
+      evidence_artifact_id: shortId("evidence"),
+      run_id: run.run_id,
+      node_id: "kernel-verification",
+      worker_id: "project-kernel",
+      action_id: null,
+      attempt: 1,
+      kind: "execution",
+      objective: evidence.objective,
+      verdict: "PASS",
+      candidate_digest: candidateDigest,
+      scope: {
+        read: evidence.source_refs,
+        write: []
+      },
+      sections: [{
+        kind: "capability",
+        capability_id: evidence.capability_id,
+        output_contract: evidence.output_contract,
+        content: evidence.output
+      }],
+      provenance: {
+        submission_format: "unified",
+        executor: `provider:${binding.capability_id}`,
+        model: null
+      },
+      evidence_refs: [
+        ...evidence.source_refs,
+        ...evidence.verification_refs
+      ],
+      gate: {
+        status: "PASS",
+        reasons: []
+      },
+      created_at: timestamp
+    };
+    assertContract(
+      "evidence-artifact.schema.json",
+      evidenceArtifact,
+      `kernel capability artifact:${binding.capability_id}`
+    );
+    const evidenceName = [
+      "evidence-artifact",
+      evidenceArtifact.evidence_artifact_id,
+      binding.capability_id
+    ].join("-") + ".json";
+    const evidenceRef = [
+      ".apex-v2",
+      "runs",
+      run.run_id,
+      "kernel-capabilities",
+      evidenceName
+    ].join("/");
+    writeJson(join(dir, evidenceName), evidenceArtifact);
+    const receipt = {
+      schema_version: SCHEMA_VERSION,
+      receipt_id: [
+        "capability-receipt",
+        evidenceArtifact.evidence_artifact_id,
+        binding.capability_id
+      ].join("-"),
+      evidence_artifact_id: evidenceArtifact.evidence_artifact_id,
+      capability_id: binding.capability_id,
+      capability_version: binding.capability_version,
+      invocation_id: evidence.invocation_id,
+      output_contract: binding.output_contract,
+      output_ref: evidenceRef,
+      output_digest: createHash("sha256")
+        .update(JSON.stringify(evidence.output))
+        .digest("hex"),
+      source_refs: evidence.source_refs,
+      verification_refs: evidence.verification_refs,
+      validation: {
+        binding_match: true,
+        version_match: true,
+        schema_valid: true,
+        semantic_valid: true,
+        status: "PASS"
+      },
+      derived_at: timestamp
+    };
+    assertContract(
+      "capability-receipt.schema.json",
+      receipt,
+      `kernel capability receipt:${binding.capability_id}`
+    );
+    const name = `${receipt.receipt_id}.json`;
+    writeJson(join(dir, name), receipt);
+    receiptRefs.push([
+      ".apex-v2",
+      "runs",
+      run.run_id,
+      "kernel-capabilities",
+      name
+    ].join("/"));
+  }
+  return receiptRefs;
+}
+
+function latestEvidenceArtifact(root, worker) {
+  const dir = workerDir(root, worker.run_id, worker.worker_id);
+  if (!existsSync(dir)) return null;
+  const artifacts = readdirSync(dir)
+    .filter((name) =>
+      name.startsWith("evidence-artifact-") && name.endsWith(".json")
+    )
+    .map((name) => readJson(join(dir, name), null))
+    .filter(Boolean)
+    .sort((left, right) =>
+      String(left.created_at).localeCompare(String(right.created_at))
+    );
+  return artifacts.at(-1) || null;
+}
+
+function capabilityReceiptsForArtifact(root, worker, evidenceArtifactId) {
+  const dir = workerDir(root, worker.run_id, worker.worker_id);
+  return readdirSync(dir)
+    .filter((name) =>
+      name.startsWith("capability-receipt-") && name.endsWith(".json")
+    )
+    .map((name) => readJson(join(dir, name), null))
+    .filter((receipt) =>
+      receipt?.evidence_artifact_id === evidenceArtifactId
+    );
 }
 
 function isNoopIntegrationRun(root, runId) {

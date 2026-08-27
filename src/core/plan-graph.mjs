@@ -197,6 +197,7 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
     quickNodes,
     fullNodes,
     roadmapNode,
+    intake,
     scopes,
     runId: run.run_id
   };
@@ -238,7 +239,7 @@ export function buildTaskPlanGraph(root, run, timestamp, inventory) {
     withThroughputMetadata(node, methodPack.workflow)
   );
   const barriers = buildExecutionBarriers(methodPack.workflow, nodes);
-  const parallelLanes = buildParallelLanes(methodPack.workflow);
+  const parallelLanes = buildParallelLanes(methodPack.workflow, nodes);
   const mergeOrder = parallelLanes.map((lane) => lane.id);
   const edges = nodes.flatMap((node) =>
     node.dependencies.map((dependency) => edge(dependency, node.id, node.id === "delivery-verification" ? "verifies" : "blocks"))
@@ -331,7 +332,8 @@ function bindMethodPackCapabilities(methodPack, availableNodes, routedCapabiliti
   return applyCapabilityBindings(selectedNodes, routedCapabilities, {
     limits: methodPack.workflow === "governed_v2"
       ? { core: 5, conditional: 3 }
-      : undefined
+      : undefined,
+    kernelDeterministic: methodPack.workflow === "governed_v2"
   });
 }
 
@@ -352,13 +354,24 @@ export function applyCapabilityBindings(nodes, routedCapabilities, options = {})
     ...(routedCapabilities.optional || []),
     ...(routedCapabilities.advisory || [])
   ];
+  const kernelCapabilities = [];
   for (const capability of selected) {
     const node = selectCapabilityNode(
       capability,
       nextNodes,
-      options.limits
+      options
     );
     if (!node) {
+      if (
+        options.kernelDeterministic
+        && capability.execution_class === "deterministic_check"
+      ) {
+        kernelCapabilities.push(persistedCapabilityBinding({
+          ...capability,
+          target_node_id: "kernel-verification"
+        }));
+        continue;
+      }
       throw new Error(
         `Capability 无可用 PlanGraph 节点：${capability.capability_id} -> ${capability.target_node_id}`
       );
@@ -393,12 +406,13 @@ export function applyCapabilityBindings(nodes, routedCapabilities, options = {})
       router_mode: routedCapabilities.router_mode || "enabled",
       required: (routedCapabilities.required || []).map(persistedCapabilityBinding),
       optional: (routedCapabilities.optional || []).map(persistedCapabilityBinding),
-      advisory: (routedCapabilities.advisory || []).map(persistedCapabilityBinding)
+      advisory: (routedCapabilities.advisory || []).map(persistedCapabilityBinding),
+      kernel: kernelCapabilities
     }
   };
 }
 
-function selectCapabilityNode(capability, nodes, limits) {
+function selectCapabilityNode(capability, nodes, options = {}) {
   const targetId = resolveCapabilityTarget(
     capability,
     nodes
@@ -412,6 +426,12 @@ function selectCapabilityNode(capability, nodes, limits) {
     capabilityExecutionCompatible(capability.execution_class, node.execution_class)
   );
   if (candidates.length === 0) {
+    if (
+      options.kernelDeterministic
+      && capability.execution_class === "deterministic_check"
+    ) {
+      return null;
+    }
     throw new Error(
       `Capability execution class unavailable：${capability.capability_id} `
       + `${capability.execution_class} -> ${nodes.map((node) => `${node.id}:${node.execution_class}`).join(",")}`
@@ -422,7 +442,7 @@ function selectCapabilityNode(capability, nodes, limits) {
       assertCapabilityContextBudget([
         ...(node.capability_bindings || []),
         capability
-      ], limits);
+      ], options.limits);
       return node;
     } catch {}
   }
@@ -517,6 +537,9 @@ function withThroughputMetadata(node, workflow) {
     && !mainAgentRequired;
   return {
     ...node,
+    evidence_format: workflow === "governed_v2"
+      ? "unified-v1"
+      : "legacy-v1",
     barrier_id: barrierId,
     dispatch_kind: node.execution_class === "deterministic_check"
       ? "kernel"
@@ -536,7 +559,12 @@ function withThroughputMetadata(node, workflow) {
 }
 
 function barrierForNode(nodeId) {
-  if (["delivery-context", "delivery-risk", "delivery-design"].includes(nodeId)) {
+  if ([
+    "delivery-context",
+    "delivery-risk",
+    "delivery-risk-challenger",
+    "delivery-design"
+  ].includes(nodeId)) {
     return "delivery-plan";
   }
   if (
@@ -570,6 +598,7 @@ function modelTierForNode(node, workflow) {
   if (["delivery-context", "delivery-risk", "delivery-tests"].includes(node.id)) {
     return "cheap";
   }
+  if (node.id === "delivery-risk-challenger") return "cheap";
   if (node.id === "delivery-review") return "standard";
   return "standard";
 }
@@ -579,6 +608,7 @@ function delegationDefaultForNode(node, workflow) {
   return [
     "delivery-context",
     "delivery-risk",
+    "delivery-risk-challenger",
     "delivery-implementation",
     "delivery-tests",
     "delivery-review"
@@ -591,7 +621,7 @@ function fallbackModelTier(modelTier) {
   return null;
 }
 
-function buildParallelLanes(workflow) {
+function buildParallelLanes(workflow, nodes = []) {
   if (workflow === "quick") {
     return [
       { id: "build", purpose: "单一 ActionWorkspace 同时完成实现与测试，减少简单任务往返。", node_ids: ["delivery-implementation"] },
@@ -617,8 +647,22 @@ function buildParallelLanes(workflow) {
   }
   if (workflow === "governed_v2") {
     return [
-      { id: "planning", purpose: "单一 Plan Agent 汇总上下文、风险、方案和测试策略。", node_ids: ["delivery-design"] },
-      { id: "build", purpose: "Implementation Agent 默认同时完成实现和聚焦测试。", node_ids: ["delivery-implementation"] },
+      {
+        id: "planning",
+        purpose: "Plan Agent 汇总上下文、风险、方案和测试策略；critical 时并行独立挑战。",
+        node_ids: existingNodeIds(nodes, [
+          "delivery-design",
+          "delivery-risk-challenger"
+        ])
+      },
+      {
+        id: "build",
+        purpose: "默认由 Implementation Agent 完成实现和聚焦测试；仅在收益为正时拆分 Test Worker。",
+        node_ids: existingNodeIds(nodes, [
+          "delivery-implementation",
+          "delivery-tests"
+        ])
+      },
       { id: "readiness", purpose: "Verified Candidate 的独立只读语义评审。", node_ids: ["delivery-review"] }
     ];
   }
@@ -629,6 +673,11 @@ function buildParallelLanes(workflow) {
         { id: "verification", purpose: "独立执行真实项目验证并固化证据。", node_ids: ["delivery-verification"] },
         { id: "readiness", purpose: "复核需求符合性并只修复明确阻塞项。", node_ids: ["delivery-review"] }
   ];
+}
+
+function existingNodeIds(nodes, ids) {
+  const available = new Set(nodes.map((node) => node.id));
+  return ids.filter((id) => available.has(id));
 }
 
 function selectMethodPackNodes(workflow, input) {
@@ -664,16 +713,43 @@ function selectMethodPackNodes(workflow, input) {
   verification.dependencies = ["delivery-implementation"];
   review.dependencies = ["delivery-verification"];
   if (workflow === "governed_v2") {
+    const riskChallenger = clonePlanNode(input.fullNodes, "delivery-risk");
     design.dependencies = [];
     design.objective = `在单一 Plan Artifact 中完成“${input.roadmapNode.title}”的上下文、风险、方案、回滚和测试策略。`;
-    implementation.dependencies = ["delivery-design"];
+    const includeRiskChallenger = needsRiskChallenger(input.roadmapNode, input);
+    if (includeRiskChallenger) {
+      riskChallenger.id = "delivery-risk-challenger";
+      riskChallenger.title = "独立风险挑战";
+      riskChallenger.dependencies = [];
+      riskChallenger.parallel_group = "planning";
+      riskChallenger.objective = `独立挑战“${input.roadmapNode.title}”的关键假设、失败路径与回滚可行性。`;
+      riskChallenger.write_scope = [];
+    }
+    const split = evaluateTestWorkerSplit(input);
+    implementation.dependencies = [
+      "delivery-design",
+      ...(includeRiskChallenger ? ["delivery-risk-challenger"] : [])
+    ];
     implementation.title = "实现与聚焦测试";
-    implementation.write_scope = unique([
-      ...input.scopes.implementation,
-      ...input.scopes.tests
-    ]);
+    implementation.write_scope = split.enabled
+      ? unique(input.scopes.implementation)
+      : unique([
+          ...input.scopes.implementation,
+          ...input.scopes.tests
+        ]);
     implementation.objective = `在一个隔离 Workspace 内完成“${input.roadmapNode.title}”的最小实现和聚焦测试。`;
-    review.dependencies = ["delivery-implementation"];
+    const testNode = clonePlanNode(input.fullNodes, "delivery-tests");
+    if (split.enabled) {
+      testNode.dependencies = [
+        "delivery-design",
+        ...(includeRiskChallenger ? ["delivery-risk-challenger"] : [])
+      ];
+      testNode.objective = `在独立且互斥的测试写域中为“${input.roadmapNode.title}”补充聚焦测试。`;
+    }
+    review.dependencies = [
+      "delivery-implementation",
+      ...(split.enabled ? ["delivery-tests"] : [])
+    ];
     review.read_scope = unique([
       ...review.read_scope,
       `.apex-v2/runs/${input.runId}/verification-report.json`,
@@ -681,11 +757,64 @@ function selectMethodPackNodes(workflow, input) {
     ]);
     review.write_scope = [];
     review.objective = `在 candidate-bound staged verification PASS 后，对“${input.roadmapNode.title}”执行独立只读语义评审。`;
-    return [design, implementation, review];
+    return [
+      design,
+      ...(includeRiskChallenger ? [riskChallenger] : []),
+      implementation,
+      ...(split.enabled ? [testNode] : []),
+      review
+    ];
   }
   return workflow === "phase_context"
     ? [context, design, implementation, verification, review]
     : [design, implementation, verification, review];
+}
+
+export function evaluateTestWorkerSplit(input) {
+  const implementation = unique(input.scopes?.implementation || []);
+  const tests = unique(input.scopes?.tests || []);
+  const text = [
+    input.roadmapNode?.title,
+    input.intake?.title,
+    input.intake?.description
+  ].filter(Boolean).join("\n");
+  const explicitLargeParallel = /(parallel test|independent test worker|large test suite|并行测试|独立测试 worker|大型测试)/i
+    .test(text);
+  const disjoint = implementation.length > 0
+    && tests.length > 0
+    && implementation.every((left) =>
+      tests.every((right) => !scopeOverlaps(left, right))
+    );
+  const implementationMinutes = implementation.length * 4;
+  const testMinutes = tests.length * 4;
+  const startupCost = 3;
+  const contextDuplicationCost = 2;
+  const conflictRiskCost = disjoint ? 0 : 10;
+  const benefit = Math.max(
+    implementationMinutes + testMinutes
+      - Math.max(implementationMinutes, testMinutes),
+    0
+  ) - startupCost - contextDuplicationCost - conflictRiskCost;
+  return {
+    enabled: disjoint && explicitLargeParallel && benefit > 0,
+    benefit,
+    disjoint,
+    implementation_minutes: implementationMinutes,
+    test_minutes: testMinutes
+  };
+}
+
+function needsRiskChallenger(roadmapNode, input) {
+  const text = `${roadmapNode?.title || ""}\n${input.intake?.description || ""}`;
+  return input.intake?.risk === "critical"
+    || /(irreversible|production destructive|funds?|trading|payment|auth(?:entication|orization)? protocol|multi[- ]repo(?:sitory)? write|rollback uncertainty|不可逆|资金|交易|支付|鉴权协议|多仓库写入|回滚不确定)/i.test(text);
+}
+
+function scopeOverlaps(left, right) {
+  const normalize = (value) => String(value || "").replace(/\/+$/, "");
+  const a = normalize(left);
+  const b = normalize(right);
+  return a === b || a.startsWith(`${b}/`) || b.startsWith(`${a}/`);
 }
 
 function clonePlanNode(nodes, id) {

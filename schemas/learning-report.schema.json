@@ -13,7 +13,7 @@
     "queue_job_ids": { "type": "array", "items": { "type": "string" } },
     "completion_kind": {
       "type": "string",
-      "enum": ["proposal_queued", "applied_inline"]
+      "enum": ["proposal_queued", "no_change", "applied_inline"]
     },
     "proposal_artifact_id": { "type": ["string", "null"] }
   },

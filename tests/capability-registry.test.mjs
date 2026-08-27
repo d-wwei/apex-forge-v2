@@ -12,7 +12,10 @@ import {
   validateCapabilityRegistry,
   validateCapabilityLock
 } from "../src/core/capability-registry.mjs";
-import { applyCapabilityBindings } from "../src/core/plan-graph.mjs";
+import {
+  applyCapabilityBindings,
+  evaluateTestWorkerSplit
+} from "../src/core/plan-graph.mjs";
 import { buildWorkerAgentPrompt } from "../src/core/worker-execution.mjs";
 import {
   contractRegistry,
@@ -438,4 +441,29 @@ test("environment-dependent capabilities require an explicit certified provider 
       { capability_id: "mobile-qa", required: false }
     ], "")
   );
+});
+
+test("test worker split requires explicit parallel value and disjoint substantial scopes", () => {
+  const base = {
+    roadmapNode: {
+      title: "Large parallel test implementation",
+      description: "Use an independent test worker for the large test suite."
+    },
+    scopes: {
+      implementation: ["src/a.mjs", "src/b.mjs"],
+      tests: ["tests/a.test.mjs", "tests/b.test.mjs"]
+    }
+  };
+  assert.equal(evaluateTestWorkerSplit(base).enabled, true);
+  assert.equal(evaluateTestWorkerSplit({
+    ...base,
+    roadmapNode: { title: "Small change", description: "" }
+  }).enabled, false);
+  assert.equal(evaluateTestWorkerSplit({
+    ...base,
+    scopes: {
+      implementation: ["src/"],
+      tests: ["src/tests/"]
+    }
+  }).enabled, false);
 });

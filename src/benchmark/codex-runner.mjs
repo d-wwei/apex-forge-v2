@@ -45,15 +45,17 @@ export function executeCodexBenchmarkRun({
     profile,
     reasoningEffort
   });
-  const outputSchemaPath = join(
-    candidateRoot,
-    "plugins",
-    "codex",
-    "apex-forge-v2",
-    "runtime",
-    "schemas",
-    "benchmark-agent-output.schema.json"
-  );
+  const outputSchemaPath = mode === "raw-agent"
+    ? join(repositoryRoot || process.cwd(), "schemas", "benchmark-agent-output.schema.json")
+    : join(
+        candidateRoot,
+        "plugins",
+        "codex",
+        "apex-forge-v2",
+        "runtime",
+        "schemas",
+        "benchmark-agent-output.schema.json"
+      );
   const processNumber = nextProcessNumber(runRoot);
   const agentIoRoot = join(runRoot, "agent-io");
   mkdirSync(agentIoRoot, { recursive: true });
@@ -89,7 +91,10 @@ export function executeCodexBenchmarkRun({
     controllerRoot,
     repositoryRoot,
     candidateRoot,
-    extraDeniedReadPaths: deniedReadPaths
+    extraDeniedReadPaths: [
+      ...deniedReadPaths,
+      ...(mode === "raw-agent" ? [candidateRoot] : [])
+    ]
   });
   const result = spawnCapabilityProcess("codex", args, {
     workspaceDir: executionWorkspace,
@@ -97,15 +102,15 @@ export function executeCodexBenchmarkRun({
     timeoutMs,
     minFreeBytes: positiveInteger(
       process.env.APEX_BENCHMARK_MIN_FREE_BYTES,
-      20 * 1024 * 1024 * 1024
+      150 * 1024 * 1024 * 1024
     ),
     maxDiskGrowthBytes: positiveInteger(
       process.env.APEX_BENCHMARK_MAX_DISK_GROWTH_BYTES,
-      5 * 1024 * 1024 * 1024
+      1024 * 1024 * 1024
     ),
     maxWorkspaceGrowthBytes: positiveInteger(
       process.env.APEX_BENCHMARK_MAX_WORKSPACE_GROWTH_BYTES,
-      5 * 1024 * 1024 * 1024
+      1024 * 1024 * 1024
     ),
     maxOutputBytes: positiveInteger(
       process.env.APEX_BENCHMARK_MAX_OUTPUT_BYTES,
@@ -282,6 +287,13 @@ export function buildBenchmarkPrompt({
         "If the Kernel generates plan profile `quick`, preserve the one-patch quick route and use consolidated project ticks instead of expanding it into the full workflow."
       );
     }
+  } else if (mode === "raw-agent") {
+    common.unshift(
+      "Work as a plain coding agent with no Apex Forge workflow.",
+      "Do not load or invoke any plugin, V1 skill, Apex Forge Kernel, apex-host bridge, or durable workflow command.",
+      "Use only the public task description and public acceptance commands below.",
+      "Do not inspect hidden checks, benchmark controller files, candidate files, or any repository outside the current workspace."
+    );
   } else {
     throw new Error(`unknown benchmark mode: ${mode}`);
   }

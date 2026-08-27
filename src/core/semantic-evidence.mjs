@@ -63,7 +63,9 @@ export function cognitiveEvidenceCandidateDigest(root, worker) {
 
 export function cognitiveEvidenceType(planNodeId) {
   if (planNodeId.endsWith("context")) return "context";
-  if (planNodeId.endsWith("risk")) return "risk";
+  if (planNodeId.endsWith("risk") || planNodeId.includes("risk-challenger")) {
+    return "risk";
+  }
   if (planNodeId.endsWith("design")) return "design";
   if (planNodeId.endsWith("review")) return "review";
   throw new Error(`未知 cognitive evidence 类型：${planNodeId}`);

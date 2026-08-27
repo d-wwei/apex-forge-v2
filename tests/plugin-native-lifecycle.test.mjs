@@ -12,7 +12,7 @@ import {
 } from "node:fs";
 import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { delimiter, dirname, join } from "node:path";
 import { spawnSync } from "node:child_process";
 
 const REPO = new URL("../", import.meta.url).pathname;
@@ -24,11 +24,10 @@ const CODEX_PLUGIN = RELEASE_CANDIDATE_ROOT
 const CLAUDE_PLUGIN = RELEASE_CANDIDATE_ROOT
   ? join(RELEASE_CANDIDATE_ROOT, "plugins", "claude-code", "apex-forge-v2")
   : join(REPO, "plugins", "claude-code", "apex-forge-v2");
+const CODEX_BIN = resolveExecutable("codex", { nodeScript: true });
+const CLAUDE_BIN = resolveExecutable("claude");
 
 test("native Codex and Claude lifecycle preserves an active Apex project", () => {
-  assert.equal(run("codex", ["--version"]).status, 0, "Codex CLI unavailable");
-  assert.equal(run("claude", ["--version"]).status, 0, "Claude CLI unavailable");
-
   const temp = mkdtempSync(join(tmpdir(), "apex-native-lifecycle-"));
   const project = join(temp, "project");
   const codexHome = join(temp, "codex-home");
@@ -45,7 +44,16 @@ test("native Codex and Claude lifecycle preserves an active Apex project", () =>
   prepareClaudeMarketplace(claudeMarket, "0.1.0-rc.1");
 
   const codexEnv = { CODEX_HOME: codexHome, HOME: claudeHome };
-  assert.equal(run("codex", ["plugin", "marketplace", "add", codexMarket, "--json"], { env: codexEnv }).status, 0);
+  const addedCodexMarketplace = run(
+    "codex",
+    ["plugin", "marketplace", "add", codexMarket, "--json"],
+    { env: codexEnv }
+  );
+  assert.equal(
+    addedCodexMarketplace.status,
+    0,
+    addedCodexMarketplace.stderr || addedCodexMarketplace.stdout
+  );
   const codexRc1 = installCodex(codexEnv);
   assertInstalledRuntime(codexRc1.installedPath, "0.1.0-rc.1", project, baseline);
 
@@ -201,11 +209,44 @@ function runNode(args) {
 }
 
 function run(command, args, options = {}) {
-  return spawnSync(command, args, {
-    cwd: options.cwd || REPO,
-    env: { ...process.env, ...(options.env || {}) },
-    encoding: "utf8"
-  });
+  const resolved = command === "codex"
+    ? CODEX_BIN
+    : command === "claude"
+      ? CLAUDE_BIN
+      : command;
+  const executable = command === "codex" ? process.execPath : resolved;
+  const commandArgs = command === "codex" ? [resolved, ...args] : args;
+  let result;
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    result = spawnSync(executable, commandArgs, {
+      cwd: options.cwd || REPO,
+      env: { ...process.env, ...(options.env || {}) },
+      encoding: "utf8"
+    });
+    if (result.status === 0) return result;
+    Atomics.wait(
+      new Int32Array(new SharedArrayBuffer(4)),
+      0,
+      0,
+      250 * (attempt + 1)
+    );
+  }
+  return result;
+}
+
+function resolveExecutable(name, options = {}) {
+  for (const directory of String(process.env.PATH || "").split(delimiter)) {
+    const candidate = join(directory, name);
+    if (!existsSync(candidate)) continue;
+    if (
+      options.nodeScript
+      && !readFileSync(candidate, "utf8").split("\n", 1)[0].includes("node")
+    ) {
+      continue;
+    }
+    return candidate;
+  }
+  return name;
 }
 
 function writeJson(path, value) {

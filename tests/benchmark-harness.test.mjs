@@ -19,6 +19,73 @@ test("plugin benchmark expands 5 repositories into 30 representative tasks", () 
   assert.equal(new Set(plan.tasks.map((task) => task.scenario)).size, 6);
 });
 
+test("plugin benchmark preserves an explicit task subset", () => {
+  const plan = buildBenchmarkPlan({
+    repositories: [{ id: "repo", source_commit: "1234567" }],
+    scenarios: ["simple", "bug-fix"]
+  }, [{
+    task_id: "repo--bug-fix",
+    task_digest: "d".repeat(64),
+    repository: "repo",
+    scenario: "bug-fix"
+  }]);
+  assert.deepEqual(plan.tasks.map((task) => task.task_id), [
+    "repo--bug-fix"
+  ]);
+  assert.equal(plan.tasks[0].source_commit, "1234567");
+});
+
+test("canary benchmark reports successful delivery rate and token cost by mode", () => {
+  const modes = ["raw-agent", "v1-skill", "plugin-kernel"];
+  const tasks = buildBenchmarkPlan(
+    { repositories: ["repo"], scenarios: ["simple"] },
+    [],
+    modes
+  ).tasks;
+  const task = tasks[0];
+  const results = [
+    record(task, "raw-agent", ceilingMetrics({ cost: 30, durable_closure: 0 })),
+    record(task, "v1-skill", ceilingMetrics({ cost: 20, durable_closure: 0 })),
+    record(task, "plugin-kernel", ceilingMetrics({ cost: 40 }))
+  ];
+  const evaluation = evaluateBenchmark(tasks, results, { modes });
+  assert.equal(
+    evaluation.delivery_metrics_by_mode["raw-agent"].successful_delivery_rate,
+    1
+  );
+  assert.equal(
+    evaluation.delivery_metrics_by_mode["plugin-kernel"].tokens_per_successful_delivery,
+    40
+  );
+  assert.equal(
+    evaluation.delivery_metrics_by_mode["v1-skill"].successful_deliveries,
+    1
+  );
+});
+
+test("delivery efficiency reports null token cost when a mode has no successful delivery", () => {
+  const modes = ["raw-agent", "v1-skill", "plugin-kernel"];
+  const tasks = buildBenchmarkPlan(
+    { repositories: ["repo"], scenarios: ["simple"] },
+    [],
+    modes
+  ).tasks;
+  const results = [
+    record(tasks[0], "raw-agent", ceilingMetrics({ completion: 0, cost: 99 })),
+    record(tasks[0], "v1-skill", ceilingMetrics({ cost: 20, durable_closure: 0 })),
+    record(tasks[0], "plugin-kernel", ceilingMetrics({ cost: 40 }))
+  ];
+  const evaluation = evaluateBenchmark(tasks, results, { modes });
+  assert.equal(
+    evaluation.delivery_metrics_by_mode["raw-agent"].successful_delivery_rate,
+    0
+  );
+  assert.equal(
+    evaluation.delivery_metrics_by_mode["raw-agent"].tokens_per_successful_delivery,
+    null
+  );
+});
+
 test("product benchmark preparation lists five pinned external repositories", () => {
   const script = new URL("../scripts/prepare-product-benchmark.mjs", import.meta.url).pathname;
   const result = spawnSync(process.execPath, [script, "--list"], {
@@ -79,6 +146,20 @@ test("benchmark rejects extra task records", () => {
   const evaluation = evaluateBenchmark(tasks, results);
   assert.equal(evaluation.status, "BLOCKED");
   assert.ok(evaluation.validation_errors.some((error) => error.kind === "extra_task"));
+});
+
+test("benchmark rejects a mode outside the selected comparison matrix", () => {
+  const tasks = buildBenchmarkPlan({
+    repositories: ["repo"],
+    scenarios: ["simple"]
+  }).tasks;
+  const results = completeResults(tasks);
+  results.push(record(tasks[0], "raw-agent", ceilingMetrics()));
+  const evaluation = evaluateBenchmark(tasks, results);
+  assert.equal(evaluation.status, "BLOCKED");
+  assert.ok(evaluation.validation_errors.some((error) =>
+    error.kind === "unexpected_mode_or_task"
+  ));
 });
 
 test("benchmark rejects task digest and source commit drift", () => {

@@ -23,7 +23,10 @@ import { inspectAgentAdapters, resolveAgentAdapter } from "../src/adapters/regis
 import { executeClaudeAdapter } from "../src/adapters/claude.mjs";
 import { executeGeminiAdapter } from "../src/adapters/gemini.mjs";
 import { syncAdapterSmokeRisk } from "../src/core/risks.mjs";
-import { buildCandidateSet } from "../src/core/candidate.mjs";
+import {
+  buildCandidateSet,
+  projectSourceFingerprint
+} from "../src/core/candidate.mjs";
 import { readCheckoutClaim } from "../src/core/git-delivery.mjs";
 
 const CLI = new URL("../src/apex-v2.mjs", import.meta.url).pathname;
@@ -209,6 +212,8 @@ function createAcceptedRun(project, options = {}) {
   if (options.methodPack) intakeArgs.push("--method-pack", options.methodPack);
   if (options.type) intakeArgs.push("--type", options.type);
   if (options.risk) intakeArgs.push("--risk", options.risk);
+  if (options.description) intakeArgs.push("--description", options.description);
+  if (options.area) intakeArgs.push("--area", options.area);
   const intake = JSON.parse(run(intakeArgs).stdout);
   run(["intake", "triage", "--project", project, "--id", intake.id, "--decision", "accepted"]);
   const roadmapNode = JSON.parse(run(["roadmap", "promote", "--project", project, "--intake-id", intake.id]).stdout);
@@ -329,7 +334,14 @@ function completeHostWorker(project, worker, summary, modifyWorkspace = false) {
     "--worker-id", worker.worker_id, "--claim-token", claimed.action.claim_token,
     "--summary", summary
   ];
-  if (!modifyWorkspace) {
+  if (worker.evidence_format === "unified-v1") {
+    submitArgs.push("--evidence-artifact-json", JSON.stringify({
+      semantic_evidence_json: modifyWorkspace
+        ? null
+        : JSON.stringify(semanticEvidenceForWorker(project, worker)),
+      capability_outputs: []
+    }));
+  } else if (!modifyWorkspace) {
     submitArgs.push("--evidence-json", JSON.stringify(semanticEvidenceForWorker(project, worker)));
   }
   return JSON.parse(run(submitArgs).stdout);
@@ -476,6 +488,11 @@ function capabilityEvidenceForWorker(worker, capabilityId) {
 
 function createCapabilityFakeCodex(project, options = {}) {
   const evidence = options.evidence || [];
+  const evidenceArtifact = options.evidenceArtifact;
+  const evidenceRefs = options.evidenceRefs || [];
+  const evidenceArtifactField = options.omitEvidenceArtifact
+    ? ""
+    : `evidence_artifact: ${JSON.stringify(evidenceArtifact ?? null)},`;
   const path = join(project, `fake-capability-codex-${Math.random().toString(36).slice(2)}.mjs`);
   writeFileSync(path, `#!/usr/bin/env node
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -500,12 +517,14 @@ const target = join(workspace, "src/apex-v2.mjs");
 mkdirSync(dirname(target), { recursive: true });
 writeFileSync(target, "console.log('capability integration fixture');\\n");
 writeFileSync(output, JSON.stringify({
-  verdict: "pass",
-  summary: "fake capability worker completed scoped change",
+  verdict: ${JSON.stringify(options.verdict || "pass")},
+  summary: ${JSON.stringify(options.summary || "fake capability worker completed scoped change")},
   tests: [{ command: "node --check", status: "pass", detail: "fixture" }],
   risks: [],
-  evidence_refs: [],
-  capability_evidence: ${JSON.stringify(evidence)}
+  evidence_refs: ${JSON.stringify(evidenceRefs)},
+  semantic_evidence: null,
+  capability_evidence: ${JSON.stringify(evidence)},
+  ${evidenceArtifactField}
 }));
 `);
   chmodSync(path, 0o755);
@@ -883,7 +902,22 @@ test("认知节点由当前 Host Agent claim 并提交语义 evidence", () => {
     "host-result.json"
   ));
   assert.equal(persisted.host_id, "codex-host");
-  assert.match(persisted.semantic_evidence_ref, /cognitive-evidence\.json$/);
+  assert.match(
+    persisted.semantic_evidence_ref,
+    /cognitive-evidence-attempt-1\.json$/
+  );
+  assert.equal(
+    existsSync(join(
+      project,
+      ".apex-v2",
+      "runs",
+      deliveryRun.run_id,
+      "workers",
+      worker.worker_id,
+      "cognitive-evidence.json"
+    )),
+    true
+  );
 });
 
 test("Host capability shadow 模式注入 binding/protocol 且缺失 evidence 可审计但不阻塞", () => {
@@ -1036,18 +1070,113 @@ test("Host capability enforce 模式缺失 evidence fail closed，完整 evidenc
     submitted: ["engineering-spec"],
     missing: []
   });
-  assert.deepEqual(submitted.result.capability_evidence_refs, [
-    `${worker.namespace}/capability-evidence-engineering-spec.json`
-  ]);
+  assert.equal(submitted.result.capability_evidence_refs.length, 1);
+  assert.match(
+    submitted.result.capability_evidence_refs[0],
+    /capability-evidence-attempt-1-engineering-spec\.json$/
+  );
   assert.deepEqual(
     readJson(join(dir, "capability-evidence-engineering-spec.json")),
     capabilityEvidence
   );
   assert.ok(
     submitted.result.artifact_refs.includes(
-      `${worker.namespace}/capability-evidence-engineering-spec.json`
+      submitted.result.capability_evidence_refs[0]
     )
   );
+  assert.match(
+    submitted.result.evidence_artifact_ref,
+    /evidence-artifact-evidence-.*\.json$/
+  );
+  assert.equal(submitted.result.capability_receipt_refs.length, 1);
+  assert.equal(
+    validatePersistedValue(
+      join(project, submitted.result.evidence_artifact_ref),
+      readJson(join(project, submitted.result.evidence_artifact_ref))
+    ),
+    1
+  );
+  const receipt = readJson(join(
+    project,
+    submitted.result.capability_receipt_refs[0]
+  ));
+  assert.equal(receipt.capability_id, "engineering-spec");
+  assert.equal(receipt.validation.status, "PASS");
+  assert.equal(receipt.evidence_artifact_id,
+    readJson(join(project, submitted.result.evidence_artifact_ref))
+      .evidence_artifact_id
+  );
+});
+
+test("Host unified evidence 生成兼容投影和 capability receipt", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithPlanGraph(project, {
+    methodPack: "governed"
+  });
+  setPlanCapabilityEnforcement(project, deliveryRun.run_id, "enforce");
+  const worker = JSON.parse(run([
+    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
+    "--plan-node-id", "delivery-design"
+  ]).stdout);
+  const claimed = JSON.parse(run([
+    "host", "claim", "--project", project, "--host-id", "codex-host",
+    "--worker-id", worker.worker_id
+  ]).stdout);
+  const semantic = semanticEvidenceForWorker(project, worker);
+  const capabilities = worker.capability_bindings
+    .filter((binding) => binding.required)
+    .map((binding) => capabilityEvidenceForWorker(
+      worker,
+      binding.capability_id
+    ));
+  const submitted = JSON.parse(run([
+    "host", "submit", "--project", project, "--host-id", "codex-host",
+    "--worker-id", worker.worker_id,
+    "--claim-token", claimed.action.claim_token,
+    "--evidence-artifact-json", JSON.stringify({
+      semantic_evidence_json: JSON.stringify(semantic),
+      capability_outputs: capabilities.map((capability) => ({
+        capability_id: capability.capability_id,
+        output_json: JSON.stringify(capability.output)
+      }))
+    }),
+    "--summary", "one unified evidence submission"
+  ]).stdout);
+
+  assert.equal(submitted.result.submission_format, "unified");
+  assert.equal(submitted.result.capability_evidence_status.missing.length, 0);
+  assert.equal(
+    submitted.result.capability_receipt_refs.length,
+    capabilities.length
+  );
+  assert.ok(existsSync(join(project, submitted.result.evidence_artifact_ref)));
+  assert.ok(existsSync(join(project, submitted.result.capability_evidence_refs[0])));
+  assert.ok(existsSync(join(project, submitted.result.capability_receipt_refs[0])));
+});
+
+test("Host unified evidence 与 legacy evidence 混用时 fail closed", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithPlanGraph(project);
+  const worker = JSON.parse(run([
+    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
+    "--plan-node-id", "delivery-design"
+  ]).stdout);
+  const claimed = JSON.parse(run([
+    "host", "claim", "--project", project, "--host-id", "codex-host",
+    "--worker-id", worker.worker_id
+  ]).stdout);
+  const rejected = run([
+    "host", "submit", "--project", project, "--host-id", "codex-host",
+    "--worker-id", worker.worker_id,
+    "--claim-token", claimed.action.claim_token,
+    "--evidence-json", JSON.stringify(semanticEvidenceForWorker(project, worker)),
+    "--evidence-artifact-json", JSON.stringify({
+      semantic_evidence_json: null,
+      capability_outputs: []
+    }),
+    "--summary", "conflicting evidence formats"
+  ], { expectFailure: true });
+  assert.match(rejected.stderr, /不能与 legacy semantic\/capability evidence 同时提交/);
 });
 
 test("cognitive Host action 拒绝 summary-only、空 source refs 和复制 objective", () => {
@@ -1546,7 +1675,7 @@ test("project tick --integrate 自动处理 evidence-only no-op integration", ()
   assert.equal(runState.nodes.find((node) => node.id === "integrate").status, "passed");
 });
 
-test("project tick --learn 排队后立即关闭 run，learning worker 后台应用", () => {
+test("project tick --learn 无新规则时直接关闭且不制造模板提案", () => {
   const project = tempProject();
   seedProjectFiles(project);
   const { deliveryRun } = createIntegratedRun(project);
@@ -1562,26 +1691,31 @@ test("project tick --learn 排队后立即关闭 run，learning worker 后台应
   assert.equal(readJson(join(root, "project.json")).active_runs.length, 0);
   assert.match(runState.closure_event_id, /^event-/);
   const jobs = readJson(join(root, "learning", "jobs.json"));
-  assert.equal(jobs.length, 3);
-  assert.ok(jobs.every((job) => job.status === "waiting_approval"));
+  assert.equal(jobs.length, 0);
+  assert.equal(proposedOnly.learned_runs[0].proposal_ids.length, 0);
+  assert.equal(
+    readJson(join(
+      root,
+      "runs",
+      deliveryRun.run_id,
+      "learning-report.json"
+    )).completion_kind,
+    "no_change"
+  );
   const reconciled = JSON.parse(run(["project", "reconcile", "--project", project]).stdout);
   assert.equal(reconciled.status, "CONSISTENT");
 
-  for (const proposalId of proposedOnly.learned_runs[0].proposal_ids) {
-    run(["learn", "approve", "--project", project, "--id", proposalId]);
-  }
   const applied = JSON.parse(run([
     "project", "tick", "--project", project,
     "--learning-worker", "--learning-limit", "3"
   ]).stdout);
-  assert.equal(applied.learning_jobs.length, 3);
-  assert.ok(applied.learning_jobs.every((job) => job.status === "APPLIED"));
+  assert.equal(applied.learning_jobs.length, 0);
   runState = readJson(join(root, "runs", deliveryRun.run_id, "run.json"));
   assert.equal(runState.status, "done");
   assert.equal(
     readdirSync(join(root, "learning", "receipts"))
       .filter((name) => name.endsWith(".json")).length,
-    3
+    0
   );
   const appliedReconcile = JSON.parse(run([
     "project", "reconcile", "--project", project
@@ -2340,11 +2474,196 @@ test("governed v2 用三个 barrier 编排三个默认 Agent 判断", () => {
   assert.equal(byId.get("delivery-design").model_tier, "standard");
   assert.equal(byId.get("delivery-implementation").model_tier, "standard");
   assert.equal(byId.get("delivery-review").model_tier, "standard");
+  assert.ok(generated.plan.nodes.every((node) =>
+    node.evidence_format === "unified-v1"
+  ));
   assert.equal(byId.get("delivery-design").delegation.default, false);
   assert.equal(byId.get("delivery-design").delegation.main_agent_required, true);
   assert.deepEqual(byId.get("delivery-review").write_scope, []);
   assert.equal(byId.get("delivery-review").delegation.default, true);
   assert.equal(byId.get("delivery-review").delegation.main_agent_required, false);
+});
+
+test("critical governed v2 增加独立 risk challenger", () => {
+  const project = tempProject();
+  const { generated } = createRunWithPlanGraph(project, {
+    methodPack: "governed",
+    risk: "critical",
+    title: "Irreversible production migration"
+  });
+  const byId = new Map(generated.plan.nodes.map((node) => [node.id, node]));
+  assert.equal(generated.plan.nodes.length, 4);
+  assert.equal(byId.get("delivery-risk-challenger").barrier_id, "delivery-plan");
+  assert.equal(byId.get("delivery-risk-challenger").model_tier, "strong");
+  assert.ok(
+    byId.get("delivery-implementation").dependencies.includes(
+      "delivery-risk-challenger"
+    )
+  );
+});
+
+test("governed v2 仅凭真实 provider evidence 签发 Kernel capability receipt", () => {
+  const previousProviders = process.env.APEX_CAPABILITY_PROVIDERS;
+  const previousCommands = process.env.APEX_CAPABILITY_PROVIDER_COMMANDS;
+  process.env.APEX_CAPABILITY_PROVIDERS = "browser-qa";
+  try {
+    const missingProject = tempProject();
+    const missingRun = createRunWithPlanGraph(missingProject, {
+      methodPack: "governed",
+      risk: "medium",
+      title: "Browser acceptance flow"
+    });
+    const kernelBinding = missingRun.generated.plan.capability_plan.kernel.find((binding) =>
+      binding.capability_id === "browser-qa"
+    );
+    assert.ok(kernelBinding);
+    assert.equal(kernelBinding.target_node_id, "kernel-verification");
+    assert.ok(missingRun.generated.plan.nodes.every((node) =>
+      !(node.capability_bindings || []).some((binding) =>
+        binding.capability_id === "browser-qa"
+      )
+    ));
+
+    const advanceToVerification = (project, runId) => {
+      enableInteractiveWorkspacePatch(project);
+      let step = JSON.parse(run([
+        "project", "drain", "--project", project, "--host-id", "codex-host"
+      ]).stdout);
+      let worker = JSON.parse(run([
+        "worker", "list", "--project", project, "--run-id", runId
+      ]).stdout).find((item) => item.worker_id === step.next_action.worker_id);
+      completeHostWorker(project, worker, "browser plan complete");
+      step = JSON.parse(run([
+        "project", "drain", "--project", project, "--host-id", "codex-host"
+      ]).stdout);
+      worker = JSON.parse(run([
+        "worker", "list", "--project", project, "--run-id", runId
+      ]).stdout).find((item) => item.worker_id === step.next_action.worker_id);
+      completeHostWorker(project, worker, "browser implementation complete", true);
+      return JSON.parse(run([
+        "project", "drain", "--project", project, "--host-id", "codex-host",
+        "--max-steps", "2"
+      ]).stdout);
+    };
+
+    const missingStep = advanceToVerification(
+      missingProject,
+      missingRun.deliveryRun.run_id
+    );
+    assert.equal(missingStep.status, "BLOCKED");
+    const missingVerification = readJson(join(
+      missingProject,
+      ".apex-v2",
+      "runs",
+      missingRun.deliveryRun.run_id,
+      "verification-report.json"
+    ));
+    assert.equal(missingVerification.status, "FAIL");
+    assert.deepEqual(missingVerification.capability_receipt_refs, []);
+    assert.ok(missingVerification.checks.some((check) =>
+      check.id === "capability-provider-browser-qa"
+      && check.status === "FAIL"
+      && check.stderr_tail.includes("未配置真实 provider command")
+    ));
+
+    const project = tempProject();
+    const provider = join(project, "fake-browser-provider.mjs");
+    writeFileSync(provider, `import { readFileSync } from "node:fs";
+const invocation = JSON.parse(readFileSync(0, "utf8"));
+console.log(JSON.stringify({
+  schema_version: "v0",
+  capability_id: invocation.capability_id,
+  capability_version: invocation.capability_version,
+  invocation_id: invocation.invocation_id,
+  objective: "Validate the browser acceptance flow against the staged candidate.",
+  source_refs: ["https://example.test/app"],
+  claims: ["The declared browser flow completed without console or network errors."],
+  uncertainties: [],
+  verification_refs: ["browser-fixture://acceptance-flow"],
+  output_contract: invocation.output_contract,
+  output: {
+    url: "https://example.test/app",
+    browser_provider: "fixture-browser",
+    viewport: { width: 1280, height: 720 },
+    user_flows: ["open the application and complete the acceptance flow"],
+    screenshots: ["browser-fixture://acceptance-flow.png"],
+    console_errors: [],
+    network_errors: [],
+    accessibility_findings: [],
+    behavior_results: [{ status: "PASS", flow: "acceptance" }]
+  },
+  created_at: new Date().toISOString()
+}));
+`);
+    process.env.APEX_CAPABILITY_PROVIDER_COMMANDS = JSON.stringify({
+      "browser-qa": `node ${JSON.stringify(provider)}`
+    });
+    const { deliveryRun } = createRunWithPlanGraph(project, {
+      methodPack: "governed",
+      risk: "medium",
+      title: "Browser acceptance flow"
+    });
+    const step = advanceToVerification(project, deliveryRun.run_id);
+    assert.equal(step.next_action.action_type, "review");
+    const verification = readJson(join(
+      project,
+      ".apex-v2",
+      "runs",
+      deliveryRun.run_id,
+      "verification-report.json"
+    ));
+    assert.equal(verification.status, "PASS");
+    assert.equal(verification.capability_receipt_refs.length, 1);
+    const receipt = readJson(join(
+      project,
+      verification.capability_receipt_refs[0]
+    ));
+    assert.equal(receipt.capability_id, "browser-qa");
+    assert.equal(receipt.output_contract, "browser-qa-evidence");
+    assert.equal(receipt.validation.status, "PASS");
+    assert.match(receipt.output_ref, /kernel-capabilities\/evidence-artifact-/);
+  } finally {
+    if (previousProviders == null) delete process.env.APEX_CAPABILITY_PROVIDERS;
+    else process.env.APEX_CAPABILITY_PROVIDERS = previousProviders;
+    if (previousCommands == null) {
+      delete process.env.APEX_CAPABILITY_PROVIDER_COMMANDS;
+    } else {
+      process.env.APEX_CAPABILITY_PROVIDER_COMMANDS = previousCommands;
+    }
+  }
+});
+
+test("large governed v2 仅在互斥写域且并行收益为正时拆出 test worker", () => {
+  const project = tempProject();
+  for (const file of [
+    "src/a.mjs",
+    "src/b.mjs",
+    "tests/a.test.mjs",
+    "tests/b.test.mjs"
+  ]) {
+    writeProjectFile(project, file, "// split fixture\n");
+  }
+  const { generated } = createRunWithPlanGraph(project, {
+    methodPack: "governed",
+    risk: "high",
+    title: "Large parallel test implementation",
+    description: "Use an independent test worker for the large test suite.",
+    area: "src/a.mjs,src/b.mjs,tests/a.test.mjs,tests/b.test.mjs"
+  });
+  const byId = new Map(generated.plan.nodes.map((node) => [node.id, node]));
+  assert.equal(generated.plan.nodes.length, 4);
+  assert.deepEqual(byId.get("delivery-implementation").write_scope, [
+    "src/a.mjs",
+    "src/b.mjs"
+  ]);
+  assert.deepEqual(byId.get("delivery-tests").write_scope, [
+    "tests/a.test.mjs",
+    "tests/b.test.mjs"
+  ]);
+  assert.deepEqual(byId.get("delivery-review").dependencies, [
+    "delivery-implementation",
+    "delivery-tests"
+  ]);
 });
 
 test("governed v2 drain 在 staged verification PASS 后才解锁 review", () => {
@@ -2418,6 +2737,10 @@ test("governed v2 drain 在 staged verification PASS 后才解锁 review", () =>
     reviewStep.next_action.claim.payload.verification_ref,
     `.apex-v2/runs/${deliveryRun.run_id}/verification-report.json`
   );
+  assert.equal(reviewStep.next_action.claim.payload.patch_refs.length, 1);
+  assert.deepEqual(reviewStep.next_action.claim.payload.risk_refs, [
+    ".apex-v2/risks/register.json"
+  ]);
   const runState = readJson(join(
     project,
     ".apex-v2",
@@ -2457,6 +2780,140 @@ test("governed v2 drain 在 staged verification PASS 后才解锁 review", () =>
   ));
   assert.equal(closedRun.status, "done");
   assert.deepEqual(readJson(join(project, ".apex-v2", "project.json")).active_runs, []);
+});
+
+test("governed v2 blocking review 生成 rework request 并只重开 candidate", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithPlanGraph(project, {
+    methodPack: "governed",
+    risk: "medium"
+  });
+  enableInteractiveWorkspacePatch(project);
+  let step = JSON.parse(run([
+    "project", "drain", "--project", project, "--host-id", "codex-host"
+  ]).stdout);
+  let worker = JSON.parse(run([
+    "worker", "list", "--project", project, "--run-id", deliveryRun.run_id
+  ]).stdout).find((item) => item.worker_id === step.next_action.worker_id);
+  completeHostWorker(project, worker, "plan complete");
+  step = JSON.parse(run([
+    "project", "drain", "--project", project, "--host-id", "codex-host"
+  ]).stdout);
+  assert.ok(step.next_action, JSON.stringify(step, null, 2));
+  worker = JSON.parse(run([
+    "worker", "list", "--project", project, "--run-id", deliveryRun.run_id
+  ]).stdout).find((item) => item.worker_id === step.next_action.worker_id);
+  const implementationWorkerId = worker.worker_id;
+  completeHostWorker(project, worker, "implementation complete", true);
+  step = JSON.parse(run([
+    "project", "drain", "--project", project, "--host-id", "codex-host"
+  ]).stdout);
+  assert.ok(step.next_action, JSON.stringify(step, null, 2));
+  worker = JSON.parse(run([
+    "worker", "list", "--project", project, "--run-id", deliveryRun.run_id
+  ]).stdout).find((item) => item.worker_id === step.next_action.worker_id);
+  const evidence = semanticEvidenceForWorker(project, worker);
+  evidence.findings = ["P1: implementation misses an acceptance edge case"];
+  evidence.merge_posture = "block";
+  run([
+    "host", "submit", "--project", project, "--host-id", "codex-host",
+    "--worker-id", worker.worker_id,
+    "--claim-token", step.next_action.claim.claim_token,
+    "--evidence-artifact-json", JSON.stringify({
+      semantic_evidence_json: JSON.stringify(evidence),
+      capability_outputs: []
+    }),
+    "--summary", "review requests implementation changes"
+  ]);
+  const legacyEvidencePath = join(
+    project,
+    ".apex-v2",
+    "runs",
+    deliveryRun.run_id,
+    "workers",
+    worker.worker_id,
+    "cognitive-evidence.json"
+  );
+  const legacyEvidence = readJson(legacyEvidencePath);
+  legacyEvidence.findings = [];
+  legacyEvidence.merge_posture = "approve";
+  writeFileSync(
+    legacyEvidencePath,
+    `${JSON.stringify(legacyEvidence, null, 2)}\n`
+  );
+
+  const reworkStep = JSON.parse(run([
+    "project", "drain", "--project", project, "--host-id", "codex-host",
+    "--max-steps", "2"
+  ]).stdout);
+  assert.equal(reworkStep.next_action.action_type, "implement");
+  const rework = readJson(join(
+    project,
+    ".apex-v2",
+    "runs",
+    deliveryRun.run_id,
+    "rework-request.json"
+  ));
+  assert.equal(rework.status, "open");
+  assert.equal(rework.generation, 1);
+  const queue = readJson(join(
+    project,
+    ".apex-v2",
+    "runs",
+    deliveryRun.run_id,
+    "merge-queue.json"
+  ));
+  assert.ok(queue.items.length > 0);
+  assert.ok(queue.items.every((item) => item.status === "dropped"));
+  assert.notEqual(reworkStep.next_action.worker_id, implementationWorkerId);
+  const runState = readJson(join(
+    project,
+    ".apex-v2",
+    "runs",
+    deliveryRun.run_id,
+    "run.json"
+  ));
+  assert.equal(runState.nodes.find((node) => node.id === "execute").status, "pending");
+  assert.equal(runState.nodes.find((node) => node.id === "verify").status, "pending");
+  assert.equal(runState.nodes.find((node) => node.id === "review").status, "pending");
+
+  const reworkWorker = JSON.parse(run([
+    "worker", "list", "--project", project, "--run-id", deliveryRun.run_id
+  ]).stdout).find((item) =>
+    item.worker_id === reworkStep.next_action.worker_id
+  );
+  completeHostWorker(project, reworkWorker, "rework implementation complete", true);
+  const secondReviewStep = JSON.parse(run([
+    "project", "drain", "--project", project, "--host-id", "codex-host"
+  ]).stdout);
+  assert.equal(secondReviewStep.next_action.action_type, "review");
+  assert.notEqual(secondReviewStep.next_action.worker_id, worker.worker_id);
+  const secondReviewWorker = JSON.parse(run([
+    "worker", "list", "--project", project, "--run-id", deliveryRun.run_id
+  ]).stdout).find((item) =>
+    item.worker_id === secondReviewStep.next_action.worker_id
+  );
+  completeHostWorker(project, secondReviewWorker, "rework review approved");
+  const closed = JSON.parse(run([
+    "project", "drain", "--project", project, "--host-id", "codex-host"
+  ]).stdout);
+  assert.equal(closed.status, "COMPLETE");
+  assert.equal(readJson(join(
+    project,
+    ".apex-v2",
+    "runs",
+    deliveryRun.run_id,
+    "rework-request.json"
+  )).status, "resolved");
+  const finalQueue = readJson(join(
+    project,
+    ".apex-v2",
+    "runs",
+    deliveryRun.run_id,
+    "merge-queue.json"
+  ));
+  assert.equal(finalQueue.items.filter((item) => item.status === "dropped").length, 1);
+  assert.equal(finalQueue.items.filter((item) => item.status === "merged").length, 1);
 });
 
 test("high-risk governed plan 自动生成幂等 Decision Note proposal", () => {
@@ -3360,7 +3817,9 @@ test("Worker capability shadow 模式注入 protocol 且缺失 evidence 可审�
 
 test("Worker capability enforce 模式缺失 evidence fail closed，重试提交完整 evidence 可通过", () => {
   const project = tempProject();
-  const { deliveryRun } = createRunWithPlanGraph(project);
+  const { deliveryRun } = createRunWithPlanGraph(project, {
+    methodPack: "governed"
+  });
   setPlanCapabilityEnforcement(project, deliveryRun.run_id, "enforce");
   const worker = JSON.parse(run([
     "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
@@ -3368,6 +3827,10 @@ test("Worker capability enforce 模式缺失 evidence fail closed，重试提交
   ]).stdout);
   assert.equal(worker.capability_enforcement, "enforce");
   const missingFake = createCapabilityFakeCodex(project, {
+    evidenceArtifact: {
+      semantic_evidence_json: null,
+      capability_outputs: []
+    },
     expectedPrompt: ["### tdd-negative-control@1.0.0"]
   });
   const capabilityEvidence = capabilityEvidenceForWorker(
@@ -3375,10 +3838,18 @@ test("Worker capability enforce 模式缺失 evidence fail closed，重试提交
     "tdd-negative-control"
   );
   const completeFake = createCapabilityFakeCodex(project, {
-    evidence: [capabilityEvidence],
+    evidenceArtifact: {
+      semantic_evidence_json: null,
+      capability_outputs: [{
+        capability_id: "tdd-negative-control",
+        output_json: JSON.stringify(capabilityEvidence.output)
+      }]
+    },
+    evidenceRefs: ["src/apex-v2.mjs"],
     expectedPrompt: [
       "### tdd-negative-control@1.0.0",
-      "Required output: negative-control-evidence"
+      "Required output: negative-control-evidence",
+      "## Unified Evidence"
     ]
   });
   run([
@@ -3393,6 +3864,7 @@ test("Worker capability enforce 模式缺失 evidence fail closed，重试提交
   assert.equal(missing.result.failure_kind, "contract_error");
   assert.equal(missing.patch, null);
   assert.equal(missing.result.capability_evidence_status.enforcement, "enforce");
+  assert.deepEqual(missing.result.capability_receipt_refs, []);
   assert.match(
     missing.result.capability_evidence_status.error,
     /缺少 required capability evidence：tdd-negative-control/
@@ -3426,6 +3898,7 @@ test("Worker capability enforce 模式缺失 evidence fail closed，重试提交
     "--adapter", "codex", "--command", completeFake, "--timeout-ms", "10000"
   ]).stdout);
   assert.equal(completed.result.status, "PASS");
+  assert.equal(completed.result.submission_format, "unified");
   assert.deepEqual(completed.result.capability_evidence_status, {
     enforcement: "enforce",
     submitted: ["tdd-negative-control"],
@@ -3433,13 +3906,164 @@ test("Worker capability enforce 模式缺失 evidence fail closed，重试提交
     error: ""
   });
   assert.ok(completed.patch);
-  const evidenceRef = `${worker.namespace}/capability-evidence-tdd-negative-control.json`;
+  const [evidenceRef] = completed.result.capability_evidence_refs;
+  assert.match(
+    evidenceRef,
+    /capability-evidence-attempt-2-tdd-negative-control\.json$/
+  );
   assert.ok(completed.result.refs.includes(evidenceRef));
-  assert.deepEqual(
-    readJson(join(dir, "capability-evidence-tdd-negative-control.json")),
-    capabilityEvidence
+  assert.match(
+    completed.result.evidence_artifact_ref,
+    /evidence-artifact-evidence-.*\.json$/
+  );
+  assert.equal(completed.result.capability_receipt_refs.length, 1);
+  assert.ok(completed.result.refs.includes(
+    completed.result.capability_receipt_refs[0]
+  ));
+  const projectedEvidence = readJson(join(
+    dir,
+    "capability-evidence-tdd-negative-control.json"
+  ));
+  assert.deepEqual(projectedEvidence.output, capabilityEvidence.output);
+  assert.equal(projectedEvidence.objective, worker.objective);
+  assert.deepEqual(projectedEvidence.source_refs, ["src/apex-v2.mjs"]);
+  const receipt = readJson(join(
+    project,
+    completed.result.capability_receipt_refs[0]
+  ));
+  assert.equal(receipt.capability_id, "tdd-negative-control");
+  assert.equal(receipt.validation.status, "PASS");
+  assert.ok(
+    completed.result.capability_receipt_refs[0].includes(
+      readJson(join(project, completed.result.evidence_artifact_ref))
+        .evidence_artifact_id
+    )
+  );
+  assert.equal(
+    existsSync(join(dir, "agent-result-provider-unified.schema.json")),
+    true
   );
   assert.equal(readJson(join(dir, "worker.json")).status, "patch_submitted");
+});
+
+test("unified worker 缺少顶层 evidence_artifact 时 fail closed", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithPlanGraph(project, {
+    methodPack: "governed"
+  });
+  const worker = JSON.parse(run([
+    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
+    "--plan-node-id", "delivery-implementation"
+  ]).stdout);
+  const fake = createCapabilityFakeCodex(project, {
+    omitEvidenceArtifact: true,
+    expectedPrompt: ["## Unified Evidence"]
+  });
+  run([
+    "worker", "sandbox", "init", "--project", project,
+    "--worker-id", worker.worker_id, "--type", "scratch"
+  ]);
+  const executed = JSON.parse(run([
+    "worker", "exec-agent", "--project", project,
+    "--worker-id", worker.worker_id,
+    "--adapter", "codex", "--command", fake, "--timeout-ms", "10000"
+  ]).stdout);
+  assert.equal(executed.result.status, "FAIL");
+  assert.equal(executed.result.failure_kind, "contract_error");
+  assert.match(
+    executed.result.semantic_evidence_status.error,
+    /requires unified evidence_artifact/
+  );
+  assert.equal(executed.patch, null);
+});
+
+test("retry 保留第一次 capability compatibility alias，attempt-specific ref 始终权威", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithPlanGraph(project, {
+    methodPack: "governed"
+  });
+  setPlanCapabilityEnforcement(project, deliveryRun.run_id, "enforce");
+  const worker = JSON.parse(run([
+    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
+    "--plan-node-id", "delivery-implementation"
+  ]).stdout);
+  const firstCapability = capabilityEvidenceForWorker(
+    worker,
+    "tdd-negative-control"
+  );
+  const secondCapability = structuredClone(firstCapability);
+  secondCapability.output.red_signature = "retry-specific signature";
+  const firstFake = createCapabilityFakeCodex(project, {
+    verdict: "fail",
+    evidenceArtifact: {
+      semantic_evidence_json: null,
+      capability_outputs: [{
+        capability_id: firstCapability.capability_id,
+        output_json: JSON.stringify(firstCapability.output)
+      }]
+    },
+    evidenceRefs: ["src/apex-v2.mjs"]
+  });
+  const secondFake = createCapabilityFakeCodex(project, {
+    evidenceArtifact: {
+      semantic_evidence_json: null,
+      capability_outputs: [{
+        capability_id: secondCapability.capability_id,
+        output_json: JSON.stringify(secondCapability.output)
+      }]
+    },
+    evidenceRefs: ["src/apex-v2.mjs"]
+  });
+
+  run([
+    "worker", "sandbox", "init", "--project", project,
+    "--worker-id", worker.worker_id, "--type", "scratch"
+  ]);
+  const first = JSON.parse(run([
+    "worker", "exec-agent", "--project", project,
+    "--worker-id", worker.worker_id,
+    "--adapter", "codex", "--command", firstFake, "--timeout-ms", "10000"
+  ]).stdout);
+  assert.equal(first.result.status, "FAIL");
+  assert.equal(first.result.failure_kind, "agent_reported_failure");
+  assert.match(
+    first.result.capability_evidence_refs[0],
+    /capability-evidence-attempt-1-tdd-negative-control\.json$/
+  );
+
+  const dir = join(
+    project,
+    ".apex-v2",
+    "runs",
+    deliveryRun.run_id,
+    "workers",
+    worker.worker_id
+  );
+  const aliasPath = join(dir, "capability-evidence-tdd-negative-control.json");
+  assert.deepEqual(readJson(aliasPath).output, firstCapability.output);
+
+  run([
+    "worker", "retry", "--project", project, "--worker-id", worker.worker_id
+  ]);
+  run([
+    "worker", "sandbox", "init", "--project", project,
+    "--worker-id", worker.worker_id, "--type", "scratch"
+  ]);
+  const second = JSON.parse(run([
+    "worker", "exec-agent", "--project", project,
+    "--worker-id", worker.worker_id,
+    "--adapter", "codex", "--command", secondFake, "--timeout-ms", "10000"
+  ]).stdout);
+  assert.equal(second.result.status, "PASS");
+  assert.match(
+    second.result.capability_evidence_refs[0],
+    /capability-evidence-attempt-2-tdd-negative-control\.json$/
+  );
+  assert.deepEqual(
+    readJson(join(dir, "capability-evidence-attempt-2-tdd-negative-control.json")).output,
+    secondCapability.output
+  );
+  assert.deepEqual(readJson(aliasPath).output, firstCapability.output);
 });
 
 test("worker execution commit failpoint 回滚 authority 并可重试", () => {
@@ -4217,6 +4841,26 @@ test("patch 内容在 verification 后变化会使 review BLOCKED", () => {
   assert.notEqual(review.report.candidate_digest, verified.report.candidate_digest);
 });
 
+test("candidate fingerprint 忽略 scheduler 和 stale control-plane locks", () => {
+  const project = tempProject();
+  seedProjectFiles(project);
+  const baseline = projectSourceFingerprint(project);
+  for (const name of [
+    ".apex-v2.scheduler-lock",
+    ".apex-v2.scheduler-lock.stale-fixture",
+    ".apex-v2.lock.stale-fixture"
+  ]) {
+    const lock = join(project, name);
+    mkdirSync(lock, { recursive: true });
+    writeFileSync(join(lock, "owner.json"), `${JSON.stringify({
+      token: name,
+      pid: process.pid,
+      created_at: new Date().toISOString()
+    })}\n`);
+  }
+  assert.equal(projectSourceFingerprint(project), baseline);
+});
+
 test("review 后 source drift 会使 merge 拒绝旧 candidate", () => {
   const project = tempProject();
   const { deliveryRun } = createRunWithQueuedPatches(project);
@@ -4666,9 +5310,21 @@ test("submit-patch 拒绝 operation path 不在 changed_files 或不安全路径
 test("learn propose/approve/apply 通过 governance gate 写回项目知识库并可经 refresh 保留", () => {
   const project = tempProject();
   const { deliveryRun } = createIntegratedRun(project);
+  const reviewPath = join(
+    project,
+    ".apex-v2",
+    "runs",
+    deliveryRun.run_id,
+    "review-report.json"
+  );
+  const review = readJson(reviewPath);
+  review.non_blocking_findings = [
+    "learning: Candidate-bound review evidence must be invalidated after source drift."
+  ];
+  writeFileSync(reviewPath, `${JSON.stringify(review, null, 2)}\n`);
 
   const proposed = JSON.parse(run(["learn", "propose", "--project", project, "--run-id", deliveryRun.run_id]).stdout);
-  assert.equal(proposed.proposals.length, 3);
+  assert.equal(proposed.proposals.length, 1);
   assert.match(proposed.artifact_id, /^artifact-/);
   assert.ok(proposed.proposals.every((proposal) => proposal.status === "proposed"));
 

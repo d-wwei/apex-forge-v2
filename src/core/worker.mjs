@@ -27,6 +27,7 @@ import {
 } from "./capability-registry.mjs";
 import { assertCapabilityEvidence } from "./capability-evidence.mjs";
 import { resolveModelSelection } from "./model-routing.mjs";
+import { persistUnifiedEvidence } from "./evidence-artifact.mjs";
 
 export function createWorkerForPlanNode(root, run, planNode, options = {}) {
   const generation = getWorkers(root, run.run_id)
@@ -69,6 +70,7 @@ function createWorkerForPlanNodeTransaction(root, run, planNode, options) {
     model_id: modelSelection.model_id,
     model_reason: modelSelection.model_reason,
     output_contract: planNode.output_contract || "evidence",
+    evidence_format: planNode.evidence_format || "legacy-v1",
     objective: planNode.objective,
     deliverables: planNode.deliverables,
     required_evidence: planNode.required_evidence,
@@ -640,12 +642,42 @@ function commitWorkerShell(
     throw new Error(`shell worker commit 遇到并发状态变化：${worker.worker_id}`);
   }
   const dir = workerDir(root, worker.run_id, worker.worker_id);
+  const capabilityPassed = adapterResult.capability_evidence_status.error === "";
+  const acceptedCapabilityEvidence = capabilityPassed
+    ? capabilityEvidence
+    : [];
   const capabilityEvidenceRefs = persistShellCapabilityEvidence(
     dir,
     worker.namespace,
-    capabilityEvidence
+    acceptedCapabilityEvidence,
+    Number(worker.attempt || 0) + 1
   );
-  adapterResult.refs = capabilityEvidenceRefs;
+  const unified = persistUnifiedEvidence(root, worker, {
+    success: adapterResult.status === "PASS",
+    capabilityEvidence: acceptedCapabilityEvidence,
+    capabilityValidation: {
+      valid: capabilityPassed
+    },
+    tests: [{
+      command: adapterResult.command,
+      status: adapterResult.status === "PASS" ? "pass" : "fail",
+      detail: adapterResult.summary
+    }],
+    evidenceRefs: capabilityEvidenceRefs,
+    executor: "shell",
+    model: null,
+    reasons: adapterResult.status === "PASS" ? [] : [adapterResult.summary],
+    timestamp
+  });
+  adapterResult.evidence_artifact_ref = unified.evidenceArtifactRef;
+  adapterResult.capability_evidence_refs = capabilityEvidenceRefs;
+  adapterResult.capability_receipt_refs = unified.capabilityReceiptRefs;
+  adapterResult.submission_format = "legacy_projection";
+  adapterResult.refs = [
+    ...capabilityEvidenceRefs,
+    unified.evidenceArtifactRef,
+    ...unified.capabilityReceiptRefs
+  ];
   const file = `adapter-result-${adapterResult.result_id}.json`;
   writeJson(join(dir, file), adapterResult);
   worker.status = adapterResult.status === "PASS" ? "evidence_submitted" : "blocked";
@@ -674,10 +706,24 @@ function commitWorkerShell(
   return { adapterResult, artifact };
 }
 
-function persistShellCapabilityEvidence(dir, namespace, evidenceItems = []) {
+function persistShellCapabilityEvidence(
+  dir,
+  namespace,
+  evidenceItems = [],
+  attempt = 1
+) {
   return (evidenceItems || []).map((evidence) => {
-    const name = `capability-evidence-${evidence.capability_id}.json`;
+    const name = [
+      "capability-evidence",
+      `attempt-${attempt}`,
+      evidence.capability_id
+    ].join("-") + ".json";
     writeJson(join(dir, name), evidence);
+    const legacyAlias = join(
+      dir,
+      `capability-evidence-${evidence.capability_id}.json`
+    );
+    if (!existsSync(legacyAlias)) writeJson(legacyAlias, evidence);
     return `${namespace}/${name}`;
   });
 }
