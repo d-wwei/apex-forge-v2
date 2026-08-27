@@ -171,14 +171,51 @@ function bootstrapBenchmarkProject({
         plan
       })
     : null;
+  const entryAction = enableFastPath && !fastPath
+    ? prepareGuidedEntryAction({
+        workspace,
+        runtimePath,
+        schemaDir
+      })
+    : null;
   return {
     reused,
     intake_id: intake?.id || plan.source_intake_id,
     run_id: runId,
     profile: plan.profile,
     fast_path: fastPath,
+    entry_action: entryAction,
     tick,
     status
+  };
+}
+
+function prepareGuidedEntryAction({ workspace, runtimePath, schemaDir }) {
+  const drained = runRuntime(runtimePath, schemaDir, [
+    "project",
+    "drain",
+    "--project",
+    workspace,
+    "--host-id",
+    "codex-host"
+  ]);
+  if (drained.status !== "ACTION_REQUIRED" || !drained.next_action?.claim) {
+    throw new Error("plugin guided bootstrap expected one claimed Host action");
+  }
+  const action = drained.next_action;
+  return {
+    action_type: action.action_type,
+    worker_id: action.worker_id,
+    run_id: action.run_id,
+    objective: action.objective,
+    workspace: action.workspace,
+    context_refs: action.context_refs,
+    candidate_digest: action.candidate_digest,
+    verification_ref: action.verification_ref,
+    patch_refs: action.patch_refs,
+    risk_refs: action.risk_refs,
+    claim_token: action.claim.claim_token,
+    submission_contract: action.submission_contract
   };
 }
 

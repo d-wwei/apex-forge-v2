@@ -662,6 +662,12 @@ test("Plugin benchmark can force the governed v2 method pack", () => {
   assert.equal(plan.graph_version, "governed-v2");
   assert.equal(plan.method_pack.id, "governed");
   assert.equal(result.fast_path, null);
+  assert.equal(result.entry_action.action_type, "plan");
+  assert.match(result.entry_action.claim_token, /^claim-/);
+  assert.equal(
+    result.entry_action.submission_contract.semantic_evidence.evidence_type,
+    "design"
+  );
 });
 
 test("CLI benchmark bootstrap persists exact public acceptance commands", () => {

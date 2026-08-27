@@ -279,6 +279,17 @@ export function buildBenchmarkPrompt({
         "The Host Adapter will capture the patch, bind your review to the candidate, verify, merge, and close the durable run after your structured output.",
         "For a PASS, include `review` with specific claims, acceptance mappings, findings, residual risks, and merge_posture=`approve`."
       );
+    } else if (pluginBootstrap?.entry_action) {
+      common.unshift(
+        "Use the Apex Forge V2 guided Plugin path.",
+        `Kernel bridge: ${join(candidateRoot, "plugins", "codex", "apex-forge-v2", "scripts", "apex-host.mjs")}`,
+        "The controller already claimed the first Host action shown below.",
+        "Do not locate or read plugin files, CLI help, runtime source, or JSON schemas.",
+        "Use each next_action.submission_contract as the authoritative evidence shape.",
+        "Submit one natural JSON file with semantic_evidence as an object and capability_outputs[].output as an object.",
+        "After each successful host submit, call project drain with host-id codex-host and follow only the returned next_action.",
+        `Initial action:\n${JSON.stringify(pluginBootstrap.entry_action, null, 2)}`
+      );
     } else {
       common.unshift(
         "Use the installed Apex Forge V2 Agent Plugin to implement this requirement end-to-end.",

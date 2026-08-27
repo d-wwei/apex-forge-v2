@@ -30,8 +30,18 @@ export function normalizeEvidenceSubmission(worker, input) {
     input.evidenceArtifact,
     `evidence submission:${worker.worker_id}`
   );
+  if (
+    input.evidenceArtifact.semantic_evidence_json != null
+    && input.evidenceArtifact.semantic_evidence != null
+  ) {
+    throw new Error(
+      "evidence_artifact 只能指定 semantic_evidence 或 semantic_evidence_json 之一"
+    );
+  }
   let semanticEvidence = null;
-  if (input.evidenceArtifact.semantic_evidence_json != null) {
+  if (input.evidenceArtifact.semantic_evidence != null) {
+    semanticEvidence = input.evidenceArtifact.semantic_evidence;
+  } else if (input.evidenceArtifact.semantic_evidence_json != null) {
     try {
       semanticEvidence = JSON.parse(
         input.evidenceArtifact.semantic_evidence_json
@@ -55,13 +65,33 @@ export function normalizeEvidenceSubmission(worker, input) {
         throw new Error(`Capability output 重复：${section.capability_id}`);
       }
       seen.add(section.capability_id);
-      let output;
-      try {
-        output = JSON.parse(section.output_json);
-      } catch (error) {
+      if (
+        section.capability_version
+        && section.capability_version !== binding.capability_version
+      ) {
         throw new Error(
-          `Capability output_json 无效：${section.capability_id} ${error.message}`
+          `Capability output version 不匹配：${section.capability_id}`
         );
+      }
+      if (
+        section.output_contract
+        && section.output_contract !== binding.output_contract
+      ) {
+        throw new Error(
+          `Capability output contract 不匹配：${section.capability_id}`
+        );
+      }
+      let output;
+      if (section.output != null) {
+        output = section.output;
+      } else {
+        try {
+          output = JSON.parse(section.output_json);
+        } catch (error) {
+          throw new Error(
+            `Capability output_json 无效：${section.capability_id} ${error.message}`
+          );
+        }
       }
       return {
         schema_version: SCHEMA_VERSION,

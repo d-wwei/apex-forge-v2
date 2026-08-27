@@ -87,6 +87,10 @@ const REQUIRED_OUTPUT_FIELDS = {
   ]
 };
 
+export function capabilityOutputRequiredFields(outputContract) {
+  return [...(REQUIRED_OUTPUT_FIELDS[outputContract] || [])];
+}
+
 export function validateCapabilityEvidence(evidence, context = "capability evidence") {
   return validateContract("capability-evidence.schema.json", evidence, context);
 }

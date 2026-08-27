@@ -131,6 +131,7 @@ import {
   handleRoadmapCommand
 } from "./commands/intake-roadmap.mjs";
 import { handleCapabilityCommand } from "./commands/capability.mjs";
+import { capabilityOutputRequiredFields } from "./core/capability-evidence.mjs";
 import {
   claimHostAction,
   handleHostCommand,
@@ -1060,7 +1061,57 @@ function controllerAction(action, claimed) {
       lease_expires_at: claimed?.action?.lease_expires_at || action.lease_expires_at
     },
     claim: claimed?.action || null,
-    capability_bindings: action.capability_bindings
+    capability_bindings: action.capability_bindings,
+    submission_contract: hostSubmissionContract(action, actionType)
+  };
+}
+
+function hostSubmissionContract(action, actionType) {
+  const evidenceType = {
+    plan: "design",
+    risk_challenge: "risk",
+    review: "review"
+  }[actionType] || null;
+  const semanticFields = {
+    design: ["slices", "dependencies", "verification", "rollback"],
+    risk: ["failure_paths", "blast_radius", "mitigations", "rollback"],
+    review: ["candidate_digest", "findings", "residual_risks", "merge_posture"]
+  };
+  return {
+    command: "host submit",
+    evidence_argument: "--evidence-artifact-file",
+    format: "unified-v1",
+    semantic_evidence: evidenceType
+      ? {
+          evidence_type: evidenceType,
+          objective_must_equal: action.objective,
+          required_fields: [
+            "schema_version",
+            "evidence_type",
+            "objective",
+            "source_refs",
+            "claims",
+            "uncertainties",
+            "acceptance_mapping",
+            ...semanticFields[evidenceType],
+            "created_at"
+          ]
+        }
+      : null,
+    capability_outputs: (action.capability_bindings || []).map((binding) => ({
+      capability_id: binding.capability_id,
+      capability_version: binding.capability_version,
+      output_contract: binding.output_contract,
+      required: binding.required,
+      required_output_fields: capabilityOutputRequiredFields(
+        binding.output_contract
+      )
+    })),
+    rules: [
+      "Use semantic_evidence as an object; do not JSON-stringify it.",
+      "Use capability_outputs[].output as an object; do not flatten output fields.",
+      "Do not read CLI source or schema files unless this contract is rejected."
+    ]
   };
 }
 

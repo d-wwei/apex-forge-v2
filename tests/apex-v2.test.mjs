@@ -1134,10 +1134,13 @@ test("Host unified evidence 生成兼容投影和 capability receipt", () => {
     "--worker-id", worker.worker_id,
     "--claim-token", claimed.action.claim_token,
     "--evidence-artifact-json", JSON.stringify({
-      semantic_evidence_json: JSON.stringify(semantic),
+      schema_version: "unified-v1",
+      semantic_evidence: semantic,
       capability_outputs: capabilities.map((capability) => ({
         capability_id: capability.capability_id,
-        output_json: JSON.stringify(capability.output)
+        capability_version: capability.capability_version,
+        output_contract: capability.output_contract,
+        output: capability.output
       }))
     }),
     "--summary", "one unified evidence submission"
@@ -2679,6 +2682,20 @@ test("governed v2 drain 在 staged verification PASS 后才解锁 review", () =>
   ]).stdout);
   assert.equal(planStep.next_action.action_type, "plan");
   assert.equal(planStep.next_action.claim.payload.plan_node_id, "delivery-design");
+  assert.equal(planStep.next_action.submission_contract.format, "unified-v1");
+  assert.equal(
+    planStep.next_action.submission_contract.semantic_evidence.evidence_type,
+    "design"
+  );
+  assert.ok(
+    planStep.next_action.submission_contract.semantic_evidence.required_fields
+      .includes("slices")
+  );
+  assert.ok(
+    planStep.next_action.submission_contract.capability_outputs.every((item) =>
+      item.required_output_fields.length > 0
+    )
+  );
   assert.equal(
     JSON.parse(run([
       "worker", "list", "--project", project, "--run-id", deliveryRun.run_id
@@ -2721,6 +2738,10 @@ test("governed v2 drain 在 staged verification PASS 后才解锁 review", () =>
   ]).stdout);
   assert.ok(reviewStep.next_action, JSON.stringify(reviewStep, null, 2));
   assert.equal(reviewStep.next_action.action_type, "review");
+  assert.equal(
+    reviewStep.next_action.submission_contract.semantic_evidence.evidence_type,
+    "review"
+  );
   const verification = readJson(join(
     project,
     ".apex-v2",
