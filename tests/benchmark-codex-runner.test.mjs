@@ -130,6 +130,33 @@ test("Plugin fast path keeps the Agent inside the claimed workspace and out of K
   assert.match(prompt, /include `review`/);
 });
 
+test("Plugin guided prompt starts from the claimed action without schema discovery", () => {
+  const prompt = buildBenchmarkPrompt({
+    task,
+    mode: "plugin-kernel",
+    workspace: "/workspace",
+    candidateRoot: "/candidate",
+    runRoot: "/run",
+    pluginBootstrap: {
+      fast_path: null,
+      entry_action: {
+        action_type: "plan",
+        worker_id: "worker-1",
+        claim_token: "claim-1",
+        submission_contract: {
+          required_cli_values: {
+            evidence_file: "/private/tmp/apex-evidence-worker-1.json"
+          }
+        }
+      }
+    }
+  });
+  assert.match(prompt, /No plugin tool invocation is needed/);
+  assert.equal(prompt.includes('--project-dir "/workspace"'), true);
+  assert.match(prompt, /--worker-id worker-1 --claim-token claim-1/);
+  assert.match(prompt, /Do not locate or read plugin files/);
+});
+
 test("benchmark sandbox denies hidden controller inputs and only exposes agent IO for writes", () => {
   const policy = benchmarkSandboxPolicy({
     workspace: "/private/tmp/agent/workspace",

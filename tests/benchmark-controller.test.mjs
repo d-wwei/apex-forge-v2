@@ -668,6 +668,17 @@ test("Plugin benchmark can force the governed v2 method pack", () => {
     result.entry_action.submission_contract.semantic_evidence.evidence_type,
     "design"
   );
+  assert.equal(
+    result.entry_action.submission_contract.required_cli_values.project_dir,
+    workspace
+  );
+  assert.equal(
+    result.entry_action.submission_contract
+      .capability_outputs
+      .find((item) => item.capability_id === "test-strategy")
+      .required_for_submission,
+    false
+  );
 });
 
 test("CLI benchmark bootstrap persists exact public acceptance commands", () => {

@@ -216,6 +216,7 @@ function prepareGuidedEntryAction({ workspace, runtimePath, schemaDir }) {
     patch_refs: action.patch_refs,
     risk_refs: action.risk_refs,
     claim_token: action.claim.claim_token,
+    capability_enforcement: action.capability_enforcement,
     submission_contract: action.submission_contract
   };
 }

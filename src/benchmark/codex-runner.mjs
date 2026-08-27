@@ -68,6 +68,7 @@ export function executeCodexBenchmarkRun({
     : buildBenchmarkPrompt({
         task,
         mode,
+        workspace,
         candidateRoot,
         runRoot,
         pluginBootstrap,
@@ -239,6 +240,7 @@ export function buildBenchmarkCodexArgs({
 export function buildBenchmarkPrompt({
   task,
   mode,
+  workspace = "<project-dir>",
   candidateRoot,
   runRoot,
   pluginBootstrap = null,
@@ -295,6 +297,7 @@ export function buildBenchmarkPrompt({
         "Do not locate or read plugin files, CLI help, runtime source, or JSON schemas. Do not call bare `actions` or `host submit --help`.",
         "Use each next_action.submission_contract as the authoritative evidence shape.",
         "Submit one natural JSON file with semantic_evidence as an object and capability_outputs[].output as an object.",
+        "If capability_enforcement is shadow, leave capability_outputs empty unless you actually executed that capability; never fabricate capability evidence.",
         "Every host submit must include the shown worker_id, claim_token, host-id codex-host, project-dir equal to the original benchmark workspace, a summary, and --evidence-artifact-file.",
         "Write temporary evidence files under /private/tmp, never inside the action workspace.",
         "After each successful host submit, call `project drain --project-dir <original-workspace> --host-id codex-host --compact` and follow only the returned next_action.",

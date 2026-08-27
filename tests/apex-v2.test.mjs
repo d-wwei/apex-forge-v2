@@ -2693,7 +2693,8 @@ test("governed v2 drain 在 staged verification PASS 后才解锁 review", () =>
   );
   assert.ok(
     planStep.next_action.submission_contract.capability_outputs.every((item) =>
-      item.required_output_fields.length > 0
+      item.required_for_submission === false
+      && item.required_output_fields == null
     )
   );
   assert.equal(
