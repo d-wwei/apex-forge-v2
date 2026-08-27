@@ -301,6 +301,7 @@ export function buildBenchmarkPrompt({
         "Use `host submit-current`; do not manually pass worker-id or claim-token.",
         "Write temporary evidence files under /private/tmp, never inside the action workspace.",
         "The initial action is plan-only: do not edit source files before submitting it. When drain returns an implement action, change into exactly next_action.workspace before editing.",
+        "For every Kernel command, always copy the absolute project_dir from submission_contract.required_cli_values; never substitute the current `$PWD` after entering an ActionWorkspace.",
         "After each successful host submit, call `project drain --project-dir <original-workspace> --host-id codex-host --compact` and follow only the returned next_action.",
         `First submit command template:\nnode ${JSON.stringify(bridge)} host submit-current --project-dir ${JSON.stringify(workspace)} --host-id codex-host --action-result-file ${JSON.stringify(first.submission_contract.required_cli_values.evidence_file)}`,
         `Initial action:\n${JSON.stringify(first, null, 2)}`
