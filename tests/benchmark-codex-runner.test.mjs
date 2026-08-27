@@ -153,7 +153,8 @@ test("Plugin guided prompt starts from the claimed action without schema discove
   });
   assert.match(prompt, /No plugin tool invocation is needed/);
   assert.equal(prompt.includes('--project-dir "/workspace"'), true);
-  assert.match(prompt, /--worker-id worker-1 --claim-token claim-1/);
+  assert.match(prompt, /host submit-current/);
+  assert.doesNotMatch(prompt, /--worker-id worker-1 --claim-token claim-1/);
   assert.match(prompt, /Do not locate or read plugin files/);
 });
 

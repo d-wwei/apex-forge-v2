@@ -77,6 +77,35 @@ export function handleHostCommand(subcommand, args) {
     ), null, 2));
     return;
   }
+  if (subcommand === "submit-current") {
+    const root = requireStore(projectRoot(args));
+    const hostId = required(args, "host-id");
+    const claimed = listHostActions(root).filter((action) =>
+      action.status === "claimed"
+      && action.claimed_by === hostId
+      && !action.claim_expired
+    );
+    if (claimed.length !== 1) {
+      throw new Error(
+        `host submit-current 需要恰好一个有效 claim，当前 ${claimed.length} 个`
+      );
+    }
+    const worker = findWorker(root, claimed[0].worker_id);
+    console.log(JSON.stringify(submitHostResult(
+      root,
+      worker.worker_id,
+      hostId,
+      {
+        summary: required(args, "summary"),
+        refs: splitList(args.refs),
+        claimToken: worker.claim_token,
+        semanticEvidence: parseSemanticEvidence(args),
+        capabilityEvidence: parseCapabilityEvidence(args),
+        evidenceArtifact: parseEvidenceArtifact(args)
+      }
+    ), null, 2));
+    return;
+  }
   if (subcommand === "cancel") {
     console.log(JSON.stringify(cancelHostAction(
       requireStore(projectRoot(args)),

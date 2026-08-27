@@ -1157,6 +1157,32 @@ test("Host unified evidence 生成兼容投影和 capability receipt", () => {
   assert.ok(existsSync(join(project, submitted.result.capability_receipt_refs[0])));
 });
 
+test("Host submit-current resolves the only active claim", () => {
+  const project = tempProject();
+  const { deliveryRun } = createRunWithPlanGraph(project, {
+    methodPack: "governed"
+  });
+  const worker = JSON.parse(run([
+    "worker", "create", "--project", project, "--run-id", deliveryRun.run_id,
+    "--plan-node-id", "delivery-design"
+  ]).stdout);
+  run([
+    "host", "claim", "--project", project, "--host-id", "codex-host",
+    "--worker-id", worker.worker_id
+  ]);
+  const submitted = JSON.parse(run([
+    "host", "submit-current", "--project", project, "--host-id", "codex-host",
+    "--summary", "submitted current plan action",
+    "--evidence-artifact-json", JSON.stringify({
+      schema_version: "unified-v1",
+      semantic_evidence: semanticEvidenceForWorker(project, worker),
+      capability_outputs: []
+    })
+  ]).stdout);
+  assert.equal(submitted.result.status, "completed");
+  assert.equal(submitted.worker.worker_id, worker.worker_id);
+});
+
 test("Host unified evidence 与 legacy evidence 混用时 fail closed", () => {
   const project = tempProject();
   const { deliveryRun } = createRunWithPlanGraph(project);
