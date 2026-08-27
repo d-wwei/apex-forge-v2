@@ -1,9 +1,9 @@
 {
   "schema_version": "v0",
   "release_version": "0.2.0-rc.1+codex.20260827190511",
-  "source_commit": "a35c3d9f485a3db0a64d2e4a668b42d1e849b0bb",
+  "source_commit": "87e37d211d3b2efe145f3ce1adf03ff6c48cd294",
   "source_tree_hash": "bb0f13edf438559f40404ffa6a4ae9383dd9a5cd9f69c21d17b1403d3e93c295",
-  "source_dirty": true,
+  "source_dirty": false,
   "runtime_sha256": "642dee8f3cb66b75f8cce322bd0e04cfd9aa5f91c4120facea2d7b05b0ce4569",
   "schemas_sha256": "839b93e1e8af75894560cde5ceeab3e4db8da9a6aacc02cc799f53ec62615ec4",
   "capabilities_sha256": "7822f7971fca510add8bbfc7b8aee39962e453a4378a8dc669a7d1c03ef9f0c9",
@@ -11,7 +11,7 @@
     "node": "v26.7.0",
     "esbuild": "0.25.9"
   },
-  "generated_at": "2026-08-27T19:05:52.175Z",
+  "generated_at": "2026-08-27T19:06:44.708Z",
   "entrypoint": "apex-v2.mjs",
   "schema_dir": "schemas",
   "capability_dir": "capabilities"
