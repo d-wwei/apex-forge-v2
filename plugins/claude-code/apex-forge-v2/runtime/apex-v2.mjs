@@ -24428,6 +24428,7 @@ function controllerAction(action, claimed, options = {}) {
     },
     claim_token: fullClaim?.claim_token || null,
     claim,
+    capability_enforcement: action.capability_enforcement || "shadow",
     capability_bindings: options.compact ? (action.capability_bindings || []).map((binding) => ({
       capability_id: binding.capability_id,
       capability_version: binding.capability_version,
@@ -24442,6 +24443,7 @@ function controllerAction(action, claimed, options = {}) {
 }
 function hostSubmissionContract(action, actionType, options = {}) {
   const claim = options.claim || null;
+  const enforceCapabilities = action.capability_enforcement === "enforce";
   const evidenceType = {
     plan: "design",
     risk_challenge: "risk",
@@ -24492,15 +24494,19 @@ function hostSubmissionContract(action, actionType, options = {}) {
         capability_version: binding.capability_version,
         output_contract: binding.output_contract,
         required: binding.required,
-        required_output_fields: capabilityOutputRequiredFields(
-          binding.output_contract
-        ),
-        output_field_constraints: summarizeRequiredProperties(schema)
+        required_for_submission: enforceCapabilities && binding.required,
+        ...enforceCapabilities ? {
+          required_output_fields: capabilityOutputRequiredFields(
+            binding.output_contract
+          ),
+          output_field_constraints: summarizeRequiredProperties(schema)
+        } : {}
       };
     }),
     rules: [
       "Use semantic_evidence as an object; do not JSON-stringify it.",
       "Use capability_outputs[].output as an object; do not flatten output fields.",
+      "In shadow mode, omit capability output unless it was actually executed; never synthesize evidence.",
       "Do not read CLI source or schema files unless this contract is rejected."
     ]
   };
