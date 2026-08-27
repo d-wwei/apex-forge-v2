@@ -885,7 +885,7 @@ function loadContext(args) {
   const taskSelection = loadTaskSet(args["task-set"]);
   const selectedTaskIds = taskSelection?.task_ids || null;
   const selectedModes = taskSelection?.modes || DEFAULT_BENCHMARK_MODES;
-  const selectedTasks = selectedTaskIds
+  const selectedTasks = (selectedTaskIds
     ? selectedTaskIds.map((taskId) => {
         const task = fullTaskValidation.tasks.find((item) =>
           item.task_id === taskId
@@ -893,7 +893,12 @@ function loadContext(args) {
         if (!task) throw new Error(`unknown benchmark task: ${taskId}`);
         return task;
       })
-    : fullTaskValidation.tasks;
+    : fullTaskValidation.tasks).map((task) => ({
+      ...task,
+      ...(taskSelection?.plugin_method_pack
+        ? { plugin_method_pack: taskSelection.plugin_method_pack }
+        : {})
+    }));
   const taskValidation = {
     ...fullTaskValidation,
     tasks: selectedTasks,
@@ -901,6 +906,7 @@ function loadContext(args) {
     task_set_digest: createHash("sha256")
       .update(JSON.stringify({
         modes: selectedModes,
+        plugin_method_pack: taskSelection?.plugin_method_pack || null,
         tasks: selectedTasks.map((task) => ({
           task_id: task.task_id,
           task_digest: task.task_digest
@@ -998,7 +1004,26 @@ function loadTaskSet(path) {
   if (!modes.includes("plugin-kernel")) {
     throw new Error("--task-set modes must include plugin-kernel");
   }
-  return { task_ids: normalized, modes };
+  const pluginMethodPack = value?.plugin_method_pack == null
+    ? null
+    : String(value.plugin_method_pack).trim();
+  if (
+    pluginMethodPack != null
+    && ![
+      "quick",
+      "disciplined-tdd",
+      "phase-context",
+      "governed",
+      "governed-v1"
+    ].includes(pluginMethodPack)
+  ) {
+    throw new Error("--task-set plugin_method_pack is invalid");
+  }
+  return {
+    task_ids: normalized,
+    modes,
+    plugin_method_pack: pluginMethodPack
+  };
 }
 
 function resolveIsolatedRunRoot(value) {

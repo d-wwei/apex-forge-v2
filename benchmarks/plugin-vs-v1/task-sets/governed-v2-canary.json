@@ -9,5 +9,6 @@
     "raw-agent",
     "v1-skill",
     "plugin-kernel"
-  ]
+  ],
+  "plugin_method_pack": "governed"
 }

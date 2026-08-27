@@ -628,6 +628,42 @@ test("Plugin Host fast path preclaims one scoped quick run and closes it determi
   assert.equal(multiStep.fast_path, null);
 });
 
+test("Plugin benchmark can force the governed v2 method pack", () => {
+  const workspace = mkdtempSync(join(tmpdir(), "apex-plugin-governed-route-"));
+  mkdirSync(join(workspace, "src"), { recursive: true });
+  mkdirSync(join(workspace, "tests"), { recursive: true });
+  writeFileSync(join(workspace, "src", "value.mjs"), "export const value = 1;\n");
+  writeFileSync(join(workspace, "tests", "value.test.mjs"), "import test from 'node:test';\n");
+  writeFileSync(join(workspace, "package.json"), JSON.stringify({
+    type: "module",
+    scripts: { test: "node --test" }
+  }));
+  const result = bootstrapPluginBenchmarkProject({
+    workspace,
+    task: {
+      task_id: "repo--simple",
+      scenario: "simple",
+      title: "Change value",
+      instructions: "Update the value and add focused coverage.",
+      affected_files: ["src/value.mjs", "tests/value.test.mjs"],
+      acceptance_commands: ["npm test"],
+      plugin_method_pack: "governed"
+    },
+    runtimePath: new URL("../src/apex-v2.mjs", import.meta.url).pathname,
+    schemaDir: new URL("../schemas/", import.meta.url).pathname
+  });
+  const plan = JSON.parse(readFileSync(join(
+    workspace,
+    ".apex-v2",
+    "runs",
+    result.run_id,
+    "plan-graph.json"
+  )));
+  assert.equal(plan.graph_version, "governed-v2");
+  assert.equal(plan.method_pack.id, "governed");
+  assert.equal(result.fast_path, null);
+});
+
 test("CLI benchmark bootstrap persists exact public acceptance commands", () => {
   const workspace = mkdtempSync(join(tmpdir(), "apex-cli-bootstrap-"));
   mkdirSync(join(workspace, "src"), { recursive: true });

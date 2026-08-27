@@ -61,6 +61,8 @@ test("canary benchmark reports successful delivery rate and token cost by mode",
     evaluation.delivery_metrics_by_mode["v1-skill"].successful_deliveries,
     1
   );
+  assert.deepEqual(evaluation.durable_value_scenarios, []);
+  assert.equal(evaluation.durable_value_pass, true);
 });
 
 test("delivery efficiency reports null token cost when a mode has no successful delivery", () => {

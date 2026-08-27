@@ -98,7 +98,7 @@ function bootstrapBenchmarkProject({
       "--name",
       `Benchmark ${task.task_id}`
     ]);
-    intake = runRuntime(runtimePath, schemaDir, [
+    const intakeArgs = [
       "intake",
       "add",
       "--project",
@@ -123,7 +123,11 @@ function bootstrapBenchmarkProject({
         : "low",
       "--priority",
       "P2"
-    ]);
+    ];
+    if (task.plugin_method_pack) {
+      intakeArgs.push("--method-pack", task.plugin_method_pack);
+    }
+    intake = runRuntime(runtimePath, schemaDir, intakeArgs);
     runRuntime(runtimePath, schemaDir, [
       "intake",
       "triage",

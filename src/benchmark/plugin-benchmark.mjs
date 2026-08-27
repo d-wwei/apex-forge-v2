@@ -167,9 +167,11 @@ export function evaluateBenchmark(tasks, results, { modes = DEFAULT_MODES } = {}
   const scenariosPassed = scenarioEvaluations.filter((item) => item.pass).length;
   const requiredScenarios = Math.ceil(scenarioIds.length * 2 / 3);
   const simpleOverhead = evaluateSimpleOverhead(validation.validResults, modes);
-  const durableValueScenarios = DURABLE_VALUE_SCENARIOS.map((scenario) =>
-    evaluateDurableValueScenario(validation.validResults, scenario, modes)
-  );
+  const durableValueScenarios = DURABLE_VALUE_SCENARIOS
+    .filter((scenario) => scenarioIds.includes(scenario))
+    .map((scenario) =>
+      evaluateDurableValueScenario(validation.validResults, scenario, modes)
+    );
   const durableValuePass = durableValueScenarios.every((item) => item.pass);
   const relativePass = overallComparison.noninferior.length >= MIN_CORE_NONINFERIOR
     && overallComparison.improved.length >= MIN_CORE_IMPROVEMENTS
@@ -389,11 +391,15 @@ function blockedEvaluation(tasks, validResults, modes, extra = {}) {
     required_scenarios: Math.ceil(new Set(tasks.map((task) => task.scenario)).size * 2 / 3),
     simple_overhead_ratio: null,
     simple_overhead_pass: false,
-    durable_value_scenarios: DURABLE_VALUE_SCENARIOS.map((scenario) => ({
-      scenario,
-      pass: false,
-      checks: []
-    })),
+    durable_value_scenarios: DURABLE_VALUE_SCENARIOS
+      .filter((scenario) =>
+        tasks.some((task) => task.scenario === scenario)
+      )
+      .map((scenario) => ({
+        scenario,
+        pass: false,
+        checks: []
+      })),
     durable_value_pass: false,
     safety_regression: null,
     absolute_gate_pass: false,
