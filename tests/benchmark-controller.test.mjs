@@ -669,6 +669,10 @@ test("Plugin benchmark can force the governed v2 method pack", () => {
     "design"
   );
   assert.equal(
+    result.entry_action.submission_contract.command,
+    "host submit-current"
+  );
+  assert.equal(
     result.entry_action.submission_contract.required_cli_values.project_dir,
     workspace
   );

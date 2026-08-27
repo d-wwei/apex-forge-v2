@@ -1172,10 +1172,17 @@ test("Host submit-current resolves the only active claim", () => {
   ]);
   const submitted = JSON.parse(run([
     "host", "submit-current", "--project", project, "--host-id", "codex-host",
-    "--summary", "submitted current plan action",
-    "--evidence-artifact-json", JSON.stringify({
-      schema_version: "unified-v1",
-      semantic_evidence: semanticEvidenceForWorker(project, worker),
+    "--action-result-json", JSON.stringify({
+      summary: "submitted current plan action",
+      refs: ["src/apex-v2.mjs"],
+      semantic: {
+        claims: ["The delivery plan is bounded to the declared source and tests."],
+        uncertainties: [],
+        slices: ["Implement the bounded change."],
+        dependencies: [],
+        verification: ["npm test"],
+        rollback: ["Revert the candidate patch."]
+      },
       capability_outputs: []
     })
   ]).stdout);
@@ -2708,7 +2715,11 @@ test("governed v2 drain 在 staged verification PASS 后才解锁 review", () =>
   ]).stdout);
   assert.equal(planStep.next_action.action_type, "plan");
   assert.equal(planStep.next_action.claim.payload.plan_node_id, "delivery-design");
-  assert.equal(planStep.next_action.submission_contract.format, "unified-v1");
+  assert.equal(planStep.next_action.submission_contract.format, "compact-action-v1");
+  assert.equal(
+    planStep.next_action.submission_contract.command,
+    "host submit-current"
+  );
   assert.equal(
     planStep.next_action.submission_contract.semantic_evidence.evidence_type,
     "design"

@@ -8,7 +8,7 @@ import {
   updateProject
 } from "../core/store.mjs";
 import { createArtifact } from "../core/artifacts.mjs";
-import { validateContract } from "../core/contracts.mjs";
+import { assertContract, validateContract } from "../core/contracts.mjs";
 import { assertPatchWithinBudget } from "../core/governance.mjs";
 import { loadRun } from "../core/run-state.mjs";
 import {
@@ -91,17 +91,27 @@ export function handleHostCommand(subcommand, args) {
       );
     }
     const worker = findWorker(root, claimed[0].worker_id);
+    const compactResult = parseActionResult(args);
+    const submission = compactResult
+      ? expandActionResult(root, worker, compactResult)
+      : {
+          summary: required(args, "summary"),
+          refs: splitList(args.refs),
+          semanticEvidence: parseSemanticEvidence(args),
+          capabilityEvidence: parseCapabilityEvidence(args),
+          evidenceArtifact: parseEvidenceArtifact(args)
+        };
     console.log(JSON.stringify(submitHostResult(
       root,
       worker.worker_id,
       hostId,
       {
-        summary: required(args, "summary"),
-        refs: splitList(args.refs),
+        summary: submission.summary,
+        refs: submission.refs,
         claimToken: worker.claim_token,
-        semanticEvidence: parseSemanticEvidence(args),
-        capabilityEvidence: parseCapabilityEvidence(args),
-        evidenceArtifact: parseEvidenceArtifact(args)
+        semanticEvidence: submission.semanticEvidence,
+        capabilityEvidence: submission.capabilityEvidence,
+        evidenceArtifact: submission.evidenceArtifact
       }
     ), null, 2));
     return;
@@ -671,6 +681,166 @@ function parseEvidenceArtifact(args) {
   } catch (error) {
     throw new Error(`evidence artifact JSON 无效：${error.message}`);
   }
+}
+
+function parseActionResult(args) {
+  const inline = args["action-result-json"];
+  const file = args["action-result-file"];
+  if (!inline && !file) return null;
+  if (inline && file) {
+    throw new Error(
+      "只能指定 --action-result-json 或 --action-result-file 之一"
+    );
+  }
+  let value;
+  try {
+    value = JSON.parse(
+      file ? readFileSync(resolve(String(file)), "utf8") : String(inline)
+    );
+  } catch (error) {
+    throw new Error(`action result JSON 无效：${error.message}`);
+  }
+  assertContract("host-action-result.schema.json", value, "host action result");
+  return value;
+}
+
+function expandActionResult(root, worker, value) {
+  const timestamp = now();
+  const refs = uniqueStrings(value.refs?.length > 0
+    ? value.refs
+    : worker.read_scope || []);
+  const semanticEvidence = compactSemanticEvidence(
+    root,
+    worker,
+    value.semantic,
+    value.summary,
+    refs,
+    timestamp
+  );
+  const bindingMap = new Map((worker.capability_bindings || []).map((binding) => [
+    binding.capability_id,
+    binding
+  ]));
+  const capabilityOutputs = (value.capability_outputs || []).map((item) => {
+    const binding = bindingMap.get(item.capability_id);
+    if (!binding) {
+      throw new Error(`Capability output 未绑定：${item.capability_id}`);
+    }
+    return {
+      capability_id: binding.capability_id,
+      capability_version: binding.capability_version,
+      output_contract: binding.output_contract,
+      output: item.output
+    };
+  });
+  return {
+    summary: value.summary,
+    refs,
+    semanticEvidence: null,
+    capabilityEvidence: [],
+    evidenceArtifact: {
+      schema_version: "unified-v1",
+      semantic_evidence: semanticEvidence,
+      capability_outputs: capabilityOutputs
+    }
+  };
+}
+
+function compactSemanticEvidence(
+  root,
+  worker,
+  value,
+  summary,
+  refs,
+  timestamp
+) {
+  if (worker.execution_class === "workspace_patch") return null;
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error(`Host action ${worker.plan_node_id} 缺少 semantic object`);
+  }
+  const evidenceType = worker.plan_node_id === "delivery-risk-challenger"
+    ? "risk"
+    : worker.plan_node_id === "delivery-review"
+      ? "review"
+      : "design";
+  const sourceRefs = uniqueStrings([
+    ...refs,
+    ...(worker.read_scope || [])
+  ]);
+  const acceptance = (worker.required_evidence || [])
+    .filter((item) => !String(item).startsWith("capability:"));
+  const common = {
+    schema_version: SCHEMA_VERSION,
+    evidence_type: evidenceType,
+    objective: worker.objective,
+    source_refs: sourceRefs,
+    claims: normalizeStringEvidence(value.claims, [summary]),
+    uncertainties: normalizeStringEvidence(value.uncertainties, []),
+    acceptance_mapping: acceptance.length > 0
+      ? acceptance.map((criterion) => ({
+          criterion,
+          evidence_ref: sourceRefs[0],
+          status: "supported"
+        }))
+      : [{
+          criterion: worker.objective,
+          evidence_ref: sourceRefs[0],
+          status: "supported"
+        }],
+    created_at: timestamp
+  };
+  if (evidenceType === "design") {
+    return {
+      ...common,
+      slices: normalizeStringEvidence(value.slices, worker.deliverables),
+      dependencies: normalizeStringEvidence(value.dependencies, []),
+      verification: normalizeStringEvidence(
+        value.verification,
+        worker.verification
+      ),
+      rollback: normalizeStringEvidence(
+        value.rollback,
+        ["Revert the candidate patch."]
+      )
+    };
+  }
+  if (evidenceType === "risk") {
+    return {
+      ...common,
+      failure_paths: normalizeStringEvidence(value.failure_paths, [summary]),
+      blast_radius: normalizeStringEvidence(value.blast_radius, worker.read_scope),
+      mitigations: normalizeStringEvidence(value.mitigations, [summary]),
+      rollback: normalizeStringEvidence(
+        value.rollback,
+        ["Revert the candidate patch."]
+      )
+    };
+  }
+  const context = reviewActionContext(root, worker);
+  return {
+    ...common,
+    candidate_digest: context.candidate_digest,
+    findings: Array.isArray(value.findings) ? value.findings : [],
+    residual_risks: Array.isArray(value.residual_risks)
+      ? value.residual_risks
+      : [],
+    merge_posture: ["approve", "conditional", "block"].includes(
+      value.merge_posture
+    )
+      ? value.merge_posture
+      : "block"
+  };
+}
+
+function normalizeStringEvidence(value, fallback) {
+  if (!Array.isArray(value) || value.length === 0) return [...fallback];
+  return value.map((item) =>
+    typeof item === "string" ? item : JSON.stringify(item)
+  );
+}
+
+function uniqueStrings(values = []) {
+  return [...new Set(values.map(String).filter(Boolean))];
 }
 
 function assertActiveClaim(worker, action, claimToken) {

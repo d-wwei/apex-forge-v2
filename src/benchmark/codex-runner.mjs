@@ -296,12 +296,13 @@ export function buildBenchmarkPrompt({
         `Kernel bridge: ${bridge}`,
         "Do not locate or read plugin files, CLI help, runtime source, or JSON schemas. Do not call bare `actions` or `host submit --help`.",
         "Use each next_action.submission_contract as the authoritative evidence shape.",
-        "Submit one natural JSON file with semantic_evidence as an object and capability_outputs[].output as an object.",
+        "Submit one compact action-result JSON file. The Kernel supplies objective, candidate digest, source refs, acceptance mapping, versions, and timestamps.",
         "If capability_enforcement is shadow, leave capability_outputs empty unless you actually executed that capability; never fabricate capability evidence.",
         "Use `host submit-current`; do not manually pass worker-id or claim-token.",
         "Write temporary evidence files under /private/tmp, never inside the action workspace.",
+        "The initial action is plan-only: do not edit source files before submitting it. When drain returns an implement action, change into exactly next_action.workspace before editing.",
         "After each successful host submit, call `project drain --project-dir <original-workspace> --host-id codex-host --compact` and follow only the returned next_action.",
-        `First submit command template:\nnode ${JSON.stringify(bridge)} host submit-current --project-dir ${JSON.stringify(workspace)} --host-id codex-host --summary "<summary>" --evidence-artifact-file ${JSON.stringify(first.submission_contract.required_cli_values.evidence_file)}`,
+        `First submit command template:\nnode ${JSON.stringify(bridge)} host submit-current --project-dir ${JSON.stringify(workspace)} --host-id codex-host --action-result-file ${JSON.stringify(first.submission_contract.required_cli_values.evidence_file)}`,
         `Initial action:\n${JSON.stringify(first, null, 2)}`
       );
     } else {
